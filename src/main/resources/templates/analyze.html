@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Case Analysis</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Case Analysis & Decision Support</h1>
+
+            <div class="card mb-4" th:if="${caseId != null && !caseId.isEmpty()}">
+                <div class="card-header">
+                    <h5 class="mb-0">Case Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Case ID:</strong> <span th:text="${caseId}"></span></p>
+                    <div th:if="${case != null}">
+                        <p><strong>Type:</strong> <span th:text="${case.caseType()}"></span></p>
+                        <p><strong>Urgency:</strong> <span th:text="${case.urgencyLevel()}"></span></p>
+                        <p th:if="${case.chiefComplaint() != null && !case.chiefComplaint().isEmpty()}"><strong>Chief
+                            Complaint:</strong> <span th:text="${case.chiefComplaint()}"></span></p>
+                        <p th:if="${case.abstractText() != null && !case.abstractText().isEmpty()}">
+                            <strong>Abstract:</strong> <span th:text="${case.abstractText()}"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4" th:if="${caseId == null || caseId.isEmpty()}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Select a Case to Analyze</h5>
+                    <button class="btn btn-outline-secondary btn-sm" id="analyzeSearchCasesBtn" type="button">
+                        <i class="bi bi-search"></i> Search Existing Cases
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-0">Click <strong>Search Existing Cases</strong> to find and select a case
+                        for analysis.</p>
+                </div>
+            </div>
+
+            <div aria-hidden="true" aria-labelledby="analyzeCaseSearchModalLabel" class="modal fade"
+                 id="analyzeCaseSearchModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="analyzeCaseSearchModalLabel">Search Existing Cases</h5>
+                            <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3 position-relative">
+                                <input autocomplete="off" class="form-control" id="analyzeCaseSearchQuery"
+                                       placeholder="Search by chief complaint, symptoms, or notes..." type="text">
+                                <div class="list-group position-absolute w-100 shadow-sm"
+                                     id="analyzeCaseSearchSuggestions"
+                                     style="z-index: 1050; max-height: 300px; overflow-y: auto; display: none; margin-top: 2px; border-radius: 0.375rem;"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="analyzeCaseSearchCaseId">Case ID</label>
+                                <input autocomplete="off" class="form-control" id="analyzeCaseSearchCaseId"
+                                       placeholder="Filter by case ID (optional)" type="text">
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="analyzeCaseSearchSpecialty">
+                                        <option value="">All Specialties</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-select" id="analyzeCaseSearchUrgency">
+                                        <option value="">All Urgency Levels</option>
+                                        <option value="CRITICAL">Critical</option>
+                                        <option value="HIGH">High</option>
+                                        <option value="MEDIUM">Medium</option>
+                                        <option value="LOW">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mb-3" id="analyzePerformSearchBtn" type="button">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <div id="analyzeCaseSearchResults" style="max-height: 400px; overflow-y: auto;">
+                                <div class="text-muted text-center">Enter search criteria and click Search</div>
+                            </div>
+                            <div class="mt-3 d-none" id="analyzeCaseSearchPagination">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-sm btn-outline-secondary" disabled id="analyzePrevPageBtn"
+                                            type="button">
+                                        <i class="bi bi-chevron-left"></i> Previous
+                                    </button>
+                                    <span class="text-muted small" id="analyzeCaseSearchPageInfo"></span>
+                                    <button class="btn btn-sm btn-outline-secondary" id="analyzeNextPageBtn"
+                                            type="button">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2 text-center d-none" id="analyzeCaseSearchLoading">
+                                    <span aria-hidden="true" class="spinner-border spinner-border-sm"
+                                          role="status"></span>
+                                    <span class="ms-2 text-muted small">Loading more results...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4" th:if="${caseId != null && !caseId.isEmpty()}">
+                <div class="card-header">
+                    <h5 class="mb-0">Analyze Case</h5>
+                </div>
+                <div class="card-body long-running-block">
+                    <form id="runAnalysisForm" method="post" th:action="@{/analyze/{caseId}(caseId=${caseId})}">
+                        <div class="long-running-actions">
+                            <button class="btn btn-primary" id="runAnalysisBtn" type="submit">Run Analysis</button>
+                        </div>
+                        <p class="long-running-msg" id="analyzeLongRunningMsg">Long-running operation. Case analysis may
+                            take 2-3 minutes. You can cancel at any time.</p>
+                        <div class="long-running-progress align-items-center gap-3" id="analyzeProgressArea"
+                             style="display: none;">
+                            <div aria-label="Loading" class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading</span>
+                            </div>
+                            <span class="long-running-progress-text" id="analyzeProgressText">Analyzing case...</span>
+                            <button class="btn btn-outline-secondary btn-sm long-running-cancel" id="analyzeCancelBtn"
+                                    type="button">Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-danger d-none" id="analyzeErrorAlert"
+                 th:if="${caseId != null && !caseId.isEmpty()}"></div>
+            <div class="alert alert-secondary d-none long-running-cancelled" id="analyzeCancelledAlert" role="alert"
+                 th:if="${caseId != null && !caseId.isEmpty()}">Request cancelled.
+            </div>
+            <div class="alert alert-danger" th:if="${error != null && !error.isEmpty()}" th:text="${error}"></div>
+
+            <div class="card mb-4" id="analyzeResultCard" th:classappend="${analysisResult == null} ? 'd-none' : ''"
+                 th:if="${caseId != null && !caseId.isEmpty()}">
+                <div class="card-header">
+                    <h5 class="mb-0">Analysis Results</h5>
+                </div>
+                <div class="card-body" id="analyzeResultContent">
+                    <div class="mb-3" th:if="${analysisResult != null}">
+                        <strong>Response:</strong>
+                        <div id="analyzeResultBody">
+                            <pre class="bg-light p-3 rounded" id="analyzeResultPre"
+                                 th:text="${analysisResult != null ? analysisResult.response() : ''}"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4 mb-4" id="analyzeLogPanelCard"
+                 th:if="${isAdmin && caseId != null && !caseId.isEmpty()}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Execution Trace</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" id="analyzeClearLogsBtn" type="button">
+                            <i class="bi bi-trash"></i> Clear
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="analyzeToggleLogsBtn" type="button">
+                            <i class="bi bi-chevron-down" id="analyzeToggleLogsIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="analyzeLogPanelBody">
+                    <div id="analyzeLogContainer"
+                         style="height: 300px; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; border-radius: 4px;">
+                        <div id="analyzeLogContent">
+                            <div style="color: #6a9955;">[Waiting for execution trace...]</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4" th:if="${recommendationsResult != null}">
+                <div class="card-header">
+                    <h5 class="mb-0">Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Response:</strong>
+                        <pre class="bg-light p-3 rounded" th:text="${recommendationsResult.response()}"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script th:if="${caseId != null && !caseId.isEmpty()}">
+    (function () {
+        const form = document.getElementById('runAnalysisForm');
+        const runBtn = document.getElementById('runAnalysisBtn');
+        const actionsEl = form ? form.querySelector('.long-running-actions') : null;
+        const longRunningMsg = document.getElementById('analyzeLongRunningMsg');
+        const progressArea = document.getElementById('analyzeProgressArea');
+        const progressText = document.getElementById('analyzeProgressText');
+        const cancelBtn = document.getElementById('analyzeCancelBtn');
+        const errorAlert = document.getElementById('analyzeErrorAlert');
+        const cancelledAlert = document.getElementById('analyzeCancelledAlert');
+        const resultCard = document.getElementById('analyzeResultCard');
+        const resultContent = document.getElementById('analyzeResultContent');
+        const logContainer = document.getElementById('analyzeLogContainer');
+        const logContent = document.getElementById('analyzeLogContent');
+        const logPanelBody = document.getElementById('analyzeLogPanelBody');
+        const clearLogsBtn = document.getElementById('analyzeClearLogsBtn');
+        const toggleLogsBtn = document.getElementById('analyzeToggleLogsBtn');
+        const toggleLogsIcon = document.getElementById('analyzeToggleLogsIcon');
+        const caseId = (function () {
+            const m = document.getElementById('runAnalysisForm');
+            if (!m || !m.action) return null;
+            const parts = m.action.split('/');
+            return parts[parts.length - 1] || null;
+        })();
+
+        let analyzeEventSource = null;
+        let logPanelCollapsed = false;
+        let analyzeAbortController = null;
+
+        function isMarkdownFormat(text) {
+            if (!text || text.length === 0) return false;
+            var patterns = [
+                new RegExp('^#{1,6}\\s+', 'm'),
+                new RegExp('^\\*\\s+', 'm'),
+                new RegExp('^\\d+\\.\\s+', 'm'),
+                new RegExp('```[\\s\\S]*?```', 'm'),
+                new RegExp('`[^`]+`', 'm'),
+                new RegExp('\\[.*?\\]\\(.*?\\)', 'm'),
+                new RegExp('\\*\\*.*?\\*\\*', 'm'),
+                new RegExp('^\\s*[-*+]\\s+', 'm'),
+                new RegExp('^\\s*>\\s+', 'm'),
+                new RegExp('^\\|.*\\|.*\\|', 'm')
+            ];
+            var matchCount = 0;
+            for (var i = 0; i < patterns.length; i++) {
+                if (patterns[i].test(text)) matchCount++;
+            }
+            return matchCount >= 2;
+        }
+
+        function renderAnalysisResponse(container, text) {
+            if (!container) return;
+            if (!text || text.trim().length === 0) {
+                container.innerHTML = '<pre class="bg-light p-3 rounded"></pre>';
+                return;
+            }
+            var escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            if (isMarkdownFormat(text) && typeof marked !== 'undefined') {
+                try {
+                    var html = marked.parse(text, {breaks: true, gfm: true});
+                    container.innerHTML = '<div class="markdown-content">' + html + '</div>';
+                } catch (e) {
+                    container.innerHTML = '<pre class="bg-light p-3 rounded">' + escaped + '</pre>';
+                }
+            } else {
+                container.innerHTML = '<pre class="bg-light p-3 rounded">' + escaped + '</pre>';
+            }
+        }
+
+        function initLogStream(sessionId) {
+            if (analyzeEventSource) {
+                analyzeEventSource.close();
+                analyzeEventSource = null;
+            }
+            const url = '/api/v1/logs/stream?sessionId=' + encodeURIComponent(sessionId);
+            analyzeEventSource = new EventSource(url);
+            analyzeEventSource.addEventListener('log', function (event) {
+                addLogEntry(event.data);
+            });
+            analyzeEventSource.onopen = function () {
+                addLogEntry('[INFO] Execution trace connected (session: ' + sessionId + ')', 'info');
+            };
+            analyzeEventSource.onerror = function () {
+                if (analyzeEventSource && analyzeEventSource.readyState === EventSource.CLOSED) {
+                    addLogEntry('[ERROR] Connection closed.', 'error');
+                }
+            };
+        }
+
+        function addLogEntry(message, level) {
+            if (!logContent) return;
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '2px';
+            entry.style.wordWrap = 'break-word';
+            if (level === 'error' || (message && message.indexOf('[ERROR]') !== -1)) {
+                entry.style.color = '#f48771';
+            } else if (message && message.indexOf('[WARN]') !== -1) {
+                entry.style.color = '#dcdcaa';
+            } else if (message && message.indexOf('[DEBUG]') !== -1) {
+                entry.style.color = '#9cdcfe';
+            } else if (message && message.indexOf('[INFO]') !== -1) {
+                entry.style.color = '#4ec9b0';
+            } else {
+                entry.style.color = '#d4d4d4';
+            }
+            entry.textContent = message || '';
+            logContent.appendChild(entry);
+            if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
+            while (logContent.children.length > 500) {
+                logContent.removeChild(logContent.firstChild);
+            }
+        }
+
+        function closeLogStream() {
+            if (analyzeEventSource) {
+                analyzeEventSource.close();
+                analyzeEventSource = null;
+            }
+        }
+
+        function setRunning(running) {
+            if (actionsEl) actionsEl.classList.toggle('d-none', running);
+            if (progressArea) progressArea.style.display = running ? 'flex' : 'none';
+            if (longRunningMsg) longRunningMsg.classList.toggle('d-none', running);
+            if (runBtn) runBtn.disabled = running;
+            if (errorAlert) errorAlert.classList.add('d-none');
+            if (cancelledAlert) cancelledAlert.classList.add('d-none');
+        }
+
+        function cancelAnalysis() {
+            setRunning(false);
+            closeLogStream();
+            if (analyzeAbortController) {
+                analyzeAbortController.abort();
+                analyzeAbortController = null;
+            }
+            if (cancelledAlert) cancelledAlert.classList.remove('d-none');
+            addLogEntry('[WARN] Analysis cancelled.', 'warn');
+        }
+
+        function showResult(responseText) {
+            setRunning(false);
+            closeLogStream();
+            addLogEntry('[INFO] Case analysis completed.', 'info');
+            if (resultCard) resultCard.classList.remove('d-none');
+            if (resultContent) {
+                resultContent.innerHTML = '<div class="mb-3"><strong>Response:</strong><div id="analyzeResultBody"></div></div>';
+                var body = document.getElementById('analyzeResultBody');
+                renderAnalysisResponse(body, responseText || '');
+            }
+        }
+
+        function showError(message) {
+            setRunning(false);
+            closeLogStream();
+            addLogEntry('[ERROR] ' + (message || 'Analysis failed.'), 'error');
+            if (errorAlert) {
+                errorAlert.textContent = message || 'Analysis failed. Please try again.';
+                errorAlert.classList.remove('d-none');
+            }
+        }
+
+        if (clearLogsBtn && logContent) {
+            clearLogsBtn.addEventListener('click', function () {
+                logContent.innerHTML = '<div style="color: #6a9955;">[Logs cleared]</div>';
+            });
+        }
+        if (toggleLogsBtn && logPanelBody && toggleLogsIcon) {
+            toggleLogsBtn.addEventListener('click', function () {
+                logPanelCollapsed = !logPanelCollapsed;
+                logPanelBody.style.display = logPanelCollapsed ? 'none' : 'block';
+                toggleLogsIcon.className = logPanelCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+            });
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                cancelAnalysis();
+            });
+        }
+
+        if (form && caseId) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                if (analyzeAbortController) {
+                    analyzeAbortController.abort();
+                }
+                analyzeAbortController = new AbortController();
+                var sessionId = 'analyze-' + Date.now();
+                if (logContent) {
+                    logContent.innerHTML = '';
+                }
+                addLogEntry('[INFO] Starting case analysis for case: ' + caseId, 'info');
+                initLogStream(sessionId);
+                setRunning(true);
+                if (progressText) progressText.textContent = 'Analyzing case...';
+                fetch('/api/v1/agent/analyze-case/' + encodeURIComponent(caseId), {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sessionId: sessionId}),
+                    signal: analyzeAbortController.signal
+                })
+                    .then(function (r) {
+                        if (!r.ok) throw new Error(r.statusText || 'Request failed');
+                        return r.json();
+                    })
+                    .then(function (data) {
+                        analyzeAbortController = null;
+                        showResult(data.response != null ? data.response : '');
+                    })
+                    .catch(function (err) {
+                        if (err.name === 'AbortError') {
+                            analyzeAbortController = null;
+                            setRunning(false);
+                            if (cancelledAlert) cancelledAlert.classList.remove('d-none');
+                            addLogEntry('[WARN] Request cancelled.', 'warn');
+                            return;
+                        }
+                        analyzeAbortController = null;
+                        showError('Failed to analyze case: ' + (err.message || 'Unknown error'));
+                    });
+            });
+        }
+
+        // Render server-rendered analysis result as Markdown if applicable
+        (function () {
+            var pre = document.getElementById('analyzeResultPre');
+            var body = document.getElementById('analyzeResultBody');
+            if (pre && body && pre.textContent && pre.textContent.trim().length > 0) {
+                renderAnalysisResponse(body, pre.textContent);
+            }
+        })();
+    })();
+</script>
+<script th:if="${caseId == null || caseId.isEmpty()}">
+    (function () {
+        const searchBtn = document.getElementById('analyzeSearchCasesBtn');
+        const modalEl = document.getElementById('analyzeCaseSearchModal');
+        const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+        const searchQuery = document.getElementById('analyzeCaseSearchQuery');
+        const caseIdInput = document.getElementById('analyzeCaseSearchCaseId');
+        const searchSuggestions = document.getElementById('analyzeCaseSearchSuggestions');
+        const specialtySelect = document.getElementById('analyzeCaseSearchSpecialty');
+        const urgencySelect = document.getElementById('analyzeCaseSearchUrgency');
+        const performSearchBtn = document.getElementById('analyzePerformSearchBtn');
+        const searchResults = document.getElementById('analyzeCaseSearchResults');
+        const paginationDiv = document.getElementById('analyzeCaseSearchPagination');
+        const prevBtn = document.getElementById('analyzePrevPageBtn');
+        const nextBtn = document.getElementById('analyzeNextPageBtn');
+        const pageInfo = document.getElementById('analyzeCaseSearchPageInfo');
+        const searchLoadingDiv = document.getElementById('analyzeCaseSearchLoading');
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        var searchPaginationState = {offset: 0, limit: 20, loading: false, hasMore: false};
+
+        function populateSpecialtyDropdown() {
+            if (!specialtySelect) return;
+            while (specialtySelect.options.length > 1) specialtySelect.remove(1);
+            fetch('/api/cases/list?offset=0&limit=300')
+                .then(function (r) {
+                    return r.json();
+                })
+                .then(function (cases) {
+                    var specialties = new Set();
+                    cases.forEach(function (c) {
+                        if (c.requiredSpecialty && c.requiredSpecialty.trim()) specialties.add(c.requiredSpecialty.trim());
+                    });
+                    specialties.forEach(function (s) {
+                        var opt = document.createElement('option');
+                        opt.value = s;
+                        opt.textContent = s;
+                        specialtySelect.appendChild(opt);
+                    });
+                })
+                .catch(function () {
+                });
+        }
+
+        function performCaseSearch(reset) {
+            if (reset === undefined) reset = true;
+            var query = searchQuery ? searchQuery.value.trim() : '';
+            var caseIdFilter = caseIdInput ? caseIdInput.value.trim() : '';
+            var specialty = specialtySelect ? specialtySelect.value : '';
+            var urgency = urgencySelect ? urgencySelect.value : '';
+            if (reset) {
+                searchPaginationState.offset = 0;
+                searchPaginationState.hasMore = false;
+                searchResults.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Searching...</div>';
+            } else if (searchLoadingDiv) searchLoadingDiv.classList.remove('d-none');
+            searchPaginationState.loading = true;
+            var params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (caseIdFilter) params.append('caseId', caseIdFilter);
+            if (specialty) params.append('specialty', specialty);
+            if (urgency) params.append('urgencyLevel', urgency);
+            params.append('offset', String(searchPaginationState.offset));
+            params.append('maxResults', String(searchPaginationState.limit));
+            fetch('/api/cases/search?' + params.toString())
+                .then(function (r) {
+                    return r.ok ? r.json() : Promise.reject(new Error(r.statusText));
+                })
+                .then(function (cases) {
+                    if (reset) searchResults.innerHTML = '';
+                    if (!cases || cases.length === 0) {
+                        if (reset) searchResults.innerHTML = '<div class="text-muted text-center">No cases found</div>';
+                        if (paginationDiv) paginationDiv.classList.add('d-none');
+                        searchPaginationState.hasMore = false;
+                        return;
+                    }
+                    var html = cases.map(function (c) {
+                        var chiefComplaint = c.chiefComplaint || 'No chief complaint';
+                        var specialtyVal = c.requiredSpecialty || 'N/A';
+                        var urgencyVal = c.urgencyLevel || 'N/A';
+                        var caseId = c.id || '';
+                        var symptoms = c.symptoms || '';
+                        var age = c.patientAge || '';
+                        var caseType = c.caseType || 'INPATIENT';
+                        return '<div class="card mb-2" data-case-id="' + escapeHtml(caseId) + '">' +
+                            '<div class="card-body p-2"><div class="d-flex justify-content-between align-items-start">' +
+                            '<div class="flex-grow-1"><div class="fw-bold">' + escapeHtml(chiefComplaint) + '</div>' +
+                            '<div class="small text-muted">Specialty: ' + escapeHtml(specialtyVal) + ' | Urgency: ' + escapeHtml(urgencyVal) + ' | Type: ' + escapeHtml(caseType) + (age ? ' | Age: ' + age : '') + '</div>' +
+                            (symptoms ? '<div class="small mt-1">Symptoms: ' + escapeHtml(symptoms.substring(0, 100)) + (symptoms.length > 100 ? '...' : '') + '</div>' : '') +
+                            '</div>' +
+                            '<button type="button" class="btn btn-sm btn-primary ms-2 analyze-case-select-btn" data-case-id="' + escapeHtml(caseId) + '" style="flex-shrink:0;">Select</button>' +
+                            '</div></div></div>';
+                    }).join('');
+                    searchResults.insertAdjacentHTML('beforeend', html);
+                    searchResults.querySelectorAll('.analyze-case-select-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            var id = this.getAttribute('data-case-id');
+                            if (id && modal) {
+                                modal.hide();
+                                window.location.href = '/analyze/' + encodeURIComponent(id);
+                            }
+                        });
+                    });
+                    searchPaginationState.hasMore = cases.length === searchPaginationState.limit;
+                    if (paginationDiv) {
+                        paginationDiv.classList.remove('d-none');
+                        var currentPage = Math.floor(searchPaginationState.offset / searchPaginationState.limit) + 1;
+                        var start = searchPaginationState.offset + 1;
+                        var end = searchPaginationState.offset + cases.length;
+                        if (pageInfo) pageInfo.textContent = 'Page ' + currentPage + ' (' + start + '-' + end + ')';
+                        if (prevBtn) prevBtn.disabled = searchPaginationState.offset === 0;
+                        if (nextBtn) nextBtn.disabled = !searchPaginationState.hasMore;
+                    }
+                })
+                .catch(function (err) {
+                    searchResults.innerHTML = '<div class="alert alert-danger">Error searching cases: ' + escapeHtml(err.message) + '</div>';
+                    if (paginationDiv) paginationDiv.classList.add('d-none');
+                })
+                .finally(function () {
+                    searchPaginationState.loading = false;
+                    if (searchLoadingDiv) searchLoadingDiv.classList.add('d-none');
+                });
+        }
+
+        if (searchBtn && modal) {
+            searchBtn.addEventListener('click', function () {
+                populateSpecialtyDropdown();
+                searchResults.innerHTML = '<div class="text-muted text-center">Enter search criteria and click Search</div>';
+                if (paginationDiv) paginationDiv.classList.add('d-none');
+                modal.show();
+            });
+        }
+        if (performSearchBtn) performSearchBtn.addEventListener('click', function () {
+            performCaseSearch(true);
+        });
+        if (searchQuery) searchQuery.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                performCaseSearch(true);
+            }
+        });
+        if (modalEl) modalEl.addEventListener('hidden.bs.modal', function () {
+            if (searchQuery) searchQuery.value = '';
+        });
+        if (prevBtn) prevBtn.addEventListener('click', function () {
+            if (searchPaginationState.offset > 0 && !searchPaginationState.loading) {
+                searchPaginationState.offset = Math.max(0, searchPaginationState.offset - searchPaginationState.limit);
+                performCaseSearch(false);
+                searchResults.scrollTop = 0;
+            }
+        });
+        if (nextBtn) nextBtn.addEventListener('click', function () {
+            if (searchPaginationState.hasMore && !searchPaginationState.loading) {
+                searchPaginationState.offset += searchPaginationState.limit;
+                performCaseSearch(false);
+            }
+        });
+    })();
+</script>
+</body>
+</html>

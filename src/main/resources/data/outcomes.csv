@@ -1,0 +1,6 @@
+name,description
+SUCCESS,Successful treatment with complete resolution
+IMPROVED,Patient condition improved with treatment
+STABLE,Patient condition stabilized
+COMPLICATED,Case complicated by additional factors
+ONGOING,Ongoing treatment required

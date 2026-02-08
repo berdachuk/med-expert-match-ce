@@ -1,0 +1,35 @@
+# Use the official Apache AGE image with PostgreSQL 17 and AGE 1.6.0
+FROM apache/age:release_PG17_1.6.0
+
+# Install necessary packages for building pgVector extension
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    ca-certificates \
+    postgresql-server-dev-17 && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+# Clone, build, and install pgVector 0.8.0
+RUN git config --global http.sslverify false && \
+    git clone --branch v0.8.0 https://github.com/pgvector/pgvector.git /pgvector && \
+    cd /pgvector && \
+    make PG_CONFIG=/usr/lib/postgresql/17/bin/pg_config && \
+    make PG_CONFIG=/usr/lib/postgresql/17/bin/pg_config install && \
+    cd / && \
+    rm -rf /pgvector
+
+# Update PostgreSQL configuration to preload both extensions
+RUN if [ -f /usr/share/postgresql/postgresql.conf.sample ]; then \
+        sed -i "s/shared_preload_libraries = 'age'/shared_preload_libraries = 'age,vector'/" /usr/share/postgresql/postgresql.conf.sample || \
+        echo "shared_preload_libraries = 'age,vector'" >> /usr/share/postgresql/postgresql.conf.sample; \
+    elif [ -f /usr/share/postgresql/17/postgresql.conf.sample ]; then \
+        sed -i "s/shared_preload_libraries = 'age'/shared_preload_libraries = 'age,vector'/" /usr/share/postgresql/17/postgresql.conf.sample || \
+        echo "shared_preload_libraries = 'age,vector'" >> /usr/share/postgresql/17/postgresql.conf.sample; \
+    else \
+        echo "shared_preload_libraries = 'age,vector'" >> /etc/postgresql/postgresql.conf || true; \
+    fi
+
+EXPOSE 5432
+CMD ["postgres"]

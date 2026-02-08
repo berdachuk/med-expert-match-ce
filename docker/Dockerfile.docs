@@ -1,0 +1,26 @@
+# Build stage: MkDocs with Python
+FROM python:3.12-alpine AS builder
+WORKDIR /build
+
+# Copy docs config and sources
+COPY requirements-docs.txt mkdocs.yml ./
+COPY docs ./docs
+
+# Install dependencies and build static site
+RUN pip install --no-cache-dir -r requirements-docs.txt && \
+    mkdocs build
+
+# Runtime stage: nginx serves static site
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+
+# Remove default nginx content and use our site
+RUN rm -rf /usr/share/nginx/html/*
+
+COPY --from=builder /build/site /usr/share/nginx/html
+
+# Optional: custom nginx config for SPA-style 404 handling (docs use directory index)
+RUN echo 'server { listen 80; root /usr/share/nginx/html; index index.html; location / { try_files $uri $uri/ /index.html; } }' > /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

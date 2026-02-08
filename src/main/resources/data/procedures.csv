@@ -1,0 +1,146 @@
+name,description,category
+Echocardiogram,Ultrasound imaging of the heart to assess structure and function,Diagnostic
+CT Scan,Computed tomography imaging for detailed cross-sectional views,Diagnostic
+MRI,Magnetic resonance imaging for detailed soft tissue visualization,Diagnostic
+Blood Test,Laboratory analysis of blood samples,Diagnostic
+Biopsy,Removal of tissue sample for microscopic examination,Diagnostic
+Surgery,Operative procedure to treat or investigate a condition,Surgical
+Medication Adjustment,Modification of medication dosage or type,Therapeutic
+Physical Therapy,Rehabilitation through physical exercises and movements,Therapeutic
+Consultation,Medical evaluation and advice from a specialist,Evaluation and Management
+X-Ray,Radiographic imaging using X-rays,Diagnostic
+Ultrasound,Imaging using sound waves,Diagnostic
+Endoscopy,Visual examination of internal structures using a flexible tube,Diagnostic
+Colonoscopy,Endoscopic examination of the colon,Diagnostic
+Mammography,X-ray imaging of the breast for cancer screening,Diagnostic
+Angiography,Imaging of blood vessels using contrast material,Diagnostic
+Cardiac Catheterization,Invasive procedure to examine heart function and blood flow,Diagnostic
+Electrocardiogram,Recording of electrical activity of the heart,Diagnostic
+Stress Test,Cardiac function test during exercise,Diagnostic
+Holter Monitor,Continuous heart rhythm monitoring over 24-48 hours,Diagnostic
+Pulmonary Function Test,Assessment of lung function and capacity,Diagnostic
+Spirometry,Measurement of lung volumes and airflow,Diagnostic
+Bronchoscopy,Endoscopic examination of the airways,Diagnostic
+Thoracentesis,Removal of fluid from the pleural space,Diagnostic
+Lumbar Puncture,Removal of cerebrospinal fluid from the spinal canal,Diagnostic
+Bone Marrow Biopsy,Removal of bone marrow sample for examination,Diagnostic
+Liver Biopsy,Removal of liver tissue sample for examination,Diagnostic
+Kidney Biopsy,Removal of kidney tissue sample for examination,Diagnostic
+Skin Biopsy,Removal of skin tissue sample for examination,Diagnostic
+Lymph Node Biopsy,Removal of lymph node tissue for examination,Diagnostic
+Chemotherapy,Use of drugs to treat cancer,Therapeutic
+Radiation Therapy,Use of high-energy radiation to treat cancer,Therapeutic
+Immunotherapy,Treatment that uses the immune system to fight disease,Therapeutic
+Dialysis,Artificial filtering of blood for kidney failure,Therapeutic
+Plasmapheresis,Removal and replacement of blood plasma,Therapeutic
+Blood Transfusion,Transfer of blood or blood products,Therapeutic
+IV Therapy,Administration of fluids or medications intravenously,Therapeutic
+Wound Care,Management and treatment of wounds,Therapeutic
+Dressing Change,Replacement of wound dressings,Therapeutic
+Suture Removal,Removal of surgical stitches,Therapeutic
+Physical Examination,Comprehensive health assessment,Evaluation and Management
+Neurological Exam,Assessment of nervous system function,Evaluation and Management
+Cardiac Exam,Assessment of cardiovascular system,Evaluation and Management
+Respiratory Exam,Assessment of respiratory system,Evaluation and Management
+Abdominal Exam,Assessment of abdominal organs,Evaluation and Management
+Vaccination,Administration of vaccine to prevent disease,Preventive
+Immunization,Process of making immune to a disease,Preventive
+Flu Shot,Influenza vaccination,Preventive
+COVID-19 Test,Testing for SARS-CoV-2 virus,Diagnostic
+PCR Test,Polymerase chain reaction test for genetic material,Diagnostic
+Antibiotic Therapy,Treatment with antibiotics for bacterial infections,Therapeutic
+Antiviral Therapy,Treatment with antiviral medications,Therapeutic
+Pain Management,Treatment focused on relieving pain,Therapeutic
+Anesthesia,Administration of anesthetic agents,Anesthesia
+Sedation,Administration of sedative medications,Anesthesia
+Intubation,Insertion of breathing tube into the airway,Therapeutic
+Ventilator Support,Mechanical breathing assistance,Therapeutic
+CPR,Cardiopulmonary resuscitation,Therapeutic
+Defibrillation,Electrical shock to restore normal heart rhythm,Therapeutic
+Cardiac Monitoring,Continuous monitoring of heart function,Diagnostic
+Respiratory Therapy,Treatment to improve breathing and lung function,Therapeutic
+Occupational Therapy,Rehabilitation to improve daily living skills,Therapeutic
+Speech Therapy,Treatment to improve speech and language,Therapeutic
+Nutrition Counseling,Education and guidance on nutrition,Therapeutic
+Diabetes Education,Education on diabetes management,Therapeutic
+Wound Debridement,Removal of dead or damaged tissue from wounds,Therapeutic
+Incision and Drainage,Surgical opening and drainage of abscess or fluid collection,Surgical
+Surgical Drain Placement,Insertion of drainage tube,Surgical
+Catheter Insertion,Placement of catheter for drainage or access,Therapeutic
+Stent Placement,Insertion of stent to keep vessel or duct open,Surgical
+Angioplasty,Procedure to open blocked or narrowed blood vessels,Surgical
+Bypass Surgery,Surgical creation of alternative pathway for blood flow,Surgical
+Organ Transplant,Surgical transplantation of organ from donor to recipient,Surgical
+Joint Replacement,Surgical replacement of damaged joint with prosthesis,Surgical
+Spinal Fusion,Surgical fusion of vertebrae to stabilize spine,Surgical
+Laparoscopy,Minimally invasive surgery using small incisions and camera,Surgical
+Arthroscopy,Minimally invasive joint surgery using small camera,Surgical
+Endoscopic Surgery,Surgery performed using endoscope,Surgical
+Robotic Surgery,Surgery performed using robotic assistance,Surgical
+Minimally Invasive Surgery,Surgery with minimal tissue damage,Surgical
+Emergency Resuscitation,Life-saving measures in emergency situations,Therapeutic
+Trauma Care,Medical care for traumatic injuries,Therapeutic
+Burn Care,Specialized treatment for burn injuries,Therapeutic
+Fracture Reduction,Realignment of broken bones,Surgical
+Casting,Application of cast to immobilize fracture,Therapeutic
+Splinting,Application of splint to support injured area,Therapeutic
+Traction,Application of pulling force to align bones,Therapeutic
+External Fixation,Surgical stabilization using external frame,Surgical
+Internal Fixation,Surgical stabilization using internal hardware,Surgical
+Prosthetic Fitting,Fitting and adjustment of prosthetic device,Therapeutic
+Cataract Surgery,Surgical removal of cloudy lens and replacement with artificial lens,Surgical
+Cesarean Section,Surgical delivery of baby through abdominal incision,Surgical
+Cholecystectomy,Surgical removal of gallbladder,Surgical
+Appendectomy,Surgical removal of appendix,Surgical
+Hernia Repair,Surgical repair of hernia,Surgical
+Circumcision,Surgical removal of foreskin,Surgical
+Carotid Endarterectomy,Surgical removal of plaque from carotid artery,Surgical
+Hysterectomy,Surgical removal of uterus,Surgical
+Basic Metabolic Panel,Blood test measuring glucose electrolytes and kidney function,Diagnostic
+Complete Blood Count,Blood test measuring blood cell counts,Diagnostic
+Comprehensive Metabolic Panel,Blood test measuring multiple metabolic parameters,Diagnostic
+Lipid Panel,Blood test measuring cholesterol and triglycerides,Diagnostic
+Urinalysis,Analysis of urine sample,Diagnostic
+Wound Repair,Surgical repair of wounds,Surgical
+Chest X-Ray,X-ray imaging of the chest,Diagnostic
+Breast Biopsy,Removal of breast tissue sample for examination,Diagnostic
+Colonoscopy with Biopsy,Colonoscopy with tissue sample removal,Diagnostic
+Upper Endoscopy,Endoscopic examination of upper digestive tract,Diagnostic
+Flexible Sigmoidoscopy,Endoscopic examination of sigmoid colon,Diagnostic
+Capsule Endoscopy,Swallowing camera capsule to examine digestive tract,Diagnostic
+ERCP,Endoscopic retrograde cholangiopancreatography,Diagnostic
+EUS,Endoscopic ultrasound,Diagnostic
+Bronchoscopy with Biopsy,Bronchoscopy with tissue sample removal,Diagnostic
+Paracentesis,Removal of fluid from abdominal cavity,Diagnostic
+Pericardiocentesis,Removal of fluid from pericardial sac,Diagnostic
+Bone Marrow Aspiration,Removal of liquid bone marrow sample,Diagnostic
+Fine Needle Aspiration,Removal of cells using thin needle,Diagnostic
+Core Needle Biopsy,Removal of tissue core using larger needle,Diagnostic
+Excisional Biopsy,Surgical removal of entire lesion for examination,Diagnostic
+Incisional Biopsy,Surgical removal of portion of lesion for examination,Diagnostic
+Punch Biopsy,Removal of small circular tissue sample,Diagnostic
+Shave Biopsy,Removal of superficial tissue layer,Diagnostic
+Mohs Surgery,Precise surgical removal of skin cancer layer by layer,Surgical
+Cryosurgery,Destruction of tissue using extreme cold,Surgical
+Electrosurgery,Destruction of tissue using electrical current,Surgical
+Laser Surgery,Destruction or removal of tissue using laser,Surgical
+Radiofrequency Ablation,Destruction of tissue using radiofrequency energy,Therapeutic
+Microwave Ablation,Destruction of tissue using microwave energy,Therapeutic
+Cryoablation,Destruction of tissue using extreme cold,Therapeutic
+Stereotactic Radiosurgery,Precise radiation treatment using stereotactic guidance,Therapeutic
+Gamma Knife,Type of stereotactic radiosurgery using gamma rays,Therapeutic
+CyberKnife,Robotic stereotactic radiosurgery system,Therapeutic
+Proton Therapy,Radiation treatment using proton beams,Therapeutic
+Brachytherapy,Internal radiation therapy using radioactive sources,Therapeutic
+External Beam Radiation,External radiation therapy,Therapeutic
+Intensity-Modulated Radiation Therapy,Advanced form of external beam radiation,Therapeutic
+Stereotactic Body Radiation Therapy,Precise radiation treatment for body tumors,Therapeutic
+Whole Brain Radiation,Radiation treatment to entire brain,Therapeutic
+Palliative Radiation,Radiation treatment for symptom relief,Therapeutic
+Adjuvant Chemotherapy,Chemotherapy given after primary treatment,Therapeutic
+Neoadjuvant Chemotherapy,Chemotherapy given before primary treatment,Therapeutic
+Consolidation Chemotherapy,Chemotherapy to consolidate initial treatment response,Therapeutic
+Maintenance Chemotherapy,Long-term chemotherapy to maintain remission,Therapeutic
+Salvage Chemotherapy,Chemotherapy for relapsed or refractory disease,Therapeutic
+High-Dose Chemotherapy,High-intensity chemotherapy treatment,Therapeutic
+Intraperitoneal Chemotherapy,Chemotherapy delivered directly into abdominal cavity,Therapeutic

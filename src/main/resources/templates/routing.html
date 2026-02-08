@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Regional Routing</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Regional Routing</h1>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Select Medical Case</h5>
+                </div>
+                <div class="card-body">
+                    <div id="noCaseSelected" th:class="${caseId != null && !caseId.isEmpty()} ? 'd-none' : ''">
+                        <button class="btn btn-primary" id="searchCasesBtn" type="button">
+                            <i class="bi bi-search"></i> Search Existing Cases
+                        </button>
+                    </div>
+                    <div id="selectedCaseDisplay" th:class="${caseId != null && !caseId.isEmpty()} ? '' : 'd-none'">
+                        <div class="mb-2">
+                            <strong>Selected case:</strong>
+                            <span id="selectedCaseSummary"></span>
+                        </div>
+                        <form action="" class="long-running-block" id="routeForm" method="post">
+                            <div class="long-running-actions" id="routeActionsArea">
+                                <button class="btn btn-primary" id="routeCaseBtn" type="submit">Route Case</button>
+                                <button class="btn btn-outline-secondary ms-2" id="clearSelectionBtn" type="button">
+                                    Clear selection
+                                </button>
+                            </div>
+                            <p class="long-running-msg d-none" id="routingLongRunningMsg">Long-running operation.
+                                Routing may
+                                take one to several minutes. You can cancel at any time.</p>
+                            <div class="long-running-progress d-none d-flex align-items-center gap-3"
+                                 id="routingProgressArea">
+                                <div aria-label="Loading" class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading</span>
+                                </div>
+                                <span class="long-running-progress-text">Routing case...</span>
+                                <button class="btn btn-outline-secondary btn-sm long-running-cancel"
+                                        id="routingCancelBtn" type="button">Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-danger d-none" id="routingErrorAlert" role="alert"></div>
+            <div class="alert alert-secondary d-none long-running-cancelled" id="routingCancelledAlert" role="alert">
+                Request cancelled.
+            </div>
+
+            <div class="card d-none mb-4" id="routingResultCard">
+                <div class="card-header">
+                    <h5 class="mb-0">Routing Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-0">
+                        <strong>Response:</strong>
+                        <div class="markdown-body mt-2 mb-0" id="routingResultBody"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card d-none mb-4" id="routingLogPanel">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Execution logs</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" id="routingLogClearBtn" type="button">Clear
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="routingLogToggleBtn" type="button">
+                            <i class="bi bi-chevron-down" id="routingLogToggleIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="routingLogPanelBody">
+                    <div id="routingLogContainer"
+                         style="height: 280px; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; border-radius: 4px;">
+                        <div id="routingLogContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-danger" th:if="${error != null && !error.isEmpty()}" th:text="${error}"></div>
+
+            <div class="card" id="serverRoutingResultCard" th:if="${routingResult != null}">
+                <div class="card-header">
+                    <h5 class="mb-0">Routing Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Response:</strong>
+                        <div class="markdown-body mt-2 mb-0" id="serverRoutingResultBody"
+                             th:attr="data-raw=${routingResult != null ? routingResult.response() : null}"></div>
+                    </div>
+                    <div th:if="${routingResult.toolCalls() != null && !routingResult.toolCalls().isEmpty()}">
+                        <strong>Tool Calls:</strong>
+                        <ul>
+                            <li th:each="toolCall : ${routingResult.toolCalls()}" th:text="${toolCall}"></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div aria-hidden="true" aria-labelledby="routingCaseSearchModalLabel" class="modal fade"
+                 id="routingCaseSearchModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="routingCaseSearchModalLabel">Search Existing Cases</h5>
+                            <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label" for="routingCaseSearchQuery">Search</label>
+                                <input autocomplete="off" class="form-control" id="routingCaseSearchQuery"
+                                       placeholder="Search by chief complaint, symptoms, or notes..." type="text">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="routingCaseSearchCaseId">Case ID</label>
+                                <input autocomplete="off" class="form-control" id="routingCaseSearchCaseId"
+                                       placeholder="Filter by case ID (optional)" type="text">
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="routingCaseSearchSpecialty">
+                                        <option value="">All Specialties</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-select" id="routingCaseSearchUrgency">
+                                        <option value="">All Urgency Levels</option>
+                                        <option value="CRITICAL">Critical</option>
+                                        <option value="HIGH">High</option>
+                                        <option value="MEDIUM">Medium</option>
+                                        <option value="LOW">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mb-3" id="routingPerformSearchBtn" type="button">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <div id="routingCaseSearchResults" style="max-height: 400px; overflow-y: auto;">
+                                <div class="text-muted text-center">Enter search criteria and click Search</div>
+                            </div>
+                            <div class="mt-3 d-none" id="routingCaseSearchPagination">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-sm btn-outline-secondary" disabled id="routingPrevPageBtn"
+                                            type="button">
+                                        <i class="bi bi-chevron-left"></i> Previous
+                                    </button>
+                                    <span class="text-muted small" id="routingCaseSearchPageInfo"></span>
+                                    <button class="btn btn-sm btn-outline-secondary" id="routingNextPageBtn"
+                                            type="button">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<style>
+    .markdown-body {
+        font-size: 0.9375rem;
+        line-height: 1.6;
+    }
+
+    .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+    }
+
+    .markdown-body h1 {
+        font-size: 1.5em;
+    }
+
+    .markdown-body h2 {
+        font-size: 1.25em;
+    }
+
+    .markdown-body h3 {
+        font-size: 1.1em;
+    }
+
+    .markdown-body pre, .markdown-body code {
+        background: var(--bs-secondary-bg, #f8f9fa);
+        border-radius: 0.25rem;
+    }
+
+    .markdown-body pre {
+        padding: 0.75rem 1rem;
+        overflow-x: auto;
+    }
+
+    .markdown-body code {
+        padding: 0.2em 0.4em;
+        font-size: 0.9em;
+    }
+
+    .markdown-body pre code {
+        padding: 0;
+    }
+
+    .markdown-body ul, .markdown-body ol {
+        margin-bottom: 0.5em;
+        padding-left: 1.5em;
+    }
+
+    .markdown-body p {
+        margin-bottom: 0.5em;
+    }
+
+    .markdown-body p:last-child {
+        margin-bottom: 0;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script th:inline="javascript">
+    (function () {
+        const searchCasesBtn = document.getElementById('searchCasesBtn');
+        const routingCaseSearchModal = new bootstrap.Modal(document.getElementById('routingCaseSearchModal'));
+        const performSearchBtn = document.getElementById('routingPerformSearchBtn');
+        const routingCaseSearchQuery = document.getElementById('routingCaseSearchQuery');
+        const routingCaseSearchCaseId = document.getElementById('routingCaseSearchCaseId');
+        const routingCaseSearchSpecialty = document.getElementById('routingCaseSearchSpecialty');
+        const routingCaseSearchUrgency = document.getElementById('routingCaseSearchUrgency');
+        const routingCaseSearchResults = document.getElementById('routingCaseSearchResults');
+        const noCaseSelected = document.getElementById('noCaseSelected');
+        const selectedCaseDisplay = document.getElementById('selectedCaseDisplay');
+        const selectedCaseSummary = document.getElementById('selectedCaseSummary');
+        const routeForm = document.getElementById('routeForm');
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+
+        let selectedCaseId = /*[[${caseId}]]*/ null;
+        let selectedCaseSummaryText = '';
+
+        const searchPaginationState = {
+            offset: 0,
+            limit: 20,
+            loading: false,
+            hasMore: false
+        };
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderMarkdown(text) {
+            if (typeof marked !== 'undefined' && text && String(text).trim()) {
+                try {
+                    return marked.parse(String(text).trim());
+                } catch (e) {
+                    return escapeHtml(text);
+                }
+            }
+            return text ? escapeHtml(text) : '';
+        }
+
+        function performCaseSearch(resetPagination) {
+            if (searchPaginationState.loading) return;
+            const query = routingCaseSearchQuery ? routingCaseSearchQuery.value.trim() : '';
+            const caseIdFilter = routingCaseSearchCaseId ? routingCaseSearchCaseId.value.trim() : '';
+            const specialty = routingCaseSearchSpecialty ? routingCaseSearchSpecialty.value : '';
+            const urgencyLevel = routingCaseSearchUrgency ? routingCaseSearchUrgency.value : '';
+
+            if (resetPagination !== false) {
+                searchPaginationState.offset = 0;
+            }
+            searchPaginationState.loading = true;
+
+            const params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (caseIdFilter) params.append('caseId', caseIdFilter);
+            if (specialty) params.append('specialty', specialty);
+            if (urgencyLevel) params.append('urgencyLevel', urgencyLevel);
+            params.append('offset', searchPaginationState.offset.toString());
+            params.append('maxResults', searchPaginationState.limit.toString());
+
+            if (resetPagination !== false) {
+                routingCaseSearchResults.innerHTML = '<div class="text-center"><span class="spinner-border spinner-border-sm"></span> Searching...</div>';
+            }
+
+            fetch('/api/cases/search?' + params.toString())
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Search failed');
+                    return res.json();
+                })
+                .then(function (cases) {
+                    if (resetPagination !== false) {
+                        routingCaseSearchResults.innerHTML = '';
+                    }
+                    if (!cases || cases.length === 0) {
+                        if (resetPagination !== false) {
+                            routingCaseSearchResults.innerHTML = '<div class="text-muted text-center">No cases found</div>';
+                        }
+                        searchPaginationState.hasMore = false;
+                        updatePaginationUI(0);
+                        return;
+                    }
+                    const html = cases.map(function (c) {
+                        const chiefComplaint = c.chiefComplaint || 'No chief complaint';
+                        const specialty = c.requiredSpecialty || 'N/A';
+                        const urgency = c.urgencyLevel || 'N/A';
+                        const caseId = c.id || '';
+                        return '<div class="card mb-2">' +
+                            '<div class="card-body p-2 d-flex justify-content-between align-items-start">' +
+                            '<div><div class="fw-bold">' + escapeHtml(chiefComplaint) + '</div>' +
+                            '<div class="small text-muted">' + escapeHtml(specialty) + ' | ' + escapeHtml(urgency) + '</div></div>' +
+                            '<button type="button" class="btn btn-sm btn-primary routing-select-case-btn" data-case-id="' + escapeHtml(caseId) + '">Select</button>' +
+                            '</div></div>';
+                    }).join('');
+                    routingCaseSearchResults.insertAdjacentHTML('beforeend', html);
+                    routingCaseSearchResults.querySelectorAll('.routing-select-case-btn').forEach(function (btn) {
+                        btn.addEventListener('click', function () {
+                            const id = this.getAttribute('data-case-id');
+                            selectCaseFromModal(id);
+                        });
+                    });
+                    searchPaginationState.hasMore = cases.length === searchPaginationState.limit;
+                    updatePaginationUI(cases.length);
+                })
+                .catch(function (err) {
+                    routingCaseSearchResults.innerHTML = '<div class="alert alert-danger">Error: ' + escapeHtml(err.message) + '</div>';
+                    searchPaginationState.hasMore = false;
+                })
+                .finally(function () {
+                    searchPaginationState.loading = false;
+                });
+        }
+
+        function updatePaginationUI(resultsCount) {
+            const paginationDiv = document.getElementById('routingCaseSearchPagination');
+            const prevBtn = document.getElementById('routingPrevPageBtn');
+            const nextBtn = document.getElementById('routingNextPageBtn');
+            const pageInfo = document.getElementById('routingCaseSearchPageInfo');
+            if (!paginationDiv || !prevBtn || !nextBtn) return;
+            if (resultsCount > 0) {
+                paginationDiv.classList.remove('d-none');
+                prevBtn.disabled = searchPaginationState.offset === 0;
+                nextBtn.disabled = !searchPaginationState.hasMore;
+                if (pageInfo) {
+                    const start = searchPaginationState.offset + 1;
+                    pageInfo.textContent = start + '-' + (searchPaginationState.offset + resultsCount);
+                }
+            } else {
+                paginationDiv.classList.add('d-none');
+            }
+        }
+
+        function selectCaseFromModal(caseId) {
+            selectedCaseId = caseId;
+            routingCaseSearchModal.hide();
+            fetch('/api/cases/' + encodeURIComponent(caseId))
+                .then(function (res) {
+                    return res.ok ? res.json() : null;
+                })
+                .then(function (c) {
+                    if (c) {
+                        selectedCaseSummaryText = (c.chiefComplaint || 'Case') + ' (ID: ' + caseId + ')';
+                    } else {
+                        selectedCaseSummaryText = 'Case ID: ' + caseId;
+                    }
+                    selectedCaseSummary.textContent = selectedCaseSummaryText;
+                    routeForm.action = '/routing/' + encodeURIComponent(caseId);
+                    noCaseSelected.classList.add('d-none');
+                    selectedCaseDisplay.classList.remove('d-none');
+                })
+                .catch(function () {
+                    selectedCaseSummaryText = 'Case ID: ' + caseId;
+                    selectedCaseSummary.textContent = selectedCaseSummaryText;
+                    routeForm.action = '/routing/' + encodeURIComponent(caseId);
+                    noCaseSelected.classList.add('d-none');
+                    selectedCaseDisplay.classList.remove('d-none');
+                });
+        }
+
+        if (searchCasesBtn) {
+            searchCasesBtn.addEventListener('click', function () {
+                routingCaseSearchResults.innerHTML = '<div class="text-muted text-center">Enter search criteria and click Search</div>';
+                document.getElementById('routingCaseSearchPagination').classList.add('d-none');
+                routingCaseSearchModal.show();
+            });
+        }
+
+        if (performSearchBtn) {
+            performSearchBtn.addEventListener('click', function () {
+                performCaseSearch(true);
+            });
+        }
+
+        if (clearSelectionBtn) {
+            clearSelectionBtn.addEventListener('click', function () {
+                selectedCaseId = null;
+                selectedCaseSummaryText = '';
+                noCaseSelected.classList.remove('d-none');
+                selectedCaseDisplay.classList.add('d-none');
+                routeForm.action = '';
+            });
+        }
+
+        const routeCaseBtn = document.getElementById('routeCaseBtn');
+        const routeActionsArea = document.getElementById('routeActionsArea');
+        const routingLongRunningMsg = document.getElementById('routingLongRunningMsg');
+        const routingProgressArea = document.getElementById('routingProgressArea');
+        const routingErrorAlert = document.getElementById('routingErrorAlert');
+        const routingResultCard = document.getElementById('routingResultCard');
+        const routingResultBody = document.getElementById('routingResultBody');
+        const routingLogPanel = document.getElementById('routingLogPanel');
+        const routingLogPanelBody = document.getElementById('routingLogPanelBody');
+        const routingLogContainer = document.getElementById('routingLogContainer');
+        const routingLogContent = document.getElementById('routingLogContent');
+        const routingLogClearBtn = document.getElementById('routingLogClearBtn');
+        const routingLogToggleBtn = document.getElementById('routingLogToggleBtn');
+        const routingLogToggleIcon = document.getElementById('routingLogToggleIcon');
+
+        var routingEventSource = null;
+        var routingLogPanelCollapsed = false;
+        var maxLogEntries = 500;
+
+        function addRoutingLogEntry(message, level) {
+            if (!routingLogContent) return;
+            var entry = document.createElement('div');
+            entry.style.marginBottom = '2px';
+            entry.style.wordWrap = 'break-word';
+            if (level === 'error' || (message && message.indexOf('[ERROR]') !== -1)) {
+                entry.style.color = '#f48771';
+            } else if (message && message.indexOf('[WARN]') !== -1) {
+                entry.style.color = '#dcdcaa';
+            } else if (message && message.indexOf('[INFO]') !== -1) {
+                entry.style.color = '#4ec9b0';
+            } else {
+                entry.style.color = '#d4d4d4';
+            }
+            entry.textContent = message || '';
+            routingLogContent.appendChild(entry);
+            if (routingLogContainer) routingLogContainer.scrollTop = routingLogContainer.scrollHeight;
+            while (routingLogContent.children.length > maxLogEntries) {
+                routingLogContent.removeChild(routingLogContent.firstChild);
+            }
+        }
+
+        function initRoutingLogStream(sessionId) {
+            if (routingEventSource) {
+                routingEventSource.close();
+                routingEventSource = null;
+            }
+            var url = '/api/v1/logs/stream?sessionId=' + encodeURIComponent(sessionId);
+            routingEventSource = new EventSource(url);
+            routingEventSource.addEventListener('log', function (event) {
+                addRoutingLogEntry(event.data);
+            });
+            routingEventSource.onerror = function () {
+                if (routingEventSource && routingEventSource.readyState === EventSource.CLOSED) {
+                    addRoutingLogEntry('[ERROR] Log connection closed.', 'error');
+                }
+            };
+        }
+
+        function closeRoutingLogStream() {
+            if (routingEventSource) {
+                routingEventSource.close();
+                routingEventSource = null;
+            }
+        }
+
+        if (routingLogClearBtn && routingLogContent) {
+            routingLogClearBtn.addEventListener('click', function () {
+                routingLogContent.innerHTML = '';
+                addRoutingLogEntry('[Logs cleared]', 'info');
+            });
+        }
+        if (routingLogToggleBtn && routingLogPanelBody) {
+            routingLogToggleBtn.addEventListener('click', function () {
+                routingLogPanelCollapsed = !routingLogPanelCollapsed;
+                routingLogPanelBody.style.display = routingLogPanelCollapsed ? 'none' : 'block';
+                if (routingLogToggleIcon) {
+                    routingLogToggleIcon.className = routingLogPanelCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+                }
+            });
+        }
+
+        var routingAbortController = null;
+        var routingCancelBtn = document.getElementById('routingCancelBtn');
+        var routingCancelledAlert = document.getElementById('routingCancelledAlert');
+
+        function setRoutingProgress(show) {
+            if (routeActionsArea) routeActionsArea.classList.toggle('d-none', show);
+            if (routingProgressArea) routingProgressArea.classList.toggle('d-none', !show);
+            if (routingLongRunningMsg) routingLongRunningMsg.classList.add('d-none');
+            if (routingErrorAlert) routingErrorAlert.classList.add('d-none');
+            if (routingCancelledAlert) routingCancelledAlert.classList.add('d-none');
+            if (show && routingLogPanel) {
+                routingLogPanel.classList.remove('d-none');
+                if (routingLogPanelBody) routingLogPanelBody.style.display = 'block';
+            }
+        }
+
+        if (routeForm) {
+            routeForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const action = routeForm.action;
+                if (!action || action.indexOf('/routing/') === -1) return;
+                const caseIdFromAction = action.split('/routing/')[1];
+                if (!caseIdFromAction) return;
+                var sessionId = 'routing-' + Date.now();
+                if (routingLogContent) routingLogContent.innerHTML = '';
+                initRoutingLogStream(sessionId);
+                setRoutingProgress(true);
+                if (routeCaseBtn) routeCaseBtn.disabled = true;
+                routingAbortController = new AbortController();
+                fetch('/api/v1/agent/route-case/' + encodeURIComponent(caseIdFromAction.trim()), {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({sessionId: sessionId}),
+                    signal: routingAbortController.signal
+                })
+                    .then(function (res) {
+                        if (!res.ok) throw new Error(res.statusText || 'Request failed');
+                        return res.json();
+                    })
+                    .then(function (data) {
+                        closeRoutingLogStream();
+                        routingAbortController = null;
+                        setRoutingProgress(false);
+                        if (routeCaseBtn) routeCaseBtn.disabled = false;
+                        addRoutingLogEntry('[INFO] Case routing completed.', 'info');
+                        const text = data && data.response != null ? data.response : '';
+                        if (routingResultBody) routingResultBody.innerHTML = renderMarkdown(text);
+                        if (routingResultCard) routingResultCard.classList.remove('d-none');
+                    })
+                    .catch(function (err) {
+                        closeRoutingLogStream();
+                        routingAbortController = null;
+                        setRoutingProgress(false);
+                        if (routeCaseBtn) routeCaseBtn.disabled = false;
+                        if (err.name === 'AbortError') {
+                            if (routingCancelledAlert) routingCancelledAlert.classList.remove('d-none');
+                            addRoutingLogEntry('[WARN] Request cancelled.', 'warn');
+                        } else {
+                            addRoutingLogEntry('[ERROR] Request failed: ' + (err.message || 'Unknown error'), 'error');
+                            if (routingErrorAlert) {
+                                routingErrorAlert.textContent = 'Failed to route case: ' + (err.message || 'Unknown error');
+                                routingErrorAlert.classList.remove('d-none');
+                            }
+                        }
+                    });
+            });
+        }
+
+        if (routingCancelBtn) {
+            routingCancelBtn.addEventListener('click', function () {
+                if (routingAbortController) {
+                    routingAbortController.abort();
+                }
+            });
+        }
+
+        document.getElementById('routingPrevPageBtn').addEventListener('click', function () {
+            if (searchPaginationState.offset > 0 && !searchPaginationState.loading) {
+                searchPaginationState.offset = Math.max(0, searchPaginationState.offset - searchPaginationState.limit);
+                performCaseSearch(false);
+            }
+        });
+        document.getElementById('routingNextPageBtn').addEventListener('click', function () {
+            if (searchPaginationState.hasMore && !searchPaginationState.loading) {
+                searchPaginationState.offset += searchPaginationState.limit;
+                performCaseSearch(false);
+            }
+        });
+
+        var serverResultBody = document.getElementById('serverRoutingResultBody');
+        if (serverResultBody && serverResultBody.getAttribute('data-raw')) {
+            serverResultBody.innerHTML = renderMarkdown(serverResultBody.getAttribute('data-raw'));
+            serverResultBody.removeAttribute('data-raw');
+        }
+
+        var initialCaseId = /*[[${caseId}]]*/ null;
+        if (initialCaseId) {
+            selectedCaseId = initialCaseId;
+            routeForm.action = '/routing/' + encodeURIComponent(initialCaseId);
+            fetch('/api/cases/' + encodeURIComponent(initialCaseId))
+                .then(function (res) {
+                    return res.ok ? res.json() : null;
+                })
+                .then(function (c) {
+                    selectedCaseSummary.textContent = c ? ((c.chiefComplaint || 'Case') + ' (ID: ' + initialCaseId + ')') : ('Case ID: ' + initialCaseId);
+                })
+                .catch(function () {
+                    selectedCaseSummary.textContent = 'Case ID: ' + initialCaseId;
+                });
+            noCaseSelected.classList.add('d-none');
+            selectedCaseDisplay.classList.remove('d-none');
+        }
+    })();
+</script>
+</body>
+</html>

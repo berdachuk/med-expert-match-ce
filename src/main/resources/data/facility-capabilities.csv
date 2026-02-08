@@ -1,0 +1,31 @@
+name,description
+PCI,Percutaneous coronary intervention capability
+ECMO,Extracorporeal membrane oxygenation support
+ICU,Intensive care unit services
+SURGERY,Surgical procedure capability
+EMERGENCY,Emergency department services
+LAB,Laboratory testing services
+IMAGING,Medical imaging services
+CARDIAC_CATH,Cardiac catheterization lab
+RADIATION_ONCOLOGY,Radiation oncology services
+CHEMOTHERAPY,Chemotherapy administration
+Dialysis,Dialysis services
+Transplant,Organ transplant services
+Trauma,Trauma center designation
+Burn,Burn care unit
+Pediatric,Pediatric specialty services
+Neonatal,Neonatal intensive care
+Maternity,Maternity and delivery services
+Psychiatric,Psychiatric services
+Rehabilitation,Rehabilitation services
+Physical Therapy,Physical therapy services
+Occupational Therapy,Occupational therapy services
+Speech Therapy,Speech therapy services
+Respiratory Therapy,Respiratory therapy services
+Pharmacy,Pharmacy services
+Blood Bank,Blood bank services
+Pathology,Pathology services
+Nuclear Medicine,Nuclear medicine services
+Interventional Radiology,Interventional radiology services
+Robotic Surgery,Robotic surgery capability
+Minimally Invasive Surgery,Minimally invasive surgery capability

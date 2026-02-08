@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Synthetic Data Generator</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Synthetic Data Generator</h1>
+
+            <div class="alert alert-success" th:if="${success != null && !success.isEmpty()}"
+                 th:text="${success}"></div>
+            <div class="alert alert-danger" th:if="${error != null && !error.isEmpty()}" th:text="${error}"></div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Generate Synthetic Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success d-none" id="generateSuccessAlert" role="alert"></div>
+                    <div class="alert alert-danger d-none" id="generateErrorAlert" role="alert"></div>
+
+                    <form id="generateForm">
+                        <div class="mb-3">
+                            <label class="form-label" for="size">Data Size</label>
+                            <select class="form-select" id="size" name="size">
+                                <option value="">Loading sizes...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" id="clear" name="clear" type="checkbox" value="true">
+                                <label class="form-check-label" for="clear">Clear existing data first</label>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="generateButton" type="submit">
+                            <span id="generateButtonText">Generate Synthetic Data</span>
+                            <span aria-hidden="true" class="spinner-border spinner-border-sm d-none ms-2"
+                                  id="generateSpinner" role="status"></span>
+                        </button>
+                        <small class="text-muted ms-2" id="timeEstimate">This is a long-running operation and may take
+                            1-2 minutes to complete.</small>
+                        <button class="btn btn-danger d-none ms-2" id="stopButton" type="button">
+                            <span id="stopButtonText">Stop Generation</span>
+                        </button>
+                        <div class="mt-3 d-none" id="generateProgress">
+                            <div class="progress" style="height: 25px;">
+                                <div aria-valuemax="100"
+                                     aria-valuemin="0" aria-valuenow="0"
+                                     class="progress-bar progress-bar-striped progress-bar-animated"
+                                     id="generateProgressBar" role="progressbar" style="width: 0%">
+                                    <span id="generateProgressText">Generating...</span>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-muted small" id="generateStatusText"></div>
+                        </div>
+                        <div class="mt-3 d-none" id="executionTracePanel" th:if="${isAdmin}">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0 text-white">Execution Trace</h6>
+                                    <button class="btn btn-sm btn-outline-light" id="toggleTraceButton" type="button">
+                                        <span id="toggleTraceIcon">▼</span> <span id="toggleTraceText">Collapse</span>
+                                    </button>
+                                </div>
+                                <div class="card-body p-0" id="traceContent"
+                                     style="max-height: 500px; overflow-y: auto; display: block;">
+                                    <div class="list-group list-group-flush" id="traceEntries">
+                                        <!-- Trace entries will be added here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Clear Synthetic Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success d-none" id="clearSuccessAlert" role="alert"></div>
+                    <div class="alert alert-danger d-none" id="clearErrorAlert" role="alert"></div>
+
+                    <form id="clearForm">
+                        <button class="btn btn-danger" id="clearButton" type="submit">
+                            <span id="clearButtonText">Clear All Synthetic Data</span>
+                            <span aria-hidden="true" class="spinner-border spinner-border-sm d-none ms-2"
+                                  id="clearSpinner"
+                                  role="status"></span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Generate form handling
+        const generateForm = document.getElementById('generateForm');
+        const generateButton = document.getElementById('generateButton');
+        const generateButtonText = document.getElementById('generateButtonText');
+        const generateSpinner = document.getElementById('generateSpinner');
+        const generateProgress = document.getElementById('generateProgress');
+        const generateProgressBar = document.getElementById('generateProgressBar');
+        const generateProgressText = document.getElementById('generateProgressText');
+        const generateStatusText = document.getElementById('generateStatusText');
+        const generateSuccessAlert = document.getElementById('generateSuccessAlert');
+        const generateErrorAlert = document.getElementById('generateErrorAlert');
+        const stopButton = document.getElementById('stopButton');
+        const stopButtonText = document.getElementById('stopButtonText');
+        const executionTracePanel = document.getElementById('executionTracePanel');
+        const traceEntries = document.getElementById('traceEntries');
+        const traceContent = document.getElementById('traceContent');
+        const toggleTraceButton = document.getElementById('toggleTraceButton');
+        const toggleTraceIcon = document.getElementById('toggleTraceIcon');
+        const toggleTraceText = document.getElementById('toggleTraceText');
+        const timeEstimate = document.getElementById('timeEstimate');
+        const sizeSelect = document.getElementById('size');
+        let traceExpanded = true;
+        let currentJobId = null;
+        let sizeConfigs = {};
+
+        // Load available sizes from API
+        function loadAvailableSizes() {
+            fetch('/api/v1/synthetic-data/sizes')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load available sizes');
+                    }
+                    return response.json();
+                })
+                .then(sizes => {
+                    // Store size configurations
+                    sizes.forEach(config => {
+                        sizeConfigs[config.size] = config;
+                    });
+
+                    // Clear existing options
+                    sizeSelect.innerHTML = '';
+
+                    // Populate dropdown
+                    sizes.forEach((config, index) => {
+                        const option = document.createElement('option');
+                        option.value = config.size;
+                        option.textContent = config.description;
+                        if (config.size === 'tiny') {
+                            option.selected = true;
+                        }
+                        sizeSelect.appendChild(option);
+                    });
+
+                    // Update time estimate after loading
+                    updateTimeEstimate();
+                })
+                .catch(error => {
+                    console.error('Error loading sizes:', error);
+                    sizeSelect.innerHTML = '<option value="">Error loading sizes</option>';
+                });
+        }
+
+        // Update time estimate based on selected size
+        function updateTimeEstimate() {
+            if (!timeEstimate || !sizeSelect) return;
+
+            const size = sizeSelect.value;
+            const config = sizeConfigs[size];
+
+            if (config && config.estimatedTimeMinutes > 0) {
+                const minutes = config.estimatedTimeMinutes;
+                let timeMessage = '';
+
+                if (minutes < 5) {
+                    timeMessage = `This is a long-running operation and may take ${minutes} minute${minutes !== 1 ? 's' : ''} to complete.`;
+                } else if (minutes < 60) {
+                    const minRange = Math.floor(minutes * 0.8);
+                    const maxRange = Math.ceil(minutes * 1.2);
+                    timeMessage = `This is a long-running operation and may take ${minRange}-${maxRange} minutes to complete.`;
+                } else if (minutes < 1440) {
+                    // Less than 24 hours (1 day)
+                    const hours = Math.floor(minutes / 60);
+                    const remainingMinutes = minutes % 60;
+                    if (remainingMinutes === 0) {
+                        timeMessage = `This is a long-running operation and may take ${hours} hour${hours !== 1 ? 's' : ''} to complete.`;
+                    } else {
+                        timeMessage = `This is a long-running operation and may take ${hours} hour${hours !== 1 ? 's' : ''} and ${remainingMinutes} minute${remainingMinutes !== 1 ? 's' : ''} to complete.`;
+                    }
+                } else {
+                    // 24 hours or more - show in days and hours
+                    const totalHours = Math.floor(minutes / 60);
+                    const days = Math.floor(totalHours / 24);
+                    const remainingHours = totalHours % 24;
+
+                    if (remainingHours === 0) {
+                        timeMessage = `This is a long-running operation and may take ${days} day${days !== 1 ? 's' : ''} to complete.`;
+                    } else {
+                        const daysText = `${days} day${days !== 1 ? 's' : ''}`;
+                        const hoursText = `${remainingHours} hour${remainingHours !== 1 ? 's' : ''}`;
+                        timeMessage = `This is a long-running operation and may take ${daysText} and ${hoursText} to complete.`;
+                    }
+                }
+
+                timeEstimate.textContent = timeMessage;
+            } else {
+                timeEstimate.textContent = 'This is a long-running operation and may take several minutes to complete.';
+            }
+        }
+
+        // Load sizes on page load
+        loadAvailableSizes();
+
+        // Update time estimate when size changes
+        if (sizeSelect) {
+            sizeSelect.addEventListener('change', updateTimeEstimate);
+        }
+
+        if (generateForm) {
+            generateForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const size = document.getElementById('size').value;
+                const clear = document.getElementById('clear').checked;
+
+                // Hide previous alerts
+                generateSuccessAlert.classList.add('d-none');
+                generateErrorAlert.classList.add('d-none');
+
+                // Show progress indicator
+                generateButton.disabled = true;
+                generateButtonText.textContent = 'Generating...';
+                generateSpinner.classList.remove('d-none');
+                generateProgress.classList.remove('d-none');
+                generateProgressBar.style.width = '0%';
+                generateProgressBar.setAttribute('aria-valuenow', '0');
+                generateProgressText.textContent = '0%';
+                generateStatusText.textContent = 'Starting generation...';
+
+                // Show execution trace panel and clear previous entries
+                executionTracePanel.classList.remove('d-none');
+                traceEntries.innerHTML = '';
+                traceExpanded = true;
+                traceContent.style.display = 'block';
+                toggleTraceIcon.textContent = '▼';
+                toggleTraceText.textContent = ' Collapse';
+                stopButton.classList.remove('d-none');
+
+                // Make AJAX request to start generation
+                const url = '/api/v1/synthetic-data/generate?size=' + encodeURIComponent(size) + '&clear=' + clear;
+                let pollInterval = null;
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.message || 'Failed to start synthetic data generation');
+                            }).catch(() => {
+                                throw new Error('Network response was not ok');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Start polling for real progress
+                        const jobId = data.jobId;
+                        currentJobId = jobId;
+
+                        // Function to poll for progress updates
+                        pollInterval = setInterval(function () {
+                            fetch('/api/v1/synthetic-data/progress/' + jobId, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json'
+                                }
+                            })
+                                .then(response => {
+                                    if (response.status === 404) {
+                                        throw new Error('Job not found');
+                                    }
+                                    if (!response.ok) {
+                                        throw new Error('Failed to get progress');
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    // Update progress bar
+                                    generateProgressBar.style.width = data.progress + '%';
+                                    generateProgressBar.setAttribute('aria-valuenow', data.progress);
+                                    generateProgressText.textContent = data.progress + '%';
+                                    generateStatusText.textContent = (data.currentStep || '') + ': ' + (data.message || '');
+
+                                    // Update execution trace
+                                    if (data.traceEntries && Array.isArray(data.traceEntries) && data.traceEntries.length > 0) {
+                                        // Show panel if it's hidden
+                                        executionTracePanel.classList.remove('d-none');
+                                        updateTraceEntries(data.traceEntries);
+                                    }
+
+                                    // Check if completed, error, or cancelled
+                                    if (data.status === 'completed') {
+                                        if (pollInterval) {
+                                            clearInterval(pollInterval);
+                                            pollInterval = null;
+                                        }
+                                        generateProgressBar.style.width = '100%';
+                                        generateProgressText.textContent = '100%';
+                                        generateStatusText.textContent = 'Synthetic data generated successfully';
+
+                                        // Show success message
+                                        const message = 'Synthetic data generated successfully - Size: ' + size +
+                                            (clear ? ' (existing data cleared)' : '');
+                                        generateSuccessAlert.textContent = message;
+                                        generateSuccessAlert.classList.remove('d-none');
+
+                                        // Hide progress after a delay
+                                        setTimeout(function () {
+                                            generateProgress.classList.add('d-none');
+                                        }, 2000);
+
+                                        // Cleanup
+                                        generateButton.disabled = false;
+                                        generateButtonText.textContent = 'Generate Synthetic Data';
+                                        generateSpinner.classList.add('d-none');
+                                        stopButton.classList.add('d-none');
+                                        currentJobId = null;
+                                    } else if (data.status === 'error') {
+                                        if (pollInterval) {
+                                            clearInterval(pollInterval);
+                                            pollInterval = null;
+                                        }
+                                        generateErrorAlert.textContent = 'Failed to generate synthetic data: ' +
+                                            (data.errorMessage || 'Unknown error');
+                                        generateErrorAlert.classList.remove('d-none');
+                                        generateProgress.classList.add('d-none');
+
+                                        generateButton.disabled = false;
+                                        generateButtonText.textContent = 'Generate Synthetic Data';
+                                        generateSpinner.classList.add('d-none');
+                                        stopButton.classList.add('d-none');
+                                        currentJobId = null;
+                                    } else if (data.status === 'cancelled') {
+                                        // Update trace with cancellation
+                                        if (data.traceEntries && Array.isArray(data.traceEntries)) {
+                                            updateTraceEntries(data.traceEntries);
+                                        }
+                                        if (pollInterval) {
+                                            clearInterval(pollInterval);
+                                            pollInterval = null;
+                                        }
+                                        generateProgressBar.style.width = data.progress + '%';
+                                        generateProgressText.textContent = data.progress + '%';
+                                        generateStatusText.textContent = 'Generation cancelled';
+
+                                        generateErrorAlert.textContent = 'Generation was cancelled';
+                                        generateErrorAlert.classList.remove('d-none');
+
+                                        // Hide progress after a delay
+                                        setTimeout(function () {
+                                            generateProgress.classList.add('d-none');
+                                        }, 2000);
+
+                                        generateButton.disabled = false;
+                                        generateButtonText.textContent = 'Generate Synthetic Data';
+                                        generateSpinner.classList.add('d-none');
+                                        stopButton.classList.add('d-none');
+                                        currentJobId = null;
+                                    }
+                                })
+                                .catch(error => {
+                                    if (pollInterval) {
+                                        clearInterval(pollInterval);
+                                        pollInterval = null;
+                                    }
+                                    console.error('Error polling progress:', error);
+                                    generateErrorAlert.textContent = 'Failed to get progress: ' + error.message;
+                                    generateErrorAlert.classList.remove('d-none');
+                                    generateProgress.classList.add('d-none');
+
+                                    generateButton.disabled = false;
+                                    generateButtonText.textContent = 'Generate Synthetic Data';
+                                    generateSpinner.classList.add('d-none');
+                                    stopButton.classList.add('d-none');
+                                    currentJobId = null;
+                                });
+                        }, 500); // Poll every 500ms
+                    })
+                    .catch(error => {
+                        if (pollInterval) {
+                            clearInterval(pollInterval);
+                            pollInterval = null;
+                        }
+                        console.error('Error:', error);
+
+                        generateErrorAlert.textContent = 'Failed to start synthetic data generation: ' + error.message;
+                        generateErrorAlert.classList.remove('d-none');
+                        generateProgress.classList.add('d-none');
+                        executionTracePanel.classList.add('d-none');
+
+                        generateButton.disabled = false;
+                        generateButtonText.textContent = 'Generate Synthetic Data';
+                        generateSpinner.classList.add('d-none');
+                        stopButton.classList.add('d-none');
+                        currentJobId = null;
+                    });
+            });
+        }
+
+        // Function to update trace entries
+        function updateTraceEntries(newEntries) {
+            if (!traceEntries || !newEntries) return;
+
+            const currentCount = traceEntries.children.length;
+
+            // Add only new entries (those after current count)
+            for (let i = currentCount; i < newEntries.length; i++) {
+                const entry = newEntries[i];
+                const entryElement = createTraceEntryElement(entry);
+                traceEntries.appendChild(entryElement);
+            }
+
+            // Auto-scroll to bottom if expanded
+            if (traceExpanded && traceContent) {
+                traceContent.scrollTop = traceContent.scrollHeight;
+            }
+        }
+
+        // Function to create a trace entry element
+        function createTraceEntryElement(entry) {
+            const div = document.createElement('div');
+            div.className = 'list-group-item';
+
+            // Parse timestamp - handle both ISO string and LocalDateTime format
+            let timestamp = '';
+            if (entry.timestamp) {
+                try {
+                    // Try parsing as ISO string first
+                    const date = new Date(entry.timestamp);
+                    if (!isNaN(date.getTime())) {
+                        timestamp = date.toLocaleTimeString();
+                    } else {
+                        // Fallback: use as-is if it's already formatted
+                        timestamp = entry.timestamp;
+                    }
+                } catch (e) {
+                    timestamp = entry.timestamp;
+                }
+            }
+
+            const level = entry.level || 'INFO';
+            const step = entry.step || '';
+            const message = entry.message || '';
+            const progress = entry.progress !== undefined && entry.progress !== null ? entry.progress : '';
+
+            // Determine badge color based on level
+            let badgeClass = 'bg-secondary';
+            if (level === 'SUCCESS') badgeClass = 'bg-success';
+            else if (level === 'ERROR') badgeClass = 'bg-danger';
+            else if (level === 'WARN') badgeClass = 'bg-warning';
+            else if (level === 'INFO') badgeClass = 'bg-info';
+
+            div.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <span class="badge ${badgeClass} me-2">${level}</span>
+                        ${step ? '<strong>' + escapeHtml(step) + '</strong>' : ''}
+                        ${message ? '<span class="ms-2">' + escapeHtml(message) + '</span>' : ''}
+                    </div>
+                    <div class="text-end text-muted small ms-3">
+                        ${timestamp ? '<div>' + timestamp + '</div>' : ''}
+                        ${progress !== '' ? '<div class="fw-bold">' + progress + '%</div>' : ''}
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Toggle trace panel collapse/expand
+        if (toggleTraceButton && toggleTraceText) {
+            toggleTraceButton.addEventListener('click', function () {
+                traceExpanded = !traceExpanded;
+                if (traceExpanded) {
+                    traceContent.style.display = 'block';
+                    toggleTraceIcon.textContent = '▼';
+                    toggleTraceText.textContent = ' Collapse';
+                } else {
+                    traceContent.style.display = 'none';
+                    toggleTraceIcon.textContent = '▶';
+                    toggleTraceText.textContent = ' Expand';
+                }
+            });
+        }
+
+        // Stop button handling
+        if (stopButton) {
+            stopButton.addEventListener('click', function () {
+                if (!currentJobId) {
+                    return;
+                }
+
+                stopButton.disabled = true;
+                stopButtonText.textContent = 'Cancelling...';
+
+                fetch('/api/v1/synthetic-data/cancel/' + currentJobId, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.message || 'Failed to cancel generation');
+                            }).catch(() => {
+                                throw new Error('Network response was not ok');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        stopButtonText.textContent = 'Cancelled';
+                        // Progress polling will detect the cancelled status and update UI
+                    })
+                    .catch(error => {
+                        console.error('Error cancelling generation:', error);
+                        generateErrorAlert.textContent = 'Failed to cancel generation: ' + error.message;
+                        generateErrorAlert.classList.remove('d-none');
+                        stopButton.disabled = false;
+                        stopButtonText.textContent = 'Stop Generation';
+                    });
+            });
+        }
+
+        // Clear form handling
+        const clearForm = document.getElementById('clearForm');
+        const clearButton = document.getElementById('clearButton');
+        const clearButtonText = document.getElementById('clearButtonText');
+        const clearSpinner = document.getElementById('clearSpinner');
+        const clearSuccessAlert = document.getElementById('clearSuccessAlert');
+        const clearErrorAlert = document.getElementById('clearErrorAlert');
+
+        if (clearForm) {
+            clearForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                if (!confirm('Are you sure you want to clear all data?\n\nThis will delete:\n- All doctors\n- All medical cases\n- All clinical experiences\n- All consultation matches\n\nReference data (ICD-10 codes, specialties, facilities) will be preserved.\n\nThis action cannot be undone.')) {
+                    return;
+                }
+
+                // Hide previous alerts
+                clearSuccessAlert.classList.add('d-none');
+                clearErrorAlert.classList.add('d-none');
+
+                // Show progress indicator
+                clearButton.disabled = true;
+                clearButtonText.textContent = 'Clearing...';
+                clearSpinner.classList.remove('d-none');
+
+                // Make AJAX request
+                fetch('/api/v1/synthetic-data/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                throw new Error(data.message || 'Failed to clear test data');
+                            }).catch(() => {
+                                throw new Error('Network response was not ok');
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        clearSuccessAlert.textContent = 'Synthetic data cleared successfully';
+                        clearSuccessAlert.classList.remove('d-none');
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        clearErrorAlert.textContent = 'Failed to clear synthetic data: ' + error.message;
+                        clearErrorAlert.classList.remove('d-none');
+                    })
+                    .finally(() => {
+                        clearButton.disabled = false;
+                        clearButtonText.textContent = 'Clear All Test Data';
+                        clearSpinner.classList.add('d-none');
+                    });
+            });
+        }
+    });
+</script>
+</body>
+</html>

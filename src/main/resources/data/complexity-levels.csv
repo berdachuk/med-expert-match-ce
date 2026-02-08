@@ -1,0 +1,5 @@
+name,description
+LOW,Low complexity case requiring minimal intervention
+MEDIUM,Medium complexity case requiring standard care
+HIGH,High complexity case requiring specialized expertise
+CRITICAL,Critical case requiring immediate intensive care

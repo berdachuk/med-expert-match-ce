@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Find Specialist</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Find Specialist</h1>
+
+            <div id="selectCaseCard">
+                <div class="card mb-4" th:if="${caseId != null && !caseId.isEmpty()}">
+                    <div class="card-header">
+                        <h5 class="mb-0">Case Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Case ID:</strong> <span th:text="${caseId}"></span></p>
+                        <div th:if="${case != null}">
+                            <p><strong>Type:</strong> <span th:text="${case.caseType()}"></span></p>
+                            <p><strong>Urgency:</strong> <span th:text="${case.urgencyLevel()}"></span></p>
+                            <p th:if="${case.chiefComplaint() != null && !case.chiefComplaint().isEmpty()}">
+                                <strong>Chief Complaint:</strong> <span th:text="${case.chiefComplaint()}"></span>
+                            </p>
+                            <p th:if="${case.abstractText() != null && !case.abstractText().isEmpty()}">
+                                <strong>Abstract:</strong> <span th:text="${case.abstractText()}"></span>
+                            </p>
+                        </div>
+                        <form class="mt-3" id="matchForm" th:attr="data-case-id=${caseId}">
+                            <button class="btn btn-primary" id="matchButton" type="submit">
+                                <span id="matchButtonText">Match Doctors</span>
+                                <span aria-hidden="true" class="spinner-border spinner-border-sm d-none"
+                                      id="matchSpinner"
+                                      role="status"></span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card mb-4" th:if="${caseId == null || caseId.isEmpty()}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Select a Case to Match</h5>
+                        <button class="btn btn-outline-secondary btn-sm" id="searchCasesBtnTop" type="button">
+                            <i class="bi bi-search"></i> Search Existing Cases
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted mb-0">Click <strong>Search Existing Cases</strong> to find and select a
+                            case
+                            for matching doctors.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4" id="enterCaseCard" th:if="${caseId == null || caseId.isEmpty()}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Enter Case Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="textMatchForm">
+                        <div class="mb-3">
+                            <label class="form-label" for="caseText">Chief Complaint <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="caseText" name="caseText" required rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="symptoms">Symptoms</label>
+                            <textarea class="form-control" id="symptoms" name="symptoms" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="additionalNotes">Additional Notes</label>
+                            <textarea class="form-control" id="additionalNotes" name="additionalNotes"
+                                      rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="patientAge">Patient Age</label>
+                                <input class="form-control" id="patientAge" max="150" min="0" name="patientAge"
+                                       type="number">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="urgencyLevel">Urgency Level</label>
+                                <select class="form-select" id="urgencyLevel" name="urgencyLevel">
+                                    <option value="">Select urgency...</option>
+                                    <option value="CRITICAL">Critical</option>
+                                    <option value="HIGH">High</option>
+                                    <option selected value="MEDIUM">Medium</option>
+                                    <option value="LOW">Low</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" for="caseType">Case Type</label>
+                                <select class="form-select" id="caseType" name="caseType">
+                                    <option value="INPATIENT">Inpatient</option>
+                                    <option value="SECOND_OPINION">Second Opinion</option>
+                                    <option value="CONSULT_REQUEST">Consult Request</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" id="matchFromTextButton" type="submit">
+                            <span id="matchFromTextButtonText">Match Doctors</span>
+                            <span class="spinner-border spinner-border-sm d-none" id="matchFromTextSpinner"></span>
+                        </button>
+                        <small class="text-muted ms-2">This is a long-running operation and may take 2-3 minutes to
+                            complete.</small>
+                    </form>
+                </div>
+            </div>
+
+            <div aria-hidden="true" aria-labelledby="caseSearchModalLabel" class="modal fade" id="caseSearchModal"
+                 tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="caseSearchModalLabel">Search Existing Cases</h5>
+                            <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3 position-relative">
+                                <input autocomplete="off" class="form-control" id="caseSearchQuery"
+                                       placeholder="Search by chief complaint, symptoms, or notes..."
+                                       type="text">
+                                <div class="list-group position-absolute w-100 shadow-sm" id="caseSearchSuggestions"
+                                     style="z-index: 1050; max-height: 300px; overflow-y: auto; display: none; margin-top: 2px; border-radius: 0.375rem;">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="caseSearchCaseId">Case ID</label>
+                                <input autocomplete="off" class="form-control" id="caseSearchCaseId"
+                                       placeholder="Filter by case ID (optional)" type="text">
+                            </div>
+                            <style>
+                                #caseSearchSuggestions {
+                                    background-color: white;
+                                    border: 1px solid #dee2e6;
+                                }
+
+                                #caseSearchSuggestions .autosuggest-item {
+                                    cursor: pointer;
+                                    border-left: none;
+                                    border-right: none;
+                                    padding: 0.75rem 1rem;
+                                }
+
+                                #caseSearchSuggestions .autosuggest-item:first-child {
+                                    border-top-left-radius: 0.375rem;
+                                    border-top-right-radius: 0.375rem;
+                                }
+
+                                #caseSearchSuggestions .autosuggest-item:last-child {
+                                    border-bottom-left-radius: 0.375rem;
+                                    border-bottom-right-radius: 0.375rem;
+                                }
+
+                                #caseSearchSuggestions .autosuggest-item:hover,
+                                #caseSearchSuggestions .autosuggest-item:focus {
+                                    background-color: #f8f9fa;
+                                    z-index: 1;
+                                }
+
+                                #caseSearchSuggestions .autosuggest-item mark {
+                                    background-color: #fff3cd;
+                                    padding: 0;
+                                    font-weight: 600;
+                                }
+                            </style>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <select class="form-select" id="caseSearchSpecialty">
+                                        <option value="">All Specialties</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <select class="form-select" id="caseSearchUrgency">
+                                        <option value="">All Urgency Levels</option>
+                                        <option value="CRITICAL">Critical</option>
+                                        <option value="HIGH">High</option>
+                                        <option value="MEDIUM">Medium</option>
+                                        <option value="LOW">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mb-3" id="performSearchBtn" type="button">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                            <div id="caseSearchResults" style="max-height: 400px; overflow-y: auto;">
+                                <div class="text-muted text-center">Enter search criteria and click Search</div>
+                            </div>
+                            <div class="mt-3 d-none" id="caseSearchPagination">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-sm btn-outline-secondary" disabled id="prevPageBtn"
+                                            type="button">
+                                        <i class="bi bi-chevron-left"></i> Previous
+                                    </button>
+                                    <span class="text-muted small" id="caseSearchPageInfo"></span>
+                                    <button class="btn btn-sm btn-outline-secondary" id="nextPageBtn" type="button">
+                                        Next <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-2 text-center d-none" id="caseSearchLoading">
+                                    <span aria-hidden="true" class="spinner-border spinner-border-sm"
+                                          role="status"></span>
+                                    <span class="ms-2 text-muted small">Loading more results...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-danger d-none" id="errorAlert"
+                 th:classappend="${error != null && !error.isEmpty()} ? '' : 'd-none'" th:text="${error}"></div>
+
+            <div class="card d-none" id="resultsCard">
+                <div class="card-header">
+                    <h5 class="mb-0">Match Results</h5>
+                </div>
+                <div class="card-body">
+                    <div class="markdown-content" id="matchResult"
+                         th:utext="${matchResult != null ? matchResult : ''}"></div>
+                </div>
+            </div>
+
+            <div class="mt-3 d-none d-flex flex-column gap-2" id="matchProgress">
+                <div class="d-flex align-items-center gap-3">
+                    <div aria-label="Loading" class="spinner-border text-primary flex-shrink-0" role="status">
+                        <span class="visually-hidden">Loading</span>
+                    </div>
+                    <div class="progress flex-grow-1" id="matchProgressContainer" style="height: 25px;">
+                        <div aria-valuemax="100" aria-valuemin="0"
+                             aria-valuenow="0" class="progress-bar progress-bar-striped progress-bar-animated"
+                             id="matchProgressBar" role="progressbar" style="width: 0%; max-width: 100%;">
+                            <span id="matchProgressText">Matching doctors...</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm flex-shrink-0" id="matchCancelBtn" type="button">
+                        Cancel
+                    </button>
+                </div>
+                <div class="text-muted small" id="matchStatusText"></div>
+            </div>
+            <script>
+                (function () {
+                    window.setMatchProgressBarWidth = function (progress) {
+                        var bar = document.getElementById('matchProgressBar');
+                        var container = document.getElementById('matchProgressContainer');
+                        if (!bar) return;
+                        var pct = Math.max(0, Math.min(100, Number(progress)));
+                        if (container) container.style.setProperty('--match-progress-pct', pct + '%');
+                        bar.style.setProperty('width', pct + '%');
+                        bar.style.removeProperty('flex');
+                        bar.style.removeProperty('min-width');
+                        bar.setAttribute('aria-valuemin', '0');
+                        bar.setAttribute('aria-valuemax', '100');
+                        bar.setAttribute('aria-valuenow', String(pct));
+                        var t = document.getElementById('matchProgressText');
+                        if (t) t.textContent = pct + '%';
+                        void bar.offsetHeight;
+                    };
+                })();
+            </script>
+            <div class="alert alert-secondary d-none long-running-cancelled mt-2" id="matchCancelledAlert" role="alert">
+                Request cancelled.
+            </div>
+
+            <div class="card mt-4" id="executionTraceCard" th:if="${isAdmin}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Execution Trace</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" id="clearLogsBtn" type="button">
+                            <i class="bi bi-trash"></i> Clear
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="toggleLogsBtn" type="button">
+                            <i class="bi bi-chevron-down" id="toggleLogsIcon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="logPanelBody">
+                    <div id="logContainer"
+                         style="height: 300px; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; border-radius: 4px;">
+                        <div id="logContent">
+                            <div style="color: #6a9955;">[Waiting for execution trace...]</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Markdown rendering library -->
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script>
+    // Pagination state for case loading
+    let casePaginationState = {
+        offset: 0,
+        limit: 50,
+        loading: false,
+        hasMore: true,
+        loadedCaseIds: new Set()
+    };
+
+    // Load cases from API
+    async function loadCases() {
+        const caseSelect = document.getElementById('caseId');
+        const loadingIndicator = document.getElementById('caseLoadingIndicator');
+
+        if (!caseSelect || casePaginationState.loading || !casePaginationState.hasMore) {
+            return;
+        }
+
+        casePaginationState.loading = true;
+        if (loadingIndicator) {
+            loadingIndicator.classList.remove('d-none');
+        }
+
+        try {
+            const response = await fetch(`/api/cases/list?offset=${casePaginationState.offset}&limit=${casePaginationState.limit}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const cases = await response.json();
+
+            if (cases.length === 0) {
+                casePaginationState.hasMore = false;
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('d-none');
+                }
+                return;
+            }
+
+            // Clear "Loading..." option if it exists
+            if (caseSelect.options.length === 1 && caseSelect.options[0].value === '') {
+                caseSelect.innerHTML = '';
+            }
+
+            // Add new cases to select
+            cases.forEach(caseItem => {
+                if (!casePaginationState.loadedCaseIds.has(caseItem.id)) {
+                    casePaginationState.loadedCaseIds.add(caseItem.id);
+
+                    const option = document.createElement('option');
+                    option.value = caseItem.id;
+
+                    // Format display text
+                    let displayText = '';
+                    if (caseItem.chiefComplaint && caseItem.chiefComplaint.trim() !== '') {
+                        displayText = caseItem.chiefComplaint;
+                        if (caseItem.requiredSpecialty && caseItem.requiredSpecialty.trim() !== '') {
+                            displayText += ' - ' + caseItem.requiredSpecialty;
+                        }
+                        if (caseItem.urgencyLevel) {
+                            displayText += ' (' + caseItem.urgencyLevel + ')';
+                        }
+                    } else {
+                        displayText = 'Case ID: ' + caseItem.id;
+                    }
+                    option.textContent = displayText;
+
+                    // Check if this is the selected case from URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const selectedCaseId = urlParams.get('caseId');
+                    if (selectedCaseId && selectedCaseId === caseItem.id) {
+                        option.selected = true;
+                    }
+
+                    caseSelect.appendChild(option);
+                }
+            });
+
+            casePaginationState.offset += cases.length;
+
+            // If we got fewer cases than requested, we've reached the end
+            if (cases.length < casePaginationState.limit) {
+                casePaginationState.hasMore = false;
+            }
+
+        } catch (error) {
+            console.error('Error loading cases:', error);
+            if (caseSelect.options.length === 0 || (caseSelect.options.length === 1 && caseSelect.options[0].value === '')) {
+                const errorOption = document.createElement('option');
+                errorOption.value = '';
+                errorOption.textContent = '-- Error loading cases --';
+                caseSelect.innerHTML = '';
+                caseSelect.appendChild(errorOption);
+            }
+        } finally {
+            casePaginationState.loading = false;
+            if (loadingIndicator) {
+                loadingIndicator.classList.add('d-none');
+            }
+        }
+    }
+
+    // Handle case selection
+    function handleCaseSelect(selectElement) {
+        const caseId = selectElement.value;
+        if (caseId) {
+            // Submit the form to reload page with selected case
+            const form = selectElement.closest('form');
+            if (form) {
+                form.submit();
+            }
+        }
+    }
+
+    // Handle scroll event for lazy loading
+    (function () {
+        const caseSelect = document.getElementById('caseId');
+        if (caseSelect) {
+            caseSelect.addEventListener('scroll', function () {
+                // Check if scrolled near bottom (within 100px)
+                const scrollTop = this.scrollTop;
+                const scrollHeight = this.scrollHeight;
+                const clientHeight = this.clientHeight;
+
+                if (scrollHeight - scrollTop - clientHeight < 100) {
+                    // Near bottom, load more cases
+                    if (!casePaginationState.loading && casePaginationState.hasMore) {
+                        loadCases();
+                    }
+                }
+            });
+
+            // Load initial cases if card is visible
+            const selectCaseCard = document.getElementById('selectCaseCard');
+            if (selectCaseCard && selectCaseCard.style.display !== 'none') {
+                loadCases();
+            }
+        }
+    })();
+
+    // Page shows Case Information or Select a Case card via server-side th:if based on caseId
+    (function () {
+        const matchForm = document.getElementById('matchForm');
+        if (!matchForm) return;
+
+        const caseId = matchForm.getAttribute('data-case-id') || '';
+        if (!caseId) return;
+
+        // Log panel elements
+        const logContainer = document.getElementById('logContainer');
+        const logContent = document.getElementById('logContent');
+        const clearLogsBtn = document.getElementById('clearLogsBtn');
+        const toggleLogsBtn = document.getElementById('toggleLogsBtn');
+        const toggleLogsIcon = document.getElementById('toggleLogsIcon');
+        const logPanelBody = document.getElementById('logPanelBody');
+        let logPanelCollapsed = false;
+        let eventSource = null;
+        let sessionId = 'session-' + Date.now();
+
+        // Progress indicator elements (same refs used for status text and bar)
+        const matchProgress = document.getElementById('matchProgress');
+        const matchProgressContainer = document.getElementById('matchProgressContainer');
+        const matchProgressBar = document.getElementById('matchProgressBar');
+        const matchProgressText = document.getElementById('matchProgressText');
+        const matchStatusText = document.getElementById('matchStatusText');
+        const enterCaseCard = document.getElementById('enterCaseCard');
+        const selectCaseCard = document.getElementById('selectCaseCard');
+        const matchCancelBtn = document.getElementById('matchCancelBtn');
+        const matchCancelledAlert = document.getElementById('matchCancelledAlert');
+
+        // Initialize log stream
+        function initLogStream() {
+            if (eventSource) {
+                eventSource.close();
+            }
+
+            const url = '/api/v1/logs/stream?sessionId=' + sessionId;
+            console.log('Connecting to SSE:', url);
+            eventSource = new EventSource(url);
+
+            eventSource.addEventListener('log', function (event) {
+                console.log('Received log event:', event.data);
+                addLogEntry(event.data);
+            });
+
+            eventSource.onopen = function (event) {
+                console.log('SSE connection opened for session:', sessionId);
+                addLogEntry('[INFO] Execution trace connected (session: ' + sessionId + ')', 'info');
+            };
+
+            eventSource.onerror = function (event) {
+                console.error('SSE error:', event);
+                if (eventSource.readyState === EventSource.CLOSED) {
+                    addLogEntry('[ERROR] Connection closed. Reconnecting...', 'error');
+                    // Reconnect after 3 seconds
+                    setTimeout(initLogStream, 3000);
+                }
+            };
+        }
+
+        // Add log entry to panel
+        function addLogEntry(message, level) {
+            if (message && message.match(/\[PROGRESS:\d+\]/)) {
+                updateProgressFromLog(message);
+                return;
+            }
+            if (!logContent) return;
+
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '2px';
+            entry.style.wordWrap = 'break-word';
+
+            // Color coding based on level
+            if (level === 'error' || message.includes('[ERROR]')) {
+                entry.style.color = '#f48771';
+            } else if (message.includes('[WARN]')) {
+                entry.style.color = '#dcdcaa';
+            } else if (message.includes('[DEBUG]')) {
+                entry.style.color = '#9cdcfe';
+            } else if (message.includes('[INFO]')) {
+                entry.style.color = '#4ec9b0';
+            } else {
+                entry.style.color = '#d4d4d4';
+            }
+
+            entry.textContent = message;
+            logContent.appendChild(entry);
+
+            // Auto-scroll to bottom
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            // Limit log entries to prevent memory issues
+            const maxEntries = 500;
+            while (logContent.children.length > maxEntries) {
+                logContent.removeChild(logContent.firstChild);
+            }
+
+            // Update progress based on log message
+            updateProgressFromLog(message);
+        }
+
+        // Update progress indicator based on log message. Parses [PROGRESS:nn] from backend for real %.
+        function updateProgressFromLog(message) {
+            const progressMatch = message && message.match(/\[PROGRESS:(\d+)\]/);
+            const hasProgressPct = progressMatch && progressMatch[1];
+            var progressEl = document.getElementById('matchProgress');
+
+            let progress = 0;
+            let statusText = '';
+
+            if (progressMatch) {
+                progress = parseInt(progressMatch[1], 10);
+                statusText = progress + '%';
+                if (progressEl && progressEl.classList.contains('d-none')) {
+                    progressEl.classList.remove('d-none');
+                }
+            }
+            if (!progressEl || progressEl.classList.contains('d-none')) return;
+            if (!document.getElementById('matchProgressBar')) return;
+
+            if (!hasProgressPct) {
+                if (message.includes('Step 1: MedGemma case analysis')) {
+                    progress = 20;
+                    statusText = 'Analyzing case with MedGemma...';
+                } else if (message.includes('Step 2: FunctionGemma tool orchestration')) {
+                    progress = 40;
+                    statusText = 'Generating tool call plan...';
+                } else if (message.includes('doctor-matcher') || message.includes('matching doctors')) {
+                    progress = 60;
+                    statusText = 'Matching doctors to case...';
+                } else if (message.includes('complete') || message.includes('finished')) {
+                    progress = 80;
+                    statusText = 'Finalizing results...';
+                }
+            }
+
+            if (progress >= 0) {
+                var pct = Math.max(0, Math.min(100, Number(progress)));
+                var container = document.getElementById('matchProgressContainer');
+                var bar = document.getElementById('matchProgressBar');
+                var textEl = document.getElementById('matchProgressText');
+                if (container) container.style.setProperty('--match-progress-pct', pct + '%');
+                if (bar) {
+                    bar.style.setProperty('width', pct + '%', 'important');
+                    bar.style.setProperty('flex', 'none', 'important');
+                    bar.setAttribute('aria-valuemin', '0');
+                    bar.setAttribute('aria-valuemax', '100');
+                    bar.setAttribute('aria-valuenow', String(pct));
+                    void bar.offsetHeight;
+                }
+                if (textEl) textEl.textContent = pct + '%';
+                if (statusText && matchStatusText) matchStatusText.textContent = statusText;
+            }
+        }
+
+        // Clear logs
+        if (clearLogsBtn) {
+            clearLogsBtn.addEventListener('click', function () {
+                if (logContent) {
+                    logContent.innerHTML = '<div style="color: #6a9955;">[Logs cleared]</div>';
+                }
+            });
+        }
+
+        // Toggle log panel
+        if (toggleLogsBtn) {
+            toggleLogsBtn.addEventListener('click', function () {
+                logPanelCollapsed = !logPanelCollapsed;
+                if (logPanelCollapsed) {
+                    logPanelBody.style.display = 'none';
+                    toggleLogsIcon.className = 'bi bi-chevron-right';
+                } else {
+                    logPanelBody.style.display = 'block';
+                    toggleLogsIcon.className = 'bi bi-chevron-down';
+                }
+            });
+        }
+
+        // Check if text looks like Markdown format
+        function isMarkdownFormat(text) {
+            if (!text || text.length === 0) return false;
+
+            // Common Markdown patterns - using RegExp constructor to avoid Thymeleaf parsing issues
+            const markdownPatterns = [
+                new RegExp('^#{1,6}\\s+', 'm'),                    // Headers
+                new RegExp('^\\*\\s+', 'm'),                      // Unordered lists
+                new RegExp('^\\d+\\.\\s+', 'm'),                   // Ordered lists
+                new RegExp('```[\\s\\S]*?```', 'm'),              // Code blocks
+                new RegExp('`[^`]+`', 'm'),                       // Inline code
+                new RegExp('\\[.*?\\]\\(.*?\\)', 'm'),            // Links
+                new RegExp('\\*\\*.*?\\*\\*', 'm'),                // Bold
+                new RegExp('_.*?_', 'm'),                         // Italic
+                new RegExp('^\\s*[-*+]\\s+', 'm'),                // List items
+                new RegExp('^\\s*>\\s+', 'm'),                    // Blockquotes
+                new RegExp('^\\|.*\\|.*\\|', 'm'),                // Tables
+                new RegExp('^---+\\s*$', 'm')                     // Horizontal rules
+            ];
+
+            // Count how many Markdown patterns match
+            let matchCount = 0;
+            for (const pattern of markdownPatterns) {
+                if (pattern.test(text)) {
+                    matchCount++;
+                }
+            }
+
+            // If 2 or more patterns match, consider it Markdown
+            return matchCount >= 2;
+        }
+
+        // Initialize log stream on page load
+        initLogStream();
+
+        matchForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Generate new session ID for this request
+            const newSessionId = 'session-' + Date.now();
+            sessionId = newSessionId;
+
+            // Clear previous logs
+            if (logContent) {
+                logContent.innerHTML = '';
+            }
+
+            // Reinitialize log stream with new session BEFORE making request
+            initLogStream();
+
+            // Wait a moment for SSE connection to establish
+            setTimeout(function () {
+
+                const matchButton = document.getElementById('matchButton');
+                const matchButtonText = document.getElementById('matchButtonText');
+                const matchSpinner = document.getElementById('matchSpinner');
+                const errorAlert = document.getElementById('errorAlert');
+                const resultsCard = document.getElementById('resultsCard');
+                const matchResult = document.getElementById('matchResult');
+
+                // Validate all required elements exist
+                if (!matchButton || !matchButtonText || !matchSpinner || !errorAlert || !resultsCard || !matchResult) {
+                    console.error('Missing required elements:', {
+                        matchButton: !!matchButton,
+                        matchButtonText: !!matchButtonText,
+                        matchSpinner: !!matchSpinner,
+                        errorAlert: !!errorAlert,
+                        resultsCard: !!resultsCard,
+                        matchResult: !!matchResult
+                    });
+                    addLogEntry('[ERROR] Missing required UI elements', 'error');
+                    return;
+                }
+
+                // Show progress indicator
+                matchButton.disabled = true;
+                matchButtonText.textContent = 'Matching...';
+                matchSpinner.classList.remove('d-none');
+
+                // Show and initialize progress bar
+                if (matchProgress) {
+                    matchProgress.classList.remove('d-none');
+                    if (typeof window.setMatchProgressBarWidth === 'function') {
+                        window.setMatchProgressBarWidth(0);
+                    } else {
+                        matchProgressBar.style.flex = '0 0 0%';
+                        matchProgressBar.style.width = '0%';
+                        matchProgressBar.style.minWidth = '0';
+                        matchProgressBar.setAttribute('aria-valuenow', '0');
+                        matchProgressText.textContent = '0%';
+                    }
+                    matchStatusText.textContent = 'Starting match operation...';
+                }
+                if (enterCaseCard) {
+                    enterCaseCard.style.display = 'none';
+                }
+                if (selectCaseCard) {
+                    selectCaseCard.style.display = 'none';
+                }
+
+                // Hide previous results/errors
+                errorAlert.classList.add('d-none');
+                resultsCard.classList.add('d-none');
+
+                // Add initial log entry
+                addLogEntry('[INFO] Starting match doctors operation for case: ' + caseId, 'info');
+
+                if (matchCancelledAlert) {
+                    matchCancelledAlert.classList.add('d-none');
+                }
+                window.matchAbortController = new AbortController();
+
+                // Make AJAX request to API endpoint (JSON response) instead of HTML view
+                fetch('/api/v1/agent/match/' + caseId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sessionId: newSessionId
+                    }),
+                    signal: window.matchAbortController.signal
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error('Network response was not ok: ' + text);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response received:', data);
+
+                        // Get the element on the current page
+                        const pageResultElement = document.getElementById('matchResult');
+                        const pageResultsCard = document.getElementById('resultsCard');
+
+                        if (!pageResultElement || !pageResultsCard) {
+                            console.error('Could not find result elements on page!', {
+                                pageResultElement: !!pageResultElement,
+                                pageResultsCard: !!pageResultsCard
+                            });
+                            addLogEntry('[ERROR] Could not find result elements on page', 'error');
+                            return;
+                        }
+
+                        // Extract response text from the API response
+                        const resultText = data && data.response ? data.response.trim() : '';
+
+                        // Always show the results card
+                        if (resultText && resultText.length > 0) {
+                            // Check if content looks like Markdown
+                            const isMarkdown = isMarkdownFormat(resultText);
+
+                            if (isMarkdown && typeof marked !== 'undefined') {
+                                // Render Markdown to HTML
+                                try {
+                                    const htmlContent = marked.parse(resultText, {
+                                        breaks: true,
+                                        gfm: true
+                                    });
+                                    pageResultElement.innerHTML = htmlContent;
+                                    pageResultElement.classList.add('markdown-content');
+                                    addLogEntry('[INFO] Rendered response as Markdown', 'info');
+                                } catch (markdownError) {
+                                    console.error('Error rendering Markdown:', markdownError);
+                                    // Fallback to plain text if Markdown parsing fails
+                                    pageResultElement.textContent = resultText;
+                                    pageResultElement.classList.remove('markdown-content');
+                                }
+                            } else {
+                                // Plain text display
+                                pageResultElement.textContent = resultText;
+                                pageResultElement.classList.remove('markdown-content');
+                            }
+
+                            pageResultsCard.classList.remove('d-none');
+                            addLogEntry('[INFO] Match operation completed successfully', 'info');
+                            console.log('Results displayed successfully, text length:', resultText.length, 'isMarkdown:', isMarkdown);
+
+                            // Complete progress indicator
+                            if (matchProgress && matchProgressBar && matchProgressText && matchStatusText) {
+                                if (typeof window.setMatchProgressBarWidth === 'function') {
+                                    window.setMatchProgressBarWidth(100);
+                                } else {
+                                    matchProgressBar.style.flex = '0 0 100%';
+                                    matchProgressBar.style.width = '100%';
+                                    matchProgressBar.style.minWidth = '3%';
+                                    matchProgressBar.setAttribute('aria-valuenow', '100');
+                                    matchProgressText.textContent = '100%';
+                                }
+                                matchStatusText.textContent = 'Match operation completed';
+
+                                // Hide progress after a delay
+                                setTimeout(function () {
+                                    if (matchProgress) {
+                                        matchProgress.classList.add('d-none');
+                                    }
+                                    if (enterCaseCard) {
+                                        enterCaseCard.style.display = '';
+                                    }
+                                    if (selectCaseCard) {
+                                        selectCaseCard.style.display = 'block';
+                                    }
+                                }, 2000);
+                            }
+                        } else {
+                            // Show fallback message
+                            const fallbackMessage = data && data.metadata
+                                ? 'Match operation completed. Case ID: ' + (data.metadata.caseId || caseId) + '. ' +
+                                (data.metadata.skills ? 'Skills used: ' + data.metadata.skills + '. ' : '') +
+                                'The LLM response was empty or minimal. This may indicate the model needs better prompting or configuration.'
+                                : 'Match operation completed. The LLM response was empty or minimal. This may indicate the model needs better prompting or configuration. Check backend logs for details.';
+                            pageResultElement.textContent = fallbackMessage;
+                            pageResultElement.classList.remove('markdown-content');
+                            pageResultsCard.classList.remove('d-none');
+                            addLogEntry('[WARN] Response received but content is empty or minimal', 'warn');
+                            console.warn('Empty or minimal response from server. Response data:', data);
+
+                            // Complete progress indicator
+                            if (matchProgress && matchProgressBar && matchProgressText && matchStatusText) {
+                                if (typeof window.setMatchProgressBarWidth === 'function') {
+                                    window.setMatchProgressBarWidth(100);
+                                } else {
+                                    matchProgressBar.style.flex = '0 0 100%';
+                                    matchProgressBar.style.width = '100%';
+                                    matchProgressBar.style.minWidth = '3%';
+                                    matchProgressBar.setAttribute('aria-valuenow', '100');
+                                    matchProgressText.textContent = '100%';
+                                }
+                                matchStatusText.textContent = 'Match operation completed';
+
+                                // Hide progress after a delay
+                                setTimeout(function () {
+                                    if (matchProgress) {
+                                        matchProgress.classList.add('d-none');
+                                    }
+                                    if (enterCaseCard) {
+                                        enterCaseCard.style.display = '';
+                                    }
+                                    if (selectCaseCard) {
+                                        selectCaseCard.style.display = 'block';
+                                    }
+                                }, 2000);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        if (error.name === 'AbortError') {
+                            addLogEntry('[WARN] Request cancelled.', 'warn');
+                            if (matchCancelledAlert) {
+                                matchCancelledAlert.classList.remove('d-none');
+                            }
+                        } else {
+                            console.error('Error:', error);
+                            const errorMessage = error.message || 'Unknown error occurred';
+                            if (errorAlert) {
+                                errorAlert.textContent = 'Failed to match doctors: ' + errorMessage;
+                                errorAlert.classList.remove('d-none');
+                            }
+                            addLogEntry('[ERROR] ' + errorMessage, 'error');
+                        }
+
+                        // Hide results card on error
+                        const resultsCard = document.getElementById('resultsCard');
+                        if (resultsCard) {
+                            resultsCard.classList.add('d-none');
+                        }
+
+                        // Hide progress indicator on error
+                        if (matchProgress) {
+                            matchProgress.classList.add('d-none');
+                        }
+                        if (enterCaseCard) {
+                            enterCaseCard.style.display = '';
+                        }
+                        if (selectCaseCard) {
+                            selectCaseCard.style.display = 'block';
+                        }
+                        window.window.matchAbortController = null;
+                    })
+                    .finally(() => {
+                        // Hide progress indicator - check if elements still exist
+                        if (enterCaseCard) {
+                            enterCaseCard.style.display = '';
+                        }
+                        if (selectCaseCard) {
+                            selectCaseCard.style.display = 'block';
+                        }
+                        if (matchButton) {
+                            matchButton.disabled = false;
+                        }
+                        if (matchButtonText) {
+                            matchButtonText.textContent = 'Match Doctors';
+                        }
+                        if (matchSpinner) {
+                            matchSpinner.classList.add('d-none');
+                        }
+                        window.matchAbortController = null;
+                        // Note: Progress bar is hidden in success/error handlers or after delay
+                    });
+            }, 500); // Wait 500ms for SSE connection to establish
+        });
+
+        if (matchCancelBtn) {
+            matchCancelBtn.addEventListener('click', function () {
+                if (window.matchAbortController) {
+                    window.matchAbortController.abort();
+                }
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function () {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    })();
+
+    // Text input form and case search modal functionality
+    (function () {
+        const textMatchForm = document.getElementById('textMatchForm');
+        if (!textMatchForm) return;
+
+        const searchCasesBtn = document.getElementById('searchCasesBtn');
+        const caseSearchModal = new bootstrap.Modal(document.getElementById('caseSearchModal'));
+        const performSearchBtn = document.getElementById('performSearchBtn');
+        const caseSearchQuery = document.getElementById('caseSearchQuery');
+        const caseSearchCaseId = document.getElementById('caseSearchCaseId');
+        const caseSearchSpecialty = document.getElementById('caseSearchSpecialty');
+        const caseSearchUrgency = document.getElementById('caseSearchUrgency');
+        const caseSearchResults = document.getElementById('caseSearchResults');
+        const caseSearchSuggestions = document.getElementById('caseSearchSuggestions');
+        const matchFromTextButton = document.getElementById('matchFromTextButton');
+        const matchFromTextButtonText = document.getElementById('matchFromTextButtonText');
+        const matchFromTextSpinner = document.getElementById('matchFromTextSpinner');
+
+        // Log panel elements for text input form
+        const logContainer = document.getElementById('logContainer');
+        const logContent = document.getElementById('logContent');
+        let textFormEventSource = null;
+
+        // Progress indicator elements (same refs used for status text and bar)
+        const matchProgress = document.getElementById('matchProgress');
+        const matchProgressContainer = document.getElementById('matchProgressContainer');
+        const matchProgressBar = document.getElementById('matchProgressBar');
+        const matchProgressText = document.getElementById('matchProgressText');
+        const matchStatusText = document.getElementById('matchStatusText');
+        const enterCaseCard = document.getElementById('enterCaseCard');
+        const selectCaseCard = document.getElementById('selectCaseCard');
+
+        // Initialize log stream for text input form
+        function initTextFormLogStream(sessionId) {
+            if (textFormEventSource) {
+                textFormEventSource.close();
+            }
+
+            const url = '/api/v1/logs/stream?sessionId=' + sessionId;
+            console.log('Connecting to SSE for text form:', url);
+            textFormEventSource = new EventSource(url);
+
+            textFormEventSource.addEventListener('log', function (event) {
+                console.log('Received log event:', event.data);
+                addTextFormLogEntry(event.data);
+            });
+
+            textFormEventSource.onopen = function (event) {
+                console.log('SSE connection opened for text form session:', sessionId);
+                addTextFormLogEntry('[INFO] Execution trace connected (session: ' + sessionId + ')', 'info');
+            };
+
+            textFormEventSource.onerror = function (event) {
+                console.error('SSE error:', event);
+                if (textFormEventSource.readyState === EventSource.CLOSED) {
+                    addTextFormLogEntry('[ERROR] Connection closed. Reconnecting...', 'error');
+                    setTimeout(() => initTextFormLogStream(sessionId), 3000);
+                }
+            };
+        }
+
+        // Add log entry to panel for text form
+        function addTextFormLogEntry(message, level) {
+            if (message && message.match(/\[PROGRESS:\d+\]/)) {
+                updateTextFormProgress(message);
+                return;
+            }
+            if (!logContent) return;
+
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '2px';
+            entry.style.wordWrap = 'break-word';
+
+            // Color coding based on level
+            if (level === 'error' || message.includes('[ERROR]')) {
+                entry.style.color = '#f48771';
+            } else if (message.includes('[WARN]')) {
+                entry.style.color = '#dcdcaa';
+            } else if (message.includes('[DEBUG]')) {
+                entry.style.color = '#9cdcfe';
+            } else if (message.includes('[INFO]')) {
+                entry.style.color = '#4ec9b0';
+            } else {
+                entry.style.color = '#d4d4d4';
+            }
+
+            entry.textContent = message;
+            logContent.appendChild(entry);
+
+            // Auto-scroll to bottom
+            if (logContainer) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+
+            // Update progress based on log message
+            updateTextFormProgress(message);
+        }
+
+        // Update progress indicator based on log message for text form
+        function updateTextFormProgress(message) {
+            const progressMatch = message && message.match(/\[PROGRESS:(\d+)\]/);
+            if (progressMatch && matchProgress && matchProgress.classList.contains('d-none')) {
+                matchProgress.classList.remove('d-none');
+            }
+            if (!matchProgress || matchProgress.classList.contains('d-none')) return;
+            if (!matchProgressBar || !matchProgressText || !matchStatusText) return;
+
+            let progress = 0;
+            if (progressMatch) {
+                progress = parseInt(progressMatch[1], 10);
+                matchStatusText.textContent = progress + '%';
+            } else if (message.includes('Case ID generated') || message.includes('Inserting case')) {
+                progress = 20;
+            } else if (message.includes('Generating embedding') || message.includes('Embedding generated')) {
+                progress = 40;
+            } else if (message.includes('Matching doctors') || message.includes('match_doctors_to_case')) {
+                progress = 60;
+            } else if (message.includes('Found') && message.includes('matches')) {
+                progress = 80;
+            }
+
+            if (progress >= 0) {
+                var pct = Math.max(0, Math.min(100, Number(progress)));
+                var container = document.getElementById('matchProgressContainer');
+                var bar = document.getElementById('matchProgressBar');
+                var textEl = document.getElementById('matchProgressText');
+                if (container) container.style.setProperty('--match-progress-pct', pct + '%');
+                if (bar) {
+                    bar.style.setProperty('width', pct + '%', 'important');
+                    bar.style.setProperty('flex', 'none', 'important');
+                    bar.setAttribute('aria-valuemin', '0');
+                    bar.setAttribute('aria-valuemax', '100');
+                    bar.setAttribute('aria-valuenow', String(pct));
+                    void bar.offsetHeight;
+                }
+                if (textEl) textEl.textContent = pct + '%';
+            }
+
+            if (!progressMatch && message.includes('[INFO]')) {
+                matchStatusText.textContent = message.replace('[INFO]', '').trim();
+            }
+        }
+
+        // Populate specialty dropdown from available cases
+        function populateSpecialtyDropdown() {
+            const specialties = new Set();
+            const caseOptions = document.querySelectorAll('#caseId option');
+            caseOptions.forEach(option => {
+                const text = option.textContent;
+                if (text && text.includes(' - ')) {
+                    const parts = text.split(' - ');
+                    if (parts.length > 1) {
+                        const specialty = parts[1].split(' (')[0].trim();
+                        if (specialty) {
+                            specialties.add(specialty);
+                        }
+                    }
+                }
+            });
+            const specialtySelect = document.getElementById('caseSearchSpecialty');
+            specialties.forEach(specialty => {
+                const option = document.createElement('option');
+                option.value = specialty;
+                option.textContent = specialty;
+                specialtySelect.appendChild(option);
+            });
+        }
+
+        function openCaseSearchModal() {
+            populateSpecialtyDropdown();
+            caseSearchModal.show();
+        }
+
+        if (searchCasesBtn) {
+            searchCasesBtn.addEventListener('click', openCaseSearchModal);
+        }
+        const searchCasesBtnTop = document.getElementById('searchCasesBtnTop');
+        if (searchCasesBtnTop) {
+            searchCasesBtnTop.addEventListener('click', openCaseSearchModal);
+        }
+
+        // Hide suggestions when modal is closed
+        const caseSearchModalElement = document.getElementById('caseSearchModal');
+        if (caseSearchModalElement) {
+            caseSearchModalElement.addEventListener('hidden.bs.modal', function () {
+                hideSuggestions();
+                if (caseSearchQuery) {
+                    caseSearchQuery.value = '';
+                }
+                if (caseSearchCaseId) {
+                    caseSearchCaseId.value = '';
+                }
+            });
+        }
+
+        // Perform search
+        if (performSearchBtn) {
+            performSearchBtn.addEventListener('click', function () {
+                performCaseSearch();
+            });
+        }
+
+        // Allow Enter key to trigger search
+        if (caseSearchQuery) {
+            caseSearchQuery.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    hideSuggestions();
+                    performCaseSearch();
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const firstSuggestion = caseSearchSuggestions.querySelector('.list-group-item');
+                    if (firstSuggestion) {
+                        firstSuggestion.focus();
+                    }
+                }
+            });
+
+            // Autosuggest on input
+            let autosuggestTimeout;
+            caseSearchQuery.addEventListener('input', function (e) {
+                const query = e.target.value.trim();
+
+                // Clear previous timeout
+                clearTimeout(autosuggestTimeout);
+
+                // Hide suggestions if query is empty
+                if (query.length === 0) {
+                    hideSuggestions();
+                    return;
+                }
+
+                // Debounce autosuggest (wait 300ms after user stops typing)
+                autosuggestTimeout = setTimeout(() => {
+                    performAutosuggest(query);
+                }, 300);
+            });
+
+            // Hide suggestions when input loses focus (with small delay to allow clicking suggestions)
+            caseSearchQuery.addEventListener('blur', function () {
+                setTimeout(() => {
+                    if (!document.activeElement || !caseSearchSuggestions.contains(document.activeElement)) {
+                        hideSuggestions();
+                    }
+                }, 200);
+            });
+        }
+
+        // Debounce helper function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Perform autosuggest search
+        function performAutosuggest(query) {
+            if (!query || query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+
+            const params = new URLSearchParams();
+            params.append('query', query);
+            params.append('maxResults', '5'); // Limit suggestions to 5
+
+            fetch('/api/cases/search?' + params.toString())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Autosuggest failed: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(cases => {
+                    displaySuggestions(cases, query);
+                })
+                .catch(error => {
+                    console.error('Autosuggest error:', error);
+                    hideSuggestions();
+                });
+        }
+
+        // Display autosuggest suggestions
+        function displaySuggestions(cases, query) {
+            if (!cases || cases.length === 0) {
+                hideSuggestions();
+                return;
+            }
+
+            const suggestionsHtml = cases.map(caseItem => {
+                const chiefComplaint = caseItem.chiefComplaint || 'No chief complaint';
+                const specialty = caseItem.requiredSpecialty || '';
+                const urgency = caseItem.urgencyLevel || '';
+                const caseId = caseItem.id || '';
+
+                // Highlight matching text
+                const highlightedComplaint = highlightMatch(chiefComplaint, query);
+
+                return `
+                    <button type="button" class="list-group-item list-group-item-action autosuggest-item"
+                            data-case-id="${caseId}"
+                            data-case-complaint="${escapeHtml(chiefComplaint)}">
+                        <div class="fw-bold">${highlightedComplaint}</div>
+                        ${specialty ? `<small class="text-muted">${specialty}</small>` : ''}
+                        ${urgency ? `<small class="text-muted ms-2">${urgency}</small>` : ''}
+                    </button>
+                `;
+            }).join('');
+
+            caseSearchSuggestions.innerHTML = suggestionsHtml;
+            caseSearchSuggestions.style.display = 'block';
+
+            // Add click handlers to suggestions
+            const suggestionItems = caseSearchSuggestions.querySelectorAll('.autosuggest-item');
+            suggestionItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    const complaint = this.getAttribute('data-case-complaint');
+                    caseSearchQuery.value = complaint;
+                    hideSuggestions();
+                    // Optionally trigger search automatically
+                    // performCaseSearch();
+                });
+
+                // Handle keyboard navigation
+                item.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        this.click();
+                    } else if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const next = this.nextElementSibling;
+                        if (next) {
+                            next.focus();
+                        }
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prev = this.previousElementSibling;
+                        if (prev) {
+                            prev.focus();
+                        } else {
+                            caseSearchQuery.focus();
+                        }
+                    } else if (e.key === 'Escape') {
+                        hideSuggestions();
+                        caseSearchQuery.focus();
+                    }
+                });
+            });
+
+            // Make first suggestion focusable
+            if (suggestionItems.length > 0) {
+                suggestionItems[0].setAttribute('tabindex', '0');
+            }
+        }
+
+        // Highlight matching text in suggestion
+        function highlightMatch(text, query) {
+            if (!query || query.length === 0) {
+                return escapeHtml(text);
+            }
+
+            const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+            return escapeHtml(text).replace(regex, '<mark>$1</mark>');
+        }
+
+        // Escape regex special characters
+        function escapeRegex(text) {
+            return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Hide suggestions
+        function hideSuggestions() {
+            if (caseSearchSuggestions) {
+                caseSearchSuggestions.style.display = 'none';
+                caseSearchSuggestions.innerHTML = '';
+            }
+        }
+
+        // Pagination state for search results
+        let searchPaginationState = {
+            offset: 0,
+            limit: 20,
+            loading: false,
+            hasMore: false,
+            currentQuery: '',
+            currentCaseId: '',
+            currentSpecialty: '',
+            currentUrgencyLevel: ''
+        };
+
+        function performCaseSearch(resetPagination = true) {
+            const query = caseSearchQuery ? caseSearchQuery.value.trim() : '';
+            const caseIdFilter = caseSearchCaseId ? caseSearchCaseId.value.trim() : '';
+            const specialty = caseSearchSpecialty ? caseSearchSpecialty.value : '';
+            const urgencyLevel = caseSearchUrgency ? caseSearchUrgency.value : '';
+
+            if (resetPagination) {
+                searchPaginationState.offset = 0;
+                searchPaginationState.hasMore = false;
+                caseSearchResults.innerHTML = '<div class="text-center"><div class="spinner-border spinner-border-sm" role="status"></div> Searching...</div>';
+            } else {
+                const loadingDiv = document.getElementById('caseSearchLoading');
+                if (loadingDiv) {
+                    loadingDiv.classList.remove('d-none');
+                }
+            }
+
+            searchPaginationState.currentQuery = query;
+            searchPaginationState.currentCaseId = caseIdFilter;
+            searchPaginationState.currentSpecialty = specialty;
+            searchPaginationState.currentUrgencyLevel = urgencyLevel;
+            searchPaginationState.loading = true;
+
+            const params = new URLSearchParams();
+            if (query) params.append('query', query);
+            if (caseIdFilter) params.append('caseId', caseIdFilter);
+            if (specialty) params.append('specialty', specialty);
+            if (urgencyLevel) params.append('urgencyLevel', urgencyLevel);
+            params.append('offset', searchPaginationState.offset.toString());
+            params.append('maxResults', searchPaginationState.limit.toString());
+
+            fetch('/api/cases/search?' + params.toString())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Search failed: ' + response.statusText);
+                    }
+                    return response.json();
+                })
+                .then(cases => {
+                    if (resetPagination) {
+                        displaySearchResults(cases, true);
+                    } else {
+                        appendSearchResults(cases);
+                    }
+                    updatePaginationControls(cases.length);
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    caseSearchResults.innerHTML = '<div class="alert alert-danger">Error searching cases: ' + error.message + '</div>';
+                    const paginationDiv = document.getElementById('caseSearchPagination');
+                    if (paginationDiv) {
+                        paginationDiv.classList.add('d-none');
+                    }
+                })
+                .finally(() => {
+                    searchPaginationState.loading = false;
+                    const loadingDiv = document.getElementById('caseSearchLoading');
+                    if (loadingDiv) {
+                        loadingDiv.classList.add('d-none');
+                    }
+                });
+        }
+
+        function displaySearchResults(cases, isNewSearch) {
+            if (isNewSearch) {
+                if (!cases || cases.length === 0) {
+                    caseSearchResults.innerHTML = '<div class="text-muted text-center">No cases found</div>';
+                    const paginationDiv = document.getElementById('caseSearchPagination');
+                    if (paginationDiv) {
+                        paginationDiv.classList.add('d-none');
+                    }
+                    return;
+                }
+                caseSearchResults.innerHTML = '';
+            }
+
+            const resultsHtml = cases.map(caseItem => {
+                const chiefComplaint = caseItem.chiefComplaint || 'No chief complaint';
+                const specialty = caseItem.requiredSpecialty || 'N/A';
+                const urgency = caseItem.urgencyLevel || 'N/A';
+                const caseId = caseItem.id || '';
+                const symptoms = caseItem.symptoms || '';
+                const notes = caseItem.additionalNotes || '';
+                const age = caseItem.patientAge || '';
+                const caseType = caseItem.caseType || 'INPATIENT';
+
+                return `
+                    <div class="card mb-2 case-search-result" data-case-id="${escapeHtml(caseId)}">
+                        <div class="card-body p-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">${escapeHtml(chiefComplaint)}</div>
+                                    <div class="small text-muted">
+                                        Specialty: ${escapeHtml(specialty)} |
+                                        Urgency: ${escapeHtml(urgency)} |
+                                        Type: ${escapeHtml(caseType)}
+                                        ${age ? ' | Age: ' + age : ''}
+                                    </div>
+                                    ${symptoms ? '<div class="small mt-1">Symptoms: ' + escapeHtml(symptoms.substring(0, 100)) + (symptoms.length > 100 ? '...' : '') + '</div>' : ''}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-primary ms-2 case-select-btn"
+                                        data-case-id="${escapeHtml(caseId)}"
+                                        style="flex-shrink: 0;">
+                                    Select
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            caseSearchResults.insertAdjacentHTML('beforeend', resultsHtml);
+
+            // Add click handlers to Select buttons
+            caseSearchResults.querySelectorAll('.case-select-btn').forEach(btn => {
+                if (!btn.hasAttribute('data-click-handler')) {
+                    btn.setAttribute('data-click-handler', 'true');
+                    btn.addEventListener('click', async function (e) {
+                        e.stopPropagation(); // Prevent card click event
+                        e.preventDefault(); // Prevent any default behavior
+                        console.log('Select button clicked'); // Debug log
+
+                        const caseId = this.getAttribute('data-case-id');
+                        console.log('Case ID:', caseId); // Debug log
+
+                        if (caseId) {
+                            try {
+                                // Fetch full case data from API
+                                console.log('Fetching case data from API...'); // Debug log
+                                const response = await fetch(`/api/cases/${encodeURIComponent(caseId)}`);
+
+                                if (!response.ok) {
+                                    throw new Error(`Failed to fetch case: ${response.status} ${response.statusText}`);
+                                }
+
+                                const caseItem = await response.json();
+                                console.log('Fetched case item:', caseItem); // Debug log
+                                console.log('Calling selectCase function...'); // Debug log
+
+                                // Check if selectCase is available
+                                if (typeof selectCase === 'function') {
+                                    selectCase(caseItem);
+                                } else {
+                                    console.error('selectCase function is not available');
+                                    // Fallback: try window.selectCase
+                                    if (typeof window.selectCase === 'function') {
+                                        console.log('Using window.selectCase');
+                                        window.selectCase(caseItem);
+                                    } else {
+                                        console.error('window.selectCase also not available');
+                                    }
+                                }
+                            } catch (err) {
+                                console.error('Error fetching case data:', err);
+                                alert('Failed to load case data. Please try again.');
+                            }
+                        } else {
+                            console.error('No case ID found on button');
+                        }
+                    });
+                }
+            });
+        }
+
+        function appendSearchResults(cases) {
+            displaySearchResults(cases, false);
+        }
+
+        function updatePaginationControls(resultsCount) {
+            const paginationDiv = document.getElementById('caseSearchPagination');
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            const pageInfo = document.getElementById('caseSearchPageInfo');
+
+            if (!paginationDiv || !prevBtn || !nextBtn || !pageInfo) {
+                return;
+            }
+
+            // Show pagination if we have results
+            if (resultsCount > 0) {
+                paginationDiv.classList.remove('d-none');
+            } else {
+                paginationDiv.classList.add('d-none');
+                return;
+            }
+
+            // Update hasMore flag
+            searchPaginationState.hasMore = resultsCount === searchPaginationState.limit;
+
+            // Calculate current page (1-indexed)
+            const currentPage = Math.floor(searchPaginationState.offset / searchPaginationState.limit) + 1;
+            const startResult = searchPaginationState.offset + 1;
+            const endResult = searchPaginationState.offset + resultsCount;
+
+            // Update page info
+            pageInfo.textContent = `Page ${currentPage} (${startResult}-${endResult})`;
+
+            // Update button states
+            prevBtn.disabled = searchPaginationState.offset === 0;
+            nextBtn.disabled = !searchPaginationState.hasMore;
+        }
+
+        // Pagination button handlers
+        (function () {
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', function () {
+                    if (searchPaginationState.offset > 0 && !searchPaginationState.loading) {
+                        searchPaginationState.offset = Math.max(0, searchPaginationState.offset - searchPaginationState.limit);
+                        performCaseSearch(false);
+                        // Scroll to top of results
+                        caseSearchResults.scrollTop = 0;
+                    }
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function () {
+                    if (searchPaginationState.hasMore && !searchPaginationState.loading) {
+                        searchPaginationState.offset += searchPaginationState.limit;
+                        performCaseSearch(false);
+                    }
+                });
+            }
+
+            // Infinite scroll for search results
+            if (caseSearchResults) {
+                caseSearchResults.addEventListener('scroll', function () {
+                    const scrollTop = this.scrollTop;
+                    const scrollHeight = this.scrollHeight;
+                    const clientHeight = this.clientHeight;
+
+                    // Load more when scrolled near bottom (within 50px)
+                    if (scrollHeight - scrollTop - clientHeight < 50) {
+                        if (searchPaginationState.hasMore && !searchPaginationState.loading) {
+                            searchPaginationState.offset += searchPaginationState.limit;
+                            performCaseSearch(false);
+                        }
+                    }
+                });
+            }
+        })();
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Make selectCase available globally - defined inside IIFE but accessible via closure
+        function selectCase(caseItem) {
+            console.log('selectCase called with:', caseItem); // Debug log
+
+            // Use existing-case flow to avoid creating a duplicate case when matching
+            if (caseItem && caseItem.id) {
+                const modalElement = document.getElementById('caseSearchModal');
+                if (modalElement) {
+                    const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                    if (modal) modal.hide();
+                }
+                window.location.href = '/match?caseId=' + encodeURIComponent(caseItem.id);
+                return;
+            }
+
+            // Populate form fields (when caseItem has no id, e.g. external integration)
+            const caseTextEl = document.getElementById('caseText');
+            const symptomsEl = document.getElementById('symptoms');
+            const additionalNotesEl = document.getElementById('additionalNotes');
+            const patientAgeEl = document.getElementById('patientAge');
+            const caseTypeEl = document.getElementById('caseType');
+            const urgencyLevelEl = document.getElementById('urgencyLevel');
+
+            if (caseTextEl) {
+                caseTextEl.value = caseItem.chiefComplaint || '';
+                console.log('Set caseText to:', caseItem.chiefComplaint);
+            }
+            if (symptomsEl) {
+                symptomsEl.value = caseItem.symptoms || '';
+                console.log('Set symptoms to:', caseItem.symptoms);
+            }
+            if (additionalNotesEl) {
+                additionalNotesEl.value = caseItem.additionalNotes || '';
+            }
+            if (patientAgeEl) {
+                patientAgeEl.value = caseItem.patientAge || '';
+            }
+            if (caseTypeEl) {
+                caseTypeEl.value = caseItem.caseType || 'INPATIENT';
+            }
+            if (urgencyLevelEl) {
+                urgencyLevelEl.value = caseItem.urgencyLevel || 'MEDIUM';
+            }
+
+            // Close modal using Bootstrap API
+            const modalElement = document.getElementById('caseSearchModal');
+            if (modalElement) {
+                const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+                if (modal) {
+                    modal.hide();
+                    console.log('Modal hidden');
+                } else {
+                    console.error('Could not get modal instance');
+                }
+            } else {
+                console.error('Modal element not found');
+            }
+        }
+
+        // Expose selectCase globally for debugging
+        window.selectCase = selectCase;
+
+        // Handle form submission
+        if (textMatchForm) {
+            textMatchForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const caseText = document.getElementById('caseText').value.trim();
+                if (!caseText) {
+                    alert('Chief Complaint is required');
+                    return;
+                }
+
+                // Generate new session ID
+                const sessionId = 'session-' + Date.now();
+
+                // Clear previous logs
+                if (logContent) {
+                    logContent.innerHTML = '<div style="color: #6a9955;">[Starting execution trace...]</div>';
+                }
+
+                // Show execution trace panel (only present for administrator)
+                const logPanelCard = document.getElementById('executionTraceCard');
+                if (logPanelCard) {
+                    logPanelCard.style.display = 'block';
+                    const logPanelBody = document.getElementById('logPanelBody');
+                    if (logPanelBody) {
+                        logPanelBody.style.display = 'block';
+                    }
+                }
+
+                // Initialize SSE connection for execution trace
+                initTextFormLogStream(sessionId);
+
+                // Disable button and show spinner
+                if (matchFromTextButton) {
+                    matchFromTextButton.disabled = true;
+                }
+                if (matchFromTextButtonText) {
+                    matchFromTextButtonText.textContent = 'Matching...';
+                }
+                if (matchFromTextSpinner) {
+                    matchFromTextSpinner.classList.remove('d-none');
+                }
+
+                // Hide previous results/errors
+                const errorAlert = document.getElementById('errorAlert');
+                const resultsCard = document.getElementById('resultsCard');
+                if (errorAlert) {
+                    errorAlert.classList.add('d-none');
+                }
+                if (resultsCard) {
+                    resultsCard.classList.add('d-none');
+                }
+
+                // Show and initialize progress indicator
+                if (matchProgress) {
+                    matchProgress.classList.remove('d-none');
+                    if (typeof window.setMatchProgressBarWidth === 'function') {
+                        window.setMatchProgressBarWidth(0);
+                    } else if (matchProgressBar) {
+                        matchProgressBar.style.flex = '0 0 0%';
+                        matchProgressBar.style.width = '0%';
+                        matchProgressBar.style.minWidth = '0';
+                        matchProgressBar.setAttribute('aria-valuenow', '0');
+                    }
+                    if (matchProgressText) matchProgressText.textContent = '0%';
+                    if (matchStatusText) matchStatusText.textContent = 'Initializing...';
+                }
+                if (enterCaseCard) {
+                    enterCaseCard.style.display = 'none';
+                }
+                if (selectCaseCard) {
+                    selectCaseCard.style.display = 'none';
+                }
+
+                const matchCancelledAlertEl = document.getElementById('matchCancelledAlert');
+                if (matchCancelledAlertEl) {
+                    matchCancelledAlertEl.classList.add('d-none');
+                }
+                window.matchAbortController = new AbortController();
+
+                // Prepare request body
+                const requestBody = {
+                    caseText: caseText,
+                    sessionId: sessionId
+                };
+
+                const symptoms = document.getElementById('symptoms').value.trim();
+                if (symptoms) {
+                    requestBody.symptoms = symptoms;
+                }
+
+                const additionalNotes = document.getElementById('additionalNotes').value.trim();
+                if (additionalNotes) {
+                    requestBody.additionalNotes = additionalNotes;
+                }
+
+                const patientAge = document.getElementById('patientAge').value;
+                if (patientAge) {
+                    requestBody.patientAge = parseInt(patientAge);
+                }
+
+                const caseType = document.getElementById('caseType').value;
+                if (caseType) {
+                    requestBody.caseType = caseType;
+                }
+
+                const urgencyLevel = document.getElementById('urgencyLevel').value;
+                if (urgencyLevel) {
+                    requestBody.urgencyLevel = urgencyLevel;
+                }
+
+                // Make API call
+                fetch('/api/v1/agent/match-from-text', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody),
+                    signal: window.matchAbortController.signal
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => {
+                                throw new Error('Network response was not ok: ' + text);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Display results (reuse existing result display logic)
+                        const pageResultElement = document.getElementById('matchResult');
+                        const pageResultsCard = document.getElementById('resultsCard');
+
+                        if (pageResultElement && pageResultsCard) {
+                            const resultText = data && data.response ? data.response.trim() : '';
+                            if (resultText && resultText.length > 0) {
+                                // Check if content looks like Markdown
+                                const isMarkdown = isMarkdownFormat(resultText);
+                                if (isMarkdown && typeof marked !== 'undefined') {
+                                    try {
+                                        const htmlContent = marked.parse(resultText, {
+                                            breaks: true,
+                                            gfm: true
+                                        });
+                                        pageResultElement.innerHTML = htmlContent;
+                                        pageResultElement.classList.add('markdown-content');
+                                    } catch (markdownError) {
+                                        pageResultElement.textContent = resultText;
+                                        pageResultElement.classList.remove('markdown-content');
+                                    }
+                                } else {
+                                    pageResultElement.textContent = resultText;
+                                    pageResultElement.classList.remove('markdown-content');
+                                }
+                                pageResultsCard.classList.remove('d-none');
+                            }
+                        }
+
+                        // Complete progress indicator
+                        if (matchProgressBar && matchProgressText && matchStatusText) {
+                            if (typeof window.setMatchProgressBarWidth === 'function') {
+                                window.setMatchProgressBarWidth(100);
+                            } else {
+                                matchProgressBar.style.flex = '0 0 100%';
+                                matchProgressBar.style.width = '100%';
+                                matchProgressBar.style.minWidth = '3%';
+                                matchProgressBar.setAttribute('aria-valuenow', '100');
+                                matchProgressText.textContent = '100%';
+                            }
+                            matchStatusText.textContent = 'Match operation completed';
+                            setTimeout(function () {
+                                if (matchProgress) {
+                                    matchProgress.classList.add('d-none');
+                                }
+                                if (enterCaseCard) {
+                                    enterCaseCard.style.display = '';
+                                }
+                                if (selectCaseCard) {
+                                    selectCaseCard.style.display = 'none';
+                                }
+                            }, 2000);
+                        }
+
+                        // Close SSE connection
+                        if (textFormEventSource) {
+                            textFormEventSource.close();
+                            textFormEventSource = null;
+                        }
+                    })
+                    .catch(error => {
+                        if (error.name === 'AbortError') {
+                            const matchCancelledAlertEl = document.getElementById('matchCancelledAlert');
+                            if (matchCancelledAlertEl) {
+                                matchCancelledAlertEl.classList.remove('d-none');
+                            }
+                        } else {
+                            console.error('Error:', error);
+                            const errorMessage = error.message || 'Unknown error occurred';
+                            if (errorAlert) {
+                                errorAlert.textContent = 'Failed to match doctors: ' + errorMessage;
+                                errorAlert.classList.remove('d-none');
+                            }
+                        }
+                        if (matchProgress) {
+                            matchProgress.classList.add('d-none');
+                        }
+                        if (enterCaseCard) {
+                            enterCaseCard.style.display = '';
+                        }
+                        if (selectCaseCard) {
+                            selectCaseCard.style.display = 'none';
+                        }
+                        window.matchAbortController = null;
+
+                        // Close SSE connection on error
+                        if (textFormEventSource) {
+                            textFormEventSource.close();
+                            textFormEventSource = null;
+                        }
+                    })
+                    .finally(() => {
+                        if (enterCaseCard) {
+                            enterCaseCard.style.display = '';
+                        }
+                        if (selectCaseCard) {
+                            selectCaseCard.style.display = 'none';
+                        }
+                        window.matchAbortController = null;
+                        // Re-enable button
+                        if (matchFromTextButton) {
+                            matchFromTextButton.disabled = false;
+                        }
+                        if (matchFromTextButtonText) {
+                            matchFromTextButtonText.textContent = 'Match Doctors';
+                        }
+                        if (matchFromTextSpinner) {
+                            matchFromTextSpinner.classList.add('d-none');
+                        }
+                    });
+            });
+        }
+
+        // Helper function to check if text looks like Markdown (reuse from existing script)
+        function isMarkdownFormat(text) {
+            if (!text || text.length === 0) return false;
+            const markdownPatterns = [
+                new RegExp('^#{1,6}\\s+', 'm'),
+                new RegExp('^\\*\\s+', 'm'),
+                new RegExp('^\\d+\\.\\s+', 'm'),
+                new RegExp('```[\\s\\S]*?```', 'm'),
+                new RegExp('`[^`]+`', 'm'),
+                new RegExp('\\[.*?\\]\\(.*?\\)', 'm'),
+                new RegExp('\\*\\*.*?\\*\\*', 'm'),
+                new RegExp('_.*?_', 'm'),
+                new RegExp('^\\s*[-*+]\\s+', 'm'),
+                new RegExp('^\\s*>\\s+', 'm'),
+                new RegExp('^\\|.*\\|.*\\|', 'm'),
+                new RegExp('^---+\\s*$', 'm')
+            ];
+            let matchCount = 0;
+            for (const pattern of markdownPatterns) {
+                if (pattern.test(text)) {
+                    matchCount++;
+                }
+            }
+            return matchCount >= 2;
+        }
+    })();
+    /*]]>*/</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="header">
+    <script th:inline="javascript">
+        (function () {
+            try {
+                var stored = window.localStorage && window.localStorage.getItem('medexpertmatch-selected-user');
+                if (!stored) return;
+                var user = JSON.parse(stored);
+                var isAdmin = user.roles && user.roles.indexOf('ROLE_ADMIN') !== -1;
+                var url = new URL(window.location.href);
+                var urlUser = url.searchParams.get('user');
+                if (isAdmin && urlUser !== 'admin') {
+                    url.searchParams.set('user', 'admin');
+                    window.location.replace(url.toString());
+                    return;
+                }
+                if (!isAdmin && urlUser === 'admin') {
+                    url.searchParams.delete('user');
+                    window.location.replace(url.toString());
+                }
+            } catch (e) {
+            }
+        })();
+    </script>
+    <nav class="navbar navbar-expand-lg navbar-dark py-2 px-4" style="background-color: #1a5490;">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center gap-4">
+                <a class="text-white text-decoration-none" style="color: #FFFFFF !important;"
+                   th:href="@{/}" th:if="${currentPage != 'index' and !isAdmin}">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <a class="text-white text-decoration-none" style="color: #FFFFFF !important;"
+                   th:href="@{/(user=admin)}" th:if="${currentPage != 'index' and isAdmin}">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div class="d-flex align-items-center">
+                    <div class="ms-3">
+                        <h1 class="h5 mb-0 fw-bold text-white" style="color: #FFFFFF !important;">
+                            MEDEXPERT MATCH</h1>
+                        <p class="small mb-0 text-white d-none d-md-inline" style="color: #FFFFFF !important;">
+                            Medical Expert Recommendation System</p>
+                    </div>
+                </div>
+            </div>
+            <button aria-controls="navbarMainCollapse" aria-expanded="false" aria-label="Toggle navigation"
+                    class="navbar-toggler border-light" data-bs-target="#navbarMainCollapse" data-bs-toggle="collapse"
+                    type="button">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarMainCollapse">
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 py-3 py-lg-0 ms-lg-auto">
+                    <a class="text-white text-decoration-none" th:classappend="${currentPage == 'index'} ? 'fw-bold'"
+                       th:href="@{/}" th:if="${!isAdmin}">Home</a>
+                    <a class="text-white text-decoration-none" th:classappend="${currentPage == 'index'} ? 'fw-bold'"
+                       th:href="@{/(user=admin)}" th:if="${isAdmin}">Home</a>
+                    <a class="text-white text-decoration-none" th:href="@{/match}" th:if="${currentPage == 'index'}">Find
+                        Specialist</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${currentPage == 'match'}">Find Specialist</span>
+                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
+                          th:if="${currentPage != 'index' and currentPage != 'match'}">Find Specialist</span>
+                    <a class="text-white text-decoration-none" th:href="@{/analyze}" th:if="${currentPage == 'index'}">Case
+                        Analysis</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${currentPage == 'analyze'}">Case Analysis</span>
+                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
+                          th:if="${currentPage != 'index' and currentPage != 'analyze'}">Case Analysis</span>
+                    <a class="text-white text-decoration-none" th:href="@{/queue}" th:if="${currentPage == 'index'}">Queue</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${currentPage == 'queue'}">Queue</span>
+                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
+                          th:if="${currentPage != 'index' and currentPage != 'queue'}">Queue</span>
+                    <a class="text-white text-decoration-none" th:href="@{/analytics}"
+                       th:if="${currentPage == 'index'}">Analytics</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${currentPage == 'analytics'}">Analytics</span>
+                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
+                          th:if="${currentPage != 'index' and currentPage != 'analytics'}">Analytics</span>
+                    <a class="text-white text-decoration-none" th:href="@{/routing}" th:if="${currentPage == 'index'}">Routing</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${currentPage == 'routing'}">Routing</span>
+                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
+                          th:if="${currentPage != 'index' and currentPage != 'routing'}">Routing</span>
+                    <a class="text-white text-decoration-none" th:href="@{/admin/synthetic-data(user=admin)}"
+                       th:if="${isAdmin and currentPage != 'synthetic-data'}">Synthetic Data</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${isAdmin and currentPage == 'synthetic-data'}">Synthetic Data</span>
+                    <a class="text-white text-decoration-none" th:href="@{/admin/graph-visualization(user=admin)}"
+                       th:if="${isAdmin and currentPage != 'graph-visualization'}">Graph Visualization</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${isAdmin and currentPage == 'graph-visualization'}">Graph Visualization</span>
+                    <a aria-label="Open documentation" class="btn btn-outline-light btn-sm" href="/docs"
+                       rel="noopener noreferrer"
+                       target="_blank" title="Documentation">
+                        <i aria-hidden="true" class="bi bi-journal-text"></i>
+                    </a>
+                    <div class="dropdown">
+                        <button aria-expanded="false" class="btn btn-outline-light btn-sm dropdown-toggle"
+                                data-bs-toggle="dropdown"
+                                id="userSelectorBtn" type="button">
+                            <span id="currentUserDisplay">Regular User</span>
+                        </button>
+                        <ul aria-labelledby="userSelectorBtn" class="dropdown-menu dropdown-menu-end"
+                            id="userSelectorMenu">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <script th:src="@{/js/main.js}"></script>
+</th:block>
+</body>
+</html>

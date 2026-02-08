@@ -1,0 +1,138 @@
+site_name: MedExpertMatch Documentation
+site_description: MedExpertMatch - AI-Powered Medical Expert Recommendation System for MedGemma Impact Challenge
+site_author: Siarhei Berdachuk
+site_url: https://medexpertmatch.berdachuk.com
+
+# Repository
+repo_name: med-expert-match
+repo_url: https://github.com/berdachuk/med-expert-match-ce
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2026 Siarhei Berdachuk
+
+# Theme (colors aligned with application: primary #1a5490, hover #144375)
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.annotate
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+
+# Extensions
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - plantuml_markdown:
+      server: https://www.plantuml.com/plantuml
+      cachedir: .plantuml-cache
+      format: svg
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+# Navigation
+nav:
+  - Home: index.md
+  - Overview:
+      - Vision: VISION.md
+      - Product Requirements: PRD.md
+      - MedExpertMatch Overview: MedExpertMatch.md
+      - Use Cases: USE_CASES.md
+      - Problems Solved: PROBLEMS_SOLVED.md
+      - Target Audience: TARGET_AUDIENCE.md
+      - Benefits: BENEFITS.md
+      - Unique Selling Propositions: UNIQUE_SELLING_PROPOSITIONS.md
+      - Sales Copy (Pain-Solution): SALES_COPY_PAIN_SOLUTION.md
+      - Sales Presentation (3 min): PRESENTATION_SALES_3MIN.md
+  - Features:
+      - Find Specialist Flow: FIND_SPECIALIST_FLOW.md
+      - Consultation Queue: CONSULTATION_QUEUE.md
+      - Network Analytics: NETWORK_ANALYTICS.md
+      - Regional Routing: ROUTING.md
+      - Evidence Retrieval: EVIDENCE_RETRIEVAL.md
+      - Medical Agent Tools: MEDICAL_AGENT_TOOLS.md
+      - Synthetic Data Generator: SYNTHETIC_DATA_GENERATOR.md
+  - Architecture:
+      - Architecture Overview: ARCHITECTURE.md
+      - Architecture Analysis: ARCHITECTURE_ANALYSIS.md
+      - Integration Plan: INTEGRATION_PLAN.md
+  - Development:
+      - Implementation Plan: IMPLEMENTATION_PLAN.md
+      - Demo Guide: DEMO_GUIDE.md
+      - UI Flows and Mockups: UI_FLOWS_AND_MOCKUPS.md
+      - Development Guide: DEVELOPMENT_GUIDE.md
+      - Coding Rules: CODING_RULES.md
+      - Testing: TESTING.md
+      - List Formatting Guide: LIST_FORMATTING_GUIDE.md
+      - MkDocs Setup: MKDOCS_SETUP.md
+      - PlantUML Usage: PLANTUML_USAGE.md
+  - Configuration:
+      - AI Provider Configuration: AI_PROVIDER_CONFIGURATION.md
+      - MedGemma Configuration: MEDGEMMA_CONFIGURATION.md
+      - MedGemma Setup Guide: MEDGEMMA_SETUP.md
+
+
+# Extra
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/berdachuk/med-expert-match-ce
+  analytics:
+    provider: google
+    property: G-XXXXXXXXXX
+
+# Custom CSS for full-width content
+extra_css:
+  - stylesheets/extra.css
+
+# Custom JavaScript for navigation toggles
+extra_javascript:
+  - javascripts/navigation-toggle.js

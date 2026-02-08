@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Consultation Queue</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Consultation Queue</h1>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Prioritize Consults</h5>
+                </div>
+                <div class="card-body long-running-block">
+                    <form id="prioritize-form" method="post" th:action="@{/queue/prioritize}">
+                        <div class="long-running-actions">
+                            <button class="btn btn-primary" id="prioritize-btn" type="submit">Prioritize Queue</button>
+                        </div>
+                        <p class="long-running-msg" id="prioritize-long-running-msg">Prioritization analyzes cases with
+                            MedGemma and can take one to several minutes depending on queue size. You can cancel at any
+                            time.</p>
+                        <div class="long-running-progress align-items-center gap-3" id="prioritize-progress"
+                             style="display: none;">
+                            <div aria-label="Loading" class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading</span>
+                            </div>
+                            <span class="long-running-progress-text">Prioritizing consultation queue...</span>
+                            <button class="btn btn-outline-secondary btn-sm long-running-cancel" id="prioritize-cancel"
+                                    type="button">Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="prioritize-error" role="alert"
+                 th:class="'alert alert-danger' + (${error != null && !error.isEmpty()} ? '' : ' d-none')"
+                 th:text="${error}"></div>
+            <div class="alert alert-secondary d-none long-running-cancelled" id="prioritize-cancelled-alert"
+                 role="alert">Request cancelled.
+            </div>
+
+            <div class="card mb-4" id="prioritize-result-card"
+                 th:style="${prioritizationResult != null} ? 'display: block' : 'display: none'">
+                <div class="card-header">
+                    <h5 class="mb-0">Prioritization Results</h5>
+                </div>
+                <div class="card-body">
+                    <div id="prioritize-result-body"
+                         th:text="${prioritizationResult != null ? prioritizationResult.response : ''}"></div>
+                </div>
+            </div>
+
+            <div class="card" id="queue-log-panel" style="display: none;" th:if="${isAdmin}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Execution logs</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" id="queue-clear-logs" type="button">Clear
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" id="queue-toggle-logs" type="button">
+                            <i class="bi bi-chevron-down" id="queue-toggle-logs-icon"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="queue-log-panel-body">
+                    <div id="queue-log-container"
+                         style="height: 280px; overflow-y: auto; background-color: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', monospace; font-size: 12px; padding: 10px; border-radius: 4px;">
+                        <div id="queue-log-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script th:inline="javascript">
+    (function () {
+        const form = document.getElementById('prioritize-form');
+        const progressEl = document.getElementById('prioritize-progress');
+        const cancelBtn = document.getElementById('prioritize-cancel');
+        const resultCard = document.getElementById('prioritize-result-card');
+        const resultBody = document.getElementById('prioritize-result-body');
+        const errorEl = document.getElementById('prioritize-error');
+        const cancelledAlert = document.getElementById('prioritize-cancelled-alert');
+        const longRunningMsg = document.getElementById('prioritize-long-running-msg');
+        const submitBtn = document.getElementById('prioritize-btn');
+        const actionsEl = form ? form.querySelector('.long-running-actions') : null;
+        const logPanel = document.getElementById('queue-log-panel');
+        const logPanelBody = document.getElementById('queue-log-panel-body');
+        const logContainer = document.getElementById('queue-log-container');
+        const logContent = document.getElementById('queue-log-content');
+        const clearLogsBtn = document.getElementById('queue-clear-logs');
+        const toggleLogsBtn = document.getElementById('queue-toggle-logs');
+        const toggleLogsIcon = document.getElementById('queue-toggle-logs-icon');
+
+        let abortController = null;
+        let eventSource = null;
+        let logPanelCollapsed = false;
+        const maxLogEntries = 500;
+
+        function setProgress(show) {
+            if (actionsEl) actionsEl.classList.toggle('d-none', show);
+            if (progressEl) progressEl.style.display = show ? 'flex' : 'none';
+            if (longRunningMsg) longRunningMsg.classList.toggle('d-none', show);
+            if (errorEl) errorEl.classList.add('d-none');
+            if (cancelledAlert) cancelledAlert.classList.add('d-none');
+            submitBtn.disabled = show;
+            if (show) {
+                logPanel.style.display = 'block';
+                if (logPanelBody) logPanelBody.style.display = 'block';
+            }
+        }
+
+        function setError(message) {
+            errorEl.textContent = message || '';
+            errorEl.classList.toggle('d-none', !message);
+        }
+
+        function renderResultAsMarkdown(text) {
+            if (!resultBody) return;
+            var content = (text != null && text !== undefined) ? String(text).trim() : '';
+            if (!content) {
+                resultBody.textContent = '';
+                resultBody.classList.remove('markdown-content');
+                return;
+            }
+            if (typeof marked !== 'undefined') {
+                try {
+                    var html = marked.parse(content, {breaks: true, gfm: true});
+                    resultBody.innerHTML = html;
+                    resultBody.classList.add('markdown-content');
+                } catch (e) {
+                    resultBody.textContent = content;
+                    resultBody.classList.remove('markdown-content');
+                }
+            } else {
+                resultBody.textContent = content;
+                resultBody.classList.remove('markdown-content');
+            }
+        }
+
+        function setResult(data) {
+            resultCard.style.display = 'block';
+            if (resultBody) {
+                resultBody.style.display = 'block';
+                renderResultAsMarkdown(data && data.response != null ? data.response : '');
+            }
+        }
+
+        function addLogEntry(message, level) {
+            if (!logContent) return;
+            const entry = document.createElement('div');
+            entry.style.marginBottom = '2px';
+            entry.style.wordWrap = 'break-word';
+            if (level === 'error' || (message && message.indexOf('[ERROR]') !== -1)) {
+                entry.style.color = '#f48771';
+            } else if (message && message.indexOf('[WARN]') !== -1) {
+                entry.style.color = '#dcdcaa';
+            } else if (message && message.indexOf('[DEBUG]') !== -1) {
+                entry.style.color = '#9cdcfe';
+            } else if (message && message.indexOf('[INFO]') !== -1) {
+                entry.style.color = '#4ec9b0';
+            } else {
+                entry.style.color = '#d4d4d4';
+            }
+            entry.textContent = message || '';
+            logContent.appendChild(entry);
+            if (logContainer) logContainer.scrollTop = logContainer.scrollHeight;
+            while (logContent.children.length > maxLogEntries) {
+                logContent.removeChild(logContent.firstChild);
+            }
+        }
+
+        function initLogStream(sessionId) {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            const url = '/api/v1/logs/stream?sessionId=' + encodeURIComponent(sessionId);
+            eventSource = new EventSource(url);
+            eventSource.addEventListener('log', function (event) {
+                addLogEntry(event.data);
+            });
+            eventSource.onerror = function () {
+                if (eventSource && eventSource.readyState === EventSource.CLOSED) {
+                    addLogEntry('[ERROR] Log connection closed.', 'error');
+                }
+            };
+        }
+
+        function closeLogStream() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+        }
+
+        if (clearLogsBtn) {
+            clearLogsBtn.addEventListener('click', function () {
+                if (logContent) {
+                    logContent.innerHTML = '';
+                    addLogEntry('[Logs cleared]', 'info');
+                }
+            });
+        }
+
+        if (toggleLogsBtn && logPanelBody) {
+            toggleLogsBtn.addEventListener('click', function () {
+                logPanelCollapsed = !logPanelCollapsed;
+                logPanelBody.style.display = logPanelCollapsed ? 'none' : 'block';
+                if (toggleLogsIcon) {
+                    toggleLogsIcon.className = logPanelCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+                }
+            });
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            setError('');
+            abortController = new AbortController();
+            const sessionId = 'queue-' + Date.now();
+
+            if (logContent) logContent.innerHTML = '';
+            initLogStream(sessionId);
+            setProgress(true);
+
+            fetch([[@{/api/v1 / agent / prioritize - consults
+        }]],
+            {
+                method: 'POST',
+                    headers
+            :
+                {
+                    'Content-Type'
+                :
+                    'application/json'
+                }
+            ,
+                body: JSON.stringify({sessionId: sessionId}),
+                    signal
+            :
+                abortController.signal
+            }
+        )
+        .
+            then(function (res) {
+                if (!res.ok) throw new Error(res.statusText || 'Request failed');
+                return res.json();
+            })
+                .then(function (data) {
+                    closeLogStream();
+                    setProgress(false);
+                    setResult(data);
+                    addLogEntry('[INFO] Prioritization completed.', 'info');
+                })
+                .catch(function (err) {
+                    closeLogStream();
+                    setProgress(false);
+                    if (err.name === 'AbortError') {
+                        if (cancelledAlert) cancelledAlert.classList.remove('d-none');
+                        addLogEntry('[WARN] Prioritization cancelled.', 'warn');
+                    } else {
+                        setError('Failed to prioritize consults: ' + (err.message || 'Unknown error'));
+                        addLogEntry('[ERROR] Request failed: ' + (err.message || 'Unknown error'), 'error');
+                    }
+                });
+        });
+
+        cancelBtn.addEventListener('click', function () {
+            if (abortController) {
+                abortController.abort();
+            }
+        });
+
+        if (resultBody && resultBody.textContent.trim()) {
+            renderResultAsMarkdown(resultBody.textContent);
+        }
+    })();
+</script>
+</body>
+</html>

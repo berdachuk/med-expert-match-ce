@@ -1,0 +1,107 @@
+# Full stack: PostgreSQL, MedExpertMatch application, and documentation.
+# Usage: docker compose up -d
+# App: http://localhost:8094  Docs: http://localhost:8095  DB: localhost:5433
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    image: medexpertmatch-postgres:latest
+    container_name: medexpertmatch-postgres
+    environment:
+      POSTGRES_USER: medexpertmatch
+      POSTGRES_PASSWORD: medexpertmatch
+      POSTGRES_DB: medexpertmatch
+    ports:
+      - "5433:5432"
+    volumes:
+      - medexpertmatch-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U medexpertmatch -d medexpertmatch" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medexpertmatch-network
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    image: medexpertmatch-app:latest
+    container_name: medexpertmatch-app
+    # Resolve host.docker.internal on Linux (Docker Desktop sets it automatically on Mac/Windows)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Optional: mount custom skills to extend built-in ones (set MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY=/app/.claude/skills-extra)
+    # volumes:
+    #   - ./custom-skills:/app/.claude/skills-extra
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # Database (compose: postgres service)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medexpertmatch
+      SPRING_DATASOURCE_USERNAME: medexpertmatch
+      SPRING_DATASOURCE_PASSWORD: medexpertmatch
+      SERVER_PORT: "8080"
+      # Chat/LLM (Ollama on host; override for remote API)
+      CHAT_PROVIDER: openai
+      CHAT_BASE_URL: http://host.docker.internal:11434
+      CHAT_API_KEY: ollama
+      CHAT_MODEL: MedAIBase/MedGemma1.5:4b
+      CHAT_TEMPERATURE: "0.7"
+      CHAT_MAX_TOKENS: "6000"
+      # Embedding
+      EMBEDDING_PROVIDER: openai
+      EMBEDDING_BASE_URL: http://host.docker.internal:11434
+      EMBEDDING_API_KEY: ollama
+      EMBEDDING_MODEL: nomic-embed-text
+      EMBEDDING_DIMENSIONS: "768"
+      # Reranking
+      RERANKING_PROVIDER: openai
+      RERANKING_BASE_URL: http://host.docker.internal:11434
+      RERANKING_API_KEY: ollama
+      RERANKING_MODEL: MedAIBase/MedGemma1.5:4b
+      RERANKING_TEMPERATURE: "0.1"
+      # Tool calling (Mistral 7B)
+      TOOL_CALLING_PROVIDER: openai
+      TOOL_CALLING_BASE_URL: http://host.docker.internal:11434
+      TOOL_CALLING_API_KEY: ollama
+      TOOL_CALLING_MODEL: mistral:7b
+      TOOL_CALLING_TEMPERATURE: "0.7"
+      TOOL_CALLING_MAX_TOKENS: "4096"
+      # LLM concurrency (sequential for local Ollama)
+      MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS: "1"
+      MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS: "1"
+      MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS: "1"
+      MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS: "1"
+      # Logging (aligned with local debug)
+      LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_AI: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JDBC: DEBUG
+      LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH_GRAPH: DEBUG
+    ports:
+      - "8094:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - medexpertmatch-network
+
+  docs:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.docs
+    image: medexpertmatch-docs:latest
+    container_name: medexpertmatch-docs
+    ports:
+      - "8095:80"
+    networks:
+      - medexpertmatch-network
+
+volumes:
+  medexpertmatch-postgres-data:
+
+networks:
+  medexpertmatch-network:
+    driver: bridge

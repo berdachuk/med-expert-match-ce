@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  postgres-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    image: medexpertmatch-postgres-dev:latest
+    container_name: medexpertmatch-postgres-dev
+    environment:
+      POSTGRES_USER: medexpertmatch
+      POSTGRES_PASSWORD: medexpertmatch
+      POSTGRES_DB: medexpertmatch
+    ports:
+      - "5433:5432"  # Map container port 5432 to host port 5433
+    volumes:
+      - ~/data/medexpertmatch-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U medexpertmatch" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medexpertmatch-network
+
+networks:
+  medexpertmatch-network:
+    driver: bridge

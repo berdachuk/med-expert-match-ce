@@ -1,0 +1,4 @@
+name,description
+AVAILABLE,Doctor is available for consultations
+BUSY,Doctor is currently busy
+OFFLINE,Doctor is offline or unavailable

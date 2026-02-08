@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Doctor Profile</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Doctor Profile</h1>
+
+            <div class="alert alert-danger" th:if="${error != null && !error.isEmpty()}" th:text="${error}"></div>
+
+            <div class="card mb-4" th:if="${doctor != null}">
+                <div class="card-header">
+                    <h5 class="mb-0">Doctor Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ID:</strong> <span th:text="${doctor.id()}"></span></p>
+                            <p><strong>Name:</strong> <span th:text="${doctor.name()}"></span></p>
+                            <p><strong>Email:</strong> <span th:text="${doctor.email()}"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Telehealth Enabled:</strong>
+                                <span class="badge bg-success" th:if="${doctor.telehealthEnabled()}">Yes</span>
+                                <span class="badge bg-secondary" th:if="${!doctor.telehealthEnabled()}">No</span>
+                            </p>
+                            <p><strong>Availability Status:</strong>
+                                <span class="badge"
+                                      th:classappend="${doctor.availabilityStatus() == 'AVAILABLE'} ? 'bg-success' : 'bg-warning'"
+                                      th:text="${doctor.availabilityStatus()}"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-3" th:if="${doctor.specialties() != null && !doctor.specialties().isEmpty()}">
+                        <strong>Specialties:</strong>
+                        <div class="d-flex flex-wrap gap-2 mt-2">
+                            <span class="badge bg-primary" th:each="specialty : ${doctor.specialties()}"
+                                  th:text="${specialty}"></span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3" th:if="${doctor.certifications() != null && !doctor.certifications().isEmpty()}">
+                        <strong>Certifications:</strong>
+                        <ul>
+                            <li th:each="cert : ${doctor.certifications()}" th:text="${cert}"></li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-3" th:if="${doctor.facilityIds() != null && !doctor.facilityIds().isEmpty()}">
+                        <strong>Facilities:</strong>
+                        <ul>
+                            <li th:each="facilityId : ${doctor.facilityIds()}" th:text="${facilityId}"></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" th:if="${experiences != null && !experiences.isEmpty()}">
+                <div class="card-header">
+                    <h5 class="mb-0">Clinical Experience</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Case ID</th>
+                                <th>ICD-10 Code</th>
+                                <th>Complexity</th>
+                                <th>Outcome</th>
+                                <th>Date</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="exp : ${experiences}">
+                                <td th:text="${exp.caseId()}"></td>
+                                <td th:text="${exp.icd10Code()}"></td>
+                                <td th:text="${exp.complexityLevel()}"></td>
+                                <td th:text="${exp.outcome()}"></td>
+                                <td th:text="${exp.experienceDate()}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

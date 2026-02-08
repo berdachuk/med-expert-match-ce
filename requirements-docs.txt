@@ -1,0 +1,12 @@
+# MkDocs and documentation dependencies
+mkdocs==1.6.1
+mkdocs-material==9.7.1
+pymdown-extensions==10.20
+markdown-include==0.8.1
+
+# PlantUML support - using plantuml-markdown extension
+plantuml-markdown==3.11.1
+
+# Optional: For local PlantUML rendering (alternative to online server)
+# Requires Java to be installed separately
+# plantuml==1.2023.12

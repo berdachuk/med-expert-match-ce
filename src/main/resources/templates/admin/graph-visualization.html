@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Graph Visualization</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Graph Visualization</h1>
+
+            <div class="alert alert-danger d-none" id="errorAlert" role="alert"></div>
+            <div class="alert alert-info d-none" id="infoAlert" role="alert"></div>
+
+            <!-- Statistics Panel -->
+            <div class="card mb-4" id="statsPanel">
+                <div class="card-header">
+                    <h5 class="mb-0">Graph Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center" id="statsLoading">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading statistics...</span>
+                    </div>
+                    <div class="d-none" id="statsContent">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <strong>Total Vertices:</strong> <span id="totalVertices">0</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Total Edges:</strong> <span id="totalEdges">0</span>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Graph Status:</strong> <span id="graphStatus">Unknown</span>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-sm btn-primary" id="refreshStatsBtn">Refresh Stats</button>
+                            </div>
+                        </div>
+                        <div class="mt-3" id="vertexCounts"></div>
+                        <div class="mt-3" id="edgeCounts"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="card mb-4" id="controlsPanel">
+                <div class="card-header">
+                    <h5 class="mb-0">Visualization Controls</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label" for="vertexTypeFilter">Filter by Vertex Type</label>
+                            <select class="form-select" id="vertexTypeFilter">
+                                <option value="">All Types</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="maxNodes">Max Nodes</label>
+                            <input class="form-control" id="maxNodes" max="10000" min="100" step="100" type="number"
+                                   value="1000">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="layoutSelect">Layout</label>
+                            <select class="form-select" id="layoutSelect">
+                                <option value="grid">Grid</option>
+                                <option value="cose">Force-Directed (Small)</option>
+                                <option selected value="cose-spread">Force-Directed (Spread)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="showEdges">Show Edges</label>
+                            <div class="form-check form-switch mt-2">
+                                <input checked class="form-check-input" id="showEdges" type="checkbox">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button class="btn btn-primary" id="loadGraphBtn">Load Graph</button>
+                                <button class="btn btn-secondary" id="clearGraphBtn">Clear</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-warning d-none" id="largeGraphWarning">
+                                <strong>Warning:</strong> Large graph detected. Loading may take time and impact
+                                performance.
+                                Consider filtering by vertex type or reducing max nodes.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualization Container -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Graph Visualization</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-secondary" id="zoomInBtn">Zoom In</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="zoomOutBtn">Zoom Out</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="resetViewBtn">Reset View</button>
+                        <button class="btn btn-sm btn-outline-secondary" id="togglePanelsBtn">
+                            <span id="togglePanelsIcon">◀</span> Hide Controls
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="text-center py-5 d-none" id="loadingIndicator">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading graph...</span>
+                        </div>
+                        <p class="mt-2">Loading graph data...</p>
+                    </div>
+                    <div id="cy" style="width: 100%; height: 600px; border: 1px solid #ddd; position: relative;"></div>
+                    <div class="node-tooltip d-none" id="nodeTooltip"></div>
+                    <div class="p-3 bg-light border-top" id="graphInfo">
+                        <small class="text-muted">
+                            Nodes: <span id="nodeCount">0</span> |
+                            Edges: <span id="edgeCount">0</span> |
+                            Zoom: <span id="zoomLevel">1.0</span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+<style>
+    .node-tooltip {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.95);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        pointer-events: none;
+        z-index: 1000;
+        max-width: 400px;
+        max-height: 500px;
+        overflow-y: auto;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        line-height: 1.5;
+    }
+
+    .node-tooltip strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 13px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        padding-bottom: 4px;
+    }
+
+    .node-tooltip .tooltip-item {
+        margin: 2px 0;
+    }
+
+    .node-tooltip .tooltip-label {
+        font-weight: 600;
+        margin-right: 6px;
+    }
+
+    .panel-hidden {
+        display: none !important;
+    }
+
+    #cy.fullscreen {
+        height: calc(100vh - 200px) !important;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Global variables
+    let cy = null;
+    let currentStats = null;
+    let cytoscapeLoaded = false;
+    let panelsVisible = true;
+
+    // Utility functions (must be defined before use)
+    function escapeHtml(text) {
+        if (text == null) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showError(message) {
+        const errorAlert = document.getElementById('errorAlert');
+        if (errorAlert) {
+            errorAlert.textContent = message;
+            errorAlert.classList.remove('d-none');
+        } else {
+            console.error(message);
+        }
+    }
+
+    function hideError() {
+        const errorAlert = document.getElementById('errorAlert');
+        if (errorAlert) {
+            errorAlert.classList.add('d-none');
+        }
+    }
+
+    function showInfo(message) {
+        const infoAlert = document.getElementById('infoAlert');
+        if (infoAlert) {
+            infoAlert.textContent = message;
+            infoAlert.classList.remove('d-none');
+            setTimeout(() => {
+                infoAlert.classList.add('d-none');
+            }, 3000);
+        }
+    }
+
+    function hideInfo() {
+        const infoAlert = document.getElementById('infoAlert');
+        if (infoAlert) {
+            infoAlert.classList.add('d-none');
+        }
+    }
+
+    // Initialize Cytoscape
+    function initCytoscape() {
+        // Check if Cytoscape is loaded
+        if (typeof cytoscape === 'undefined') {
+            console.error('Cytoscape.js library not loaded');
+            showError('Graph visualization library failed to load. Please refresh the page.');
+            return false;
+        }
+
+        if (cy) {
+            cy.destroy();
+        }
+
+        cy = cytoscape({
+            container: document.getElementById('cy'),
+            elements: {nodes: [], edges: []},
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'label': 'data(label)',
+                        'width': 30,
+                        'height': 30,
+                        'background-color': '#1a5490',
+                        'color': '#fff',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'font-size': '10px',
+                        'text-wrap': 'wrap',
+                        'text-max-width': '80px'
+                    }
+                },
+                {
+                    selector: 'node[type="Doctor"]',
+                    style: {
+                        'background-color': '#1a5490',
+                        'shape': 'ellipse'
+                    }
+                },
+                {
+                    selector: 'node[type="MedicalCase"]',
+                    style: {
+                        'background-color': '#dc3545',
+                        'shape': 'rectangle'
+                    }
+                },
+                {
+                    selector: 'node[type="ICD10Code"]',
+                    style: {
+                        'background-color': '#28a745',
+                        'shape': 'diamond'
+                    }
+                },
+                {
+                    selector: 'node[type="MedicalSpecialty"]',
+                    style: {
+                        'background-color': '#ffc107',
+                        'shape': 'hexagon'
+                    }
+                },
+                {
+                    selector: 'node[type="Facility"]',
+                    style: {
+                        'background-color': '#17a2b8',
+                        'shape': 'round-rectangle'
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 2,
+                        'line-color': '#ccc',
+                        'target-arrow-color': '#ccc',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'straight'
+                    }
+                },
+                {
+                    selector: 'edge[type="TREATED"]',
+                    style: {
+                        'line-color': '#1a5490',
+                        'target-arrow-color': '#1a5490'
+                    }
+                },
+                {
+                    selector: 'edge[type="SPECIALIZES_IN"]',
+                    style: {
+                        'line-color': '#ffc107',
+                        'target-arrow-color': '#ffc107'
+                    }
+                },
+                {
+                    selector: 'edge[type="HAS_CONDITION"]',
+                    style: {
+                        'line-color': '#28a745',
+                        'target-arrow-color': '#28a745'
+                    }
+                }
+            ],
+            layout: {
+                name: 'cose',
+                animate: false,
+                fit: true,
+                padding: 30,
+                nodeRepulsion: 400000,
+                idealEdgeLength: 100,
+                nodeOverlap: 10,
+                minNodeSpacing: 25,
+                randomize: false,
+                componentSpacing: 100,
+                nestingFactor: 5,
+                gravity: 80,
+                numIter: 100,
+                initialTemp: 200,
+                coolingFactor: 0.95,
+                minTemp: 1.0
+            },
+            minZoom: 0.1,
+            maxZoom: 2.0,
+            wheelSensitivity: 0.2
+        });
+
+        // Update zoom level display
+        cy.on('zoom', function () {
+            updateZoomLevel();
+        });
+
+        // Update edge visibility based on zoom
+        cy.on('zoom', function () {
+            const zoom = cy.zoom();
+            const showEdges = document.getElementById('showEdges').checked;
+
+            if (!showEdges || zoom < 0.3) {
+                cy.edges().style('opacity', 0);
+            } else {
+                cy.edges().style('opacity', 0.6);
+            }
+        });
+
+        // Node hover tooltip
+        const tooltip = document.getElementById('nodeTooltip');
+        let tooltipTimeout = null;
+        let loadingCaseId = null;
+        let currentCaseData = null;
+        let loadingDoctorId = null;
+        let currentDoctorData = null;
+        let loadingIcd10Code = null;
+        let currentIcd10Data = null;
+        let loadingSpecialtyId = null;
+        let currentSpecialtyData = null;
+
+        cy.on('mouseover', 'node', function (evt) {
+            const node = evt.target;
+            const nodeData = node.data();
+
+            // Clear any pending timeout
+            if (tooltipTimeout) {
+                clearTimeout(tooltipTimeout);
+            }
+
+            const nodeType = nodeData.type || nodeData.label || '';
+
+            // Build basic tooltip content
+            let tooltipContent = '<strong>' + nodeType + '</strong>';
+
+            if (nodeData.id) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">ID:</span>' + escapeHtml(String(nodeData.id)) + '</div>';
+            }
+
+            if (nodeData.name) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Name:</span>' + escapeHtml(String(nodeData.name)) + '</div>';
+            }
+
+            // For MedicalCase nodes, fetch and display detailed information
+            if (nodeType === 'MedicalCase' && nodeData.id) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Loading details...</span></div>';
+                tooltip.innerHTML = tooltipContent;
+                tooltip.classList.remove('d-none');
+                updateTooltipPosition(evt, node);
+
+                // Fetch medical case details
+                if (loadingCaseId !== nodeData.id) {
+                    loadingCaseId = nodeData.id;
+                    fetchMedicalCaseDetails(nodeData.id, evt, node);
+                } else if (currentCaseData && currentCaseData.id === nodeData.id) {
+                    // Use cached data if available
+                    displayMedicalCaseDetails(currentCaseData, evt, node);
+                }
+            } else if (nodeType === 'Doctor' && nodeData.id) {
+                // For Doctor nodes, fetch and display detailed information
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Loading details...</span></div>';
+                tooltip.innerHTML = tooltipContent;
+                tooltip.classList.remove('d-none');
+                updateTooltipPosition(evt, node);
+
+                // Fetch doctor details
+                if (loadingDoctorId !== nodeData.id) {
+                    loadingDoctorId = nodeData.id;
+                    fetchDoctorDetails(nodeData.id, evt, node);
+                } else if (currentDoctorData && currentDoctorData.id === nodeData.id) {
+                    // Use cached data if available
+                    displayDoctorDetails(currentDoctorData, evt, node);
+                }
+            } else if (nodeType === 'ICD10Code' && nodeData.id) {
+                // For ICD10Code nodes, fetch and display detailed information
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Loading details...</span></div>';
+                tooltip.innerHTML = tooltipContent;
+                tooltip.classList.remove('d-none');
+                updateTooltipPosition(evt, node);
+
+                // Fetch ICD-10 code details (try by code first, then by ID)
+                const codeToFetch = nodeData.id;
+                if (loadingIcd10Code !== codeToFetch) {
+                    loadingIcd10Code = codeToFetch;
+                    fetchICD10CodeDetails(codeToFetch, evt, node);
+                } else if (currentIcd10Data && (currentIcd10Data.code === codeToFetch || currentIcd10Data.id === codeToFetch)) {
+                    // Use cached data if available
+                    displayICD10CodeDetails(currentIcd10Data, evt, node);
+                }
+            } else if (nodeType === 'MedicalSpecialty' && (nodeData.id || nodeData.name)) {
+                // For MedicalSpecialty nodes, fetch and display detailed information
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Loading details...</span></div>';
+                tooltip.innerHTML = tooltipContent;
+                tooltip.classList.remove('d-none');
+                updateTooltipPosition(evt, node);
+
+                // Fetch medical specialty details (try by name first, then by ID)
+                const specialtyToFetch = nodeData.name || nodeData.id;
+                if (loadingSpecialtyId !== specialtyToFetch) {
+                    loadingSpecialtyId = specialtyToFetch;
+                    fetchMedicalSpecialtyDetails(specialtyToFetch, nodeData.name, evt, node);
+                } else if (currentSpecialtyData && (currentSpecialtyData.name === specialtyToFetch || currentSpecialtyData.id === specialtyToFetch)) {
+                    // Use cached data if available
+                    displayMedicalSpecialtyDetails(currentSpecialtyData, evt, node);
+                }
+            } else {
+                // Set tooltip content for other node types
+                tooltip.innerHTML = tooltipContent;
+                tooltip.classList.remove('d-none');
+                updateTooltipPosition(evt, node);
+            }
+        });
+
+        async function fetchMedicalCaseDetails(caseId, evt, node) {
+            try {
+                const response = await fetch(`/api/cases/${encodeURIComponent(caseId)}`);
+                if (response.ok) {
+                    const caseData = await response.json();
+                    currentCaseData = caseData;
+                    displayMedicalCaseDetails(caseData, evt, node);
+                } else {
+                    // If case not found, show basic info
+                    showBasicCaseInfo(caseId, evt, node);
+                }
+            } catch (error) {
+                console.error('Error fetching medical case details:', error);
+                showBasicCaseInfo(caseId, evt, node);
+            }
+        }
+
+        function displayMedicalCaseDetails(caseData, evt, node) {
+            let tooltipContent = '<strong>Medical Case</strong>';
+
+            if (caseData.id) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">ID:</span>' + escapeHtml(String(caseData.id)) + '</div>';
+            }
+
+            if (caseData.urgencyLevel) {
+                const urgencyColor = getUrgencyColor(caseData.urgencyLevel);
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Urgency:</span><span style="color: ' + urgencyColor + '; font-weight: bold;">' + escapeHtml(String(caseData.urgencyLevel)) + '</span></div>';
+            }
+
+            if (caseData.caseType) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Type:</span>' + escapeHtml(String(caseData.caseType)) + '</div>';
+            }
+
+            if (caseData.patientAge !== null && caseData.patientAge !== undefined) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Age:</span>' + escapeHtml(String(caseData.patientAge)) + '</div>';
+            }
+
+            if (caseData.requiredSpecialty) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Specialty:</span>' + escapeHtml(String(caseData.requiredSpecialty)) + '</div>';
+            }
+
+            if (caseData.chiefComplaint) {
+                const complaint = truncateText(caseData.chiefComplaint, 100);
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Chief Complaint:</span>' + escapeHtml(complaint) + '</div>';
+            }
+
+            if (caseData.symptoms) {
+                const symptoms = truncateText(caseData.symptoms, 100);
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Symptoms:</span>' + escapeHtml(symptoms) + '</div>';
+            }
+
+            if (caseData.currentDiagnosis) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Diagnosis:</span>' + escapeHtml(String(caseData.currentDiagnosis)) + '</div>';
+            }
+
+            if (caseData.icd10Codes && caseData.icd10Codes.length > 0) {
+                const codes = caseData.icd10Codes.slice(0, 3).join(', ');
+                const more = caseData.icd10Codes.length > 3 ? ' (+' + (caseData.icd10Codes.length - 3) + ' more)' : '';
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">ICD-10:</span>' + escapeHtml(codes + more) + '</div>';
+            }
+
+            if (caseData.additionalNotes) {
+                const notes = truncateText(caseData.additionalNotes, 80);
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Notes:</span>' + escapeHtml(notes) + '</div>';
+            }
+
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        function showBasicCaseInfo(caseId, evt, node) {
+            let tooltipContent = '<strong>Medical Case</strong>';
+            tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">ID:</span>' + escapeHtml(String(caseId)) + '</div>';
+            tooltipContent += '<div class="tooltip-item" style="color: #999; font-style: italic;">Details not available</div>';
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        function getUrgencyColor(urgencyLevel) {
+            switch (urgencyLevel?.toUpperCase()) {
+                case 'CRITICAL':
+                    return '#dc3545';
+                case 'HIGH':
+                    return '#fd7e14';
+                case 'MEDIUM':
+                    return '#ffc107';
+                case 'LOW':
+                    return '#28a745';
+                default:
+                    return '#6c757d';
+            }
+        }
+
+        async function fetchDoctorDetails(doctorId, evt, node) {
+            try {
+                const response = await fetch(`/api/doctors/${encodeURIComponent(doctorId)}`);
+                if (response.ok) {
+                    const doctorData = await response.json();
+                    currentDoctorData = doctorData;
+                    displayDoctorDetails(doctorData, evt, node);
+                } else {
+                    // If doctor not found, show basic info
+                    showBasicDoctorInfo(doctorId, evt, node);
+                }
+            } catch (error) {
+                console.error('Error fetching doctor details:', error);
+                showBasicDoctorInfo(doctorId, evt, node);
+            }
+        }
+
+        function displayDoctorDetails(doctorData, evt, node) {
+            let tooltipContent = '<strong>Doctor</strong>';
+
+            if (doctorData.id) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">ID:</span>' + escapeHtml(String(doctorData.id)) + '</div>';
+            }
+
+            if (doctorData.name) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Name:</span>' + escapeHtml(String(doctorData.name)) + '</div>';
+            }
+
+            if (doctorData.email) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Email:</span>' + escapeHtml(String(doctorData.email)) + '</div>';
+            }
+
+            if (doctorData.specialties && doctorData.specialties.length > 0) {
+                const specialties = doctorData.specialties.slice(0, 5).join(', ');
+                const more = doctorData.specialties.length > 5 ? ' (+' + (doctorData.specialties.length - 5) + ' more)' : '';
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Specialties:</span>' + escapeHtml(specialties + more) + '</div>';
+            }
+
+            if (doctorData.certifications && doctorData.certifications.length > 0) {
+                const certs = doctorData.certifications.slice(0, 3).join(', ');
+                const more = doctorData.certifications.length > 3 ? ' (+' + (doctorData.certifications.length - 3) + ' more)' : '';
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Certifications:</span>' + escapeHtml(certs + more) + '</div>';
+            }
+
+            if (doctorData.facilityIds && doctorData.facilityIds.length > 0) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Facilities:</span>' + escapeHtml(String(doctorData.facilityIds.length)) + ' facility(ies)</div>';
+            }
+
+            if (doctorData.telehealthEnabled !== null && doctorData.telehealthEnabled !== undefined) {
+                const telehealthStatus = doctorData.telehealthEnabled ? 'Yes' : 'No';
+                const telehealthColor = doctorData.telehealthEnabled ? '#28a745' : '#6c757d';
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Telehealth:</span><span style="color: ' + telehealthColor + ';">' + telehealthStatus + '</span></div>';
+            }
+
+            if (doctorData.availabilityStatus) {
+                const statusColor = getAvailabilityColor(doctorData.availabilityStatus);
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Availability:</span><span style="color: ' + statusColor + ';">' + escapeHtml(String(doctorData.availabilityStatus)) + '</span></div>';
+            }
+
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        function showBasicDoctorInfo(doctorId, evt, node) {
+            let tooltipContent = '<strong>Doctor</strong>';
+            tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">ID:</span>' + escapeHtml(String(doctorId)) + '</div>';
+            tooltipContent += '<div class="tooltip-item" style="color: #999; font-style: italic;">Details not available</div>';
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        async function fetchICD10CodeDetails(codeOrId, evt, node) {
+            try {
+                // Try fetching by code first (most common case for ICD10Code nodes)
+                let response = await fetch(`/api/icd10/code/${encodeURIComponent(codeOrId)}`);
+                if (!response.ok) {
+                    // If not found by code, try by ID
+                    response = await fetch(`/api/icd10/${encodeURIComponent(codeOrId)}`);
+                }
+
+                if (response.ok) {
+                    const icd10Data = await response.json();
+                    currentIcd10Data = icd10Data;
+                    displayICD10CodeDetails(icd10Data, evt, node);
+                } else {
+                    // If code not found, show basic info
+                    showBasicICD10Info(codeOrId, evt, node);
+                }
+            } catch (error) {
+                console.error('Error fetching ICD-10 code details:', error);
+                showBasicICD10Info(codeOrId, evt, node);
+            }
+        }
+
+        function displayICD10CodeDetails(icd10Data, evt, node) {
+            let tooltipContent = '<strong>ICD-10 Code</strong>';
+
+            if (icd10Data.code) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Code:</span><span style="font-weight: bold; color: #4CAF50;">' + escapeHtml(String(icd10Data.code)) + '</span></div>';
+            }
+
+            if (icd10Data.description) {
+                const desc = truncateText(icd10Data.description, 120);
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Description:</span>' + escapeHtml(desc) + '</div>';
+            }
+
+            if (icd10Data.category) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Category:</span>' + escapeHtml(String(icd10Data.category)) + '</div>';
+            }
+
+            if (icd10Data.parentCode) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Parent Code:</span>' + escapeHtml(String(icd10Data.parentCode)) + '</div>';
+            }
+
+            if (icd10Data.relatedCodes && icd10Data.relatedCodes.length > 0) {
+                const related = icd10Data.relatedCodes.slice(0, 5).join(', ');
+                const more = icd10Data.relatedCodes.length > 5 ? ' (+' + (icd10Data.relatedCodes.length - 5) + ' more)' : '';
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Related Codes:</span>' + escapeHtml(related + more) + '</div>';
+            }
+
+            if (icd10Data.id) {
+                tooltipContent += '<div class="tooltip-item" style="font-size: 10px; color: #999;"><span class="tooltip-label">ID:</span>' + escapeHtml(String(icd10Data.id)) + '</div>';
+            }
+
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        function showBasicICD10Info(codeOrId, evt, node) {
+            let tooltipContent = '<strong>ICD-10 Code</strong>';
+            tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Code:</span>' + escapeHtml(String(codeOrId)) + '</div>';
+            tooltipContent += '<div class="tooltip-item" style="color: #999; font-style: italic;">Details not available</div>';
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        async function fetchMedicalSpecialtyDetails(specialtyIdOrName, specialtyName, evt, node) {
+            try {
+                // Try fetching by name first (most common case for MedicalSpecialty nodes)
+                let response;
+                if (specialtyName) {
+                    response = await fetch(`/api/specialties/name/${encodeURIComponent(specialtyName)}`);
+                } else {
+                    response = await fetch(`/api/specialties/${encodeURIComponent(specialtyIdOrName)}`);
+                }
+
+                if (!response.ok && specialtyName) {
+                    // If not found by name, try by ID
+                    response = await fetch(`/api/specialties/${encodeURIComponent(specialtyIdOrName)}`);
+                }
+
+                if (response.ok) {
+                    const specialtyData = await response.json();
+                    currentSpecialtyData = specialtyData;
+                    displayMedicalSpecialtyDetails(specialtyData, evt, node);
+                } else {
+                    // If specialty not found, show basic info
+                    showBasicSpecialtyInfo(specialtyIdOrName, evt, node);
+                }
+            } catch (error) {
+                console.error('Error fetching medical specialty details:', error);
+                showBasicSpecialtyInfo(specialtyIdOrName, evt, node);
+            }
+        }
+
+        function displayMedicalSpecialtyDetails(specialtyData, evt, node) {
+            let tooltipContent = '<strong>Medical Specialty</strong>';
+
+            if (specialtyData.name) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Name:</span><span style="font-weight: bold; color: #ffc107;">' + escapeHtml(String(specialtyData.name)) + '</span></div>';
+            }
+
+            if (specialtyData.description) {
+                const desc = truncateText(specialtyData.description, 120);
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Description:</span>' + escapeHtml(desc) + '</div>';
+            }
+
+            if (specialtyData.icd10CodeRanges && specialtyData.icd10CodeRanges.length > 0) {
+                const ranges = specialtyData.icd10CodeRanges.slice(0, 5).join(', ');
+                const more = specialtyData.icd10CodeRanges.length > 5 ? ' (+' + (specialtyData.icd10CodeRanges.length - 5) + ' more)' : '';
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">ICD-10 Ranges:</span>' + escapeHtml(ranges + more) + '</div>';
+            }
+
+            if (specialtyData.relatedSpecialtyIds && specialtyData.relatedSpecialtyIds.length > 0) {
+                tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Related Specialties:</span>' + escapeHtml(String(specialtyData.relatedSpecialtyIds.length)) + ' specialty(ies)</div>';
+            }
+
+            if (specialtyData.id) {
+                tooltipContent += '<div class="tooltip-item" style="font-size: 10px; color: #999;"><span class="tooltip-label">ID:</span>' + escapeHtml(String(specialtyData.id)) + '</div>';
+            }
+
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        function showBasicSpecialtyInfo(specialtyIdOrName, evt, node) {
+            let tooltipContent = '<strong>Medical Specialty</strong>';
+            tooltipContent += '<div class="tooltip-item"><span class="tooltip-label">Name/ID:</span>' + escapeHtml(String(specialtyIdOrName)) + '</div>';
+            tooltipContent += '<div class="tooltip-item" style="color: #999; font-style: italic;">Details not available</div>';
+            tooltip.innerHTML = tooltipContent;
+            updateTooltipPosition(evt, node);
+        }
+
+        function getAvailabilityColor(availabilityStatus) {
+            if (!availabilityStatus) return '#6c757d';
+            const status = availabilityStatus.toUpperCase();
+            if (status.includes('AVAILABLE') || status.includes('ACTIVE')) return '#28a745';
+            if (status.includes('BUSY') || status.includes('UNAVAILABLE')) return '#dc3545';
+            if (status.includes('AWAY') || status.includes('OFFLINE')) return '#ffc107';
+            return '#6c757d';
+        }
+
+        function truncateText(text, maxLength) {
+            if (!text) return '';
+            if (text.length <= maxLength) return text;
+            return text.substring(0, maxLength) + '...';
+        }
+
+        cy.on('mousemove', 'node', function (evt) {
+            // Update tooltip position as mouse moves
+            if (!tooltip.classList.contains('d-none')) {
+                updateTooltipPosition(evt, evt.target);
+            }
+        });
+
+        cy.on('mouseout', 'node', function (evt) {
+            // Hide tooltip with slight delay
+            tooltipTimeout = setTimeout(function () {
+                tooltip.classList.add('d-none');
+            }, 100);
+        });
+
+        // Hide tooltip when mouse leaves the graph
+        cy.on('mouseout', function (evt) {
+            if (evt.target === cy) {
+                tooltip.classList.add('d-none');
+            }
+        });
+
+        function updateTooltipPosition(evt, node) {
+            const container = cy.container();
+            const containerRect = container.getBoundingClientRect();
+
+            // Try to get mouse position from event, fallback to node position
+            let x, y;
+            if (evt.originalEvent) {
+                x = evt.originalEvent.clientX - containerRect.left;
+                y = evt.originalEvent.clientY - containerRect.top;
+            } else {
+                const renderedPos = node.renderedPosition();
+                x = renderedPos.x;
+                y = renderedPos.y;
+            }
+
+            // Position tooltip offset from cursor/node
+            tooltip.style.left = (x + 20) + 'px';
+            tooltip.style.top = (y - 20) + 'px';
+
+            // Adjust if tooltip goes outside container bounds
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const maxX = containerRect.width - tooltipRect.width - 10;
+            const maxY = containerRect.height - tooltipRect.height - 10;
+
+            if (x + 20 > maxX) {
+                tooltip.style.left = (x - tooltipRect.width - 20) + 'px';
+            }
+            if (y - 20 < 0) {
+                tooltip.style.top = (y + 30) + 'px';
+            }
+        }
+
+        // Update info display
+        updateGraphInfo();
+        return true;
+    }
+
+    function updateZoomLevel() {
+        if (cy) {
+            document.getElementById('zoomLevel').textContent = cy.zoom().toFixed(2);
+        }
+    }
+
+    function updateGraphInfo() {
+        if (cy) {
+            document.getElementById('nodeCount').textContent = cy.nodes().length;
+            document.getElementById('edgeCount').textContent = cy.edges().length;
+        }
+    }
+
+    // Load statistics
+    async function loadStatistics() {
+        const statsLoading = document.getElementById('statsLoading');
+        const statsContent = document.getElementById('statsContent');
+
+        try {
+            statsLoading.classList.remove('d-none');
+            statsContent.classList.add('d-none');
+
+            const response = await fetch('/api/v1/graph/stats');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to load statistics: ${response.status} ${errorText}`);
+            }
+
+            const stats = await response.json();
+
+            // Check for error in response
+            if (stats.error) {
+                throw new Error(stats.error);
+            }
+
+            currentStats = stats;
+
+            document.getElementById('totalVertices').textContent = stats.totalVertices || 0;
+            document.getElementById('totalEdges').textContent = stats.totalEdges || 0;
+            document.getElementById('graphStatus').textContent = stats.exists ? 'Available' : 'Not Available';
+
+            // Display vertex counts
+            const vertexCountsDiv = document.getElementById('vertexCounts');
+            if (stats.vertexCounts && Object.keys(stats.vertexCounts).length > 0) {
+                let html = '<strong>Vertices by Type:</strong> ';
+                html += Object.entries(stats.vertexCounts)
+                    .map(([type, count]) => `${type}: ${count}`)
+                    .join(', ');
+                vertexCountsDiv.innerHTML = html;
+            } else {
+                vertexCountsDiv.innerHTML = '';
+            }
+
+            // Display edge counts
+            const edgeCountsDiv = document.getElementById('edgeCounts');
+            if (stats.edgeCounts && Object.keys(stats.edgeCounts).length > 0) {
+                let html = '<strong>Edges by Type:</strong> ';
+                html += Object.entries(stats.edgeCounts)
+                    .map(([type, count]) => `${type}: ${count}`)
+                    .join(', ');
+                edgeCountsDiv.innerHTML = html;
+            } else {
+                edgeCountsDiv.innerHTML = '';
+            }
+
+            // Populate vertex type filter
+            const vertexTypeFilter = document.getElementById('vertexTypeFilter');
+            vertexTypeFilter.innerHTML = '<option value="">All Types</option>';
+            if (stats.vertexCounts) {
+                Object.keys(stats.vertexCounts).forEach(type => {
+                    const option = document.createElement('option');
+                    option.value = type;
+                    option.textContent = type;
+                    vertexTypeFilter.appendChild(option);
+                });
+            }
+
+            // Show warning for large graphs
+            const largeGraphWarning = document.getElementById('largeGraphWarning');
+            if (stats.totalVertices > 100000) {
+                largeGraphWarning.classList.remove('d-none');
+            } else {
+                largeGraphWarning.classList.add('d-none');
+            }
+
+            statsLoading.classList.add('d-none');
+            statsContent.classList.remove('d-none');
+
+        } catch (error) {
+            console.error('Error loading statistics:', error);
+            showError('Failed to load graph statistics: ' + error.message);
+            statsLoading.classList.add('d-none');
+        }
+    }
+
+    // Load graph data
+    async function loadGraphData() {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const maxNodes = parseInt(document.getElementById('maxNodes').value) || 1000;
+        const vertexType = document.getElementById('vertexTypeFilter').value;
+        const showEdges = document.getElementById('showEdges').checked;
+
+        try {
+            loadingIndicator.classList.remove('d-none');
+            hideError();
+            hideInfo();
+
+            // Load data in batches for large graphs
+            const batchSize = Math.min(maxNodes, 5000);
+            let offset = 0;
+            let allNodes = [];
+            let allEdges = [];
+
+            while (offset < maxNodes) {
+                const limit = Math.min(batchSize, maxNodes - offset);
+                const url = `/api/v1/graph/data?limit=${limit}&offset=${offset}${vertexType ? '&vertexType=' + encodeURIComponent(vertexType) : ''}`;
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Failed to load graph data');
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (data.nodes && data.nodes.length > 0) {
+                    allNodes = allNodes.concat(data.nodes);
+                }
+
+                if (showEdges && data.edges && data.edges.length > 0) {
+                    allEdges = allEdges.concat(data.edges);
+                }
+
+                if (!data.nodes || data.nodes.length < limit) {
+                    break; // No more data
+                }
+
+                offset += limit;
+            }
+
+            // Deduplicate nodes by ID (in case batches overlap)
+            const nodeMap = new Map();
+            allNodes.forEach(node => {
+                const nodeId = node.data.id;
+                if (!nodeMap.has(nodeId)) {
+                    nodeMap.set(nodeId, node);
+                }
+            });
+            allNodes = Array.from(nodeMap.values());
+
+            // Filter edges to only include those where both source and target nodes exist
+            const nodeIds = new Set(allNodes.map(n => n.data.id));
+            allEdges = allEdges.filter(edge => {
+                const sourceExists = nodeIds.has(edge.data.source);
+                const targetExists = nodeIds.has(edge.data.target);
+                if (!sourceExists || !targetExists) {
+                    console.warn(`Skipping edge ${edge.data.id}: source=${edge.data.source} (exists: ${sourceExists}), target=${edge.data.target} (exists: ${targetExists})`);
+                    return false;
+                }
+                return true;
+            });
+
+            // Limit total nodes/edges for performance
+            if (allNodes.length > maxNodes) {
+                allNodes = allNodes.slice(0, maxNodes);
+                // Also filter edges to only include those with nodes in the limited set
+                const limitedNodeIds = new Set(allNodes.map(n => n.data.id));
+                allEdges = allEdges.filter(edge =>
+                    limitedNodeIds.has(edge.data.source) && limitedNodeIds.has(edge.data.target)
+                );
+            }
+
+            // Limit edges to avoid overload
+            if (allEdges.length > maxNodes * 10) {
+                allEdges = allEdges.slice(0, maxNodes * 10);
+            }
+
+            // Update Cytoscape
+            if (cy) {
+                if (allNodes.length === 0) {
+                    showError('No nodes found to display');
+                    loadingIndicator.classList.add('d-none');
+                    return;
+                }
+
+                cy.batch(function () {
+                    cy.elements().remove();
+                    cy.add(allNodes);
+                    if (showEdges && allEdges.length > 0) {
+                        cy.add(allEdges);
+                    }
+                });
+
+                // Apply layout
+                const layoutName = document.getElementById('layoutSelect').value;
+                const layoutOptions = {
+                    name: 'cose', // Always use 'cose' as the layout name
+                    animate: false,
+                    fit: true,
+                    padding: 30
+                };
+
+                // Configuration for different layout variations
+                if (layoutName === 'cose-spread') {
+                    // Special configuration for spread layout
+                    layoutOptions.name = 'cose';
+                    layoutOptions.nodeRepulsion = 1000000;
+                    layoutOptions.idealEdgeLength = 150;
+                    layoutOptions.nodeOverlap = 20;
+                    layoutOptions.minNodeSpacing = 50;
+                    layoutOptions.randomize = true;
+                    layoutOptions.componentSpacing = 250;
+                    layoutOptions.nestingFactor = 1.2;
+                    layoutOptions.gravity = 1;
+                    layoutOptions.numIter = 1000;
+                    layoutOptions.initialTemp = 200;
+                    layoutOptions.coolingFactor = 0.95;
+                    layoutOptions.minTemp = 1.0;
+                } else if (layoutName === 'grid') {
+                    layoutOptions.name = 'grid';
+                    layoutOptions.rows = Math.ceil(Math.sqrt(allNodes.length));
+                } else {
+                    // Default to 'cose' with standard parameters
+                    layoutOptions.name = 'cose';
+                    layoutOptions.nodeRepulsion = 400000;
+                    layoutOptions.idealEdgeLength = 100;
+                    layoutOptions.nodeOverlap = 10;
+                    layoutOptions.minNodeSpacing = 25;
+                    layoutOptions.randomize = false;
+                    layoutOptions.componentSpacing = 100;
+                    layoutOptions.nestingFactor = 5;
+                    layoutOptions.gravity = 80;
+                    layoutOptions.numIter = 100;
+                    layoutOptions.initialTemp = 200;
+                    layoutOptions.coolingFactor = 0.95;
+                    layoutOptions.minTemp = 1.0;
+                }
+
+                cy.layout(layoutOptions).run();
+
+                // Update edge visibility based on zoom
+                const zoom = cy.zoom();
+                if (!showEdges || zoom < 0.3) {
+                    cy.edges().style('opacity', 0);
+                } else {
+                    cy.edges().style('opacity', 0.6);
+                }
+
+                // Ensure graph is visible
+                cy.fit();
+            } else {
+                console.error('Cytoscape instance not initialized');
+                showError('Graph visualization not initialized');
+            }
+
+            updateGraphInfo();
+            showInfo(`Loaded ${allNodes.length} nodes and ${allEdges.length} edges`);
+
+        } catch (error) {
+            console.error('Error loading graph data:', error);
+            showError('Failed to load graph data: ' + error.message);
+        } finally {
+            loadingIndicator.classList.add('d-none');
+        }
+    }
+
+    // Event listeners setup
+    function setupEventListeners() {
+        document.getElementById('loadGraphBtn').addEventListener('click', loadGraphData);
+        document.getElementById('clearGraphBtn').addEventListener('click', function () {
+            if (cy) {
+                cy.elements().remove();
+                updateGraphInfo();
+            }
+        });
+        document.getElementById('refreshStatsBtn').addEventListener('click', loadStatistics);
+        document.getElementById('zoomInBtn').addEventListener('click', function () {
+            if (cy) {
+                cy.zoom(cy.zoom() * 1.2);
+            }
+        });
+        document.getElementById('zoomOutBtn').addEventListener('click', function () {
+            if (cy) {
+                cy.zoom(cy.zoom() * 0.8);
+            }
+        });
+        document.getElementById('resetViewBtn').addEventListener('click', function () {
+            if (cy) {
+                cy.fit();
+                cy.center();
+            }
+        });
+        document.getElementById('showEdges').addEventListener('change', function () {
+            if (cy) {
+                const showEdges = this.checked;
+                const zoom = cy.zoom();
+                if (!showEdges || zoom < 0.3) {
+                    cy.edges().style('opacity', 0);
+                } else {
+                    cy.edges().style('opacity', 0.6);
+                }
+            }
+        });
+        document.getElementById('togglePanelsBtn').addEventListener('click', function () {
+            const statsPanel = document.getElementById('statsPanel');
+            const controlsPanel = document.getElementById('controlsPanel');
+            const toggleIcon = document.getElementById('togglePanelsIcon');
+            const toggleBtn = document.getElementById('togglePanelsBtn');
+            const cyContainer = document.getElementById('cy');
+
+            if (panelsVisible) {
+                // Hide panels and expand graph
+                statsPanel.classList.add('panel-hidden');
+                controlsPanel.classList.add('panel-hidden');
+                toggleIcon.textContent = '▶';
+                toggleBtn.innerHTML = '<span id="togglePanelsIcon">▶</span> Show Controls';
+                cyContainer.classList.add('fullscreen');
+                panelsVisible = false;
+            } else {
+                // Show panels and restore graph size
+                statsPanel.classList.remove('panel-hidden');
+                controlsPanel.classList.remove('panel-hidden');
+                toggleIcon.textContent = '◀';
+                toggleBtn.innerHTML = '<span id="togglePanelsIcon">◀</span> Hide Controls';
+                cyContainer.classList.remove('fullscreen');
+                panelsVisible = true;
+            }
+
+            // Resize Cytoscape to fit the new container size
+            if (cy) {
+                cy.resize();
+                cy.fit();
+            }
+        });
+    }
+
+    // Initialize application
+    function initializeApp() {
+        // Setup event listeners
+        setupEventListeners();
+
+        // Initialize Cytoscape and load statistics when Cytoscape is ready
+        if (initCytoscape()) {
+            loadStatistics();
+        }
+    }
+
+    // Load Cytoscape dynamically and initialize when ready
+    function loadCytoscapeAndInit() {
+        const cytoscapeScript = document.createElement('script');
+        cytoscapeScript.src = 'https://cdn.jsdelivr.net/npm/cytoscape@3/dist/cytoscape.min.js';
+        cytoscapeScript.onload = function () {
+            console.log('Cytoscape.js loaded successfully');
+            cytoscapeLoaded = true;
+            initializeApp();
+        };
+        cytoscapeScript.onerror = function () {
+            console.error('Failed to load Cytoscape.js');
+            showError('Graph visualization library failed to load. Please check your internet connection and refresh the page.');
+        };
+        document.head.appendChild(cytoscapeScript);
+    }
+
+    // Start initialization when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadCytoscapeAndInit);
+    } else {
+        loadCytoscapeAndInit();
+    }
+</script>
+</body>
+</html>

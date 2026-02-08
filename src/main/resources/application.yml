@@ -1,0 +1,163 @@
+spring:
+  application:
+    name: med-expert-match
+    version: 1.0.0
+  # Custom beans in SpringAIConfig; disable Spring AI auto-config to avoid duplicate models
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.retry.autoconfigure.SpringAiRetryAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioSpeechAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiAudioTranscriptionAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiImageModelAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration
+      - org.springframework.ai.model.openai.autoconfigure.OpenAiEmbeddingAutoConfiguration
+  datasource:
+    # Override via MEDEXPERTMATCH_DB_URL, MEDEXPERTMATCH_DB_USERNAME, MEDEXPERTMATCH_DB_PASSWORD (or SPRING_DATASOURCE_*)
+    url: ${MEDEXPERTMATCH_DB_URL:jdbc:postgresql://localhost:5433/medexpertmatch}
+    username: ${MEDEXPERTMATCH_DB_USERNAME:medexpertmatch}
+    password: ${MEDEXPERTMATCH_DB_PASSWORD:medexpertmatch}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      connection-init-sql: SET search_path = public, medexpertmatch;
+  jdbc:
+    template:
+      fetch-size: 100
+  jackson:
+    time-zone: UTC
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+    enabled: true
+    schemas: medexpertmatch
+    default-schema: medexpertmatch
+  ai:
+    openai:
+      enabled: false
+    # OpenAI-compatible providers only; base-url must NOT include /v1 (Spring AI adds it)
+    custom:
+      chat: # Case analysis, reasoning; e.g. MedGemma via Ollama/LiteLLM or OpenAI
+        provider: ${CHAT_PROVIDER:openai}
+        base-url: ${CHAT_BASE_URL:http://localhost:11434}
+        api-key: ${CHAT_API_KEY:ollama}
+        model: ${CHAT_MODEL:MedAIBase/MedGemma1.5:4b}
+        temperature: ${CHAT_TEMPERATURE:0.7}
+        max-tokens: ${CHAT_MAX_TOKENS:6000}
+      embedding: # Vector embeddings for similarity search; dimensions must match DB column
+        provider: ${EMBEDDING_PROVIDER:openai}
+        base-url: ${EMBEDDING_BASE_URL:http://localhost:11434}
+        api-key: ${EMBEDDING_API_KEY:ollama}
+        model: ${EMBEDDING_MODEL:nomic-embed-text}
+        dimensions: ${EMBEDDING_DIMENSIONS:768}
+      reranking: # Semantic reranking of match results; lower temperature preferred
+        provider: ${RERANKING_PROVIDER:openai}
+        base-url: ${RERANKING_BASE_URL:http://localhost:11434}
+        api-key: ${RERANKING_API_KEY:ollama}
+        model: ${RERANKING_MODEL:MedAIBase/MedGemma1.5:4b}
+        temperature: ${RERANKING_TEMPERATURE:0.1}
+      tool-calling: # Agent tool invocations; MedGemma does not support tools, use e.g. mistral:7b
+        provider: ${TOOL_CALLING_PROVIDER:openai}
+        base-url: ${TOOL_CALLING_BASE_URL:http://localhost:11434}
+        api-key: ${TOOL_CALLING_API_KEY:ollama}
+        model: ${TOOL_CALLING_MODEL:mistral:7b}
+        temperature: ${TOOL_CALLING_TEMPERATURE:0.7}
+        max-tokens: ${TOOL_CALLING_MAX_TOKENS:4096}
+    vectorstore: # PgVector; HNSW + cosine for similarity search
+      pgvector:
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+    include-binding-errors: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
+springdoc:
+  api-docs:
+    path: /api/v1/openapi.json
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    try-it-out-enabled: true
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  show-actuator: false
+
+# Application-specific settings
+medexpertmatch:
+  skills: # Agent skills (SKILL.md); set enabled: false to use plain ChatClient
+    enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
+    directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:.claude/skills}
+    extra-directory: ${MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY:}
+  retrieval: # Hybrid GraphRAG: vector + graph + keyword
+    vector:
+      max-results: 100
+      similarity-threshold: 0.7
+    graph:
+      max-depth: 3
+  llm: # Concurrency per component; 1 = sequential (safe for local Ollama), increase for remote APIs
+    max-tokens: 4096
+    temperature: 0.7
+    chat:
+      max-concurrent-calls: ${MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS:1}
+    embedding:
+      max-concurrent-calls: ${MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS:1}
+    reranking:
+      max-concurrent-calls: ${MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS:1}
+    tool-calling:
+      max-concurrent-calls: ${MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS:1}
+  synthetic-data: # Test data generation; batch sizes and timeouts
+    embedding:
+      thread-pool-size: ${SYNTHETIC_DATA_EMBEDDING_THREAD_POOL_SIZE:10}
+    description:
+      batch-commit-size: ${SYNTHETIC_DATA_DESCRIPTION_BATCH_COMMIT_SIZE:10}
+    llm:
+      timeout-seconds: ${SYNTHETIC_DATA_LLM_TIMEOUT_SECONDS:300}
+    batch-size: ${SYNTHETIC_DATA_BATCH_SIZE:5000}
+    progress-update-interval: ${SYNTHETIC_DATA_PROGRESS_UPDATE_INTERVAL:100}
+    max-doctors-per-batch: ${SYNTHETIC_DATA_MAX_DOCTORS_PER_BATCH:100000}
+    max-cases-per-batch: ${SYNTHETIC_DATA_MAX_CASES_PER_BATCH:1000000}
+    data-files:
+      medical-specialties: classpath:/data/medical-specialties.csv
+      icd10-codes: classpath:/data/icd10-codes.csv
+      procedures: classpath:/data/procedures.csv
+      facility-types: classpath:/data/facility-types.csv
+      complexity-levels: classpath:/data/complexity-levels.csv
+      outcomes: classpath:/data/outcomes.csv
+      availability-statuses: classpath:/data/availability-statuses.csv
+      severities: classpath:/data/severities.csv
+      symptoms: classpath:/data/symptoms.csv
+      encounter-classes: classpath:/data/encounter-classes.csv
+      encounter-types: classpath:/data/encounter-types.csv
+      complications: classpath:/data/complications.csv
+      facility-capabilities: classpath:/data/facility-capabilities.csv
+      specialty-procedures: classpath:/data/specialty-procedures.csv
+
+logging:
+  level:
+    com.berdachuk.medexpertmatch: INFO
+    org.springframework.ai: INFO
+    org.springframework.web: INFO
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/med-expert-match.log
+    max-size: 10MB
+    max-history: 30

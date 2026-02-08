@@ -1,0 +1,103 @@
+/* Custom styles for full-width content in MkDocs Material theme */
+/* Color palette aligned with application (main.css: --primary-color #1a5490, hover #144375) */
+
+:root {
+    --md-primary-fg-color: #1a5490;
+    --md-primary-fg-color--light: #4a7fb8;
+    --md-primary-fg-color--dark: #144375;
+    --md-primary-bg-color: #fff;
+    --md-primary-bg-color--light: rgba(255, 255, 255, 0.7);
+    --md-accent-fg-color: #144375;
+    --md-accent-fg-color--transparent: rgba(20, 67, 117, 0.1);
+    --md-accent-bg-color: #fff;
+    --md-accent-bg-color--light: rgba(255, 255, 255, 0.7);
+}
+
+[data-md-color-scheme="slate"] {
+    --md-primary-fg-color: #1a5490;
+    --md-primary-fg-color--light: #4a7fb8;
+    --md-primary-fg-color--dark: #144375;
+    --md-primary-bg-color: #fff;
+    --md-primary-bg-color--light: rgba(255, 255, 255, 0.7);
+    --md-accent-fg-color: #4a7fb8;
+    --md-accent-fg-color--transparent: rgba(74, 127, 184, 0.1);
+    --md-accent-bg-color: #fff;
+    --md-accent-bg-color--light: rgba(255, 255, 255, 0.7);
+}
+
+/* Remove max-width constraint on main content container */
+.md-main__inner {
+    max-width: 100% !important;
+}
+
+.md-content {
+    max-width: 100% !important;
+}
+
+.md-content__inner {
+    max-width: 100% !important;
+}
+
+/* Ensure content uses full available width */
+.md-grid {
+    max-width: 100% !important;
+}
+
+/* Adjust article container to use full width */
+.md-typeset {
+    max-width: 100% !important;
+}
+
+/* Make sure tables and code blocks can use full width */
+.md-typeset table {
+    width: 100%;
+}
+
+.md-typeset pre {
+    width: 100%;
+}
+
+/* Navigation toggle buttons */
+.md-header__nav-toggle {
+    display: flex !important;
+    gap: 0.5rem;
+    margin-left: auto;
+    align-items: center;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.md-header__nav-toggle-btn {
+    background: none !important;
+    border: none !important;
+    color: inherit !important;
+    cursor: pointer;
+    padding: 0.5rem !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s, opacity 0.2s;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+}
+
+.md-header__nav-toggle-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    opacity: 0.8;
+}
+
+[data-md-color-scheme="slate"] .md-header__nav-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.md-header__nav-toggle-btn:active {
+    opacity: 0.6;
+}
+
+.md-header__nav-toggle-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}

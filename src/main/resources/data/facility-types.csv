@@ -1,0 +1,11 @@
+name,description
+ACADEMIC,Academic medical center affiliated with university
+COMMUNITY,Community hospital serving local population
+SPECIALTY_CENTER,Specialized medical center focused on specific conditions
+HOSPITAL,General hospital providing comprehensive care
+CLINIC,Outpatient clinic providing primary and specialty care
+URGENT_CARE,Urgent care facility for non-emergency conditions
+AMBULATORY_SURGERY,Ambulatory surgery center for outpatient procedures
+REHABILITATION,Rehabilitation facility for recovery and therapy
+NURSING_HOME,Long-term care facility for elderly residents
+MENTAL_HEALTH,Mental health facility for psychiatric care

@@ -1,0 +1,1 @@
+DELETE FROM medexpertmatch.icd10_codes

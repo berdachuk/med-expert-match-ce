@@ -1,0 +1,26 @@
+# Build outputs
+target/
+build/
+site/
+
+# Version control and IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+.zed/
+.cursor/
+
+# Logs and caches
+logs/
+*.log
+.plantuml-cache/
+__pycache__/
+*.pyc
+
+# Local config (not for image)
+*.local.yml
+
+# OS and misc
+.DS_Store
+Thumbs.db

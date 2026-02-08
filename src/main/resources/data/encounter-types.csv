@@ -1,0 +1,16 @@
+name,description
+Emergency Department Visit,Emergency medical care visit
+Inpatient Stay,Hospital admission for treatment
+Outpatient Visit,Clinic or office visit
+Telehealth Consultation,Remote medical consultation
+Surgery,Surgical procedure
+Follow-up Visit,Follow-up appointment after treatment
+Preventive Care Visit,Routine preventive health check
+Urgent Care Visit,Urgent but non-emergency care
+Home Health Visit,Medical care provided at home
+Observation Stay,Short-term observation for monitoring
+Diagnostic Procedure,Procedure for diagnosis
+Therapeutic Procedure,Procedure for treatment
+Rehabilitation Visit,Rehabilitation therapy session
+Mental Health Visit,Mental health consultation
+Wellness Visit,General wellness check

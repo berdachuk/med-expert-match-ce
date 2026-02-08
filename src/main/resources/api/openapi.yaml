@@ -1,0 +1,725 @@
+openapi: 3.0.3
+info:
+  title: MedExpertMatch API
+  description: |
+    AI-powered medical expert recommendation system API.
+    
+    This API provides endpoints for:
+    - Medical agent operations (matching, analysis, routing)
+    - Synthetic data generation
+    - Medical case and doctor management
+    
+    **Medical Disclaimer:**
+    This API is for research and educational purposes only. It is NOT certified for clinical use 
+    and should NOT be used for diagnostic decisions without human-in-the-loop verification.
+  version: 1.0.0
+  contact:
+    name: MedExpertMatch API Support
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+  - url: https://api.medexpertmatch.com
+    description: Production server
+
+tags:
+  - name: Agent
+    description: Medical agent operations for matching, analysis, and routing
+  - name: Evidence
+    description: Evidence retrieval and tool verification (PubMed, guidelines)
+  - name: Synthetic Data
+    description: Synthetic data generation endpoints
+
+paths:
+  /api/v1/evidence/verify-pubmed:
+    get:
+      tags:
+        - Evidence
+      summary: Verify PubMed tool
+      description: |
+        Verifies the PubMed tool by running a search and returning article count and sample.
+        Use this to confirm PubMed is reachable from the app server and parsing works.
+        NCBI E-utilities are called with tool/email and User-Agent for identification.
+      operationId: verifyPubMed
+      parameters:
+        - name: query
+          in: query
+          required: false
+          description: Search query string
+          schema:
+            type: string
+            default: "GERD"
+            example: "GERD"
+        - name: maxResults
+          in: query
+          required: false
+          description: Maximum number of articles to fetch (max 10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 3
+            example: 3
+      responses:
+        '200':
+          description: Verification result (ok or 0 articles)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyPubMedResponse'
+        '500':
+          description: PubMed request failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyPubMedResponse'
+
+  /api/v1/agent/match/{caseId}:
+    post:
+      tags:
+        - Agent
+      summary: Match doctors to a medical case
+      description: |
+        Matches doctors to a medical case using case-analyzer and doctor-matcher skills.
+        Use Cases: Use Case 1 (Specialist Matching), Use Case 2 (Second Opinion)
+      operationId: matchDoctors
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          description: The medical case ID
+          schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{24}$'
+            example: "696d4041ee50c1cfdb2e27ae"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchRequest'
+      responses:
+        '200':
+          description: Successful response with matched doctors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '400':
+          description: Bad request - invalid case ID or request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Medical case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agent/prioritize-consults:
+    post:
+      tags:
+        - Agent
+      summary: Prioritize consultation queue
+      description: |
+        Prioritizes consultation queue based on case urgency and complexity.
+        Uses case-analyzer skill.
+        Use Case: Use Case 3 (Queue Prioritization)
+      operationId: prioritizeConsults
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrioritizeRequest'
+      responses:
+        '200':
+          description: Successful response with prioritized cases
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '400':
+          description: Bad request - invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agent/network-analytics:
+    post:
+      tags:
+        - Agent
+      summary: Perform network analytics
+      description: |
+        Performs network analytics to discover top experts and analyze expertise networks.
+        Uses network-analyzer skill.
+        Use Case: Use Case 4 (Network Analytics)
+      operationId: networkAnalytics
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkAnalyticsRequest'
+      responses:
+        '200':
+          description: Successful response with network analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '400':
+          description: Bad request - invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agent/analyze-case/{caseId}:
+    post:
+      tags:
+        - Agent
+      summary: Analyze a medical case
+      description: |
+        Analyzes a medical case, retrieves evidence, and generates clinical recommendations.
+        Uses case-analyzer, evidence-retriever, and recommendation-engine skills.
+        Use Case: Use Case 5 (Decision Support)
+      operationId: analyzeCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          description: The medical case ID
+          schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{24}$'
+            example: "696d4041ee50c1cfdb2e27ae"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeCaseRequest'
+      responses:
+        '200':
+          description: Successful response with case analysis and recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '400':
+          description: Bad request - invalid case ID or request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Medical case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agent/recommendations/{matchId}:
+    post:
+      tags:
+        - Agent
+      summary: Generate expert recommendations
+      description: |
+        Generates expert recommendations for a match.
+        Uses doctor-matcher skill.
+        Use Case: Use Case 5 (Decision Support)
+      operationId: generateRecommendations
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          description: The match ID
+          schema:
+            type: string
+            example: "match-123"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecommendationsRequest'
+      responses:
+        '200':
+          description: Successful response with expert recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '400':
+          description: Bad request - invalid match ID or request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/agent/route-case/{caseId}:
+    post:
+      tags:
+        - Agent
+      summary: Route a case to facilities
+      description: |
+        Routes a medical case to appropriate facilities based on case requirements.
+        Uses case-analyzer and routing-planner skills.
+        Use Case: Use Case 6 (Regional Routing)
+      operationId: routeCase
+      parameters:
+        - name: caseId
+          in: path
+          required: true
+          description: The medical case ID
+          schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{24}$'
+            example: "696d4041ee50c1cfdb2e27ae"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteCaseRequest'
+      responses:
+        '200':
+          description: Successful response with facility routing recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '400':
+          description: Bad request - invalid case ID or request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Medical case not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/synthetic-data/generate:
+    post:
+      tags:
+        - Synthetic Data
+      summary: Generate synthetic data
+      description: |
+        Generates synthetic data based on size parameter.
+        Uses FHIR R5 compliant resources for data generation.
+      operationId: generateSyntheticData
+      parameters:
+        - name: size
+          in: query
+          required: false
+          description: Data size (tiny, micro, mini, compact, small, standard, medium, large, huge)
+          schema:
+            type: string
+            enum: [ tiny, micro, mini, compact, small, standard, medium, large, huge ]
+            default: tiny
+        - name: clear
+          in: query
+          required: false
+          description: Whether to clear existing data first
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Synthetic data generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticDataResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/synthetic-data/generate/doctors:
+    post:
+      tags:
+        - Synthetic Data
+      summary: Generate doctors only
+      description: Generates synthetic doctor data.
+      operationId: generateDoctors
+      parameters:
+        - name: count
+          in: query
+          required: false
+          description: Number of doctors to generate
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+            default: 100
+      responses:
+        '200':
+          description: Doctors generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticDataResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/synthetic-data/generate/cases:
+    post:
+      tags:
+        - Synthetic Data
+      summary: Generate medical cases only
+      description: Generates synthetic medical case data.
+      operationId: generateMedicalCases
+      parameters:
+        - name: count
+          in: query
+          required: false
+          description: Number of cases to generate
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10000
+            default: 200
+      responses:
+        '200':
+          description: Medical cases generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticDataResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/synthetic-data/clear:
+    post:
+      tags:
+        - Synthetic Data
+      summary: Clear all synthetic data
+      description: Clears all synthetic data from the database.
+      operationId: clearSyntheticData
+      responses:
+        '200':
+          description: Synthetic data cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyntheticDataResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    VerifyPubMedResponse:
+      type: object
+      required:
+        - status
+        - query
+        - articleCount
+        - message
+      properties:
+        status:
+          type: string
+          enum: [ ok, error ]
+          description: Verification status
+        query:
+          type: string
+          description: Search query used
+        maxResults:
+          type: integer
+          description: Max results requested
+        articleCount:
+          type: integer
+          description: Number of articles returned by PubMed
+        message:
+          type: string
+          description: Human-readable message
+        sample:
+          type: array
+          description: Sample articles (pmid, title) when articleCount > 0
+          items:
+            type: object
+            properties:
+              pmid:
+                type: string
+              title:
+                type: string
+
+    AgentResponse:
+      type: object
+      required:
+        - response
+        - metadata
+      properties:
+        response:
+          type: string
+          description: The agent-generated response text
+          example: "I found several cardiology specialists who match case 696d4041ee50c1cfdb2e27ae."
+        metadata:
+          type: object
+          description: Additional metadata about the response
+          additionalProperties: true
+          properties:
+            caseId:
+              type: string
+              description: The medical case ID (if applicable)
+            matchId:
+              type: string
+              description: The match ID (if applicable)
+            skills:
+              type: array
+              items:
+                type: string
+              description: List of skills used for this operation
+              example: [ "case-analyzer", "doctor-matcher" ]
+
+    MatchRequest:
+      type: object
+      description: Request parameters for doctor matching
+      additionalProperties: true
+      properties:
+        maxResults:
+          type: integer
+          description: Maximum number of results to return
+          minimum: 1
+          maximum: 100
+          default: 10
+          example: 5
+        minScore:
+          type: number
+          format: double
+          description: Minimum match score threshold
+          minimum: 0
+          maximum: 1
+          default: 0.7
+          example: 0.8
+        preferTelehealth:
+          type: boolean
+          description: Prefer doctors with telehealth capability
+          default: false
+          example: true
+
+    PrioritizeRequest:
+      type: object
+      description: Request parameters for queue prioritization
+      additionalProperties: true
+      properties:
+        caseIds:
+          type: array
+          items:
+            type: string
+          description: List of case IDs to prioritize (if empty, prioritizes all)
+          example: [ "696d4041ee50c1cfdb2e27ae", "696d4041ee50c1cfdb2e28bf" ]
+        urgencyWeight:
+          type: number
+          format: double
+          description: Weight for urgency level in prioritization
+          minimum: 0
+          maximum: 1
+          default: 0.5
+          example: 0.7
+
+    NetworkAnalyticsRequest:
+      type: object
+      description: Request parameters for network analytics
+      additionalProperties: true
+      properties:
+        conditionCode:
+          type: string
+          description: ICD-10 condition code to analyze
+          example: "I21.9"
+        startDate:
+          type: string
+          format: date
+          description: Start date for analysis period
+          example: "2024-01-01"
+        endDate:
+          type: string
+          format: date
+          description: End date for analysis period
+          example: "2024-12-31"
+        metrics:
+          type: array
+          items:
+            type: string
+          description: Metrics to compute
+          example: [ "expertise", "collaboration", "outcomes" ]
+
+    AnalyzeCaseRequest:
+      type: object
+      description: Request parameters for case analysis
+      additionalProperties: true
+      properties:
+        includeEvidence:
+          type: boolean
+          description: Include clinical evidence in analysis
+          default: true
+          example: true
+        includeRecommendations:
+          type: boolean
+          description: Include treatment recommendations
+          default: true
+          example: true
+
+    RecommendationsRequest:
+      type: object
+      description: Request parameters for expert recommendations
+      additionalProperties: true
+      properties:
+        maxRecommendations:
+          type: integer
+          description: Maximum number of recommendations
+          minimum: 1
+          maximum: 50
+          default: 10
+          example: 5
+
+    RouteCaseRequest:
+      type: object
+      description: Request parameters for case routing
+      additionalProperties: true
+      properties:
+        preferAcademic:
+          type: boolean
+          description: Prefer academic medical centers
+          default: false
+          example: true
+        maxDistance:
+          type: number
+          format: double
+          description: Maximum distance in kilometers
+          minimum: 0
+          example: 100
+        maxResults:
+          type: integer
+          description: Maximum number of routing options
+          minimum: 1
+          maximum: 20
+          default: 5
+          example: 3
+
+    SyntheticDataResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum: [ success, error ]
+          description: Operation status
+          example: "success"
+        message:
+          type: string
+          description: Status message
+          example: "Synthetic data generated successfully"
+        size:
+          type: string
+          description: Data size used (for generate endpoint)
+          example: "medium"
+        count:
+          type: integer
+          description: Number of items generated (for specific generation endpoints)
+          example: 100
+        cleared:
+          type: boolean
+          description: Whether data was cleared (for generate endpoint)
+          example: false
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: string
+          enum: [ error ]
+          example: "error"
+        message:
+          type: string
+          description: Error message
+          example: "Medical case not found: 696d4041ee50c1cfdb2e27ae"
+        error:
+          type: string
+          description: Error type or code
+          example: "NOT_FOUND"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+          example: "2024-01-18T23:30:00Z"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication (if required)
+
+security:
+  - ApiKeyAuth: [ ]

@@ -1,0 +1,10 @@
+code,display,description
+IMP,Inpatient,Patient admitted to hospital
+AMB,Ambulatory,Outpatient visit
+EMER,Emergency,Emergency department visit
+HH,Home Health,Home health service visit
+OP,Outpatient,Outpatient clinic visit
+OBSERV,Observation,Observation stay
+PRENC,Pre-admission,Pre-admission testing
+SS,Short Stay,Short stay unit
+VR,Virtual,Virtual or telehealth encounter

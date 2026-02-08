@@ -1,0 +1,75 @@
+# These are some examples of commonly ignored file patterns.
+# You should customize this list as applicable to your project.
+# Learn more about .gitignore:
+#     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+
+# MkDocs
+site/
+.plantuml-cache/
+*.pyc
+__pycache__/
+
+# Node artifact files
+node_modules/
+dist/
+
+# Compiled Java class files
+*.class
+
+# Compiled Python bytecode
+*.py[cod]
+
+# Log files
+*.log
+
+# Logs
+/logs/
+
+# Build
+/target/
+/build/
+
+# IDE
+/.vscode/
+/.zed/
+/.idea/
+
+# Local configuration and secrets (do not commit)
+/src/main/resources/application-local.yml
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Package files
+*.jar
+# Exception: Maven Wrapper jar should be committed
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven
+target/
+dist/
+
+# JetBrains IDE
+.idea/
+
+# Unit test reports
+TEST*.xml
+
+# Applications
+*.app
+*.exe
+*.war
+
+# Large media files
+*.mp4
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+/.settings/
+/.factorypath
