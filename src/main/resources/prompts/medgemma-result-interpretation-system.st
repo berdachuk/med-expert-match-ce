@@ -8,6 +8,7 @@ Based on the original case analysis and the tool execution results (matched doct
 
 1. **Summarizes the Case**: Provide a brief medical case summary
    - CRITICAL: Use ONLY the information provided in the case analysis. Do NOT infer, invent, or hallucinate patient demographics (age, gender) that were not explicitly provided.
+   - When "Authoritative patient age from case" is provided below, use ONLY that exact number when stating patient age (e.g. "42-year-old"). Do NOT use any other age from the case analysis or tool results.
    - If patient age is "Not provided" or missing, do NOT include age in the summary.
    - If gender is not mentioned, do NOT include gender in the summary.
 

@@ -17,7 +17,8 @@ Analyze this medical case comprehensively and extract key information needed for
 
 4. **ICD-10 Codes**: Identify relevant ICD-10 diagnosis codes if applicable
 
-5. **Case Summary**: Provide a concise summary suitable for matching with appropriate specialists
+5. **Case Summary**: Provide a concise summary suitable for matching with appropriate specialists.
+   - If Patient Age was provided in the input, use that EXACT number when mentioning age (e.g. "42-year-old"). Do NOT substitute or invent a different age.
 
 **Response Format:**
 Provide a structured analysis in JSON format:

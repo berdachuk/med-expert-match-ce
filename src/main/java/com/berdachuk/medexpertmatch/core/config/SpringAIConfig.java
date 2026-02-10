@@ -73,6 +73,65 @@ public class SpringAIConfig {
     }
 
     /**
+     * ChatModel for synthetic data description generation.
+     * Uses same endpoint as primary chat but with lower max_tokens (default 1024) for short case abstracts.
+     */
+    @Bean("descriptionGenerationChatModel")
+    @Lazy
+    public ChatModel descriptionGenerationChatModel(@Qualifier("primaryChatModel") ChatModel primaryChatModel) {
+        String chatBaseUrl = environment.getProperty("spring.ai.custom.chat.base-url");
+        if (chatBaseUrl == null || chatBaseUrl.isEmpty()) {
+            log.info("No custom chat base URL; description generation uses primaryChatModel");
+            return primaryChatModel;
+        }
+        String chatProvider = environment.getProperty("spring.ai.custom.chat.provider", "openai");
+        String chatApiKey = environment.getProperty("spring.ai.custom.chat.api-key");
+        String chatModelName = environment.getProperty("spring.ai.custom.chat.model");
+        String chatTemperature = environment.getProperty("spring.ai.custom.chat.temperature");
+        String descriptionMaxTokens = environment.getProperty("medexpertmatch.synthetic-data.description.llm.max-tokens", "1024");
+
+        if (!"openai".equalsIgnoreCase(chatProvider)) {
+            return primaryChatModel;
+        }
+        OpenAiApi chatApi = OpenAiApi.builder()
+                .baseUrl(chatBaseUrl)
+                .apiKey(chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key")
+                .build();
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
+        if (chatModelName != null && !chatModelName.isEmpty()) {
+            optionsBuilder.model(chatModelName);
+        }
+        if (chatTemperature != null && !chatTemperature.isEmpty()) {
+            try {
+                optionsBuilder.temperature(Double.parseDouble(chatTemperature));
+            } catch (NumberFormatException e) {
+                log.warn("Invalid chat temperature for description model. Using default.");
+            }
+        }
+        try {
+            optionsBuilder.maxTokens(Integer.parseInt(descriptionMaxTokens));
+        } catch (NumberFormatException e) {
+            log.warn("Invalid description max-tokens: {}. Using 1024.", descriptionMaxTokens);
+            optionsBuilder.maxTokens(1024);
+        }
+        log.info("Creating descriptionGenerationChatModel with max_tokens: {}", descriptionMaxTokens);
+        return OpenAiChatModel.builder()
+                .openAiApi(chatApi)
+                .defaultOptions(optionsBuilder.build())
+                .build();
+    }
+
+    /**
+     * ChatClient for medical case description generation (synthetic data).
+     * Uses descriptionGenerationChatModel with lower max_tokens than primary chat.
+     */
+    @Bean("descriptionGenerationChatClient")
+    public ChatClient descriptionGenerationChatClient(@Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel) {
+        log.info("Creating descriptionGenerationChatClient");
+        return ChatClient.builder(descriptionGenerationChatModel).build();
+    }
+
+    /**
      * Primary EmbeddingModel configuration.
      * Supports separate base URLs for embedding service via spring.ai.custom.embedding.* properties.
      * Only supports OpenAI-compatible providers.

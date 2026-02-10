@@ -40,8 +40,14 @@ public class FhirPatientAdapterImpl implements FhirPatientAdapter {
                 .toLocalDate();
         LocalDate now = LocalDate.now();
         Period period = Period.between(birthLocalDate, now);
+        int years = period.getYears();
 
-        return period.getYears();
+        // Reject invalid ages (negative = future birth date; > 120 = likely data error)
+        if (years < 0 || years > 120) {
+            log.warn("Invalid patient age from birth date: {} (birth: {}, now: {}). Returning null.", years, birthLocalDate, now);
+            return null;
+        }
+        return years;
     }
 
     @Override

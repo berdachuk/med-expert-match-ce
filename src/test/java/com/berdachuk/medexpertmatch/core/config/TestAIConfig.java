@@ -1116,4 +1116,12 @@ public class TestAIConfig {
     public ChatClient testCaseAnalysisChatClient(ChatModel chatModel) {
         return ChatClient.builder(chatModel).build();
     }
+
+    /**
+     * Mock descriptionGenerationChatClient for tests (synthetic data description generation).
+     */
+    @Bean("descriptionGenerationChatClient")
+    public ChatClient testDescriptionGenerationChatClient(ChatModel chatModel) {
+        return ChatClient.builder(chatModel).build();
+    }
 }

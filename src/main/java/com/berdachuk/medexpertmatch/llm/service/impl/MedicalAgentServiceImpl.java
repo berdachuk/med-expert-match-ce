@@ -136,10 +136,11 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
             String jsonResponse = objectMapper.writeValueAsString(matches);
             logStreamService.sendProgress(sessionId, 55);
 
-            // Step 3: Interpret results with MedGemma
+            // Step 3: Interpret results with MedGemma (pass authoritative patient age for consistent summary)
+            Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
             logStreamService.sendLog(sessionId, "INFO", "Step 3: MedGemma result interpretation", "Interpreting tool results with MedGemma");
             logStreamService.sendProgress(sessionId, 65);
-            response = interpretResultsWithMedGemma(jsonResponse, caseAnalysisJson);
+            response = interpretResultsWithMedGemma(jsonResponse, caseAnalysisJson, patientAge);
             logStreamService.sendLog(sessionId, "INFO", "MedGemma interpretation complete", "Final response generated");
             logStreamService.sendProgress(sessionId, 85);
 
@@ -341,9 +342,10 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
             String toolResults = evidenceBuilder.toString();
             log.info("Case analysis evidence retrieved (caseId: {}), guidelines: {}, pubmed articles: {}", caseId, guidelines.size(), pubmedArticleCount);
 
-            // Step 3: Use MedGemma to interpret and enhance the final response
+            // Step 3: Use MedGemma to interpret and enhance the final response (pass authoritative patient age)
+            Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
             logStreamService.sendLog(sessionId, "INFO", "MedGemma result interpretation", "Interpreting analysis results");
-            String response = interpretResultsWithMedGemma(toolResults, caseAnalysis);
+            String response = interpretResultsWithMedGemma(toolResults, caseAnalysis, patientAge);
 
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("caseId", caseId);
@@ -397,9 +399,10 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
                 log.info("LLM model: {} completed recommendation generation (matchId: {}), response length: {}",
                         functionGemmaModelName, matchId, toolResults != null ? toolResults.length() : 0);
 
-                // Use MedGemma to enhance recommendations with medical reasoning
+                // Use MedGemma to enhance recommendations with medical reasoning (pass authoritative patient age)
                 String caseAnalysis = analyzeCaseWithMedGemma(caseId);
-                String response = interpretResultsWithMedGemma(toolResults, caseAnalysis);
+                Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
+                String response = interpretResultsWithMedGemma(toolResults, caseAnalysis, patientAge);
 
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("matchId", matchId);
@@ -817,11 +820,12 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
      * Interprets tool execution results using MedGemma for medical reasoning.
      * Generates final response with medical context and reasoning.
      *
-     * @param toolResults  The results from tool executions
-     * @param caseAnalysis The original case analysis from MedGemma
+     * @param toolResults       The results from tool executions
+     * @param caseAnalysis      The original case analysis from MedGemma
+     * @param patientAgeFromCase Authoritative patient age from the case (use this exact age in summary); null if not provided
      * @return Final interpreted response
      */
-    private String interpretResultsWithMedGemma(String toolResults, String caseAnalysis) {
+    private String interpretResultsWithMedGemma(String toolResults, String caseAnalysis, Integer patientAgeFromCase) {
         log.info("Interpreting tool results with MedGemma");
         String sessionId = logStreamService.getCurrentSessionId();
         logStreamService.sendLog(sessionId, "INFO", "MedGemma result interpretation", "Interpreting tool results");
@@ -851,6 +855,7 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
             Map<String, Object> variables = new HashMap<>();
             variables.put("caseAnalysis", limitedCaseAnalysis != null ? limitedCaseAnalysis : "No case analysis available");
             variables.put("toolResults", limitedToolResults);
+            variables.put("patientAgeFromCase", patientAgeFromCase != null ? patientAgeFromCase.toString() : "Not provided");
 
             String systemPrompt = medgemmaResultInterpretationSystemPromptTemplate.render(Collections.emptyMap());
             String userPrompt = medgemmaResultInterpretationUserPromptTemplate.render(variables);

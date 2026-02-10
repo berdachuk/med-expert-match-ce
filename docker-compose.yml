@@ -1,6 +1,7 @@
-# Full stack: PostgreSQL, MedExpertMatch application, and documentation.
+# Full stack: PostgreSQL and MedExpertMatch application (docs embedded at /docs).
 # Usage: docker compose up -d
-# App: http://localhost:8094  Docs: http://localhost:8095  DB: localhost:5433
+# App: http://localhost:8094  Docs: http://localhost:8094/docs  DB: localhost:5433
+# Remote: App at http://<server-ip>:8094/ (e.g. http://192.168.0.87:8094/). Ensure host firewall allows TCP 8094.
 
 services:
   postgres:
@@ -22,6 +23,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
     networks:
       - medexpertmatch-network
 
@@ -44,37 +46,40 @@ services:
       SPRING_DATASOURCE_USERNAME: medexpertmatch
       SPRING_DATASOURCE_PASSWORD: medexpertmatch
       SERVER_PORT: "8080"
-      # Chat/LLM (Ollama on host; override for remote API)
+      # Chat/LLM (LLM Studio on host; override for remote API)
       CHAT_PROVIDER: openai
-      CHAT_BASE_URL: http://host.docker.internal:11434
-      CHAT_API_KEY: ollama
-      CHAT_MODEL: MedAIBase/MedGemma1.5:4b
+      CHAT_BASE_URL: http://host.docker.internal:1234
+      CHAT_API_KEY: llm-studio
+      CHAT_MODEL: medgemma-1.5-4b-it@q4_k_m
       CHAT_TEMPERATURE: "0.7"
       CHAT_MAX_TOKENS: "6000"
       # Embedding
       EMBEDDING_PROVIDER: openai
-      EMBEDDING_BASE_URL: http://host.docker.internal:11434
-      EMBEDDING_API_KEY: ollama
-      EMBEDDING_MODEL: nomic-embed-text
+      EMBEDDING_BASE_URL: http://host.docker.internal:1234
+      EMBEDDING_API_KEY: llm-studio
+      EMBEDDING_MODEL: text-embedding-nomic-embed-text-v1.5
       EMBEDDING_DIMENSIONS: "768"
       # Reranking
       RERANKING_PROVIDER: openai
-      RERANKING_BASE_URL: http://host.docker.internal:11434
-      RERANKING_API_KEY: ollama
-      RERANKING_MODEL: MedAIBase/MedGemma1.5:4b
+      RERANKING_BASE_URL: http://host.docker.internal:1234
+      RERANKING_API_KEY: llm-studio
+      RERANKING_MODEL: medgemma-1.5-4b-it@q4_k_m
       RERANKING_TEMPERATURE: "0.1"
-      # Tool calling (Mistral 7B)
+      # Tool calling (Qwen3 4B; alternative: mistral-7b-instruct-v0.2)
       TOOL_CALLING_PROVIDER: openai
-      TOOL_CALLING_BASE_URL: http://host.docker.internal:11434
-      TOOL_CALLING_API_KEY: ollama
-      TOOL_CALLING_MODEL: mistral:7b
+      TOOL_CALLING_BASE_URL: http://host.docker.internal:1234
+      TOOL_CALLING_API_KEY: llm-studio
+      TOOL_CALLING_MODEL: qwen/qwen3-4b-2507
       TOOL_CALLING_TEMPERATURE: "0.7"
       TOOL_CALLING_MAX_TOKENS: "4096"
-      # LLM concurrency (sequential for local Ollama)
+      # LLM concurrency (sequential for local LLM Studio)
       MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS: "1"
+      # Agent skills (included in image via Dockerfile.app COPY .claude)
+      MEDEXPERTMATCH_SKILLS_ENABLED: "true"
+      MEDEXPERTMATCH_SKILLS_DIRECTORY: "/app/.claude/skills"
       # Logging (aligned with local debug)
       LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_AI: DEBUG
@@ -85,17 +90,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - medexpertmatch-network
-
-  docs:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.docs
-    image: medexpertmatch-docs:latest
-    container_name: medexpertmatch-docs
-    ports:
-      - "8095:80"
+    restart: unless-stopped
     networks:
       - medexpertmatch-network
 

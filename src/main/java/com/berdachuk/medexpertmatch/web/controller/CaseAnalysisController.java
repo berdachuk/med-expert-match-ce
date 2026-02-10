@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.web.controller;
 
 import com.berdachuk.medexpertmatch.llm.rest.MedicalAgentController;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Controller for case analysis and decision support.
@@ -50,9 +52,10 @@ public class CaseAnalysisController {
         model.addAttribute("currentPage", "analyze");
         model.addAttribute("caseId", caseId);
 
-        // Get case details if available
+        // Get case details if available; normalize abstract age and format list spacing for display
         medicalCaseRepository.findById(caseId).ifPresent(caseEntity -> {
             model.addAttribute("case", caseEntity);
+            model.addAttribute("displayAbstract", formatAbstractForDisplay(normalizeAbstractAge(caseEntity)));
         });
 
         return "analyze";
@@ -64,6 +67,10 @@ public class CaseAnalysisController {
             Model model) {
         model.addAttribute("currentPage", "analyze");
         model.addAttribute("caseId", caseId);
+        medicalCaseRepository.findById(caseId).ifPresent(caseEntity -> {
+            model.addAttribute("case", caseEntity);
+            model.addAttribute("displayAbstract", formatAbstractForDisplay(normalizeAbstractAge(caseEntity)));
+        });
 
         try {
             ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.analyzeCase(caseId, Map.of());
@@ -94,5 +101,33 @@ public class CaseAnalysisController {
         }
 
         return "analyze";
+    }
+
+    /**
+     * Normalizes age in abstract text to match the case's patientAge when present.
+     */
+    private static String normalizeAbstractAge(MedicalCase c) {
+        if (c == null || c.abstractText() == null || c.abstractText().isEmpty()) {
+            return c != null ? c.abstractText() : null;
+        }
+        if (c.patientAge() == null) {
+            return c.abstractText();
+        }
+        String ageStr = c.patientAge().toString();
+        String text = c.abstractText();
+        text = Pattern.compile("\\d+(-year-old| year old| years old)", Pattern.CASE_INSENSITIVE)
+                .matcher(text)
+                .replaceFirst(ageStr + "$1");
+        return text;
+    }
+
+    /**
+     * Ensures an empty line before the first list in the text (lines starting with -, *, or N. ).
+     */
+    private static String formatAbstractForDisplay(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return Pattern.compile("(\n)(\\s*[-*] |\\s*\\d+\\. )").matcher(text).replaceFirst("$1\n$2");
     }
 }

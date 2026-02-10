@@ -9,9 +9,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Controller for finding specialists (matching doctors to cases).
@@ -39,7 +42,10 @@ public class MatchController {
         model.addAttribute("currentPage", "match");
         model.addAttribute("caseId", caseId);
         if (caseId != null && !caseId.isEmpty()) {
-            medicalCaseRepository.findById(caseId).ifPresent(c -> model.addAttribute("case", c));
+            medicalCaseRepository.findById(caseId).ifPresent(c -> {
+                model.addAttribute("case", c);
+                model.addAttribute("displayAbstract", formatAbstractForDisplay(normalizeAbstractAge(c)));
+            });
         }
 
         try {
@@ -74,7 +80,10 @@ public class MatchController {
             Model model) {
         model.addAttribute("currentPage", "match");
         model.addAttribute("caseId", caseId);
-        medicalCaseRepository.findById(caseId).ifPresent(c -> model.addAttribute("case", c));
+        medicalCaseRepository.findById(caseId).ifPresent(c -> {
+            model.addAttribute("case", c);
+            model.addAttribute("displayAbstract", formatAbstractForDisplay(normalizeAbstractAge(c)));
+        });
 
         try {
             Map<String, Object> requestParams = new HashMap<>();
@@ -122,6 +131,36 @@ public class MatchController {
         model.addAttribute("cases", cases != null ? cases : new ArrayList<>());
 
         return "match";
+    }
+
+    /**
+     * Normalizes age in abstract text to match the case's patientAge when present.
+     * Replaces first age phrase (X-year-old, X year old, X years old) with the authoritative age.
+     */
+    private static String normalizeAbstractAge(MedicalCase c) {
+        if (c == null || c.abstractText() == null || c.abstractText().isEmpty()) {
+            return c != null ? c.abstractText() : null;
+        }
+        if (c.patientAge() == null) {
+            return c.abstractText();
+        }
+        String ageStr = c.patientAge().toString();
+        String text = c.abstractText();
+        // Replace first occurrence of "N-year-old", "N year old", or "N years old" with authoritative age
+        text = Pattern.compile("\\d+(-year-old| year old| years old)", Pattern.CASE_INSENSITIVE)
+                .matcher(text)
+                .replaceFirst(ageStr + "$1");
+        return text;
+    }
+
+    /**
+     * Ensures an empty line before the first list in the text (lines starting with -, *, or N. ).
+     */
+    private static String formatAbstractForDisplay(String text) {
+        if (text == null || text.isEmpty()) {
+            return text;
+        }
+        return Pattern.compile("(\n)(\\s*[-*] |\\s*\\d+\\. )").matcher(text).replaceFirst("$1\n$2");
     }
 
 }

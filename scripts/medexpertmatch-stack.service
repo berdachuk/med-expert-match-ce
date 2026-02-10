@@ -1,0 +1,30 @@
+# MedExpertMatch full stack (PostgreSQL, app with embedded docs at /docs) as a systemd service.
+# When enabled, the service auto-starts on reboot.
+# Install: sudo cp scripts/medexpertmatch-stack.service /etc/systemd/system/
+#         sudo systemctl daemon-reload
+# Enable (auto-start on boot): sudo systemctl enable medexpertmatch-stack
+# Start: sudo systemctl start medexpertmatch-stack
+# Stop:  sudo systemctl stop medexpertmatch-stack
+# Status: sudo systemctl status medexpertmatch-stack
+#
+# Database data on host: /var/lib/docker/volumes/med-expert-match-ce_medexpertmatch-postgres-data/_data
+# Volume is owned by root and used by the postgres container; do not change permissions.
+
+[Unit]
+Description=MedExpertMatch Docker Compose Stack (PostgreSQL, App with /docs)
+Documentation=https://github.com/berdachuk/med-expert-match-ce
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/berdachuk/projects-ai/med-expert-match-ce
+ExecStart=/usr/bin/docker compose -f docker-compose.yml up -d
+ExecStop=/usr/bin/docker compose -f docker-compose.yml down
+TimeoutStartSec=300
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

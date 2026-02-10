@@ -6,7 +6,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.view.RedirectView;
 
 /**
- * Redirects /docs and /docs/... to the embedded documentation so directory-style URLs work.
+ * Redirects /docs and /docs/... to the embedded documentation (same host and port).
+ * Static content is served from classpath:static/docs/ (MkDocs build in Docker).
  */
 @Controller
 public class DocsController {
@@ -26,9 +27,6 @@ public class DocsController {
         return new RedirectView("/docs/" + page + "/index.html", true);
     }
 
-    /**
-     * Match only segment without dot so static files (index.html, assets) are not redirected.
-     */
     @GetMapping("/docs/{page:[^.]+}")
     public RedirectView docsPageNoSlash(@PathVariable String page) {
         return new RedirectView("/docs/" + page + "/index.html", true);

@@ -116,6 +116,7 @@ nav:
       - AI Provider Configuration: AI_PROVIDER_CONFIGURATION.md
       - MedGemma Configuration: MEDGEMMA_CONFIGURATION.md
       - MedGemma Setup Guide: MEDGEMMA_SETUP.md
+      - Docker Service (Ubuntu): DOCKER_SERVICE_UBUNTU.md
 
 
 # Extra

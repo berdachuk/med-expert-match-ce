@@ -30,7 +30,7 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
 
     @Autowired
     public MedicalCaseDescriptionServiceImpl(
-            @Qualifier("caseAnalysisChatClient") ChatClient chatClient,
+            @Qualifier("descriptionGenerationChatClient") ChatClient chatClient,
             @Qualifier("descriptionGenerationSystemPromptTemplate") PromptTemplate systemPromptTemplate,
             @Qualifier("descriptionGenerationUserPromptTemplate") PromptTemplate userPromptTemplate) {
         this.chatClient = chatClient;
@@ -103,7 +103,8 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
     }
 
     private Map<String, Object> buildVariablesMap(MedicalCase medicalCase) {
-        Map<String, Object> variables = new HashMap<>(5);
+        Map<String, Object> variables = new HashMap<>(6);
+        variables.put("patientAge", medicalCase.patientAge() != null ? medicalCase.patientAge().toString() : "Not specified");
         variables.put("chiefComplaint", medicalCase.chiefComplaint() != null ? medicalCase.chiefComplaint() : "Not specified");
         variables.put("symptoms", medicalCase.symptoms() != null ? medicalCase.symptoms() : "Not specified");
         variables.put("currentDiagnosis", medicalCase.currentDiagnosis() != null ? medicalCase.currentDiagnosis() : "Not specified");
@@ -116,6 +117,9 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
     private String buildSimpleDescription(MedicalCase medicalCase) {
         StringBuilder text = new StringBuilder();
 
+        if (medicalCase.patientAge() != null) {
+            text.append("Patient age: ").append(medicalCase.patientAge()).append(". ");
+        }
         if (medicalCase.chiefComplaint() != null && !medicalCase.chiefComplaint().isBlank()) {
             text.append("Chief Complaint: ").append(medicalCase.chiefComplaint()).append(". ");
         }
