@@ -33,41 +33,40 @@ services:
       dockerfile: docker/Dockerfile.app
     image: medexpertmatch-app:latest
     container_name: medexpertmatch-app
-    # Resolve host.docker.internal on Linux (Docker Desktop sets it automatically on Mac/Windows)
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+    # Host network so the app can reach LM Studio on 127.0.0.1:1234 without LM Studio binding to 0.0.0.0
+    network_mode: host
     # Optional: mount custom skills to extend built-in ones (set MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY=/app/.claude/skills-extra)
     # volumes:
     #   - ./custom-skills:/app/.claude/skills-extra
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      # Database (compose: postgres service)
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medexpertmatch
+      # Database: postgres container exposes 5433 on host
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/medexpertmatch
       SPRING_DATASOURCE_USERNAME: medexpertmatch
       SPRING_DATASOURCE_PASSWORD: medexpertmatch
-      SERVER_PORT: "8080"
-      # Chat/LLM (LLM Studio on host; override for remote API)
+      SERVER_PORT: "8094"
+      # Chat/LLM (LM Studio on host at 127.0.0.1:1234)
       CHAT_PROVIDER: openai
-      CHAT_BASE_URL: http://host.docker.internal:1234
+      CHAT_BASE_URL: http://127.0.0.1:1234
       CHAT_API_KEY: llm-studio
       CHAT_MODEL: medgemma-1.5-4b-it@q4_k_m
       CHAT_TEMPERATURE: "0.7"
       CHAT_MAX_TOKENS: "6000"
       # Embedding
       EMBEDDING_PROVIDER: openai
-      EMBEDDING_BASE_URL: http://host.docker.internal:1234
+      EMBEDDING_BASE_URL: http://127.0.0.1:1234
       EMBEDDING_API_KEY: llm-studio
       EMBEDDING_MODEL: text-embedding-nomic-embed-text-v1.5
       EMBEDDING_DIMENSIONS: "768"
       # Reranking
       RERANKING_PROVIDER: openai
-      RERANKING_BASE_URL: http://host.docker.internal:1234
+      RERANKING_BASE_URL: http://127.0.0.1:1234
       RERANKING_API_KEY: llm-studio
       RERANKING_MODEL: medgemma-1.5-4b-it@q4_k_m
       RERANKING_TEMPERATURE: "0.1"
-      # Tool calling (Qwen3 4B; alternative: mistral-7b-instruct-v0.2)
+      # Tool calling (Qwen3 4B)
       TOOL_CALLING_PROVIDER: openai
-      TOOL_CALLING_BASE_URL: http://host.docker.internal:1234
+      TOOL_CALLING_BASE_URL: http://127.0.0.1:1234
       TOOL_CALLING_API_KEY: llm-studio
       TOOL_CALLING_MODEL: qwen/qwen3-4b-2507
       TOOL_CALLING_TEMPERATURE: "0.7"
@@ -85,14 +84,10 @@ services:
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_AI: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JDBC: DEBUG
       LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH_GRAPH: DEBUG
-    ports:
-      - "8094:8080"
     depends_on:
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - medexpertmatch-network
 
 volumes:
   medexpertmatch-postgres-data:

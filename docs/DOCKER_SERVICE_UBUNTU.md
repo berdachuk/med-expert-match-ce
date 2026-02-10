@@ -79,6 +79,10 @@ Containers should be running. Verify:
 - App: `curl -s http://localhost:8094/actuator/health`
 - Docs: `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8094/docs/`
 
+### LLM (LM Studio)
+
+The app container uses **host network** so it can reach LM Studio on the host at `127.0.0.1:1234` without requiring LM Studio to bind to all interfaces. Ensure LM Studio is running (e.g. via `lmstudio.service`; see `docs/LMSTUDIO_SYSTEMD.md`). The stack unit is configured to start **after** `lmstudio.service` when both are enabled, so the LLM is up before the app connects.
+
 ## 4. Service Commands Reference
 
 | Action | Command |
@@ -133,3 +137,4 @@ Database data in the volume persists across restarts and rebuilds.
 - **Containers do not start:** Run `docker compose up -d` manually from the project directory and check `docker compose logs`. Fix any build or config errors, then `sudo systemctl restart medexpertmatch-stack`.
 - **Permission denied on volume:** Do not chown/chmod the volume. Ensure no other process has changed ownership of `/var/lib/docker/volumes/med-expert-match-ce_medexpertmatch-postgres-data`. If it was modified, restore from backup or re-init the database (volume remove and fresh start; data will be lost).
 - **Service fails to start:** Check `journalctl -u medexpertmatch-stack -n 50`. Ensure Docker is running (`systemctl status docker`) and `WorkingDirectory` in the unit points to the correct project path.
+- **App cannot connect to LLM:** Ensure LM Studio is running on the host (`curl -s http://127.0.0.1:1234/v1/models`). The app uses host network and connects to `127.0.0.1:1234`. If you use `lmstudio.service`, enable it so it starts before the stack: `sudo systemctl enable lmstudio.service`.

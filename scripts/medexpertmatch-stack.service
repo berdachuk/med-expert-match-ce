@@ -1,5 +1,5 @@
 # MedExpertMatch full stack (PostgreSQL, app with embedded docs at /docs) as a systemd service.
-# When enabled, the service auto-starts on reboot.
+# When enabled, the service auto-starts on reboot. Starts after lmstudio.service if present (LLM on host).
 # Install: sudo cp scripts/medexpertmatch-stack.service /etc/systemd/system/
 #         sudo systemctl daemon-reload
 # Enable (auto-start on boot): sudo systemctl enable medexpertmatch-stack
@@ -9,13 +9,14 @@
 #
 # Database data on host: /var/lib/docker/volumes/med-expert-match-ce_medexpertmatch-postgres-data/_data
 # Volume is owned by root and used by the postgres container; do not change permissions.
+# App uses host network so it can reach LM Studio at 127.0.0.1:1234 without extra LM Studio config.
 
 [Unit]
 Description=MedExpertMatch Docker Compose Stack (PostgreSQL, App with /docs)
 Documentation=https://github.com/berdachuk/med-expert-match-ce
 Requires=docker.service
-After=docker.service network-online.target
-Wants=network-online.target
+After=docker.service network-online.target lmstudio.service
+Wants=network-online.target lmstudio.service
 
 [Service]
 Type=oneshot
