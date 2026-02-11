@@ -514,12 +514,86 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
                 %s
                 """.formatted(caseAnalysis != null ? caseAnalysis : "", rawToolResults != null ? rawToolResults : "");
         try {
-            return llmCallLimiter.execute(LlmClientType.CHAT, () ->
+            String response = llmCallLimiter.execute(LlmClientType.CHAT, () ->
                     medGemmaChatClient.prompt().user(prompt).call().content());
+            return stripLlmReasoning(response);
         } catch (Exception e) {
             log.warn("Routing summarization failed, returning raw results", e);
             return rawToolResults != null ? rawToolResults : "No routing results available.";
         }
+    }
+    
+    /**
+     * Strips LLM internal reasoning/thought content from the response.
+     * Some models output "thought" or special markers like &lt;unused94&gt; before their actual response.
+     */
+    private String stripLlmReasoning(String response) {
+        if (response == null || response.isBlank()) {
+            return response;
+        }
+        String cleaned = response.trim();
+        
+        // Remove special LLM markers like <unused94>, <unused95>, etc.
+        // These are internal markers some models use
+        cleaned = cleaned.replaceAll("<unused\\d+>", "");
+        
+        // Check if response starts with "thought" (case-insensitive)
+        // This often appears after the unused markers
+        if (cleaned.toLowerCase().startsWith("thought")) {
+            // Find where the actual response starts (after the reasoning section)
+            // Look for double newline or a clear paragraph break
+            int doubleNewlineIdx = cleaned.indexOf("\n\n");
+            if (doubleNewlineIdx > 0 && doubleNewlineIdx < cleaned.length() - 2) {
+                cleaned = cleaned.substring(doubleNewlineIdx + 2).trim();
+            } else {
+                // Try to find where reasoning ends by looking for common response start patterns
+                String[] patterns = {
+                    "Based on the routing", "The top", "According to", "In summary",
+                    "```json", "```", "{\"", "{\"requiredSpecialty"
+                };
+                for (String pattern : patterns) {
+                    int idx = cleaned.indexOf(pattern);
+                    if (idx > 0) {
+                        cleaned = cleaned.substring(idx).trim();
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Remove any remaining "thought" markers at the start
+        while (cleaned.toLowerCase().startsWith("thought")) {
+            int newlineIdx = cleaned.indexOf('\n');
+            if (newlineIdx > 0) {
+                cleaned = cleaned.substring(newlineIdx + 1).trim();
+            } else {
+                break;
+            }
+        }
+        
+        // If response still contains JSON code blocks, extract just the content
+        if (cleaned.contains("```json")) {
+            int jsonStart = cleaned.indexOf("```json");
+            int jsonEnd = cleaned.lastIndexOf("```");
+            if (jsonStart >= 0 && jsonEnd > jsonStart + 7) {
+                cleaned = cleaned.substring(jsonStart + 7, jsonEnd).trim();
+            }
+        } else if (cleaned.contains("```")) {
+            // Handle generic code blocks
+            int codeStart = cleaned.indexOf("```");
+            int codeEnd = cleaned.lastIndexOf("```");
+            if (codeStart >= 0 && codeEnd > codeStart + 3) {
+                String content = cleaned.substring(codeStart + 3, codeEnd).trim();
+                // Skip language identifier if present on first line
+                int firstNewline = content.indexOf('\n');
+                if (firstNewline > 0 && firstNewline < 20) {
+                    content = content.substring(firstNewline + 1).trim();
+                }
+                cleaned = content;
+            }
+        }
+        
+        return cleaned;
     }
 
     /**
@@ -622,11 +696,12 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
                 List<CaseUrgencyEntry> entries = new ArrayList<>();
                 for (String caseId : caseIds) {
                     try {
+                        MedicalCase medicalCase = medicalCaseRepository.findById(caseId).orElse(null);
                         String caseAnalysis = analyzeCaseWithMedGemma(caseId);
-                        entries.add(parseUrgencyFromAnalysis(caseId, caseAnalysis));
+                        entries.add(parseUrgencyFromAnalysis(caseId, caseAnalysis, medicalCase));
                     } catch (Exception e) {
                         log.warn("Could not analyze case {} for prioritization", caseId, e);
-                        entries.add(parseUrgencyFromAnalysis(caseId, null));
+                        entries.add(parseUrgencyFromAnalysis(caseId, null, null));
                     }
                 }
 
@@ -730,9 +805,14 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
      * Parses urgency and specialty from MedGemma case analysis output.
      * Tries JSON first, then regex. Defaults to MEDIUM and Unknown on failure.
      */
-    private CaseUrgencyEntry parseUrgencyFromAnalysis(String caseId, String caseAnalysis) {
+    private CaseUrgencyEntry parseUrgencyFromAnalysis(String caseId, String caseAnalysis, MedicalCase medicalCase) {
         String urgency = UrgencyLevel.MEDIUM.name();
         String specialty = "Unknown";
+        String chiefComplaint = medicalCase != null ? medicalCase.chiefComplaint() : null;
+        String symptoms = medicalCase != null ? medicalCase.symptoms() : null;
+        Integer patientAge = medicalCase != null ? medicalCase.patientAge() : null;
+        String caseSummary = null;
+        
         if (caseAnalysis != null && !caseAnalysis.isBlank()) {
             try {
                 @SuppressWarnings("unchecked")
@@ -748,6 +828,10 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
                 if (s != null && s.toString().length() > 0) {
                     specialty = s.toString().trim();
                 }
+                Object cs = map.get("caseSummary");
+                if (cs != null && cs.toString().length() > 0) {
+                    caseSummary = cs.toString().trim();
+                }
             } catch (Exception e) {
                 Matcher um = URGENCY_PATTERN.matcher(caseAnalysis);
                 if (um.find()) {
@@ -759,18 +843,39 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
                 }
             }
         }
-        return new CaseUrgencyEntry(caseId, urgency, specialty);
+        return new CaseUrgencyEntry(caseId, urgency, specialty, chiefComplaint, symptoms, patientAge, caseSummary);
     }
 
     /**
      * Builds prioritization response text from sorted entries. Lists all cases in strict urgency order with exact IDs.
      */
     private String buildPrioritizationResponse(List<CaseUrgencyEntry> entries) {
-        String lines = entries.stream()
-                .map(e -> "Case " + e.caseId() + " (" + e.specialty() + " - " + e.urgencyLevel() + ")")
-                .collect(Collectors.joining("\n"));
-        String disclaimer = "Note: This analysis is for research and educational purposes only. Do not use this system for diagnostic decisions without human-in-the-loop validation.";
-        return "Prioritized consultation queue (by urgency):\n\n" + lines + "\n\n" + disclaimer;
+        StringBuilder sb = new StringBuilder();
+        sb.append("Prioritized consultation queue (by urgency):\n\n");
+        
+        for (CaseUrgencyEntry e : entries) {
+            sb.append("### Case ").append(e.caseId()).append("\n");
+            sb.append("**Specialty:** ").append(e.specialty()).append(" | **Urgency:** ").append(e.urgencyLevel()).append("\n");
+            if (e.patientAge() != null) {
+                sb.append("**Patient Age:** ").append(e.patientAge()).append("\n");
+            }
+            if (e.chiefComplaint() != null && !e.chiefComplaint().isBlank()) {
+                sb.append("**Chief Complaint:** ").append(e.chiefComplaint()).append("\n");
+            }
+            if (e.symptoms() != null && !e.symptoms().isBlank()) {
+                sb.append("**Symptoms:** ").append(e.symptoms()).append("\n");
+            }
+            if (e.caseSummary() != null && !e.caseSummary().isBlank()) {
+                sb.append("**Summary:** ").append(e.caseSummary()).append("\n");
+            }
+            sb.append("\n");
+        }
+        
+        sb.append("---\n\n");
+        sb.append("**Note:** This analysis is for research and educational purposes only. ");
+        sb.append("Do not use this system for diagnostic decisions without human-in-the-loop validation.");
+        
+        return sb.toString();
     }
 
     /**

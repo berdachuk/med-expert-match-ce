@@ -263,8 +263,7 @@
             var sessionId = 'network-' + Date.now();
             if (logContent) logContent.innerHTML = '';
             initLogStream(sessionId);
-            fetch([[@{/api/v1 / agent / network - analytics
-        }]],
+            fetch([[@{/api/v1/agent/network-analytics}]],
             {
                 method: 'POST',
                     headers

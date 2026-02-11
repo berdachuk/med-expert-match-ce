@@ -230,25 +230,14 @@
             initLogStream(sessionId);
             setProgress(true);
 
-            fetch([[@{/api/v1 / agent / prioritize - consults
-        }]],
-            {
+            fetch([[@{/api/v1/agent/prioritize-consults}]], {
                 method: 'POST',
-                    headers
-            :
-                {
-                    'Content-Type'
-                :
-                    'application/json'
-                }
-            ,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({sessionId: sessionId}),
-                    signal
-            :
-                abortController.signal
-            }
-        )
-        .
+                signal: abortController.signal
+            }).
             then(function (res) {
                 if (!res.ok) throw new Error(res.statusText || 'Request failed');
                 return res.json();

@@ -12,7 +12,10 @@ Environment="HOME=/home/berdachuk"
 ExecStartPre=/home/berdachuk/.lmstudio/bin/lms daemon up
 ExecStartPre=/home/berdachuk/.lmstudio/bin/lms load "qwen/qwen3-4b-2507" --yes
 ExecStartPre=/home/berdachuk/.lmstudio/bin/lms load "unsloth/medgemma-1.5-4b-it-GGUF/medgemma-1.5-4b-it-Q4_K_M.gguf" --yes
+ExecStartPre=/home/berdachuk/.lmstudio/bin/lms load "Qwen/Qwen3-Embedding-0.6B-GGUF" --yes
 ExecStartPre=/home/berdachuk/.lmstudio/bin/lms load "nomic-ai/nomic-embed-text-v1.5-GGUF/nomic-embed-text-v1.5.Q4_K_M.gguf" --yes
+
+
 ExecStart=/home/berdachuk/.lmstudio/bin/lms server start
 ExecStop=/home/berdachuk/.lmstudio/bin/lms daemon down
 
