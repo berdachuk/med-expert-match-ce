@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Start MedExpertMatch service remotely on 192.168.0.73 with local profile
+# Start MedExpertMatch service remotely on 192.168.0.87 with local profile
 # This script provides commands to run manually on the remote server
 
-REMOTE_HOST="192.168.0.73"
+REMOTE_HOST="192.168.0.87"
 REMOTE_USER="berdachuk"
 PROJECT_PATH="/home/berdachuk/projects-ai/expert-match-root/med-expert-match"
 PROFILE="local"

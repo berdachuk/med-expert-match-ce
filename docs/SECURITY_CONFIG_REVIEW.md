@@ -177,7 +177,7 @@ actuator and /health protected; API permitAll).
 
 ### Issues
 
-- **server.address: 192.168.0.73** — machine-specific IP. The file is listed in `.gitignore`, so it should not be
+- **server.address: 192.168.0.87** — machine-specific IP. The file is listed in `.gitignore`, so it should not be
   committed. If it were ever committed, it would reveal a local network address.
 
 ### Recommendations

@@ -5,7 +5,7 @@
 
 set -e
 
-REMOTE_HOST="${1:-192.168.0.73}"
+REMOTE_HOST="${1:-192.168.0.87}"
 REMOTE_USER="${2:-berdachuk}"
 PROJECT_PATH="/home/berdachuk/projects-ai/expert-match-root/med-expert-match"
 LOG_FILE="${PROJECT_PATH}/logs/med-expert-match.log"

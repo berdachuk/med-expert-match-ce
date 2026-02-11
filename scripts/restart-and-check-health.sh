@@ -6,7 +6,7 @@
 set -e
 
 if [ "$1" == "remote" ]; then
-    REMOTE_HOST="192.168.0.73"
+    REMOTE_HOST="192.168.0.87"
     REMOTE_USER="${2:-berdachuk}"
     RUN_REMOTE=true
 elif [ -n "$1" ]; then
@@ -14,7 +14,7 @@ elif [ -n "$1" ]; then
     REMOTE_USER="${2:-berdachuk}"
     RUN_REMOTE=true
 else
-    REMOTE_HOST="192.168.0.73"
+    REMOTE_HOST="192.168.0.87"
     REMOTE_USER="berdachuk"
     RUN_REMOTE=false
 fi
@@ -153,7 +153,7 @@ else
     # Check health endpoint (local profile binds to 192.168.0.73, so use that for health check)
     echo ""
     echo "=== Checking Health Endpoint ==="
-    HEALTH_URL="http://192.168.0.73:${SERVICE_PORT}/actuator/health"
+    HEALTH_URL="http://192.168.0.87:${SERVICE_PORT}/actuator/health"
     for i in {1..5}; do
         echo "Attempt $i/5: Checking health at ${HEALTH_URL}..."
         HEALTH_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" "${HEALTH_URL}" || echo "HTTP_CODE:000")
@@ -162,7 +162,7 @@ else
         if [ "$HTTP_CODE" == "200" ]; then
             echo -e "${GREEN}Health check passed!${NC}"
             echo "$HEALTH_RESPONSE" | grep -v "HTTP_CODE" | jq . 2>/dev/null || echo "$HEALTH_RESPONSE" | grep -v "HTTP_CODE"
-            echo "Service URL: http://192.168.0.73:${SERVICE_PORT}"
+            echo "Service URL: http://192.168.0.87:${SERVICE_PORT}"
             exit 0
         elif [ "$HTTP_CODE" == "000" ]; then
             echo "Service not responding yet, waiting..."
@@ -176,7 +176,7 @@ else
     
     echo -e "${YELLOW}Health check did not succeed after 5 attempts${NC}"
     echo "Service may still be starting. Check logs: tail -f ${LOG_FILE}"
-    echo "Service URL: http://192.168.0.73:${SERVICE_PORT}"
+    echo "Service URL: http://192.168.0.87:${SERVICE_PORT}"
 fi
 
 echo ""

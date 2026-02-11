@@ -63,10 +63,10 @@ if ps -p $SERVICE_PID > /dev/null; then
     echo -e "${GREEN}Service restarted successfully${NC}"
     echo "PID: $SERVICE_PID"
     echo "Log file: ${LOG_FILE}"
-    echo "Service URL: http://192.168.0.73:8094"
+    echo "Service URL: http://192.168.0.87:8094"
     echo ""
     echo "To view logs: tail -f ${LOG_FILE}"
-    echo "To check health: curl http://192.168.0.73:8094/actuator/health"
+    echo "To check health: curl http://192.168.0.87:8094/actuator/health"
 else
     echo -e "${RED}Service failed to start${NC}"
     echo "Check logs: tail -f ${LOG_FILE}"

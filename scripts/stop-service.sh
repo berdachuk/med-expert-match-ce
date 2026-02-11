@@ -6,7 +6,7 @@
 set -e
 
 if [ "$1" == "remote" ]; then
-    REMOTE_HOST="192.168.0.73"
+    REMOTE_HOST="192.168.0.87"
     REMOTE_USER="${2:-berdachuk}"
     RUN_REMOTE=true
 elif [ -n "$1" ]; then
@@ -14,7 +14,7 @@ elif [ -n "$1" ]; then
     REMOTE_USER="${2:-berdachuk}"
     RUN_REMOTE=true
 else
-    REMOTE_HOST="192.168.0.73"
+    REMOTE_HOST="192.168.0.87"
     REMOTE_USER="berdachuk"
     RUN_REMOTE=false
 fi

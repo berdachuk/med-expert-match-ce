@@ -9,7 +9,7 @@ set -e
 PROJECT_PATH="/home/berdachuk/projects-ai/expert-match-root/med-expert-match"
 PROFILE="local"
 LOG_FILE="${PROJECT_PATH}/logs/med-expert-match.log"
-REMOTE_HOST="192.168.0.73"
+REMOTE_HOST="192.168.0.87"
 REMOTE_USER="berdachuk"
 
 # Colors for output

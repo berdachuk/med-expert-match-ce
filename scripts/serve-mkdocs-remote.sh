@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Serve MkDocs documentation on remote server (192.168.0.73)
+# Serve MkDocs documentation on remote server (192.168.0.87)
 # This script builds and serves MkDocs documentation accessible from the network
 
 set -e
@@ -8,7 +8,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DOCS_DIR="$PROJECT_ROOT/docs"
-HOST="192.168.0.73"
+HOST="192.168.0.87"
 PORT="8000"
 
 echo "=== Serving MkDocs Documentation ==="
