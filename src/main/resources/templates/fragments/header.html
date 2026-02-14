@@ -88,9 +88,9 @@
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${isAdmin and currentPage == 'synthetic-data'}">Synthetic Data</span>
                     <a class="text-white text-decoration-none" th:href="@{/admin/graph-visualization(user=admin)}"
-                       th:if="${isAdmin and currentPage != 'graph-visualization'}">Graph Visualization</a>
+                       th:if="${isAdmin and currentPage != 'graph-visualization'}">Graph</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
-                          th:if="${isAdmin and currentPage == 'graph-visualization'}">Graph Visualization</span>
+                          th:if="${isAdmin and currentPage == 'graph-visualization'}">Graph</span>
                     <a aria-label="Open documentation" class="btn btn-outline-light btn-sm" href="/docs"
                        rel="noopener noreferrer"
                        target="_blank" title="Documentation">

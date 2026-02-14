@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head}">
-    <title>MedExpertMatch - Graph Visualization</title>
+    <title>MedExpertMatch - Graph</title>
 </head>
 <body>
 <header th:replace="~{fragments/header :: header}"></header>
 <main class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
-            <h1 class="h3 mb-4">Graph Visualization</h1>
+            <h1 class="h3 mb-4">Graph</h1>
 
             <div class="alert alert-danger d-none" id="errorAlert" role="alert"></div>
             <div class="alert alert-info d-none" id="infoAlert" role="alert"></div>
@@ -101,7 +101,7 @@
             <!-- Visualization Container -->
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Graph Visualization</h5>
+                    <h5 class="mb-0">Graph</h5>
                     <div>
                         <button class="btn btn-sm btn-outline-secondary" id="zoomInBtn">Zoom In</button>
                         <button class="btn btn-sm btn-outline-secondary" id="zoomOutBtn">Zoom Out</button>
@@ -233,7 +233,7 @@
         // Check if Cytoscape is loaded
         if (typeof cytoscape === 'undefined') {
             console.error('Cytoscape.js library not loaded');
-            showError('Graph visualization library failed to load. Please refresh the page.');
+            showError('Graph library failed to load. Please refresh the page.');
             return false;
         }
 
@@ -1095,7 +1095,7 @@
                 cy.fit();
             } else {
                 console.error('Cytoscape instance not initialized');
-                showError('Graph visualization not initialized');
+                showError('Graph not initialized');
             }
 
             updateGraphInfo();
@@ -1201,7 +1201,7 @@
         };
         cytoscapeScript.onerror = function () {
             console.error('Failed to load Cytoscape.js');
-            showError('Graph visualization library failed to load. Please check your internet connection and refresh the page.');
+            showError('Graph library failed to load. Please check your internet connection and refresh the page.');
         };
         document.head.appendChild(cytoscapeScript);
     }

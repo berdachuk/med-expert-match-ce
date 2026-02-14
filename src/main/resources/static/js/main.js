@@ -57,9 +57,6 @@ function updateUserDisplay() {
     const displayElement = document.getElementById('currentUserDisplay');
     if (displayElement) {
         displayElement.textContent = currentUser.displayName;
-        if (currentUser.roles && currentUser.roles.length > 0) {
-            displayElement.textContent += ' (' + currentUser.roles.join(', ') + ')';
-        }
     }
 }
 
@@ -99,8 +96,7 @@ function initializeUserSelector() {
         }
 
         button.innerHTML = '<div class="fw-bold">' + user.displayName + '</div>' +
-            '<div class="small text-muted">' + (user.email || 'No email') + '</div>' +
-            '<div class="small text-muted">' + (user.roles && user.roles.length > 0 ? user.roles.join(', ') : 'No roles') + '</div>';
+            '<div class="small text-muted">' + (user.email || 'No email') + '</div>';
 
         button.addEventListener('click', function () {
             setCurrentUser(user);
