@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.caseanalysis.service.impl;
 
 import com.berdachuk.medexpertmatch.caseanalysis.domain.CaseAnalysisResult;
+import com.berdachuk.medexpertmatch.caseanalysis.exception.CaseAnalysisException;
 import com.berdachuk.medexpertmatch.caseanalysis.service.CaseAnalysisService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
@@ -75,10 +76,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
         log.info("Analyzing medical case: {}", caseId);
 
         try {
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("chiefComplaint", medicalCase.chiefComplaint() != null ? medicalCase.chiefComplaint() : "");
-            variables.put("symptoms", medicalCase.symptoms() != null ? medicalCase.symptoms() : "");
-            variables.put("additionalNotes", medicalCase.additionalNotes() != null ? medicalCase.additionalNotes() : "");
+            Map<String, Object> variables = buildCaseAnalysisVariables(medicalCase);
 
             String systemPrompt = caseAnalysisSystemPromptTemplate.render(Collections.emptyMap());
             String userPrompt = caseAnalysisUserPromptTemplate.render(variables);
@@ -124,11 +122,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
         log.info("Extracting ICD-10 codes from medical case: {}", caseId);
 
         try {
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("chiefComplaint", medicalCase.chiefComplaint() != null ? medicalCase.chiefComplaint() : "");
-            variables.put("symptoms", medicalCase.symptoms() != null ? medicalCase.symptoms() : "");
-            variables.put("diagnosis", medicalCase.currentDiagnosis() != null ? medicalCase.currentDiagnosis() : "");
-            variables.put("additionalNotes", medicalCase.additionalNotes() != null ? medicalCase.additionalNotes() : "");
+            Map<String, Object> variables = buildCaseAnalysisVariables(medicalCase);
 
             String systemPrompt = icd10ExtractionSystemPromptTemplate.render(Collections.emptyMap());
             String userPrompt = icd10ExtractionUserPromptTemplate.render(variables);
@@ -151,7 +145,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             return parseJsonArray(responseText);
         } catch (Exception e) {
             log.error("Error extracting ICD-10 codes from medical case: {}", caseId, e);
-            throw new RuntimeException("Failed to extract ICD-10 codes", e);
+            throw new CaseAnalysisException("Failed to extract ICD-10 codes", e);
         }
     }
 
@@ -164,11 +158,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
         log.info("Classifying urgency level for medical case: {}", caseId);
 
         try {
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("chiefComplaint", medicalCase.chiefComplaint() != null ? medicalCase.chiefComplaint() : "");
-            variables.put("symptoms", medicalCase.symptoms() != null ? medicalCase.symptoms() : "");
-            variables.put("diagnosis", medicalCase.currentDiagnosis() != null ? medicalCase.currentDiagnosis() : "");
-            variables.put("additionalNotes", medicalCase.additionalNotes() != null ? medicalCase.additionalNotes() : "");
+            Map<String, Object> variables = buildCaseAnalysisVariables(medicalCase);
 
             String systemPrompt = urgencyClassificationSystemPromptTemplate.render(Collections.emptyMap());
             String userPrompt = urgencyClassificationUserPromptTemplate.render(variables);
@@ -202,7 +192,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
                 throw e;
             }
             log.error("Error classifying urgency level for medical case: {}", caseId, e);
-            throw new RuntimeException("Failed to classify urgency level", e);
+            throw new CaseAnalysisException("Failed to classify urgency level", e);
         }
     }
 
@@ -215,12 +205,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
         log.info("Determining required specialty for medical case: {}", caseId);
 
         try {
-            Map<String, Object> variables = new HashMap<>();
-            variables.put("chiefComplaint", medicalCase.chiefComplaint() != null ? medicalCase.chiefComplaint() : "");
-            variables.put("symptoms", medicalCase.symptoms() != null ? medicalCase.symptoms() : "");
-            variables.put("diagnosis", medicalCase.currentDiagnosis() != null ? medicalCase.currentDiagnosis() : "");
-            variables.put("icd10Codes", medicalCase.icd10Codes() != null ? String.join(", ", medicalCase.icd10Codes()) : "");
-            variables.put("additionalNotes", medicalCase.additionalNotes() != null ? medicalCase.additionalNotes() : "");
+            Map<String, Object> variables = buildCaseAnalysisVariables(medicalCase);
 
             String systemPrompt = specialtyDeterminationSystemPromptTemplate.render(Collections.emptyMap());
             String userPrompt = specialtyDeterminationUserPromptTemplate.render(variables);
@@ -243,8 +228,25 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             return parseJsonArray(responseText);
         } catch (Exception e) {
             log.error("Error determining required specialty for medical case: {}", caseId, e);
-            throw new RuntimeException("Failed to determine required specialty", e);
+            throw new CaseAnalysisException("Failed to determine required specialty", e);
         }
+    }
+
+    /**
+     * Builds template variables from medical case for LLM prompts.
+     */
+    private Map<String, Object> buildCaseAnalysisVariables(MedicalCase medicalCase) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("chiefComplaint", nullToEmpty(medicalCase.chiefComplaint()));
+        variables.put("symptoms", nullToEmpty(medicalCase.symptoms()));
+        variables.put("diagnosis", nullToEmpty(medicalCase.currentDiagnosis()));
+        variables.put("icd10Codes", medicalCase.icd10Codes() != null ? String.join(", ", medicalCase.icd10Codes()) : "");
+        variables.put("additionalNotes", nullToEmpty(medicalCase.additionalNotes()));
+        return variables;
+    }
+
+    private static String nullToEmpty(String s) {
+        return s != null ? s : "";
     }
 
     /**

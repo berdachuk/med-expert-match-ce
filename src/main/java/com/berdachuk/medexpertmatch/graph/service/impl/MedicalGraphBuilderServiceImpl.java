@@ -4,6 +4,7 @@ import com.berdachuk.medexpertmatch.clinicalexperience.repository.ClinicalExperi
 import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository;
 import com.berdachuk.medexpertmatch.facility.repository.FacilityRepository;
+import com.berdachuk.medexpertmatch.graph.exception.GraphOperationException;
 import com.berdachuk.medexpertmatch.graph.service.GraphService;
 import com.berdachuk.medexpertmatch.graph.service.MedicalGraphBuilderService;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
@@ -1260,7 +1261,7 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
             log.info("Graph cleared successfully");
         } catch (Exception e) {
             log.error("Failed to clear graph: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to clear graph: " + e.getMessage(), e);
+            throw new GraphOperationException("Failed to clear graph: " + e.getMessage(), e);
         }
     }
 }

@@ -34,6 +34,7 @@
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <spring-modulith.version>2.0.2</spring-modulith.version>
         <commons-io.version>2.18.0</commons-io.version>
+        <commons-lang3.version>3.14.0</commons-lang3.version>
         <datafaker.version>2.5.3</datafaker.version>
     </properties>
 
@@ -161,6 +162,13 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>${commons-io.version}</version>
+        </dependency>
+
+        <!-- Apache Commons Lang for ExceptionUtils (Sonar S1148 compliance) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
         </dependency>
 
         <!-- Spring Retry (explicit version; Boot 4 removed dependency management) -->
@@ -340,6 +348,13 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- SonarScanner for Maven -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.11.0.3922</version>
             </plugin>
 
             <!-- JaCoCo Maven Plugin -->

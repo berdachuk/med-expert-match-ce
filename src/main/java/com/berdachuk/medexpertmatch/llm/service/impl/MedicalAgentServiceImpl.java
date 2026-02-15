@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
@@ -27,11 +28,10 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.util.StreamUtils;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -47,6 +47,8 @@ import java.util.stream.Collectors;
 public class MedicalAgentServiceImpl implements MedicalAgentService {
 
     private static final int MAX_CASES_FOR_QUEUE = 20;
+    private static final int MAX_NETWORK_ANALYTICS_CONDITIONS = 3;
+    private static final int MAX_EXPERTS_PER_CONDITION = 10;
     private static final Pattern URGENCY_PATTERN = Pattern.compile("\"urgencyLevel\"\\s*:\\s*\"(CRITICAL|HIGH|MEDIUM|LOW)\"");
     private static final Pattern SPECIALTY_PATTERN = Pattern.compile("\"requiredSpecialty\"\\s*:\\s*\"([^\"]+)\"");
     private final ChatClient chatClient;  // Tool call LLM for tool calling
@@ -174,10 +176,7 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
     }
 
     private String getStackTrace(Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        return sw.toString();
+        return ExceptionUtils.getStackTrace(e);
     }
 
     @Override
@@ -193,13 +192,12 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
             logStreamService.sendLog(sessionId, "INFO", "Network analytics", "Condition codes: " + conditionCodes);
 
             StringBuilder raw = new StringBuilder();
-            int maxConditions = Math.min(3, conditionCodes.size());
-            int maxExpertsPerCondition = 10;
+            int maxConditions = Math.min(MAX_NETWORK_ANALYTICS_CONDITIONS, conditionCodes.size());
 
             for (int i = 0; i < maxConditions; i++) {
                 String code = conditionCodes.get(i);
                 logStreamService.sendLog(sessionId, "INFO", "Graph query", "Querying top experts for condition: " + code);
-                List<String> experts = medicalAgentTools.graph_query_top_experts(code, maxExpertsPerCondition);
+                List<String> experts = medicalAgentTools.graph_query_top_experts(code, MAX_EXPERTS_PER_CONDITION);
                 raw.append("## Top experts for condition ").append(code).append("\n");
                 for (String line : experts) {
                     raw.append("- ").append(line).append("\n");
@@ -1342,7 +1340,7 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
         } catch (Exception e) {
             log.error("Error in matchFromText", e);
             logStreamService.sendLog(sessionId, "ERROR", "matchFromText failed", e.getMessage());
-            throw new RuntimeException("Failed to match doctors from text: " + e.getMessage(), e);
+            throw new AgentExecutionException("Failed to match doctors from text: " + e.getMessage(), e);
         }
     }
 

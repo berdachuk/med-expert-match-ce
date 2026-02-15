@@ -130,7 +130,31 @@ docker build -f docker/Dockerfile.test -t medexpertmatch-postgres-test:latest .
 
 ### Check Code Quality
 
-Currently no specific linting tools configured beyond Maven compiler checks.
+Beyond Maven compiler checks, run SonarQube/SonarCloud analysis for code quality and security.
+
+### Sonar Analysis
+
+**Run command** (SonarQube):
+
+```bash
+mvn clean verify sonar:sonar
+```
+
+**Run command** (SonarCloud):
+
+```bash
+mvn clean verify sonar:sonar -Dsonar.host.url=https://sonarcloud.io
+```
+
+**Prerequisites**: SonarQube server or SonarCloud account; provide `SONAR_TOKEN` or `sonar.login` for authentication.
+
+**Agent guidelines**:
+
+- Run Sonar analysis when making significant changes; fix new issues before completing
+- Avoid: generic `catch (Exception)`, `printStackTrace`, broad `@SuppressWarnings`, magic numbers, duplicate logic
+- Prefer: specific exception types, proper logging, named constants, extracted methods
+- When adding new code, use domain-specific unchecked exceptions instead of generic `RuntimeException`
+- For LLM prompts, follow Prompt Management rules (external `.st` files, not hardcoded strings)
 
 ## Code Style Guidelines
 

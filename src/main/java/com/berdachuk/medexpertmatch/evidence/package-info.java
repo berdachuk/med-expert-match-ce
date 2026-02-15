@@ -6,5 +6,5 @@
  * - Clinical guidelines search
  * - Evidence domain entities
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "evidence :: domain", "evidence :: service"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "core :: exception", "evidence :: domain", "evidence :: service"})
 package com.berdachuk.medexpertmatch.evidence;

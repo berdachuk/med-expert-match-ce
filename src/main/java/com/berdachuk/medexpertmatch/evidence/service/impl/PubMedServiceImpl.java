@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.evidence.service.impl;
 
 import com.berdachuk.medexpertmatch.evidence.domain.PubMedArticle;
+import com.berdachuk.medexpertmatch.evidence.exception.EvidenceRetrievalException;
 import com.berdachuk.medexpertmatch.evidence.service.PubMedService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpRequest;
@@ -114,10 +115,10 @@ public class PubMedServiceImpl implements PubMedService {
 
         } catch (RestClientException e) {
             log.error("Error querying PubMed API", e);
-            throw new RuntimeException("PubMed API request failed: " + e.getMessage(), e);
+            throw new EvidenceRetrievalException("PubMed API request failed: " + e.getMessage(), e);
         } catch (Exception e) {
             log.error("Unexpected error querying PubMed", e);
-            throw new RuntimeException("Unexpected error querying PubMed: " + e.getMessage(), e);
+            throw new EvidenceRetrievalException("Unexpected error querying PubMed: " + e.getMessage(), e);
         }
     }
 
