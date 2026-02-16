@@ -545,4 +545,241 @@ class MatchingServiceIT extends BaseIntegrationTest {
             matchingService.matchFacilitiesForCase("nonexistent-case-id", RoutingOptions.defaultOptions());
         });
     }
+
+    @Test
+    void testMatchDoctorsToCase_RanksAreSequentialAfterSorting() {
+        // Create multiple test doctors with different specialties to ensure different scores
+        String doctorId1 = IdGenerator.generateDoctorId();
+        Doctor doctor1 = new Doctor(
+                doctorId1,
+                "Dr. Cardiology Expert",
+                "cardio1@example.com",
+                List.of("Cardiology"),
+                List.of("Board Certified", "Fellowship"),
+                List.of(),
+                true,
+                "AVAILABLE"
+        );
+        doctorRepository.insert(doctor1);
+
+        String doctorId2 = IdGenerator.generateDoctorId();
+        Doctor doctor2 = new Doctor(
+                doctorId2,
+                "Dr. General Medicine",
+                "general1@example.com",
+                List.of("General Medicine"),
+                List.of(),
+                List.of(),
+                false,
+                "AVAILABLE"
+        );
+        doctorRepository.insert(doctor2);
+
+        String doctorId3 = IdGenerator.generateDoctorId();
+        Doctor doctor3 = new Doctor(
+                doctorId3,
+                "Dr. Cardiology Junior",
+                "cardio2@example.com",
+                List.of("Cardiology"),
+                List.of(),
+                List.of(),
+                true,
+                "AVAILABLE"
+        );
+        doctorRepository.insert(doctor3);
+
+        // Create test case requiring cardiology
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                55,
+                "Chest pain",
+                "Severe chest pain radiating to left arm",
+                "Acute myocardial infarction",
+                List.of("I21.9"),
+                List.of(),
+                UrgencyLevel.CRITICAL,
+                "Cardiology",
+                CaseType.CONSULT_REQUEST,
+                "Patient presents with acute MI",
+                null
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        // Match doctors
+        MatchOptions options = MatchOptions.builder().maxResults(10).build();
+        List<DoctorMatch> matches = matchingService.matchDoctorsToCase(medicalCase.id(), options);
+
+        assertNotNull(matches);
+        assertFalse(matches.isEmpty());
+
+        // Verify ranks are sequential starting from 1
+        for (int i = 0; i < matches.size(); i++) {
+            assertEquals(i + 1, matches.get(i).rank(),
+                    "Rank should be sequential: expected " + (i + 1) + " but got " + matches.get(i).rank());
+        }
+
+        // Verify matches are sorted by score descending
+        for (int i = 0; i < matches.size() - 1; i++) {
+            assertTrue(matches.get(i).matchScore() >= matches.get(i + 1).matchScore(),
+                    "Matches should be sorted by score descending");
+        }
+    }
+
+    @Test
+    void testMatchFacilitiesForCase_RanksAreSequentialAfterSorting() {
+        // Create multiple facilities with different characteristics
+        String facilityId1 = IdGenerator.generateFacilityId();
+        Facility facility1 = new Facility(
+                facilityId1,
+                "Academic Medical Center",
+                "ACADEMIC",
+                "New York",
+                "NY",
+                "US",
+                BigDecimal.valueOf(40.7128),
+                BigDecimal.valueOf(-74.0060),
+                List.of("ICU", "CARDIOLOGY", "SURGERY"),
+                500,
+                200
+        );
+        facilityRepository.insert(facility1);
+
+        String facilityId2 = IdGenerator.generateFacilityId();
+        Facility facility2 = new Facility(
+                facilityId2,
+                "Community Hospital",
+                "COMMUNITY",
+                "Boston",
+                "MA",
+                "US",
+                BigDecimal.valueOf(42.3601),
+                BigDecimal.valueOf(-71.0589),
+                List.of("ICU"),
+                100,
+                50
+        );
+        facilityRepository.insert(facility2);
+
+        String facilityId3 = IdGenerator.generateFacilityId();
+        Facility facility3 = new Facility(
+                facilityId3,
+                "Specialty Clinic",
+                "SPECIALTY_CENTER",
+                "Philadelphia",
+                "PA",
+                "US",
+                BigDecimal.valueOf(39.9526),
+                BigDecimal.valueOf(-75.1652),
+                List.of("CARDIOLOGY"),
+                50,
+                25
+        );
+        facilityRepository.insert(facility3);
+
+        // Create test case
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                60,
+                "Heart failure",
+                "Severe shortness of breath",
+                "Congestive heart failure",
+                List.of("I50.9"),
+                List.of(),
+                UrgencyLevel.HIGH,
+                "Cardiology",
+                CaseType.CONSULT_REQUEST,
+                "Patient with CHF",
+                null
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        // Match facilities
+        RoutingOptions options = RoutingOptions.builder().maxResults(10).build();
+        List<FacilityMatch> matches = matchingService.matchFacilitiesForCase(medicalCase.id(), options);
+
+        assertNotNull(matches);
+        assertFalse(matches.isEmpty());
+
+        // Verify ranks are sequential starting from 1
+        for (int i = 0; i < matches.size(); i++) {
+            assertEquals(i + 1, matches.get(i).rank(),
+                    "Rank should be sequential: expected " + (i + 1) + " but got " + matches.get(i).rank());
+        }
+
+        // Verify matches are sorted by route score descending
+        for (int i = 0; i < matches.size() - 1; i++) {
+            assertTrue(matches.get(i).routeScore() >= matches.get(i + 1).routeScore(),
+                    "Matches should be sorted by route score descending");
+        }
+    }
+
+    @Test
+    void testMatchFacilitiesForCase_HigherScoreGetsLowerRank() {
+        // Create two facilities where one should clearly score higher
+        String highScoreFacilityId = IdGenerator.generateFacilityId();
+        Facility highScoreFacility = new Facility(
+                highScoreFacilityId,
+                "Premier Cardiology Center",
+                "ACADEMIC",
+                "City",
+                "State",
+                "US",
+                null,
+                null,
+                List.of("ICU", "CARDIOLOGY", "SURGERY", "CATH_LAB"),
+                500,
+                100
+        );
+        facilityRepository.insert(highScoreFacility);
+
+        String lowerScoreFacilityId = IdGenerator.generateFacilityId();
+        Facility lowerScoreFacility = new Facility(
+                lowerScoreFacilityId,
+                "Basic Clinic",
+                "CLINIC",
+                "City",
+                "State",
+                "US",
+                null,
+                null,
+                List.of("LAB"),
+                20,
+                15
+        );
+        facilityRepository.insert(lowerScoreFacility);
+
+        // Create test case
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                65,
+                "Cardiac emergency",
+                "Chest pain with ST elevation",
+                "Acute MI",
+                List.of("I21.0"),
+                List.of(),
+                UrgencyLevel.CRITICAL,
+                "Cardiology",
+                CaseType.CONSULT_REQUEST,
+                "STEMI patient",
+                null
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        // Match facilities
+        List<FacilityMatch> matches = matchingService.matchFacilitiesForCase(medicalCase.id(), RoutingOptions.defaultOptions());
+
+        assertNotNull(matches);
+        assertFalse(matches.isEmpty());
+
+        // Find the premier facility in results
+        FacilityMatch premierMatch = matches.stream()
+                .filter(m -> m.facility().id().equals(highScoreFacilityId))
+                .findFirst()
+                .orElse(null);
+
+        if (premierMatch != null) {
+            // Premier facility should have rank 1 (best match)
+            assertEquals(1, premierMatch.rank(), "Higher scoring facility should have rank 1");
+        }
+    }
 }
