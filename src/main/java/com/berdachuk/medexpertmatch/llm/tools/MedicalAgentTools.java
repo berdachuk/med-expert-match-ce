@@ -1007,10 +1007,11 @@ public class MedicalAgentTools {
             }
 
             // Cypher query to find doctors who treated cases with matching ICD-10 code
+            // Note: Apache AGE doesn't support column aliases in ORDER BY, so we use column position (2 = caseCount)
             String cypherQuery = """
                     MATCH (d:Doctor)-[:TREATED]->(c:MedicalCase)-[:HAS_CONDITION]->(i:ICD10Code {code: $conditionCode})
                     RETURN d.id as doctorId, count(DISTINCT c) as caseCount, collect(DISTINCT c.id) as caseIds
-                    ORDER BY caseCount DESC
+                    ORDER BY count(DISTINCT c) DESC
                     LIMIT $maxResults
                     """;
 
@@ -1438,10 +1439,11 @@ public class MedicalAgentTools {
             }
 
             // Cypher query to find facilities connected to cases with matching ICD-10 code
+            // Note: Apache AGE doesn't support column aliases in ORDER BY, so we use the expression directly
             String cypherQuery = """
                     MATCH (f:Facility)<-[:AFFILIATED_WITH]-(d:Doctor)-[:TREATED]->(c:MedicalCase)-[:HAS_CONDITION]->(i:ICD10Code {code: $conditionCode})
                     RETURN DISTINCT f.id as facilityId, count(DISTINCT c) as caseCount
-                    ORDER BY caseCount DESC
+                    ORDER BY count(DISTINCT c) DESC
                     LIMIT $maxResults
                     """;
 
