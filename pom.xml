@@ -325,6 +325,28 @@
                 </configuration>
             </plugin>
 
+            <!-- Build test container before integration tests if not found -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>ensure-test-container</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>${project.basedir}/scripts/ensure-test-container.sh</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Maven Failsafe Plugin (Integration Tests) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

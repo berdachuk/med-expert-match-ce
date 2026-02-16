@@ -97,13 +97,17 @@ mvn test jacoco:report
 
 ### Test Container Setup
 
-Before running integration tests, build the test container:
+The test container is **built automatically** before integration tests if the image is not found locally.
+`mvn verify` or `mvn integration-test` will run `scripts/ensure-test-container.sh` in the `pre-integration-test`
+phase, which checks for `medexpertmatch-postgres-test:latest` and builds it when missing.
+
+To build manually (e.g. before first run or after Dockerfile changes):
 
 ```bash
 ./scripts/build-test-container.sh
 ```
 
-Or manually:
+Or:
 
 ```bash
 docker build -f docker/Dockerfile.test -t medexpertmatch-postgres-test:latest .
@@ -115,14 +119,13 @@ docker build -f docker/Dockerfile.test -t medexpertmatch-postgres-test:latest .
 - **Image Details**: Based on `apache/age:release_PG17_1.6.0` with PgVector 0.8.0 extension added
 - **Build Script**: Use `./scripts/build-test-container.sh` or
   `docker build -f docker/Dockerfile.test -t medexpertmatch-postgres-test:latest .`
+- **Auto-Build**: Maven runs `scripts/ensure-test-container.sh` in `pre-integration-test` phase; builds image if missing
 - **Image Location**: `docker/Dockerfile.test`
 - **Container Reuse**: **ENABLED by default** (`withReuse(true)`) for faster test execution
     - Container reuse is automatically **DISABLED** when `mvn clean` is detected (target directory missing)
     - After `mvn clean`, tests get a fresh database container
     - Subsequent test runs reuse the container for faster execution
-- **Prerequisites**: Custom test container image must be built before running integration tests
 - **Extensions**: Container includes PostgreSQL 17, Apache AGE 1.6.0, and PgVector 0.8.0 pre-configured
-- **Important**: Always build the test container image before running tests: `./scripts/build-test-container.sh`
 - **Test Independence**: `mvn clean test` always starts with a fresh database. Regular `mvn test` reuses containers for
   speed
 
@@ -563,6 +566,8 @@ itself
 
 ### Build Test Container
 
+Build runs automatically before integration tests when missing. To build manually:
+
 ```bash
 ./scripts/build-test-container.sh
 ```
@@ -662,7 +667,7 @@ Use Flyway for database migrations:
 
 If tests fail unexpectedly:
 
-1. Ensure test container is built: `./scripts/build-test-container.sh`
+1. Ensure test container exists (built automatically by `mvn verify`; or run `./scripts/build-test-container.sh`)
 2. Check for running application instances with non-test profiles
 3. Verify that mocks are being used instead of real LLM APIs
 4. Ensure all test data uses anonymized patient identifiers

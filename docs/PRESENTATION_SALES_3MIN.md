@@ -141,11 +141,17 @@ and grey palette. Smooth motion. Clean, professional. 4–5 seconds, 16:9."
 - **Runs fully locally**: no data sent to external AI; secure, HIPAA-aware
 
 **Script:**  
-"MedExpertMatch fixes this. We use MedGemma—Google's HAI-DEF model—for case analysis and medical reasoning. You get
-specialist matching in minutes, not days. Real expertise becomes visible—who actually handles which cases, by diagnosis
-and complexity. And we give specialists one AI copilot: case analysis, evidence, recommendations, and matched colleagues
-in a single flow. The application can run fully locally: your data never leaves your environment and is not sent to
-external AI—secure and HIPAA-aware."
+MedExpertMatch fixes this.
+We use MedGemma—Google's HAI-DEF model—for case analysis and medical reasoning.
+
+You get specialist matching in minutes, not days.
+Real expertise becomes visible—who actually handles which cases, by diagnosis and complexity.
+
+And we give specialists one AI copilot: case analysis, evidence, recommendations, and matched colleagues in a single
+flow.
+
+The application can run fully locally: your data never leaves your environment and is not sent to external AI—secure and
+HIPAA-aware.
 
 **Visual:** Positive turn. E.g. same corridor now with clear path and "minutes" clock; or one central hub (AI copilot)
 connecting case, evidence, recommendations, experts. Shield or lock for privacy. Green/blue accents.
@@ -176,10 +182,13 @@ and green. 5–6 seconds, 16:9."
 - Ranked list with rationales
 
 **Script:**  
-"Matching is powered by what we call Hybrid GraphRAG. We combine three signals: semantic similarity from embeddings—what
-the case is about; graph relationships—which doctors and facilities are connected to similar cases; and historical
-performance—past outcomes and experience. Forty, thirty, thirty. You get a ranked list of specialists with clear
-rationales, not a black box."
+Matching is powered by what we call Hybrid GraphRAG.
+
+We combine three signals: semantic similarity from embeddings—what the case is about; graph relationships—which doctors
+and facilities are connected to similar cases;
+and historical performance—past outcomes and experience.
+
+Forty, thirty, thirty. You get a ranked list of specialists with clear rationales, not a black box.
 
 **Visual:** Diagram: one input "Medical case" flowing into three branches (or three pillars) labelled 40% / 30% / 30%,
 then merging into "Ranked specialists + rationales". Optional: simple graph nodes and vectors. Blue/indigo, diagram
@@ -225,13 +234,26 @@ seconds, 16:9."
 - **Admin: graph view** — administrator can view the data graph (doctors, cases, facilities)
 
 **Script:**  
-"You get nine things. Find Specialist: inpatient consults and second opinions in minutes, with the right sub-specialist.
-A consultation queue ordered by clinical urgency—sickest first. Network analytics that show top experts by condition
-code, volume, and outcomes. An AI copilot for specialists: analysis, guidelines, PubMed, recommendations, and suggested
-colleagues. Regional routing: best facility and lead specialist by complexity and capacity. You can ingest data from
-external systems via FHIR Bundles—so EMRs and portals push cases in. It all plugs in via FHIR and REST APIs. You can
-also generate a synthetic test dataset—doctors and cases—for demo or evaluation. And the administrator can open a graph
-view to see the data graph: doctors, cases, facilities, and their relationships. I'll show the app now."
+You get nine things.
+
+Find Specialist: inpatient consults and second opinions in minutes, with the right sub-specialist.
+
+A consultation queue ordered by clinical urgency—sickest first.
+
+Network analytics that show top experts by condition code, volume, and outcomes.
+
+An AI copilot for specialists: analysis, guidelines, PubMed, recommendations, and suggested colleagues.
+
+Regional routing: best facility and lead specialist by complexity and capacity.
+
+You can also generate a synthetic test dataset—doctors and cases—for demo or evaluation.
+
+The application can be extended to ingest data from external systems via FHIR Bundles, allowing EMRs and portals to push
+cases in.
+
+It all plugs in via FHIR and REST APIs.
+
+And the administrator can open a graph view to see the data graph: doctors, cases, facilities, and their relationships.
 
 **Visual:** Six icons or six short cards in a grid (2x3 or 3x2): magnifying glass / list (Find Specialist), queue with
 priority badge (Consultation queue), bar chart / network (Analytics), chat + document (AI copilot), map + building (
@@ -241,10 +263,9 @@ Regional routing), plug / API (FHIR). Consistent icon style, one accent colour.
 `Six feature icons in grid, healthcare app, find specialist magnifying glass, priority queue list, analytics chart network, AI chat document, map building routing, API plug, consistent line icon style, one blue accent, white background, 16:9 --v 6 --style raw`
 
 **Image prompt (DALL-E / ChatGPT):**  
-"Create a clean, professional tech infographic diagram in 16:9 aspect ratio:
-Grid of six simple icons: Find Specialist (magnifying glass), Consultation queue (list with priority), Network
-analytics (chart), AI copilot (chat + doc), Regional routing (map + building), FHIR/API (plug). Line icon style, one
-blue accent, white background"
+Create a clean, professional tech infographic diagram in 16:9 aspect ratio:
+FHIR ingestion — ingest data from external systems via FHIR Bundles (EMR, portals)
+Line icon style, one blue accent, white background
 
 **Video prompt (Runway / Pika / Sora):**  
 "Six simple icons appear one after another on a white grid: magnifying glass, priority list, chart, chat bubble with
@@ -287,10 +308,18 @@ application in a separate demo."
 - **Fully local & secure** — runs on your infrastructure; no data to external AI; no PHI in logs
 
 **Script:**  
-"Why us? We deliver matching in minutes with one pipeline—vector, graph, and history—and explainable rationales. We make
-real expertise visible from data, not job titles. Specialists get one copilot instead of five separate tools. The queue
-is ordered by clinical need, not first-come-first-served. And the application can run fully locally on your
-infrastructure—data is never sent to external AI, and we don't log PHI."
+Why us?
+
+We deliver matching in minutes with one pipeline—vector, graph, and history—and explainable rationales.
+
+We make real expertise visible from data, not job titles.
+
+Specialists get one copilot instead of five separate tools.
+
+The queue is ordered by clinical need, not first-come-first-served.
+
+And the application can run fully locally on your infrastructure—data is never sent to external AI, and we don't log
+PHI.
 
 **Visual:** Five short differentiators as icons with one-line labels: clock (minutes), graph/chart (real expertise),
 single app/copilot vs many windows (one copilot), priority flag (urgent first), shield (privacy). Same style as Slide 6
@@ -318,8 +347,15 @@ flag, shield. Simple line style. Each icon highlights briefly. Professional, min
 *Demo • Full documentation • MedGemma Impact Challenge 2026*
 
 **Script:**  
-"MedExpertMatch: right specialist, right time. Full documentation is available—setup, API, use cases. We'd be glad to
-show you a demo or walk through the docs. Thank you."
+"
+MedExpertMatch: right specialist, right time.
+
+Full documentation is available—setup, API, use cases.
+
+We'd be glad to show you a demo or walk through the docs.
+
+Thank you.
+"
 
 **Visual:** Same branding as Slide 1. Contact/CTA block: "Demo", "Full documentation", "MedGemma Impact Challenge 2026".
 Optional: QR code or short URL for docs/demo. Clean, minimal.
@@ -441,4 +477,9 @@ e.g. "slow zoom in" or "subtle parallax").
 
 ---
 
+Card and Thumbnail Image
+Dimensions for the image (560 x 280)
+
 *Last updated: 2026-02-08*
+
+
