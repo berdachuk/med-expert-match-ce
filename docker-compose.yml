@@ -49,7 +49,7 @@ services:
       CHAT_PROVIDER: openai
       CHAT_BASE_URL: http://127.0.0.1:11434
       CHAT_API_KEY: any
-      CHAT_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M
+      CHAT_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q8_0
       CHAT_TEMPERATURE: "0.7"
       CHAT_MAX_TOKENS: "6000"
       # Embedding
@@ -62,7 +62,7 @@ services:
       RERANKING_PROVIDER: openai
       RERANKING_BASE_URL: http://127.0.0.1:11434
       RERANKING_API_KEY: any
-      RERANKING_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M
+      RERANKING_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q8_0
       RERANKING_TEMPERATURE: "0.1"
       # Tool calling (Qwen3 4B)
       TOOL_CALLING_PROVIDER: openai
