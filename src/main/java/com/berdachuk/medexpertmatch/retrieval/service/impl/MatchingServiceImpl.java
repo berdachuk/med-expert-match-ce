@@ -70,8 +70,7 @@ public class MatchingServiceImpl implements MatchingService {
         List<Doctor> candidates = findCandidateDoctors(medicalCase, options);
 
         // Score each candidate using SemanticGraphRetrievalService
-        List<DoctorMatch> matches = new ArrayList<>();
-        int rank = 1;
+        List<DoctorMatch> unsortedMatches = new ArrayList<>();
 
         for (Doctor doctor : candidates) {
             ScoreResult scoreResult = semanticGraphRetrievalService.score(medicalCase, doctor);
@@ -81,21 +80,34 @@ public class MatchingServiceImpl implements MatchingService {
                 continue;
             }
 
+            // Create match with temporary rank 0; will assign correct rank after sorting
             DoctorMatch match = new DoctorMatch(
                     doctor,
                     scoreResult.overallScore(),
-                    rank++,
+                    0, // Temporary rank; will be assigned after sorting
                     scoreResult.rationale()
             );
 
-            matches.add(match);
+            unsortedMatches.add(match);
         }
 
-        // Sort by score descending and limit results
-        List<DoctorMatch> result = matches.stream()
+        // Sort by score descending, assign correct ranks, and limit results
+        List<DoctorMatch> sortedMatches = unsortedMatches.stream()
                 .sorted(Comparator.comparing(DoctorMatch::matchScore).reversed())
                 .limit(options.maxResults())
                 .collect(Collectors.toList());
+
+        // Assign correct ranks after sorting (1 = best match)
+        List<DoctorMatch> result = new ArrayList<>();
+        int rank = 1;
+        for (DoctorMatch m : sortedMatches) {
+            result.add(new DoctorMatch(
+                    m.doctor(),
+                    m.matchScore(),
+                    rank++,
+                    m.rationale()
+            ));
+        }
 
         // Persist consultation matches for dashboard and history
         consultationMatchRepository.deleteByCaseId(normalizedCaseId);
@@ -136,8 +148,7 @@ public class MatchingServiceImpl implements MatchingService {
         List<Facility> candidates = findCandidateFacilities(medicalCase, options);
 
         // Score each candidate using SemanticGraphRetrievalService
-        List<FacilityMatch> matches = new ArrayList<>();
-        int rank = 1;
+        List<FacilityMatch> unsortedMatches = new ArrayList<>();
 
         for (Facility facility : candidates) {
             RouteScoreResult routeResult = semanticGraphRetrievalService.semanticGraphRetrievalRouteScore(medicalCase, facility);
@@ -165,21 +176,36 @@ public class MatchingServiceImpl implements MatchingService {
                 }
             }
 
+            // Create match with temporary rank 0; will assign correct rank after sorting
             FacilityMatch match = new FacilityMatch(
                     facility,
                     routeResult.overallScore(),
-                    rank++,
+                    0, // Temporary rank; will be assigned after sorting
                     routeResult.rationale()
             );
 
-            matches.add(match);
+            unsortedMatches.add(match);
         }
 
-        // Sort by route score descending and limit results
-        return matches.stream()
+        // Sort by route score descending, assign correct ranks, and limit results
+        List<FacilityMatch> sortedMatches = unsortedMatches.stream()
                 .sorted(Comparator.comparing(FacilityMatch::routeScore).reversed())
                 .limit(options.maxResults())
                 .collect(Collectors.toList());
+
+        // Assign correct ranks after sorting (1 = best match)
+        List<FacilityMatch> result = new ArrayList<>();
+        int rank = 1;
+        for (FacilityMatch m : sortedMatches) {
+            result.add(new FacilityMatch(
+                    m.facility(),
+                    m.routeScore(),
+                    rank++,
+                    m.rationale()
+            ));
+        }
+
+        return result;
     }
 
     /**

@@ -523,7 +523,7 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
     
     /**
      * Strips LLM internal reasoning/thought content from the response.
-     * Some models output "thought" or special markers like &lt;unused94&gt; before their actual response.
+     * Some models output "thought" or reasoning steps before their actual response.
      */
     private String stripLlmReasoning(String response) {
         if (response == null || response.isBlank()) {
@@ -532,14 +532,44 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
         String cleaned = response.trim();
         
         // Remove special LLM markers like <unused94>, <unused95>, etc.
-        // These are internal markers some models use
         cleaned = cleaned.replaceAll("<unused\\d+>", "");
         
+        // Common reasoning section headers that LLMs output before the actual response
+        String[] reasoningHeaders = {
+            "Understand the Goal:", "Analyze the", "Step 1:", "Step 2:", "Step 3:",
+            "Thought:", "Thinking:", "Reasoning:", "Analysis:", "Let me think",
+            "Let's analyze", "First, I'll", "I need to", "The task is", "Key Information"
+        };
+        
+        // Check if response starts with a reasoning header
+        for (String header : reasoningHeaders) {
+            if (cleaned.toLowerCase().startsWith(header.toLowerCase())) {
+                // Find where the actual response starts (after the reasoning section)
+                // Look for double newline followed by the actual content
+                int doubleNewlineIdx = cleaned.indexOf("\n\n");
+                if (doubleNewlineIdx > 0 && doubleNewlineIdx < cleaned.length() - 2) {
+                    String afterReasoning = cleaned.substring(doubleNewlineIdx + 2).trim();
+                    // Check if there's more reasoning after the first double newline
+                    boolean foundActualContent = false;
+                    for (String h : reasoningHeaders) {
+                        if (afterReasoning.toLowerCase().startsWith(h.toLowerCase())) {
+                            // More reasoning found, skip it too
+                            int nextDoubleNewline = afterReasoning.indexOf("\n\n");
+                            if (nextDoubleNewline > 0) {
+                                afterReasoning = afterReasoning.substring(nextDoubleNewline + 2).trim();
+                            }
+                            break;
+                        }
+                    }
+                    cleaned = afterReasoning;
+                    foundActualContent = true;
+                    break;
+                }
+            }
+        }
+        
         // Check if response starts with "thought" (case-insensitive)
-        // This often appears after the unused markers
         if (cleaned.toLowerCase().startsWith("thought")) {
-            // Find where the actual response starts (after the reasoning section)
-            // Look for double newline or a clear paragraph break
             int doubleNewlineIdx = cleaned.indexOf("\n\n");
             if (doubleNewlineIdx > 0 && doubleNewlineIdx < cleaned.length() - 2) {
                 cleaned = cleaned.substring(doubleNewlineIdx + 2).trim();
