@@ -120,7 +120,7 @@ class UseCase3IT extends BaseIntegrationTest {
     @Test
     void testQueuePrioritization() {
         // Use Case 3: Consultation Queue Prioritization
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsults(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsultsSync(
                 Map.of()
         );
 
@@ -142,7 +142,7 @@ class UseCase3IT extends BaseIntegrationTest {
 
     @Test
     void testQueuePrioritization_DeterministicOrder_ContainsAllCasesAndStrictUrgencyOrder() {
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsults(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsultsSync(
                 Map.of()
         );
 
@@ -183,7 +183,7 @@ class UseCase3IT extends BaseIntegrationTest {
     @Test
     void testQueuePrioritizationWithFilters() {
         // Test with specific filters
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsults(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsultsSync(
                 Map.of(
                         "minUrgency", "HIGH",
                         "maxResults", 10

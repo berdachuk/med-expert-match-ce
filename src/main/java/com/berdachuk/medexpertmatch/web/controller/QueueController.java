@@ -38,7 +38,7 @@ public class QueueController {
         model.addAttribute("currentPage", "queue");
 
         try {
-            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsults(Map.of());
+            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsultsSync(Map.of());
             model.addAttribute("prioritizationResult", response.getBody());
             model.addAttribute("error", null);
         } catch (Exception e) {

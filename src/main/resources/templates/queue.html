@@ -220,6 +220,8 @@
             });
         }
 
+        let pollIntervalId = null;
+
         form.addEventListener('submit', function (e) {
             e.preventDefault();
             setError('');
@@ -237,18 +239,44 @@
                 },
                 body: JSON.stringify({sessionId: sessionId}),
                 signal: abortController.signal
-            }).
-            then(function (res) {
-                if (!res.ok) throw new Error(res.statusText || 'Request failed');
-                return res.json();
             })
+                .then(function (res) {
+                    if (!res.ok) throw new Error(res.statusText || 'Request failed');
+                    return res.json();
+                })
                 .then(function (data) {
-                    closeLogStream();
-                    setProgress(false);
-                    setResult(data);
-                    addLogEntry('[INFO] Prioritization completed.', 'info');
+                    const jobId = data.jobId;
+                    if (!jobId) throw new Error('No job ID returned');
+                    addLogEntry('[INFO] Job started. Polling for result...', 'info');
+                    pollIntervalId = setInterval(function () {
+                        if (abortController && abortController.signal.aborted) {
+                            clearInterval(pollIntervalId);
+                            return;
+                        }
+                        fetch('/api/v1/agent/prioritize-consults/status/' + encodeURIComponent(jobId))
+                            .then(function (r) { return r.json(); })
+                            .then(function (status) {
+                                if (status.status === 'COMPLETED') {
+                                    clearInterval(pollIntervalId);
+                                    pollIntervalId = null;
+                                    closeLogStream();
+                                    setProgress(false);
+                                    setResult(status.result);
+                                    addLogEntry('[INFO] Prioritization completed.', 'info');
+                                } else if (status.status === 'FAILED') {
+                                    clearInterval(pollIntervalId);
+                                    pollIntervalId = null;
+                                    closeLogStream();
+                                    setProgress(false);
+                                    setError('Prioritization failed: ' + (status.errorMessage || 'Unknown error'));
+                                    addLogEntry('[ERROR] ' + (status.errorMessage || 'Unknown error'), 'error');
+                                }
+                            })
+                            .catch(function () {});
+                    }, 2000);
                 })
                 .catch(function (err) {
+                    if (pollIntervalId) clearInterval(pollIntervalId);
                     closeLogStream();
                     setProgress(false);
                     if (err.name === 'AbortError') {
@@ -262,9 +290,16 @@
         });
 
         cancelBtn.addEventListener('click', function () {
+            if (pollIntervalId) {
+                clearInterval(pollIntervalId);
+                pollIntervalId = null;
+            }
             if (abortController) {
                 abortController.abort();
             }
+            closeLogStream();
+            setProgress(false);
+            if (cancelledAlert) cancelledAlert.classList.remove('d-none');
         });
 
         if (resultBody && resultBody.textContent.trim()) {

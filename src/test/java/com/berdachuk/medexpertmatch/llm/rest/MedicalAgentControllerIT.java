@@ -242,7 +242,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
     @Test
     void testUseCase3_PrioritizeConsults() {
         // Use Case 3: Queue Prioritization
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsults(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.prioritizeConsultsSync(
                 Map.of()
         );
 

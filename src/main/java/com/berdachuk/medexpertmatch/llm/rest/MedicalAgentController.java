@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.rest;
 
+import com.berdachuk.medexpertmatch.llm.domain.PrioritizeJobStatus;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.PrioritizeJobStore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -8,10 +10,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * REST controller for Medical Agent API endpoints.
@@ -23,9 +27,11 @@ import java.util.Map;
 public class MedicalAgentController {
 
     private final MedicalAgentService medicalAgentService;
+    private final PrioritizeJobStore prioritizeJobStore;
 
-    public MedicalAgentController(MedicalAgentService medicalAgentService) {
+    public MedicalAgentController(MedicalAgentService medicalAgentService, PrioritizeJobStore prioritizeJobStore) {
         this.medicalAgentService = medicalAgentService;
+        this.prioritizeJobStore = prioritizeJobStore;
     }
 
     /**
@@ -105,24 +111,58 @@ public class MedicalAgentController {
     }
 
     /**
-     * Prioritizes consultation queue.
-     * Uses case-analyzer skill.
-     * <p>
-     * Use Case: Use Case 3 (Queue Prioritization)
-     * UI Page: /queue
+     * Starts async queue prioritization. Returns 202 with job ID; client polls status endpoint.
+     * Avoids gateway timeout for long-running operations.
      *
-     * @param request Request parameters (case IDs, filters, etc.)
-     * @return Agent response with prioritized cases
+     * @param request Request parameters (case IDs, sessionId, etc.)
+     * @return 202 Accepted with job ID
      */
     @PostMapping("/prioritize-consults")
-    public ResponseEntity<MedicalAgentService.AgentResponse> prioritizeConsults(
+    public ResponseEntity<Map<String, String>> prioritizeConsults(
             @RequestBody(required = false) Map<String, Object> request
     ) {
-        log.info("POST /api/v1/agent/prioritize-consults");
+        log.info("POST /api/v1/agent/prioritize-consults (async)");
+        String jobId = prioritizeJobStore.createJob();
+        Map<String, Object> params = request != null ? request : Map.of();
+        CompletableFuture.runAsync(() -> {
+            try {
+                MedicalAgentService.AgentResponse response = medicalAgentService.prioritizeConsults(params);
+                prioritizeJobStore.completeJob(jobId, response);
+            } catch (Exception e) {
+                log.error("Queue prioritization failed for job {}", jobId, e);
+                prioritizeJobStore.failJob(jobId, e.getMessage());
+            }
+        });
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("jobId", jobId));
+    }
+
+    /**
+     * Sync queue prioritization (legacy). May timeout for long operations; prefer async POST + poll.
+     */
+    @PostMapping("/prioritize-consults-sync")
+    public ResponseEntity<MedicalAgentService.AgentResponse> prioritizeConsultsSync(
+            @RequestBody(required = false) Map<String, Object> request
+    ) {
+        log.info("POST /api/v1/agent/prioritize-consults-sync");
         MedicalAgentService.AgentResponse response = medicalAgentService.prioritizeConsults(
                 request != null ? request : Map.of()
         );
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Polls status of async queue prioritization job.
+     *
+     * @param jobId Job ID from POST /prioritize-consults
+     * @return Job status (PENDING, COMPLETED, FAILED) and result when done
+     */
+    @GetMapping("/prioritize-consults/status/{jobId}")
+    public ResponseEntity<PrioritizeJobStatus> getPrioritizeConsultsStatus(@PathVariable String jobId) {
+        PrioritizeJobStatus status = prioritizeJobStore.getStatus(jobId);
+        if (status == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(status);
     }
 
     /**
