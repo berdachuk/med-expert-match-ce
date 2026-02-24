@@ -42,7 +42,7 @@ public class RoutingController {
         model.addAttribute("caseId", caseId);
 
         try {
-            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCase(caseId, Map.of());
+            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCaseSync(caseId, Map.of());
             model.addAttribute("routingResult", response.getBody());
             model.addAttribute("error", null);
         } catch (Exception e) {

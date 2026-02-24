@@ -84,7 +84,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
     @Test
     void testUseCase1_MatchDoctors() {
         // Use Case 1: Specialist Matching
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctors(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctorsSync(
                 testCaseId,
                 Map.of()
         );
@@ -102,7 +102,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
                 "caseText", "Patient presents with severe chest pain and shortness of breath"
         );
 
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchFromText(request);
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchFromTextSync(request);
 
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -139,7 +139,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
                 "caseType", "INPATIENT"
         );
 
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchFromText(request);
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchFromTextSync(request);
 
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -153,7 +153,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
         Map<String, Object> request = Map.of();
 
         assertThrows(IllegalArgumentException.class, () -> {
-            medicalAgentController.matchFromText(request);
+            medicalAgentController.matchFromTextSync(request);
         });
     }
 
@@ -163,7 +163,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
         Map<String, Object> request = Map.of("caseText", "");
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
-            medicalAgentController.matchFromText(request);
+            medicalAgentController.matchFromTextSync(request);
         });
         assertTrue(exception.getMessage().contains("caseText") ||
                         exception.getMessage().contains("empty") ||
@@ -179,7 +179,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
                 "caseType", "INVALID_TYPE"
         );
 
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchFromText(request);
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchFromTextSync(request);
 
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
@@ -205,7 +205,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
                 "caseText", "Second opinion case",
                 "caseType", "SECOND_OPINION"
         );
-        ResponseEntity<MedicalAgentService.AgentResponse> response1 = medicalAgentController.matchFromText(request1);
+        ResponseEntity<MedicalAgentService.AgentResponse> response1 = medicalAgentController.matchFromTextSync(request1);
         assertEquals(HttpStatus.OK, response1.getStatusCode());
 
         // Test CONSULT_REQUEST case type
@@ -213,7 +213,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
                 "caseText", "Consult request case",
                 "caseType", "CONSULT_REQUEST"
         );
-        ResponseEntity<MedicalAgentService.AgentResponse> response2 = medicalAgentController.matchFromText(request2);
+        ResponseEntity<MedicalAgentService.AgentResponse> response2 = medicalAgentController.matchFromTextSync(request2);
         assertEquals(HttpStatus.OK, response2.getStatusCode());
 
         // Verify both cases were created with correct types
@@ -268,7 +268,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
     @Test
     void testUseCase5_AnalyzeCase() {
         // Use Case 5: Decision Support - Case Analysis
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.analyzeCase(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.analyzeCaseSync(
                 testCaseId,
                 Map.of()
         );
@@ -282,7 +282,7 @@ class MedicalAgentControllerIT extends BaseIntegrationTest {
     @Test
     void testUseCase6_RouteCase() {
         // Use Case 6: Regional Routing
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCase(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCaseSync(
                 testCaseId,
                 Map.of()
         );

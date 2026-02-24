@@ -73,7 +73,7 @@ public class CaseAnalysisController {
         });
 
         try {
-            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.analyzeCase(caseId, Map.of());
+            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.analyzeCaseSync(caseId, Map.of());
             model.addAttribute("analysisResult", response.getBody());
             model.addAttribute("error", null);
         } catch (Exception e) {

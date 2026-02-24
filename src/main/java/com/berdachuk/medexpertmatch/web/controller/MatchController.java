@@ -90,7 +90,7 @@ public class MatchController {
             if (sessionId != null && !sessionId.isEmpty()) {
                 requestParams.put("sessionId", sessionId);
             }
-            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctors(caseId, requestParams);
+            ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctorsSync(caseId, requestParams);
             MedicalAgentService.AgentResponse agentResponse = response.getBody();
             if (agentResponse != null && agentResponse.response() != null && !agentResponse.response().trim().isEmpty()) {
                 // Limit response size to prevent template parsing issues (max 50KB)

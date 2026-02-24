@@ -91,7 +91,7 @@ class UseCase5IT extends BaseIntegrationTest {
     @Test
     void testCaseAnalysis() {
         // Use Case 5: Decision Support - Case Analysis
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.analyzeCase(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.analyzeCaseSync(
                 testCaseId,
                 Map.of()
         );
@@ -115,7 +115,7 @@ class UseCase5IT extends BaseIntegrationTest {
     @Test
     void testGenerateRecommendations() {
         // First analyze the case
-        ResponseEntity<MedicalAgentService.AgentResponse> analysisResponse = medicalAgentController.analyzeCase(
+        ResponseEntity<MedicalAgentService.AgentResponse> analysisResponse = medicalAgentController.analyzeCaseSync(
                 testCaseId,
                 Map.of()
         );

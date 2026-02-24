@@ -109,7 +109,7 @@ class UseCase1IT extends BaseIntegrationTest {
     @Test
     void testSpecialistMatching() {
         // Use Case 1: Specialist Matching for Complex Inpatient Cases
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctors(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctorsSync(
                 testCaseId,
                 Map.of()
         );
@@ -131,7 +131,7 @@ class UseCase1IT extends BaseIntegrationTest {
     @Test
     void testSpecialistMatchingWithFilters() {
         // Test with optional filters
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctors(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctorsSync(
                 testCaseId,
                 Map.of(
                         "maxResults", 5,
@@ -148,7 +148,7 @@ class UseCase1IT extends BaseIntegrationTest {
     @Test
     void testMatchDoctorsForExistingCase_NoDuplicateCaseOrConsultationMatch() {
         // Run Match Doctors for existing case (POST /api/v1/agent/match/{caseId})
-        ResponseEntity<MedicalAgentService.AgentResponse> response1 = medicalAgentController.matchDoctors(
+        ResponseEntity<MedicalAgentService.AgentResponse> response1 = medicalAgentController.matchDoctorsSync(
                 testCaseId,
                 Map.of()
         );
@@ -163,7 +163,7 @@ class UseCase1IT extends BaseIntegrationTest {
         assertTrue(matchCountAfterFirst >= 1, "ConsultationMatch rows should be persisted for the case");
 
         // Run Match Doctors again for the same caseId (replace, not duplicate)
-        ResponseEntity<MedicalAgentService.AgentResponse> response2 = medicalAgentController.matchDoctors(
+        ResponseEntity<MedicalAgentService.AgentResponse> response2 = medicalAgentController.matchDoctorsSync(
                 testCaseId,
                 Map.of()
         );

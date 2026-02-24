@@ -1,8 +1,14 @@
 package com.berdachuk.medexpertmatch.llm.rest;
 
+import com.berdachuk.medexpertmatch.llm.domain.AnalyzeJobStatus;
+import com.berdachuk.medexpertmatch.llm.domain.MatchJobStatus;
 import com.berdachuk.medexpertmatch.llm.domain.PrioritizeJobStatus;
+import com.berdachuk.medexpertmatch.llm.domain.RouteJobStatus;
+import com.berdachuk.medexpertmatch.llm.service.AnalyzeJobStore;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.MatchJobStore;
 import com.berdachuk.medexpertmatch.llm.service.PrioritizeJobStore;
+import com.berdachuk.medexpertmatch.llm.service.RouteJobStore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,29 +34,57 @@ public class MedicalAgentController {
 
     private final MedicalAgentService medicalAgentService;
     private final PrioritizeJobStore prioritizeJobStore;
+    private final RouteJobStore routeJobStore;
+    private final MatchJobStore matchJobStore;
+    private final AnalyzeJobStore analyzeJobStore;
 
-    public MedicalAgentController(MedicalAgentService medicalAgentService, PrioritizeJobStore prioritizeJobStore) {
+    public MedicalAgentController(MedicalAgentService medicalAgentService, PrioritizeJobStore prioritizeJobStore,
+                                  RouteJobStore routeJobStore, MatchJobStore matchJobStore,
+                                  AnalyzeJobStore analyzeJobStore) {
         this.medicalAgentService = medicalAgentService;
         this.prioritizeJobStore = prioritizeJobStore;
+        this.routeJobStore = routeJobStore;
+        this.matchJobStore = matchJobStore;
+        this.analyzeJobStore = analyzeJobStore;
     }
 
     /**
-     * Matches doctors to a medical case.
-     * Uses case-analyzer and doctor-matcher skills.
-     * <p>
-     * Use Cases: Use Case 1 (Specialist Matching), Use Case 2 (Second Opinion)
-     * UI Page: /match
+     * Starts async match doctors. Returns 202 with job ID; client polls status endpoint.
+     * Avoids gateway timeout for long-running operations.
      *
      * @param caseId  The medical case ID
-     * @param request Optional request parameters
-     * @return Agent response with matched doctors
+     * @param request Optional request parameters (sessionId, etc.)
+     * @return 202 Accepted with job ID
      */
     @PostMapping("/match/{caseId}")
-    public ResponseEntity<MedicalAgentService.AgentResponse> matchDoctors(
+    public ResponseEntity<Map<String, String>> matchDoctors(
             @PathVariable String caseId,
             @RequestBody(required = false) Map<String, Object> request
     ) {
-        log.info("POST /api/v1/agent/match/{}", caseId);
+        log.info("POST /api/v1/agent/match/{} (async)", caseId);
+        String jobId = matchJobStore.createJob();
+        Map<String, Object> params = request != null ? request : Map.of();
+        CompletableFuture.runAsync(() -> {
+            try {
+                MedicalAgentService.AgentResponse response = medicalAgentService.matchDoctors(caseId, params);
+                matchJobStore.completeJob(jobId, response);
+            } catch (Exception e) {
+                log.error("Match doctors failed for job {}", jobId, e);
+                matchJobStore.failJob(jobId, e.getMessage());
+            }
+        });
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("jobId", jobId));
+    }
+
+    /**
+     * Sync match doctors (legacy). May timeout for long operations; prefer async POST + poll.
+     */
+    @PostMapping("/match-sync/{caseId}")
+    public ResponseEntity<MedicalAgentService.AgentResponse> matchDoctorsSync(
+            @PathVariable String caseId,
+            @RequestBody(required = false) Map<String, Object> request
+    ) {
+        log.info("POST /api/v1/agent/match-sync/{}", caseId);
         MedicalAgentService.AgentResponse response = medicalAgentService.matchDoctors(
                 caseId,
                 request != null ? request : Map.of()
@@ -59,44 +93,48 @@ public class MedicalAgentController {
     }
 
     /**
-     * Matches doctors from raw text input.
-     * Creates a medical case, generates embeddings, and matches doctors in a single call.
-     * Supports handwritten text (after OCR/transcription) and direct text input.
-     * <p>
-     * Use Cases: Use Case 1 (Specialist Matching), Use Case 2 (Second Opinion)
-     * UI Page: /match
+     * Polls status of async match job.
+     *
+     * @param jobId Job ID from POST /match/{caseId} or POST /match-from-text
+     * @return Job status (PENDING, COMPLETED, FAILED) and result when done
+     */
+    @GetMapping("/match/status/{jobId}")
+    public ResponseEntity<MatchJobStatus> getMatchStatus(@PathVariable String jobId) {
+        MatchJobStatus status = matchJobStore.getStatus(jobId);
+        if (status == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(status);
+    }
+
+    /**
+     * Starts async match-from-text. Returns 202 with job ID; client polls status endpoint.
+     * Avoids gateway timeout for long-running operations.
      *
      * @param request Request body containing caseText (required) and optional parameters
-     * @return Agent response with matched doctors
+     * @return 202 Accepted with job ID
      */
     @Operation(
-            summary = "Match doctors from text input",
-            description = "Accepts raw text input, creates a medical case, generates embeddings, and matches doctors in a single call. " +
-                    "Supports handwritten text (after OCR/transcription) and direct text input.",
+            summary = "Match doctors from text input (async)",
+            description = "Starts match from text. Returns 202 with jobId; poll GET /match/status/{jobId} for result.",
             operationId = "matchFromText"
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Successful response with matched doctors",
-                    content = @Content(schema = @Schema(implementation = MedicalAgentService.AgentResponse.class))
-            ),
+            @ApiResponse(responseCode = "202", description = "Accepted - poll status endpoint for result"),
             @ApiResponse(responseCode = "400", description = "Bad request - missing or invalid caseText"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/match-from-text")
-    public ResponseEntity<MedicalAgentService.AgentResponse> matchFromText(
+    public ResponseEntity<Map<String, String>> matchFromText(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Request body containing caseText (required) and optional parameters: " +
-                            "patientAge (Integer), caseType (String: INPATIENT, SECOND_OPINION, CONSULT_REQUEST), " +
-                            "symptoms (String), additionalNotes (String)",
+                            "patientAge (Integer), caseType (String), symptoms (String), additionalNotes (String)",
                     required = true
             )
             @RequestBody Map<String, Object> request
     ) {
-        log.info("POST /api/v1/agent/match-from-text");
+        log.info("POST /api/v1/agent/match-from-text (async)");
 
-        // Extract caseText from request (required)
         Object caseTextObj = request.get("caseText");
         if (caseTextObj == null) {
             throw new IllegalArgumentException("caseText is required");
@@ -106,6 +144,35 @@ public class MedicalAgentController {
             throw new IllegalArgumentException("caseText cannot be empty");
         }
 
+        String jobId = matchJobStore.createJob();
+        CompletableFuture.runAsync(() -> {
+            try {
+                MedicalAgentService.AgentResponse response = medicalAgentService.matchFromText(caseText, request);
+                matchJobStore.completeJob(jobId, response);
+            } catch (Exception e) {
+                log.error("Match from text failed for job {}", jobId, e);
+                matchJobStore.failJob(jobId, e.getMessage());
+            }
+        });
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("jobId", jobId));
+    }
+
+    /**
+     * Sync match-from-text (legacy). May timeout for long operations; prefer async POST + poll.
+     */
+    @PostMapping("/match-from-text-sync")
+    public ResponseEntity<MedicalAgentService.AgentResponse> matchFromTextSync(
+            @RequestBody Map<String, Object> request
+    ) {
+        log.info("POST /api/v1/agent/match-from-text-sync");
+        Object caseTextObj = request.get("caseText");
+        if (caseTextObj == null) {
+            throw new IllegalArgumentException("caseText is required");
+        }
+        String caseText = caseTextObj.toString();
+        if (caseText.isBlank()) {
+            throw new IllegalArgumentException("caseText cannot be empty");
+        }
         MedicalAgentService.AgentResponse response = medicalAgentService.matchFromText(caseText, request);
         return ResponseEntity.ok(response);
     }
@@ -187,27 +254,62 @@ public class MedicalAgentController {
     }
 
     /**
-     * Analyzes a medical case.
-     * Uses case-analyzer, evidence-retriever, and recommendation-engine skills.
-     * <p>
-     * Use Case: Use Case 5 (Decision Support)
-     * UI Page: /analyze/{caseId}
+     * Starts async case analysis. Returns 202 with job ID; client polls status endpoint.
+     * Avoids gateway timeout for long-running operations.
      *
      * @param caseId  The medical case ID
-     * @param request Optional request parameters
-     * @return Agent response with case analysis and recommendations
+     * @param request Optional request parameters (sessionId, etc.)
+     * @return 202 Accepted with job ID
      */
     @PostMapping("/analyze-case/{caseId}")
-    public ResponseEntity<MedicalAgentService.AgentResponse> analyzeCase(
+    public ResponseEntity<Map<String, String>> analyzeCase(
             @PathVariable String caseId,
             @RequestBody(required = false) Map<String, Object> request
     ) {
-        log.info("POST /api/v1/agent/analyze-case/{}", caseId);
+        log.info("POST /api/v1/agent/analyze-case/{} (async)", caseId);
+        String jobId = analyzeJobStore.createJob();
+        Map<String, Object> params = request != null ? request : Map.of();
+        CompletableFuture.runAsync(() -> {
+            try {
+                MedicalAgentService.AgentResponse response = medicalAgentService.analyzeCase(caseId, params);
+                analyzeJobStore.completeJob(jobId, response);
+            } catch (Exception e) {
+                log.error("Case analysis failed for job {}", jobId, e);
+                analyzeJobStore.failJob(jobId, e.getMessage());
+            }
+        });
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("jobId", jobId));
+    }
+
+    /**
+     * Sync case analysis (legacy). May timeout for long operations; prefer async POST + poll.
+     */
+    @PostMapping("/analyze-case-sync/{caseId}")
+    public ResponseEntity<MedicalAgentService.AgentResponse> analyzeCaseSync(
+            @PathVariable String caseId,
+            @RequestBody(required = false) Map<String, Object> request
+    ) {
+        log.info("POST /api/v1/agent/analyze-case-sync/{}", caseId);
         MedicalAgentService.AgentResponse response = medicalAgentService.analyzeCase(
                 caseId,
                 request != null ? request : Map.of()
         );
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Polls status of async case analysis job.
+     *
+     * @param jobId Job ID from POST /analyze-case/{caseId}
+     * @return Job status (PENDING, COMPLETED, FAILED) and result when done
+     */
+    @GetMapping("/analyze-case/status/{jobId}")
+    public ResponseEntity<AnalyzeJobStatus> getAnalyzeCaseStatus(@PathVariable String jobId) {
+        AnalyzeJobStatus status = analyzeJobStore.getStatus(jobId);
+        if (status == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(status);
     }
 
     /**
@@ -235,44 +337,73 @@ public class MedicalAgentController {
     }
 
     /**
-     * Routes a case to facilities.
-     * Uses case-analyzer and routing-planner skills.
-     * <p>
-     * Use Case: Use Case 6 (Regional Routing)
-     * UI Page: /routing
+     * Starts async route-case. Returns 202 with job ID; client polls status endpoint.
+     * Avoids gateway timeout for long-running operations.
      *
      * @param caseId  The medical case ID
-     * @param request Optional request parameters
-     * @return Agent response with facility routing recommendations
+     * @param request Optional request parameters (sessionId, etc.)
+     * @return 202 Accepted with job ID
      */
     @Operation(
-            summary = "Route a case to facilities",
-            description = "Routes a medical case to appropriate facilities based on case requirements. " +
-                    "Uses case-analyzer and routing-planner skills. Use Case: Use Case 6 (Regional Routing)",
+            summary = "Route a case to facilities (async)",
+            description = "Starts facility routing. Returns 202 with jobId; poll GET /route-case/status/{jobId} for result.",
             operationId = "routeCase"
     )
     @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "Successful response with facility routing recommendations",
-                    content = @Content(schema = @Schema(implementation = MedicalAgentService.AgentResponse.class))
-            ),
-            @ApiResponse(responseCode = "400", description = "Bad request - invalid case ID or request parameters"),
-            @ApiResponse(responseCode = "404", description = "Medical case not found"),
+            @ApiResponse(responseCode = "202", description = "Accepted - poll status endpoint for result"),
+            @ApiResponse(responseCode = "400", description = "Bad request - invalid case ID"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     @PostMapping("/route-case/{caseId}")
-    public ResponseEntity<MedicalAgentService.AgentResponse> routeCase(
+    public ResponseEntity<Map<String, String>> routeCase(
             @Parameter(description = "The medical case ID", required = true, example = "696d4041ee50c1cfdb2e27ae")
             @PathVariable String caseId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Optional request parameters")
             @RequestBody(required = false) Map<String, Object> request
     ) {
-        log.info("POST /api/v1/agent/route-case/{}", caseId);
+        log.info("POST /api/v1/agent/route-case/{} (async)", caseId);
+        String jobId = routeJobStore.createJob();
+        Map<String, Object> params = request != null ? request : Map.of();
+        CompletableFuture.runAsync(() -> {
+            try {
+                MedicalAgentService.AgentResponse response = medicalAgentService.routeCase(caseId, params);
+                routeJobStore.completeJob(jobId, response);
+            } catch (Exception e) {
+                log.error("Route case failed for job {}", jobId, e);
+                routeJobStore.failJob(jobId, e.getMessage());
+            }
+        });
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of("jobId", jobId));
+    }
+
+    /**
+     * Sync route-case (legacy). May timeout for long operations; prefer async POST + poll.
+     */
+    @PostMapping("/route-case-sync/{caseId}")
+    public ResponseEntity<MedicalAgentService.AgentResponse> routeCaseSync(
+            @PathVariable String caseId,
+            @RequestBody(required = false) Map<String, Object> request
+    ) {
+        log.info("POST /api/v1/agent/route-case-sync/{}", caseId);
         MedicalAgentService.AgentResponse response = medicalAgentService.routeCase(
                 caseId,
                 request != null ? request : Map.of()
         );
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Polls status of async route-case job.
+     *
+     * @param jobId Job ID from POST /route-case/{caseId}
+     * @return Job status (PENDING, COMPLETED, FAILED) and result when done
+     */
+    @GetMapping("/route-case/status/{jobId}")
+    public ResponseEntity<RouteJobStatus> getRouteCaseStatus(@PathVariable String jobId) {
+        RouteJobStatus status = routeJobStore.getStatus(jobId);
+        if (status == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(status);
     }
 }

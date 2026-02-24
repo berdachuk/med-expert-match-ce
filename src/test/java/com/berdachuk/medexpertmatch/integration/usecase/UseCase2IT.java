@@ -106,7 +106,7 @@ class UseCase2IT extends BaseIntegrationTest {
     @Test
     void testSecondOpinionMatching() {
         // Use Case 2: Online Second Opinion / Telehealth
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctors(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctorsSync(
                 testCaseId,
                 Map.of()
         );
@@ -129,7 +129,7 @@ class UseCase2IT extends BaseIntegrationTest {
     @Test
     void testSecondOpinionWithTelehealthPreference() {
         // Test with telehealth preference
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctors(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.matchDoctorsSync(
                 testCaseId,
                 Map.of(
                         "preferTelehealth", true,

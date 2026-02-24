@@ -498,6 +498,7 @@
         var routingAbortController = null;
         var routingCancelBtn = document.getElementById('routingCancelBtn');
         var routingCancelledAlert = document.getElementById('routingCancelledAlert');
+        var routingPollIntervalId = null;
 
         function setRoutingProgress(show) {
             if (routeActionsArea) routeActionsArea.classList.toggle('d-none', show);
@@ -505,6 +506,7 @@
             if (routingLongRunningMsg) routingLongRunningMsg.classList.add('d-none');
             if (routingErrorAlert) routingErrorAlert.classList.add('d-none');
             if (routingCancelledAlert) routingCancelledAlert.classList.add('d-none');
+            if (routeCaseBtn) routeCaseBtn.disabled = show;
             if (show && routingLogPanel) {
                 routingLogPanel.classList.remove('d-none');
                 if (routingLogPanelBody) routingLogPanelBody.style.display = 'block';
@@ -522,7 +524,6 @@
                 if (routingLogContent) routingLogContent.innerHTML = '';
                 initRoutingLogStream(sessionId);
                 setRoutingProgress(true);
-                if (routeCaseBtn) routeCaseBtn.disabled = true;
                 routingAbortController = new AbortController();
                 fetch('/api/v1/agent/route-case/' + encodeURIComponent(caseIdFromAction.trim()), {
                     method: 'POST',
@@ -535,20 +536,45 @@
                         return res.json();
                     })
                     .then(function (data) {
-                        closeRoutingLogStream();
-                        routingAbortController = null;
-                        setRoutingProgress(false);
-                        if (routeCaseBtn) routeCaseBtn.disabled = false;
-                        addRoutingLogEntry('[INFO] Case routing completed.', 'info');
-                        const text = data && data.response != null ? data.response : '';
-                        if (routingResultBody) routingResultBody.innerHTML = renderMarkdown(text);
-                        if (routingResultCard) routingResultCard.classList.remove('d-none');
+                        const jobId = data.jobId;
+                        if (!jobId) throw new Error('No job ID returned');
+                        addRoutingLogEntry('[INFO] Job started. Polling for result...', 'info');
+                        routingPollIntervalId = setInterval(function () {
+                            if (routingAbortController && routingAbortController.signal.aborted) {
+                                clearInterval(routingPollIntervalId);
+                                return;
+                            }
+                            fetch('/api/v1/agent/route-case/status/' + encodeURIComponent(jobId))
+                                .then(function (r) { return r.json(); })
+                                .then(function (status) {
+                                    if (status.status === 'COMPLETED') {
+                                        clearInterval(routingPollIntervalId);
+                                        routingPollIntervalId = null;
+                                        closeRoutingLogStream();
+                                        setRoutingProgress(false);
+                                        addRoutingLogEntry('[INFO] Case routing completed.', 'info');
+                                        const text = status.result && status.result.response != null ? status.result.response : '';
+                                        if (routingResultBody) routingResultBody.innerHTML = renderMarkdown(text);
+                                        if (routingResultCard) routingResultCard.classList.remove('d-none');
+                                    } else if (status.status === 'FAILED') {
+                                        clearInterval(routingPollIntervalId);
+                                        routingPollIntervalId = null;
+                                        closeRoutingLogStream();
+                                        setRoutingProgress(false);
+                                        addRoutingLogEntry('[ERROR] ' + (status.errorMessage || 'Unknown error'), 'error');
+                                        if (routingErrorAlert) {
+                                            routingErrorAlert.textContent = 'Failed to route case: ' + (status.errorMessage || 'Unknown error');
+                                            routingErrorAlert.classList.remove('d-none');
+                                        }
+                                    }
+                                })
+                                .catch(function () {});
+                        }, 2000);
                     })
                     .catch(function (err) {
+                        if (routingPollIntervalId) clearInterval(routingPollIntervalId);
                         closeRoutingLogStream();
-                        routingAbortController = null;
                         setRoutingProgress(false);
-                        if (routeCaseBtn) routeCaseBtn.disabled = false;
                         if (err.name === 'AbortError') {
                             if (routingCancelledAlert) routingCancelledAlert.classList.remove('d-none');
                             addRoutingLogEntry('[WARN] Request cancelled.', 'warn');
@@ -565,9 +591,16 @@
 
         if (routingCancelBtn) {
             routingCancelBtn.addEventListener('click', function () {
+                if (routingPollIntervalId) {
+                    clearInterval(routingPollIntervalId);
+                    routingPollIntervalId = null;
+                }
                 if (routingAbortController) {
                     routingAbortController.abort();
                 }
+                closeRoutingLogStream();
+                setRoutingProgress(false);
+                if (routingCancelledAlert) routingCancelledAlert.classList.remove('d-none');
             });
         }
 

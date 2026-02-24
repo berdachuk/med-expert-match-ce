@@ -738,7 +738,7 @@
                 }
                 window.matchAbortController = new AbortController();
 
-                // Make AJAX request to API endpoint (JSON response) instead of HTML view
+                // Make AJAX request to API endpoint (async - returns 202 with jobId)
                 fetch('/api/v1/agent/match/' + caseId, {
                     method: 'POST',
                     headers: {
@@ -758,56 +758,84 @@
                         return response.json();
                     })
                     .then(data => {
-                        console.log('Response received:', data);
+                        const jobId = data.jobId;
+                        if (!jobId) throw new Error('No job ID returned');
+                        addLogEntry('[INFO] Job started. Polling for result...', 'info');
 
-                        // Get the element on the current page
-                        const pageResultElement = document.getElementById('matchResult');
-                        const pageResultsCard = document.getElementById('resultsCard');
-
-                        if (!pageResultElement || !pageResultsCard) {
-                            console.error('Could not find result elements on page!', {
-                                pageResultElement: !!pageResultElement,
-                                pageResultsCard: !!pageResultsCard
-                            });
-                            addLogEntry('[ERROR] Could not find result elements on page', 'error');
-                            return;
+                        function pollMatchStatus() {
+                            if (window.matchAbortController && window.matchAbortController.signal.aborted) return;
+                            fetch('/api/v1/agent/match/status/' + encodeURIComponent(jobId))
+                                .then(r => r.json())
+                                .then(status => {
+                                    if (status.status === 'COMPLETED') {
+                                        if (window.matchPollIntervalId) {
+                                            clearInterval(window.matchPollIntervalId);
+                                            window.matchPollIntervalId = null;
+                                        }
+                                        displayMatchResult(status.result);
+                                    } else if (status.status === 'FAILED') {
+                                        if (window.matchPollIntervalId) {
+                                            clearInterval(window.matchPollIntervalId);
+                                            window.matchPollIntervalId = null;
+                                        }
+                                        const errMsg = status.errorMessage || 'Unknown error';
+                                        addLogEntry('[ERROR] ' + errMsg, 'error');
+                                        if (errorAlert) {
+                                            errorAlert.textContent = 'Failed to match doctors: ' + errMsg;
+                                            errorAlert.classList.remove('d-none');
+                                        }
+                                        resetMatchUI();
+                                    }
+                                })
+                                .catch(() => {});
                         }
 
-                        // Extract response text from the API response
-                        const resultText = data && data.response ? data.response.trim() : '';
+                        function resetMatchUI() {
+                            if (matchProgress) matchProgress.classList.add('d-none');
+                            if (enterCaseCard) enterCaseCard.style.display = '';
+                            if (selectCaseCard) selectCaseCard.style.display = 'block';
+                            if (matchButton) matchButton.disabled = false;
+                            if (matchButtonText) matchButtonText.textContent = 'Match Doctors';
+                            if (matchSpinner) matchSpinner.classList.add('d-none');
+                            window.matchAbortController = null;
+                            if (window.matchPollIntervalId) {
+                                clearInterval(window.matchPollIntervalId);
+                                window.matchPollIntervalId = null;
+                            }
+                        }
 
-                        // Always show the results card
-                        if (resultText && resultText.length > 0) {
-                            // Check if content looks like Markdown
-                            const isMarkdown = isMarkdownFormat(resultText);
-
-                            if (isMarkdown && typeof marked !== 'undefined') {
-                                // Render Markdown to HTML
-                                try {
-                                    const htmlContent = marked.parse(resultText, {
-                                        breaks: true,
-                                        gfm: true
-                                    });
-                                    pageResultElement.innerHTML = htmlContent;
-                                    pageResultElement.classList.add('markdown-content');
-                                    addLogEntry('[INFO] Rendered response as Markdown', 'info');
-                                } catch (markdownError) {
-                                    console.error('Error rendering Markdown:', markdownError);
-                                    // Fallback to plain text if Markdown parsing fails
+                        function displayMatchResult(data) {
+                            const pageResultElement = document.getElementById('matchResult');
+                            const pageResultsCard = document.getElementById('resultsCard');
+                            if (!pageResultElement || !pageResultsCard) return;
+                            const resultText = data && data.response ? data.response.trim() : '';
+                            if (resultText && resultText.length > 0) {
+                                const isMarkdown = isMarkdownFormat(resultText);
+                                if (isMarkdown && typeof marked !== 'undefined') {
+                                    try {
+                                        const htmlContent = marked.parse(resultText, { breaks: true, gfm: true });
+                                        pageResultElement.innerHTML = htmlContent;
+                                        pageResultElement.classList.add('markdown-content');
+                                    } catch (markdownError) {
+                                        pageResultElement.textContent = resultText;
+                                        pageResultElement.classList.remove('markdown-content');
+                                    }
+                                } else {
                                     pageResultElement.textContent = resultText;
                                     pageResultElement.classList.remove('markdown-content');
                                 }
+                                pageResultsCard.classList.remove('d-none');
+                                addLogEntry('[INFO] Match operation completed successfully', 'info');
                             } else {
-                                // Plain text display
-                                pageResultElement.textContent = resultText;
+                                const fallbackMessage = data && data.metadata
+                                    ? 'Match operation completed. Case ID: ' + (data.metadata.caseId || caseId) + '. ' +
+                                    (data.metadata.skills ? 'Skills used: ' + data.metadata.skills + '. ' : '') + 'The LLM response was empty or minimal.'
+                                    : 'Match operation completed. The LLM response was empty or minimal. Check backend logs for details.';
+                                pageResultElement.textContent = fallbackMessage;
                                 pageResultElement.classList.remove('markdown-content');
+                                pageResultsCard.classList.remove('d-none');
+                                addLogEntry('[WARN] Response received but content is empty or minimal', 'warn');
                             }
-
-                            pageResultsCard.classList.remove('d-none');
-                            addLogEntry('[INFO] Match operation completed successfully', 'info');
-                            console.log('Results displayed successfully, text length:', resultText.length, 'isMarkdown:', isMarkdown);
-
-                            // Complete progress indicator
                             if (matchProgress && matchProgressBar && matchProgressText && matchStatusText) {
                                 if (typeof window.setMatchProgressBarWidth === 'function') {
                                     window.setMatchProgressBarWidth(100);
@@ -819,60 +847,24 @@
                                     matchProgressText.textContent = '100%';
                                 }
                                 matchStatusText.textContent = 'Match operation completed';
-
-                                // Hide progress after a delay
                                 setTimeout(function () {
-                                    if (matchProgress) {
-                                        matchProgress.classList.add('d-none');
-                                    }
-                                    if (enterCaseCard) {
-                                        enterCaseCard.style.display = '';
-                                    }
-                                    if (selectCaseCard) {
-                                        selectCaseCard.style.display = 'block';
+                                    if (matchProgress) matchProgress.classList.add('d-none');
+                                    if (enterCaseCard) enterCaseCard.style.display = '';
+                                    if (selectCaseCard) selectCaseCard.style.display = 'block';
+                                    if (matchButton) matchButton.disabled = false;
+                                    if (matchButtonText) matchButtonText.textContent = 'Match Doctors';
+                                    if (matchSpinner) matchSpinner.classList.add('d-none');
+                                    if (window.matchPollIntervalId) {
+                                        clearInterval(window.matchPollIntervalId);
+                                        window.matchPollIntervalId = null;
                                     }
                                 }, 2000);
-                            }
-                        } else {
-                            // Show fallback message
-                            const fallbackMessage = data && data.metadata
-                                ? 'Match operation completed. Case ID: ' + (data.metadata.caseId || caseId) + '. ' +
-                                (data.metadata.skills ? 'Skills used: ' + data.metadata.skills + '. ' : '') +
-                                'The LLM response was empty or minimal. This may indicate the model needs better prompting or configuration.'
-                                : 'Match operation completed. The LLM response was empty or minimal. This may indicate the model needs better prompting or configuration. Check backend logs for details.';
-                            pageResultElement.textContent = fallbackMessage;
-                            pageResultElement.classList.remove('markdown-content');
-                            pageResultsCard.classList.remove('d-none');
-                            addLogEntry('[WARN] Response received but content is empty or minimal', 'warn');
-                            console.warn('Empty or minimal response from server. Response data:', data);
-
-                            // Complete progress indicator
-                            if (matchProgress && matchProgressBar && matchProgressText && matchStatusText) {
-                                if (typeof window.setMatchProgressBarWidth === 'function') {
-                                    window.setMatchProgressBarWidth(100);
-                                } else {
-                                    matchProgressBar.style.flex = '0 0 100%';
-                                    matchProgressBar.style.width = '100%';
-                                    matchProgressBar.style.minWidth = '3%';
-                                    matchProgressBar.setAttribute('aria-valuenow', '100');
-                                    matchProgressText.textContent = '100%';
-                                }
-                                matchStatusText.textContent = 'Match operation completed';
-
-                                // Hide progress after a delay
-                                setTimeout(function () {
-                                    if (matchProgress) {
-                                        matchProgress.classList.add('d-none');
-                                    }
-                                    if (enterCaseCard) {
-                                        enterCaseCard.style.display = '';
-                                    }
-                                    if (selectCaseCard) {
-                                        selectCaseCard.style.display = 'block';
-                                    }
-                                }, 2000);
+                            } else {
+                                resetMatchUI();
                             }
                         }
+
+                        window.matchPollIntervalId = setInterval(pollMatchStatus, 2000);
                     })
                     .catch(error => {
                         if (error.name === 'AbortError') {
@@ -933,6 +925,14 @@
 
         if (matchCancelBtn) {
             matchCancelBtn.addEventListener('click', function () {
+                if (window.matchPollIntervalId) {
+                    clearInterval(window.matchPollIntervalId);
+                    window.matchPollIntervalId = null;
+                }
+                if (window.textFormPollIntervalId) {
+                    clearInterval(window.textFormPollIntervalId);
+                    window.textFormPollIntervalId = null;
+                }
                 if (window.matchAbortController) {
                     window.matchAbortController.abort();
                 }
@@ -1768,7 +1768,7 @@
                     requestBody.urgencyLevel = urgencyLevel;
                 }
 
-                // Make API call
+                // Make API call (async - returns 202 with jobId)
                 fetch('/api/v1/agent/match-from-text', {
                     method: 'POST',
                     headers: {
@@ -1786,65 +1786,91 @@
                         return response.json();
                     })
                     .then(data => {
-                        // Display results (reuse existing result display logic)
-                        const pageResultElement = document.getElementById('matchResult');
-                        const pageResultsCard = document.getElementById('resultsCard');
+                        const jobId = data.jobId;
+                        if (!jobId) throw new Error('No job ID returned');
+                        addTextFormLogEntry('[INFO] Job started. Polling for result...', 'info');
 
-                        if (pageResultElement && pageResultsCard) {
-                            const resultText = data && data.response ? data.response.trim() : '';
-                            if (resultText && resultText.length > 0) {
-                                // Check if content looks like Markdown
-                                const isMarkdown = isMarkdownFormat(resultText);
-                                if (isMarkdown && typeof marked !== 'undefined') {
-                                    try {
-                                        const htmlContent = marked.parse(resultText, {
-                                            breaks: true,
-                                            gfm: true
-                                        });
-                                        pageResultElement.innerHTML = htmlContent;
-                                        pageResultElement.classList.add('markdown-content');
-                                    } catch (markdownError) {
-                                        pageResultElement.textContent = resultText;
-                                        pageResultElement.classList.remove('markdown-content');
+                        window.textFormPollIntervalId = setInterval(function () {
+                            if (window.matchAbortController && window.matchAbortController.signal.aborted) return;
+                            fetch('/api/v1/agent/match/status/' + encodeURIComponent(jobId))
+                                .then(function (r) { return r.json(); })
+                                .then(function (status) {
+                                    if (status.status === 'COMPLETED') {
+                                        clearInterval(window.textFormPollIntervalId);
+                                        if (textFormEventSource) {
+                                            textFormEventSource.close();
+                                            textFormEventSource = null;
+                                        }
+                                        const pageResultElement = document.getElementById('matchResult');
+                                        const pageResultsCard = document.getElementById('resultsCard');
+                                        if (pageResultElement && pageResultsCard) {
+                                            const resultText = status.result && status.result.response ? status.result.response.trim() : '';
+                                            if (resultText && resultText.length > 0) {
+                                                const isMarkdown = isMarkdownFormat(resultText);
+                                                if (isMarkdown && typeof marked !== 'undefined') {
+                                                    try {
+                                                        const htmlContent = marked.parse(resultText, { breaks: true, gfm: true });
+                                                        pageResultElement.innerHTML = htmlContent;
+                                                        pageResultElement.classList.add('markdown-content');
+                                                    } catch (markdownError) {
+                                                        pageResultElement.textContent = resultText;
+                                                        pageResultElement.classList.remove('markdown-content');
+                                                    }
+                                                } else {
+                                                    pageResultElement.textContent = resultText;
+                                                    pageResultElement.classList.remove('markdown-content');
+                                                }
+                                                pageResultsCard.classList.remove('d-none');
+                                            }
+                                        }
+                                        if (matchProgressBar && matchProgressText && matchStatusText) {
+                                            if (typeof window.setMatchProgressBarWidth === 'function') {
+                                                window.setMatchProgressBarWidth(100);
+                                            } else {
+                                                matchProgressBar.style.flex = '0 0 100%';
+                                                matchProgressBar.style.width = '100%';
+                                                matchProgressBar.style.minWidth = '3%';
+                                                matchProgressBar.setAttribute('aria-valuenow', '100');
+                                                matchProgressText.textContent = '100%';
+                                            }
+                                            matchStatusText.textContent = 'Match operation completed';
+                                            setTimeout(function () {
+                                                if (matchProgress) matchProgress.classList.add('d-none');
+                                                if (enterCaseCard) enterCaseCard.style.display = '';
+                                                if (selectCaseCard) selectCaseCard.style.display = 'none';
+                                                if (matchFromTextButton) matchFromTextButton.disabled = false;
+                                                if (matchFromTextButtonText) matchFromTextButtonText.textContent = 'Match Doctors';
+                                                if (matchFromTextSpinner) matchFromTextSpinner.classList.add('d-none');
+                                            }, 2000);
+                                        } else {
+                                            if (enterCaseCard) enterCaseCard.style.display = '';
+                                            if (selectCaseCard) selectCaseCard.style.display = 'none';
+                                            if (matchFromTextButton) matchFromTextButton.disabled = false;
+                                            if (matchFromTextButtonText) matchFromTextButtonText.textContent = 'Match Doctors';
+                                            if (matchFromTextSpinner) matchFromTextSpinner.classList.add('d-none');
+                                        }
+                                    } else if (status.status === 'FAILED') {
+                                        clearInterval(window.textFormPollIntervalId);
+                                        if (textFormEventSource) {
+                                            textFormEventSource.close();
+                                            textFormEventSource = null;
+                                        }
+                                        const errMsg = status.errorMessage || 'Unknown error';
+                                        addTextFormLogEntry('[ERROR] ' + errMsg, 'error');
+                                        if (errorAlert) {
+                                            errorAlert.textContent = 'Failed to match doctors: ' + errMsg;
+                                            errorAlert.classList.remove('d-none');
+                                        }
+                                        if (matchProgress) matchProgress.classList.add('d-none');
+                                        if (enterCaseCard) enterCaseCard.style.display = '';
+                                        if (selectCaseCard) selectCaseCard.style.display = 'none';
+                                        if (matchFromTextButton) matchFromTextButton.disabled = false;
+                                        if (matchFromTextButtonText) matchFromTextButtonText.textContent = 'Match Doctors';
+                                        if (matchFromTextSpinner) matchFromTextSpinner.classList.add('d-none');
                                     }
-                                } else {
-                                    pageResultElement.textContent = resultText;
-                                    pageResultElement.classList.remove('markdown-content');
-                                }
-                                pageResultsCard.classList.remove('d-none');
-                            }
-                        }
-
-                        // Complete progress indicator
-                        if (matchProgressBar && matchProgressText && matchStatusText) {
-                            if (typeof window.setMatchProgressBarWidth === 'function') {
-                                window.setMatchProgressBarWidth(100);
-                            } else {
-                                matchProgressBar.style.flex = '0 0 100%';
-                                matchProgressBar.style.width = '100%';
-                                matchProgressBar.style.minWidth = '3%';
-                                matchProgressBar.setAttribute('aria-valuenow', '100');
-                                matchProgressText.textContent = '100%';
-                            }
-                            matchStatusText.textContent = 'Match operation completed';
-                            setTimeout(function () {
-                                if (matchProgress) {
-                                    matchProgress.classList.add('d-none');
-                                }
-                                if (enterCaseCard) {
-                                    enterCaseCard.style.display = '';
-                                }
-                                if (selectCaseCard) {
-                                    selectCaseCard.style.display = 'none';
-                                }
-                            }, 2000);
-                        }
-
-                        // Close SSE connection
-                        if (textFormEventSource) {
-                            textFormEventSource.close();
-                            textFormEventSource = null;
-                        }
+                                })
+                                .catch(function () {});
+                        }, 2000);
                     })
                     .catch(error => {
                         if (error.name === 'AbortError') {

@@ -90,7 +90,7 @@ class UseCase6IT extends BaseIntegrationTest {
     @Test
     void testRegionalRouting() {
         // Use Case 6: Regional Routing
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCase(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCaseSync(
                 testCaseId,
                 Map.of()
         );
@@ -114,7 +114,7 @@ class UseCase6IT extends BaseIntegrationTest {
     @Test
     void testRegionalRoutingWithOptions() {
         // Test with routing options
-        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCase(
+        ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.routeCaseSync(
                 testCaseId,
                 Map.of(
                         "preferAcademic", true,

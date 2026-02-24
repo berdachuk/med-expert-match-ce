@@ -241,6 +241,7 @@
         let analyzeEventSource = null;
         let logPanelCollapsed = false;
         let analyzeAbortController = null;
+        var analyzePollIntervalId = null;
 
         function isMarkdownFormat(text) {
             if (!text || text.length === 0) return false;
@@ -343,6 +344,10 @@
         }
 
         function cancelAnalysis() {
+            if (analyzePollIntervalId) {
+                clearInterval(analyzePollIntervalId);
+                analyzePollIntervalId = null;
+            }
             setRunning(false);
             closeLogStream();
             if (analyzeAbortController) {
@@ -420,10 +425,29 @@
                         return r.json();
                     })
                     .then(function (data) {
-                        analyzeAbortController = null;
-                        showResult(data.response != null ? data.response : '');
+                        var jobId = data.jobId;
+                        if (!jobId) throw new Error('No job ID returned');
+                        addLogEntry('[INFO] Job started. Polling for result...', 'info');
+                        analyzePollIntervalId = setInterval(function () {
+                            if (analyzeAbortController && analyzeAbortController.signal.aborted) return;
+                            fetch('/api/v1/agent/analyze-case/status/' + encodeURIComponent(jobId))
+                                .then(function (r) { return r.json(); })
+                                .then(function (status) {
+                                    if (status.status === 'COMPLETED') {
+                                        clearInterval(analyzePollIntervalId);
+                                        analyzePollIntervalId = null;
+                                        showResult(status.result && status.result.response != null ? status.result.response : '');
+                                    } else if (status.status === 'FAILED') {
+                                        clearInterval(analyzePollIntervalId);
+                                        analyzePollIntervalId = null;
+                                        showError(status.errorMessage || 'Analysis failed.');
+                                    }
+                                })
+                                .catch(function () {});
+                        }, 2000);
                     })
                     .catch(function (err) {
+                        if (analyzePollIntervalId) clearInterval(analyzePollIntervalId);
                         if (err.name === 'AbortError') {
                             analyzeAbortController = null;
                             setRunning(false);
