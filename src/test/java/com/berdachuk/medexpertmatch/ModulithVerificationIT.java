@@ -20,7 +20,7 @@ import org.springframework.modulith.core.ApplicationModules;
  * <p>
  * To run manually: Remove @Disabled annotation
  */
-public class ModulithVerificationTest {
+public class ModulithVerificationIT {
 
     @Test
     void verifyApplicationModuleStructure() {

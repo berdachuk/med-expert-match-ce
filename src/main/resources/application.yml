@@ -103,7 +103,7 @@ springdoc:
 medexpertmatch:
   skills: # Agent skills (SKILL.md); set enabled: false to use plain ChatClient
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
-    directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:.claude/skills}
+    directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
     extra-directory: ${MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY:}
   retrieval: # Hybrid GraphRAG: vector + graph + keyword
     vector:

@@ -5,7 +5,7 @@
 
 ## Agent Skills Architecture
 
-The agent system is built around 7 core medical-specific Agent Skills stored in `.claude/skills/{skill-name}/SKILL.md`
+The agent system is built around 7 core medical-specific Agent Skills stored in `src/main/resources/skills/{skill-name}/SKILL.md`
 files. These skills provide domain knowledge, tool invocation guidance, and output format specifications for the LLM
 agents.
 
@@ -211,7 +211,7 @@ Agent skills are configurable through the application configuration:
 medexpertmatch:
   skills:
     enabled: true
-    directory: .claude/skills
+    directory: skills
 ```
 
 ## Technical Implementation
@@ -236,7 +236,7 @@ ChatClient (MedGemma) + SkillsTool
     ↓
 Agent selects skill(s) based on intent
     ↓
-Skill instructions loaded from .claude/skills/{skill}/SKILL.md
+Skill instructions loaded from src/main/resources/skills/{skill}/SKILL.md
     ↓
 Agent invokes Java @Tool methods
     ↓

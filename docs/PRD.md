@@ -585,7 +585,7 @@ Apache AGE graph relationships:
 
 ### 6.5 Agent Skills Architecture
 
-Seven medical-specific Agent Skills stored in `.claude/skills/{skill-name}/SKILL.md`:
+Seven medical-specific Agent Skills stored in `src/main/resources/skills/{skill-name}/SKILL.md`:
 
 1. **case-analyzer**: Analyze cases, extract entities, ICD-10 codes, classify urgency and complexity
 2. **doctor-matcher**: Match doctors to cases, scoring and ranking using multiple signals
@@ -604,7 +604,7 @@ ChatClient (MedGemma) + SkillsTool
     ↓
 Agent selects skill(s) based on intent
     ↓
-Skill instructions loaded from .claude/skills/{skill}/SKILL.md
+Skill instructions loaded from src/main/resources/skills/{skill}/SKILL.md
     ↓
 Agent invokes Java @Tool methods
     ↓
@@ -1398,7 +1398,7 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 - **Domain Models**: Doctor, MedicalCase, ClinicalExperience, ICD10Code, MedicalSpecialty, Facility
 - **Services**: MatchingService, SemanticGraphRetrievalService, GraphService, CaseAnalysisService, FHIR Adapters
 - **Repositories**: DoctorRepository, MedicalCaseRepository, ClinicalExperienceRepository, etc.
-- **Agent Skills**: 7 medical-specific skills in `.claude/skills/` directory
+- **Agent Skills**: 7 medical-specific skills in `src/main/resources/skills/` directory
 
 ## 12. Open Questions
 
@@ -1423,7 +1423,6 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 - [Vision](VISION.md) - Project vision and long-term goals
 - [Use Cases](USE_CASES.md) - Detailed use case workflows with sequence diagrams
 - [Architecture](ARCHITECTURE.md) - System architecture and design
-- [Architecture Analysis](ARCHITECTURE_ANALYSIS.md) - Architecture gap analysis
 - [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) - User interface flows, wireframe mockups, and UI/UX guidelines
 
 ---

@@ -41,7 +41,7 @@ server:
 medexpertmatch:
   skills:
     enabled: true
-    directory: .claude/skills
+    directory: skills
     extra-directory: ""
   llm:
     chat:

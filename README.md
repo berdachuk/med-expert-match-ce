@@ -161,7 +161,7 @@ Full rationale for each USP: [Unique Selling Propositions](docs/UNIQUE_SELLING_P
 
 ## Agent Skills
 
-MedExpertMatch provides **Agent Skills** (Claude skills) in `.claude/skills/`. Each skill is a `SKILL.md` file that
+MedExpertMatch provides **Agent Skills** (Claude skills) in `src/main/resources/skills/`. Each skill is a `SKILL.md` file that
 guides AI assistants on when and how to use the application's tools for medical workflows.
 
 | Skill                     | Description                                                                                                 |
@@ -175,7 +175,7 @@ guides AI assistants on when and how to use the application's tools for medical 
 | **routing-planner**       | Facility routing optimization, multi-facility scoring, and geographic routing for medical cases             |
 
 **Configuration** (application): Skills are optional. Enable or disable and set the directory in `application.yml` under
-`medexpertmatch.skills` (`enabled`, `directory`). Default directory is `.claude/skills`. Override with
+`medexpertmatch.skills` (`enabled`, `directory`). Default directory is `skills` (classpath). Override with
 `MEDEXPERTMATCH_SKILLS_ENABLED` and `MEDEXPERTMATCH_SKILLS_DIRECTORY`.
 
 ## Technology Stack

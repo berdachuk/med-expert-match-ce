@@ -22,7 +22,7 @@ import org.springframework.core.io.ResourceLoader;
  * that complement existing Java @Tool methods. This configuration enables skills
  * discovery and loading on demand.
  * <p>
- * Skills are loaded from .claude/skills directory (filesystem or classpath).
+ * Skills are loaded from skills directory in classpath resources.
  * This configuration is only active when medexpertmatch.skills.enabled=true.
  */
 @Slf4j
@@ -42,39 +42,29 @@ public class MedicalAgentConfiguration {
 
     /**
      * Creates SkillsTool bean for discovering and loading skills on demand.
-     * Loads from main directory (filesystem or classpath), then optional extra directory (e.g. mounted volume).
+     * Loads from classpath resources, then optional extra directory (e.g. mounted volume).
      */
     @Bean
     @org.springframework.beans.factory.annotation.Qualifier("skillsTool")
     public ToolCallback skillsTool(
-            @org.springframework.beans.factory.annotation.Value("${medexpertmatch.skills.directory:.claude/skills}") String skillsDirectory,
+            @org.springframework.beans.factory.annotation.Value("${medexpertmatch.skills.directory:skills}") String skillsDirectory,
             @org.springframework.beans.factory.annotation.Value("${medexpertmatch.skills.extra-directory:}") String extraDirectory) {
         log.info("Creating SkillsTool bean - directory: {}, extra-directory: {}", skillsDirectory, extraDirectory.isEmpty() ? "(none)" : extraDirectory);
         SkillsTool.Builder builder = SkillsTool.builder();
         boolean skillsAdded = false;
 
-        // Main directory: filesystem first, then classpath
+        // Main directory: load directly from classpath
         try {
-            java.io.File skillsDir = new java.io.File(skillsDirectory);
-            if (skillsDir.exists() && skillsDir.isDirectory()) {
-                builder.addSkillsDirectory(skillsDirectory);
-                log.info("Added skills directory: {}", skillsDirectory);
+            org.springframework.core.io.Resource skillsResource = resourceLoader.getResource("classpath:" + skillsDirectory);
+            if (skillsResource.exists()) {
+                builder.addSkillsResource(skillsResource);
+                log.info("Added classpath skills: classpath:{}", skillsDirectory);
                 skillsAdded = true;
+            } else {
+                log.warn("Classpath skills directory not found: classpath:{}", skillsDirectory);
             }
         } catch (Exception e) {
-            log.debug("Skills directory not found on filesystem: {}", e.getMessage());
-        }
-        if (!skillsAdded) {
-            try {
-                org.springframework.core.io.Resource skillsResource = resourceLoader.getResource("classpath:" + skillsDirectory);
-                if (skillsResource.exists()) {
-                    builder.addSkillsResource(skillsResource);
-                    log.info("Added classpath skills: classpath:{}", skillsDirectory);
-                    skillsAdded = true;
-                }
-            } catch (Exception e) {
-                log.warn("Classpath skills not found: {}", e.getMessage());
-            }
+            log.warn("Failed to load classpath skills: {}", e.getMessage());
         }
 
         // Optional extra directory (e.g. Docker volume for custom skills)

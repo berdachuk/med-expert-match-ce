@@ -463,7 +463,7 @@ graph TB
 
 ### Agent Skills Architecture
 
-Agent Skills are Markdown files stored in `.claude/skills/{skill-name}/SKILL.md` that provide:
+Agent Skills are Markdown files stored in `src/main/resources/skills/{skill-name}/SKILL.md` that provide:
 
 - Domain knowledge and instructions for the LLM
 - Tool invocation guidance
@@ -764,7 +764,7 @@ ChatClient (MedGemma) + SkillsTool
     ↓
 Agent selects skill(s) based on intent
     ↓
-Skill instructions loaded from .claude/skills/{skill}/SKILL.md
+Skill instructions loaded from src/main/resources/skills/{skill}/SKILL.md
     ↓
 Agent invokes Java @Tool methods
     ↓

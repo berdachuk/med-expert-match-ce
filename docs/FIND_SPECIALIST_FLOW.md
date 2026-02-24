@@ -232,7 +232,7 @@ The tool calling prompt is constructed programmatically to frame the task approp
 
 The complete prompt combines multiple components:
 
-1. **Agent Skills Loading**: Loads relevant skills from `.claude/skills/`:
+1. **Agent Skills Loading**: Loads relevant skills from `src/main/resources/skills/`:
     - `case-analyzer`: Provides guidance for case analysis
     - `doctor-matcher`: Provides guidance for doctor matching
 
@@ -1127,7 +1127,7 @@ RETURN d.id
 - `case-analyzer`: Provides guidance for case analysis (used by FunctionGemma)
 - `doctor-matcher`: Provides guidance for doctor matching (used by FunctionGemma)
 
-**Location:** `.claude/skills/case-analyzer/SKILL.md` and `.claude/skills/doctor-matcher/SKILL.md`
+**Location:** `src/main/resources/skills/case-analyzer/SKILL.md` and `src/main/resources/skills/doctor-matcher/SKILL.md`
 
 **Note**: Skills provide context to FunctionGemma, but actual medical reasoning is done by MedGemma
 
@@ -1673,16 +1673,16 @@ CHAT_MODEL: medgemma:27b  # Or provider-specific model name
 medexpertmatch:
   skills:
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
-    directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:.claude/skills}
+    directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
 ```
 
 **Configuration Notes:**
 
 - Skills are enabled by default (`enabled: true`)
-- Skills directory: `.claude/skills` (default)
+- Skills directory: `skills` (classpath, default)
 - Can be overridden via environment variables:
     - `MEDEXPERTMATCH_SKILLS_ENABLED=true`
-    - `MEDEXPERTMATCH_SKILLS_DIRECTORY=.claude/skills`
+    - `MEDEXPERTMATCH_SKILLS_DIRECTORY=skills`
 
 ## Error Handling
 

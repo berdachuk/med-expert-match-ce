@@ -80,7 +80,7 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
             @Qualifier("medgemmaResultInterpretationSystemPromptTemplate") PromptTemplate medgemmaResultInterpretationSystemPromptTemplate,
             @Qualifier("medgemmaResultInterpretationUserPromptTemplate") PromptTemplate medgemmaResultInterpretationUserPromptTemplate,
             ResourceLoader resourceLoader,
-            @Value("${medexpertmatch.skills.directory:.claude/skills}") String skillsDirectory,
+           @Value("${medexpertmatch.skills.directory:skills}") String skillsDirectory,
             @Value("${spring.ai.custom.chat.model:medgemma:1.5-4b}") String medGemmaModelName,
             @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName,
             LogStreamService logStreamService,
@@ -625,7 +625,7 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
     }
 
     /**
-     * Loads skill instructions from .claude/skills/{skillName}/SKILL.md file.
+     * Loads skill instructions from skills/{skillName}/SKILL.md file.
      */
     private String loadSkill(String skillName) {
         try {
