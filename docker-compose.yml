@@ -45,33 +45,33 @@ services:
       SPRING_DATASOURCE_USERNAME: medexpertmatch
       SPRING_DATASOURCE_PASSWORD: medexpertmatch
       SERVER_PORT: "8094"
-      # Chat/LLM (LM Studio on host at 127.0.0.1:1234)
+      # Chat/LLM (Ollama on host at 127.0.0.1:11434)
       CHAT_PROVIDER: openai
-      CHAT_BASE_URL: http://127.0.0.1:1234
-      CHAT_API_KEY: llm-studio
-      CHAT_MODEL: medgemma-1.5-4b-it@q4_k_m
+      CHAT_BASE_URL: http://127.0.0.1:11434
+      CHAT_API_KEY: any
+      CHAT_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M
       CHAT_TEMPERATURE: "0.7"
       CHAT_MAX_TOKENS: "6000"
       # Embedding
       EMBEDDING_PROVIDER: openai
-      EMBEDDING_BASE_URL: http://127.0.0.1:1234
-      EMBEDDING_API_KEY: llm-studio
-      EMBEDDING_MODEL: text-embedding-nomic-embed-text-v1.5
+      EMBEDDING_BASE_URL: http://127.0.0.1:11434
+      EMBEDDING_API_KEY: any
+      EMBEDDING_MODEL: nomic-embed-text:v1.5
       EMBEDDING_DIMENSIONS: "768"
       # Reranking
       RERANKING_PROVIDER: openai
-      RERANKING_BASE_URL: http://127.0.0.1:1234
-      RERANKING_API_KEY: llm-studio
-      RERANKING_MODEL: medgemma-1.5-4b-it@q4_k_m
+      RERANKING_BASE_URL: http://127.0.0.1:11434
+      RERANKING_API_KEY: any
+      RERANKING_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M
       RERANKING_TEMPERATURE: "0.1"
       # Tool calling (Qwen3 4B)
       TOOL_CALLING_PROVIDER: openai
-      TOOL_CALLING_BASE_URL: http://127.0.0.1:1234
-      TOOL_CALLING_API_KEY: llm-studio
-      TOOL_CALLING_MODEL: qwen/qwen3-4b-2507
+      TOOL_CALLING_BASE_URL: http://127.0.0.1:11434
+      TOOL_CALLING_API_KEY: any
+      TOOL_CALLING_MODEL: hf.co/unsloth/Qwen3-4B-Instruct-2507-GGUF:Q4_K_M
       TOOL_CALLING_TEMPERATURE: "0.7"
       TOOL_CALLING_MAX_TOKENS: "4096"
-      # LLM concurrency (sequential for local LLM Studio)
+      # LLM concurrency (sequential for local LLM)
       MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS: "1"

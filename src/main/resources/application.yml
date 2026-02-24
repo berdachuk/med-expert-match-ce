@@ -42,28 +42,28 @@ spring:
     custom:
       chat: # Case analysis, reasoning; e.g. LLM Studio, LiteLLM, or OpenAI
         provider: ${CHAT_PROVIDER:openai}
-        base-url: ${CHAT_BASE_URL:http://127.0.0.1:1234}
+        base-url: ${CHAT_BASE_URL:http://localhost:11434}
         api-key: ${CHAT_API_KEY:llm-studio}
-        model: ${CHAT_MODEL:medgemma-1.5-4b-it@q4_k_m}
+        model: ${CHAT_MODEL:hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M
         temperature: ${CHAT_TEMPERATURE:0.7}
         max-tokens: ${CHAT_MAX_TOKENS:6000}
       embedding: # Vector embeddings for similarity search; dimensions must match DB column
         provider: ${EMBEDDING_PROVIDER:openai}
-        base-url: ${EMBEDDING_BASE_URL:http://127.0.0.1:1234}
+        base-url: ${EMBEDDING_BASE_URL:http://localhost:11434}
         api-key: ${EMBEDDING_API_KEY:llm-studio}
-        model: ${EMBEDDING_MODEL:text-embedding-nomic-embed-text-v1.5}
+        model: ${EMBEDDING_MODEL:nomic-embed-text:v1.5}
         dimensions: ${EMBEDDING_DIMENSIONS:768}
       reranking: # Semantic reranking of match results; lower temperature preferred
         provider: ${RERANKING_PROVIDER:openai}
-        base-url: ${RERANKING_BASE_URL:http://127.0.0.1:1234}
+        base-url: ${RERANKING_BASE_URL:http://localhost:11434}
         api-key: ${RERANKING_API_KEY:llm-studio}
-        model: ${RERANKING_MODEL:medgemma-1.5-4b-it@q4_k_m}
+        model: ${RERANKING_MODEL:hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M}
         temperature: ${RERANKING_TEMPERATURE:0.1}
       tool-calling: # Agent tool invocations; use model that supports tools, e.g. qwen/qwen3-4b-2507 or mistral-7b-instruct-v0.2
         provider: ${TOOL_CALLING_PROVIDER:openai}
-        base-url: ${TOOL_CALLING_BASE_URL:http://127.0.0.1:1234}
+        base-url: ${TOOL_CALLING_BASE_URL:http://localhost:11434}
         api-key: ${TOOL_CALLING_API_KEY:llm-studio}
-        model: ${TOOL_CALLING_MODEL:qwen/qwen3-4b-2507}
+        model: ${TOOL_CALLING_MODEL:hf.co/unsloth/Qwen3-4B-Instruct-2507-GGUF:Q4_K_M
         temperature: ${TOOL_CALLING_TEMPERATURE:0.7}
         max-tokens: ${TOOL_CALLING_MAX_TOKENS:4096}
     vectorstore: # PgVector; HNSW + cosine for similarity search
