@@ -76,9 +76,10 @@ services:
       MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS: "1"
-      # Agent skills are now loaded from classpath (included in JAR)
+      # Agent skills loaded from /app/skills (copied in Dockerfile)
       MEDEXPERTMATCH_SKILLS_ENABLED: "true"
       MEDEXPERTMATCH_SKILLS_DIRECTORY: "skills"
+      MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY: "/app/skills"
       # Logging (aligned with local debug)
       LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_AI: DEBUG

@@ -67,13 +67,14 @@ public class MedicalAgentConfiguration {
             log.warn("Failed to load classpath skills: {}", e.getMessage());
         }
 
-        // Optional extra directory (e.g. Docker volume for custom skills)
+        // Optional extra directory (e.g. Docker volume or mounted skills)
         if (!extraDirectory.isEmpty()) {
             try {
                 java.io.File extraDir = new java.io.File(extraDirectory);
                 if (extraDir.exists() && extraDir.isDirectory()) {
                     builder.addSkillsDirectory(extraDirectory);
                     log.info("Added extra skills directory: {}", extraDirectory);
+                    skillsAdded = true;
                 } else {
                     log.debug("Extra skills directory not found or not a directory: {}", extraDirectory);
                 }

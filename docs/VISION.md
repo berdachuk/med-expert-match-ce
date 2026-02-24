@@ -324,7 +324,7 @@ organizations match patients with specialists.
 
 - [Use Cases](USE_CASES.md)
 - [Architecture](ARCHITECTURE.md)
-- [Architecture Analysis](ARCHITECTURE_ANALYSIS.md)
+- [Architecture Analysis](ARCHITECTURE.md)
 
 *MedGemma Impact
 Challenge: [Kaggle Competition](https://www.kaggle.com/competitions/med-gemma-impact-challenge/overview)*

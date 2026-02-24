@@ -31,8 +31,9 @@ WORKDIR /app
 RUN groupadd -r appuser -g 1000 && useradd -r -u 1000 -g appuser appuser
 
 COPY --from=builder /build/target/app.jar ./app.jar
-# Built-in skills are now included in the JAR via src/main/resources/skills
-# Optional extra skills can still be mounted via MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY + volume mount
+COPY --from=builder /build/src/main/resources/skills ./skills
+# Skills on filesystem for reliable loading (classpath dir lookup can fail in JAR)
+# Optional extra skills can be mounted via MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY + volume
 
 USER appuser
 
