@@ -613,12 +613,12 @@ public abstract class BaseIntegrationTest {
 
 ### 3.1 Agent Skills Setup
 
-**Reference**: See expert-match `.claude/skills/` directory structure
+**Reference**: See expert-match `src/main/resources/skills/` directory structure
 and [Architecture - Agent Skills](ARCHITECTURE.md#agent-skills)
 
 **Tasks**:
 
-1. Create `.claude/skills/` directory structure
+1. Create `src/main/resources/skills/` directory structure
 2. Create 7 skill directories (see [Architecture](ARCHITECTURE.md#agent-skills) for skill descriptions):
     - `case-analyzer/` - Analyze cases, extract entities, ICD-10 codes, classify urgency and complexity
     - `doctor-matcher/` - Match doctors to cases, scoring and ranking using multiple signals
@@ -659,7 +659,7 @@ and [Architecture - Agent Skills](ARCHITECTURE.md#agent-skills)
 1. Create `MedicalAgentService` interface
 2. Implement `MedicalAgentServiceImpl` with Spring AI ChatClient
 3. Implement agent orchestration:
-    - Load skills from `.claude/skills/`
+    - Load skills from `src/main/resources/skills/`
     - Select skills based on intent
     - Invoke tools via skills
     - Format responses

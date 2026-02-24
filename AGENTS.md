@@ -500,15 +500,15 @@ Agent Skills are optional and disabled by default. Enable them via configuration
 medexpertmatch:
   skills:
     enabled: true
-    directory: .claude/skills
+    directory: skills
 ```
 
 ### Skills Directory Structure
 
-Skills are organized in directories under `.claude/skills/`:
+Skills are organized in directories under `src/main/resources/skills/`:
 
 ```
-.claude/skills/
+src/main/resources/skills/
 ├── case-analyzer/
 │   └── SKILL.md
 ├── doctor-matcher/

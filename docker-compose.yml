@@ -35,9 +35,9 @@ services:
     container_name: medexpertmatch-app
     # Host network so the app can reach LM Studio on 127.0.0.1:1234 without LM Studio binding to 0.0.0.0
     network_mode: host
-    # Optional: mount custom skills to extend built-in ones (set MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY=/app/.claude/skills-extra)
+    # Optional: mount custom skills to extend built-in ones (set MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY=/app/custom-skills)
     # volumes:
-    #   - ./custom-skills:/app/.claude/skills-extra
+    #   - ./custom-skills:/app/custom-skills
     environment:
       SPRING_PROFILES_ACTIVE: docker
       # Database: postgres container exposes 5433 on host
@@ -76,9 +76,9 @@ services:
       MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS: "1"
-      # Agent skills (included in image via Dockerfile.app COPY .claude)
+      # Agent skills are now loaded from classpath (included in JAR)
       MEDEXPERTMATCH_SKILLS_ENABLED: "true"
-      MEDEXPERTMATCH_SKILLS_DIRECTORY: "/app/.claude/skills"
+      MEDEXPERTMATCH_SKILLS_DIRECTORY: "skills"
       # Logging (aligned with local debug)
       LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_AI: DEBUG
