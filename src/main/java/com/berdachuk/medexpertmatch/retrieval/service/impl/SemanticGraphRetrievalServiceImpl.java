@@ -11,6 +11,7 @@ import com.berdachuk.medexpertmatch.graph.service.GraphQueryService;
 import com.berdachuk.medexpertmatch.graph.service.GraphService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
+import com.berdachuk.medexpertmatch.retrieval.config.RetrievalScoringProperties;
 import com.berdachuk.medexpertmatch.retrieval.domain.PriorityScore;
 import com.berdachuk.medexpertmatch.retrieval.domain.RouteScoreResult;
 import com.berdachuk.medexpertmatch.retrieval.domain.ScoreResult;
@@ -20,6 +21,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -31,9 +33,9 @@ import java.util.Map;
 @Service
 public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrievalService {
 
-    private static final double VECTOR_WEIGHT = 0.4;
-    private static final double GRAPH_WEIGHT = 0.3;
-    private static final double HISTORICAL_WEIGHT = 0.3;
+    private static final int AVAILABILITY_DOCTOR_LIMIT = 100;
+    private static final double EARTH_RADIUS_KM = 6371.0;
+    private static final double GEOGRAPHIC_DECAY_DISTANCE_KM = 500.0;
 
     private static final int FACILITY_DOCTOR_LIMIT = 500;
 
@@ -45,6 +47,7 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
     private final LogStreamService logStreamService;
     private final com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository medicalCaseRepository;
     private final GraphQueryService graphQueryService;
+    private final RetrievalScoringProperties scoringProperties;
 
     public SemanticGraphRetrievalServiceImpl(
             NamedParameterJdbcTemplate namedJdbcTemplate,
@@ -54,7 +57,8 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
             EmbeddingService embeddingService,
             LogStreamService logStreamService,
             com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository medicalCaseRepository,
-            GraphQueryService graphQueryService) {
+            GraphQueryService graphQueryService,
+            RetrievalScoringProperties scoringProperties) {
         this.namedJdbcTemplate = namedJdbcTemplate;
         this.graphService = graphService;
         this.clinicalExperienceRepository = clinicalExperienceRepository;
@@ -63,6 +67,7 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         this.logStreamService = logStreamService;
         this.medicalCaseRepository = medicalCaseRepository;
         this.graphQueryService = graphQueryService;
+        this.scoringProperties = scoringProperties;
     }
 
     @Override
@@ -82,9 +87,9 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         double historicalScore = calculateHistoricalPerformanceScore(doctor, medicalCase);
 
         // Combine scores with weighted average
-        double overallScore = (vectorScore * VECTOR_WEIGHT) +
-                (graphScore * GRAPH_WEIGHT) +
-                (historicalScore * HISTORICAL_WEIGHT);
+        double overallScore = (vectorScore * scoringProperties.getDoctorVectorWeight()) +
+                (graphScore * scoringProperties.getDoctorGraphWeight()) +
+                (historicalScore * scoringProperties.getDoctorHistoricalWeight());
 
         // Scale to 0-100
         overallScore = overallScore * 100;
@@ -119,14 +124,13 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         // Calculate center capacity score
         double capacityScore = calculateCapacityScore(facility);
 
-        // Calculate geographic proximity score (simplified - always 0.5 for now)
-        double geographicScore = 0.5;
+        double geographicScore = calculateGeographicScore(medicalCase, facility);
 
         // Combine scores with weighted average
-        double overallScore = (complexityScore * 0.3) +
-                (historicalOutcomesScore * 0.3) +
-                (capacityScore * 0.2) +
-                (geographicScore * 0.2);
+        double overallScore = (complexityScore * scoringProperties.getFacilityComplexityWeight()) +
+                (historicalOutcomesScore * scoringProperties.getFacilityHistoricalWeight()) +
+                (capacityScore * scoringProperties.getFacilityCapacityWeight()) +
+                (geographicScore * scoringProperties.getFacilityGeographicWeight());
 
         // Scale to 0-100
         overallScore = overallScore * 100;
@@ -155,13 +159,12 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         // Calculate complexity score (simplified - based on urgency for now)
         double complexityScore = calculateCaseComplexityScore(medicalCase);
 
-        // Calculate availability score (simplified - always 0.5 for now)
-        double availabilityScore = 0.5;
+        double availabilityScore = calculateAvailabilityScore(medicalCase);
 
         // Combine scores with weighted average
-        double overallScore = (urgencyScore * 0.5) +
-                (complexityScore * 0.3) +
-                (availabilityScore * 0.2);
+        double overallScore = (urgencyScore * scoringProperties.getPriorityUrgencyWeight()) +
+                (complexityScore * scoringProperties.getPriorityComplexityWeight()) +
+                (availabilityScore * scoringProperties.getPriorityAvailabilityWeight());
 
         // Scale to 0-100
         overallScore = overallScore * 100;
@@ -446,6 +449,28 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
     }
 
     /**
+     * Calculates geographic score from available facility location metadata.
+     */
+    private double calculateGeographicScore(MedicalCase medicalCase, Facility facility) {
+        Double distanceKm = calculateDistanceKm(
+                medicalCase.locationLatitude(),
+                medicalCase.locationLongitude(),
+                facility.locationLatitude(),
+                facility.locationLongitude()
+        );
+        if (distanceKm != null) {
+            return Math.max(0.0, 1.0 - (distanceKm / GEOGRAPHIC_DECAY_DISTANCE_KM));
+        }
+        if (hasText(facility.locationCity()) && hasText(facility.locationState())) {
+            return 0.75;
+        }
+        if (hasText(facility.locationCountry())) {
+            return 0.6;
+        }
+        return 0.3;
+    }
+
+    /**
      * Calculates urgency score based on urgency level.
      */
     private double calculateUrgencyScore(UrgencyLevel urgencyLevel) {
@@ -467,5 +492,80 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
     private double calculateCaseComplexityScore(MedicalCase medicalCase) {
         // Simplified: use urgency as proxy for complexity
         return calculateUrgencyScore(medicalCase.urgencyLevel());
+    }
+
+    /**
+     * Calculates physician availability score from matching doctors for the case specialty.
+     */
+    private double calculateAvailabilityScore(MedicalCase medicalCase) {
+        try {
+            List<Doctor> doctors = findAvailabilityCandidateDoctors(medicalCase);
+            if (doctors.isEmpty()) {
+                return 0.5;
+            }
+
+            double totalScore = doctors.stream()
+                    .mapToDouble(doctor -> mapAvailabilityStatusToScore(doctor.availabilityStatus()))
+                    .average()
+                    .orElse(0.5);
+
+            return Math.max(0.0, Math.min(1.0, totalScore));
+        } catch (Exception e) {
+            log.error("Failed to calculate availability score for case {}: {}", medicalCase.id(), e.getMessage(), e);
+            return 0.5;
+        }
+    }
+
+    private List<Doctor> findAvailabilityCandidateDoctors(MedicalCase medicalCase) {
+        if (hasText(medicalCase.requiredSpecialty())) {
+            return doctorRepository.findBySpecialty(medicalCase.requiredSpecialty(), AVAILABILITY_DOCTOR_LIMIT);
+        }
+
+        List<String> doctorIds = doctorRepository.findAllIds(AVAILABILITY_DOCTOR_LIMIT);
+        if (doctorIds.isEmpty()) {
+            return List.of();
+        }
+
+        return doctorRepository.findByIds(doctorIds);
+    }
+
+    private double mapAvailabilityStatusToScore(String availabilityStatus) {
+        if (!hasText(availabilityStatus)) {
+            return 0.5;
+        }
+
+        return switch (availabilityStatus.trim().toUpperCase()) {
+            case "AVAILABLE" -> 1.0;
+            case "LIMITED", "PARTIAL", "ON_CALL" -> 0.7;
+            case "BUSY" -> 0.3;
+            case "UNAVAILABLE", "OFF_DUTY" -> 0.0;
+            default -> 0.5;
+        };
+    }
+
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private Double calculateDistanceKm(
+            BigDecimal fromLatitude,
+            BigDecimal fromLongitude,
+            BigDecimal toLatitude,
+            BigDecimal toLongitude) {
+        if (fromLatitude == null || fromLongitude == null || toLatitude == null || toLongitude == null) {
+            return null;
+        }
+
+        double lat1 = Math.toRadians(fromLatitude.doubleValue());
+        double lon1 = Math.toRadians(fromLongitude.doubleValue());
+        double lat2 = Math.toRadians(toLatitude.doubleValue());
+        double lon2 = Math.toRadians(toLongitude.doubleValue());
+
+        double deltaLat = lat2 - lat1;
+        double deltaLon = lon2 - lon1;
+        double a = Math.pow(Math.sin(deltaLat / 2), 2)
+                + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(deltaLon / 2), 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return EARTH_RADIUS_KM * c;
     }
 }

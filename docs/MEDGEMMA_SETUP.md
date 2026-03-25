@@ -1,436 +1,163 @@
 # MedGemma Setup Guide for Local Development
 
-This guide explains how to set up MedGemma 1.5 4B for use with MedExpertMatch via **OpenAI-compatible APIs only**. The
-application does not use Ollama natively; all AI providers must expose an OpenAI-compatible endpoint (e.g. LiteLLM,
-vLLM, or Ollama's OpenAI-compatible API if available).
+**Last Updated:** 2026-03-25
 
-## Overview
+This guide describes a **self-hosted local AI** setup for MedExpertMatch using MedGemma behind an
+**OpenAI-compatible API**. The application itself only supports OpenAI-compatible providers.
 
-MedGemma is Google's collection of open models for medical text and image comprehension, built on Gemma 3.
-MedExpertMatch uses **OpenAI-compatible providers only**; Ollama is excluded as a direct provider. For local MedGemma
-you can:
+## Recommended approach
 
-1. **LiteLLM proxy** (recommended) - Exposes OpenAI-compatible API; can route to Ollama, vLLM, or other backends
-2. **Ollama's OpenAI-compatible endpoint** (if available) - Some Ollama versions expose `/v1/chat/completions`; use only
-   if fully compatible
+Use one of these OpenAI-compatible frontends:
 
-**Reference**: [MedGemma Documentation](https://developers.google.com/health-ai-developer-foundations/medgemma)
+- **LM Studio** with OpenAI-compatible server mode
+- **LiteLLM** in front of local or remote backends
+- **vLLM** exposing an OpenAI-compatible endpoint
+- a compatible Ollama endpoint only when it matches the OpenAI API shape well enough for your chosen models
 
-## Prerequisites
+If you just want the repository defaults, you do **not** need this guide. The committed local profile already points to
+`https://llm.berdachuk.com`.
 
-- A way to run MedGemma behind an OpenAI-compatible API, for example:
-    - **LiteLLM** (recommended): Python 3.8+ with pip; can proxy to Ollama, vLLM, or remote APIs
-    - **Ollama** (optional): Only if using Ollama as backend for LiteLLM or if Ollama exposes OpenAI-compatible endpoint
-- Sufficient disk space (~2.5 GB for Q4_K_M quantized model)
-- GPU recommended (but not required)
+## What MedExpertMatch needs
 
-## Step 1: Download MedGemma GGUF Model
+You need four independently configurable components:
 
-Download the MedGemma 1.5 4B GGUF model from Hugging Face:
+- chat model for case analysis and reasoning
+- embedding model for vector generation
+- reranking model for semantic reranking
+- tool-calling model for agent tools
 
-```bash
-# Option 1: Using wget (Q4_K_M quantization - smaller, lower quality)
-wget https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF/resolve/main/medgemma-1.5-4b-it-Q4_K_M.gguf
+MedGemma is appropriate for chat and reranking. Tool calling usually needs a different model such as Qwen3.
 
-# Alternative: Using wget (Q8_0 quantization - larger, higher quality)
-wget https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF/resolve/main/medgemma-1.5-4b-it-Q8_0.gguf
+## Local development ports
 
-# Option 2: Using huggingface-cli
-pip install huggingface-hub
-huggingface-cli download unsloth/medgemma-1.5-4b-it-GGUF medgemma-1.5-4b-it-Q4_K_M.gguf --local-dir ./models
-```
+When using the repository defaults:
 
-**Model Information**:
+- app: `http://localhost:8080`
+- local dev PostgreSQL container: `localhost:5434`
+- self-hosted AI server example: `http://127.0.0.1:1234`
 
-- **Model**: MedGemma 1.5 4B Instruction-Tuned (GGUF quantization)
-- **Quantizations Available**:
-    - **Q4_K_M**: ~2.49 GB (balanced size/performance)
-    - **Q8_0**: ~4.37 GB (larger, higher quality)
-- **Architecture**: Gemma 3 decoder-only transformer
-- **Modalities**: Multimodal (text + images)
-- **Context length**: 128K tokens
-- **Source**: [Hugging Face - unsloth/medgemma-1.5-4b-it-GGUF](https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF)
+## Option A: LM Studio
 
-## Step 2: Create Ollama Modelfile
+1. Load MedGemma into LM Studio.
+2. Start the OpenAI-compatible server on `127.0.0.1:1234`.
+3. Load or expose an embedding-capable model.
+4. Load or expose a tool-capable model if your MedGemma deployment does not support tool calls.
 
-Create a file named `Modelfile` in the same directory as the downloaded GGUF file. The modelfile differs based on which
-quantization you chose:
-
-### For Q4_K_M model (default, smaller size):
+Example environment overrides:
 
 ```bash
-cat > Modelfile << 'EOF'
-FROM ./medgemma-1.5-4b-it-Q4_K_M.gguf
-TEMPLATE """{{ .Prompt }}"""
-PARAMETER temperature 0.7
-PARAMETER top_p 0.9
-PARAMETER top_k 40
-PARAMETER num_ctx 8192
-EOF
-```
+export SPRING_PROFILES_ACTIVE=local
 
-### For Q8_0 model (higher quality, larger size):
-
-```bash
-cat > Modelfile-Q8_0 << 'EOF'
-FROM ./medgemma-1.5-4b-it-Q8_0.gguf
-TEMPLATE """{{ .Prompt }}"""
-PARAMETER temperature 0.7
-PARAMETER top_p 0.9
-PARAMETER top_k 40
-PARAMETER num_ctx 8192
-EOF
-```
-
-**Note**: Adjust the `FROM` path if your GGUF file is in a different location.
-
-```
-ollama pull hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q8_0
-```
-
-## Step 3: Import Model into Ollama
-
-Import the model into Ollama (choose the appropriate command for your quantization):
-
-### For Q4_K_M model (default, smaller size):
-
-```bash
-ollama create medgemma:1.5-4b -f Modelfile
-```
-
-### For Q8_0 model (higher quality, larger size):
-
-```bash
-ollama create medgemma:1.5-4b-q8 -f Modelfile-Q8_0
-```
-
-Verify the model is available:
-
-```bash
-ollama list
-```
-
-You should see `medgemma:1.5-4b` (and/or `medgemma:1.5-4b-q8`) in the list.
-
-## Step 4: Configure OpenAI-Compatible Access
-
-MedExpertMatch requires OpenAI-compatible APIs. Since Ollama is already running as a service, you have two options:
-
-### Option A: Use Ollama's OpenAI-Compatible Endpoint (If Available)
-
-Some Ollama versions support OpenAI-compatible endpoints. Check if your Ollama service exposes `/v1/chat/completions`:
-
-```bash
-# Test if Ollama has OpenAI-compatible endpoint
-curl http://localhost:11434/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{"model": "medgemma:1.5-4b", "messages": [{"role": "user", "content": "test"}]}'
-```
-
-If this works, you can use Ollama directly without LiteLLM. Configure:
-
-```yaml
-CHAT_BASE_URL: http://localhost:11434
-CHAT_MODEL: medgemma:1.5-4b
-```
-
-**Note**: Ollama's OpenAI-compatible endpoint may not be fully compatible. If you encounter issues, use Option B.
-
-### Option B: Use LiteLLM Proxy (Recommended for Full Compatibility)
-
-If Ollama doesn't have OpenAI-compatible endpoints, or if you need full compatibility, use LiteLLM as a proxy:
-
-Install LiteLLM:
-
-```bash
-pip install litellm
-```
-
-Start LiteLLM with MedGemma (on a different port to avoid conflict with Ollama):
-
-```bash
-litellm --model ollama/medgemma:1.5-4b --port 8000
-```
-
-**Important**: Use port 8000 (or another port) since Ollama is already using 11434.
-
-Then configure:
-
-```yaml
-CHAT_BASE_URL: http://localhost:8000
-CHAT_MODEL: medgemma:1.5-4b
-```
-
-## Step 5: Configure MedExpertMatch
-
-The `application-local.yml` file is already configured for MedGemma. Choose your configuration based on whether you're
-using Ollama directly or LiteLLM proxy:
-
-### Option A: Using Ollama's OpenAI-Compatible Endpoint (If Available)
-
-If Ollama supports OpenAI-compatible endpoints, configure:
-
-```bash
 export CHAT_PROVIDER=openai
-export CHAT_BASE_URL=http://localhost:11434  # Ollama service
-export CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS  # or medgemma:1.5-4b
-export CHAT_API_KEY=ollama
-export CHAT_TEMPERATURE=0.7
-export CHAT_MAX_TOKENS=6000
+export CHAT_BASE_URL=http://127.0.0.1:1234
+export CHAT_API_KEY=local-key
+export CHAT_MODEL=medgemma-1.5-4b-it
 
 export EMBEDDING_PROVIDER=openai
-export EMBEDDING_BASE_URL=http://localhost:11434
-export EMBEDDING_API_KEY=ollama
-export EMBEDDING_MODEL=nomic-embed-text
+export EMBEDDING_BASE_URL=http://127.0.0.1:1234
+export EMBEDDING_API_KEY=local-key
+export EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
 export EMBEDDING_DIMENSIONS=768
 
 export RERANKING_PROVIDER=openai
-export RERANKING_BASE_URL=http://localhost:11434
-export RERANKING_API_KEY=ollama
-export RERANKING_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS  # or medgemma:1.5-4b
-export RERANKING_TEMPERATURE=0.1
+export RERANKING_BASE_URL=http://127.0.0.1:1234
+export RERANKING_API_KEY=local-key
+export RERANKING_MODEL=medgemma-1.5-4b-it
 
 export TOOL_CALLING_PROVIDER=openai
-export TOOL_CALLING_BASE_URL=http://localhost:11434
-export TOOL_CALLING_API_KEY=ollama
-export TOOL_CALLING_MODEL=functiongemma
-export TOOL_CALLING_TEMPERATURE=0.7
-export TOOL_CALLING_MAX_TOKENS=4096
+export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
+export TOOL_CALLING_API_KEY=local-key
+export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
 ```
 
-**Important**: Pull FunctionGemma for tool calling:
-
-```bash
-ollama pull functiongemma
-```
-
-### Option B: Using LiteLLM Proxy (Recommended)
-
-If using LiteLLM proxy (for full OpenAI compatibility), configure:
-
-```bash
-export CHAT_PROVIDER=openai
-export CHAT_BASE_URL=http://localhost:8000  # LiteLLM proxy (different port)
-export CHAT_MODEL=medgemma:1.5-4b  # or medgemma:1.5-4b-q8 for Q8_0 model
-export CHAT_API_KEY=ollama
-export CHAT_TEMPERATURE=0.7
-export CHAT_MAX_TOKENS=6000
-
-export EMBEDDING_PROVIDER=openai
-export EMBEDDING_BASE_URL=http://localhost:8000
-export EMBEDDING_API_KEY=ollama
-export EMBEDDING_MODEL=nomic-embed-text
-export EMBEDDING_DIMENSIONS=768
-
-export RERANKING_PROVIDER=openai
-export RERANKING_BASE_URL=http://localhost:8000
-export RERANKING_API_KEY=ollama
-export RERANKING_MODEL=medgemma:1.5-4b  # or medgemma:1.5-4b-q8 for Q8_0 model
-export RERANKING_TEMPERATURE=0.1
-
-export TOOL_CALLING_PROVIDER=openai
-export TOOL_CALLING_BASE_URL=http://localhost:8000
-export TOOL_CALLING_API_KEY=ollama
-export TOOL_CALLING_MODEL=functiongemma
-export TOOL_CALLING_TEMPERATURE=0.7
-export TOOL_CALLING_MAX_TOKENS=4096
-```
-
-Start LiteLLM with MedGemma (on a different port to avoid conflict with Ollama):
-
-```bash
-litellm --model ollama/medgemma:1.5-4b --port 8000
-# OR for Q8_0 model:
-# litellm --model ollama/medgemma:1.5-4b-q8 --port 8000
-```
-
-## Step 6: Pull Embedding Model (Required)
-
-MedGemma doesn't include embeddings, so you'll need a separate embedding model:
-
-```bash
-# Pull nomic-embed-text (recommended, 768 dimensions, good quality)
-ollama pull nomic-embed-text
-
-# OR pull alternative embedding models
-ollama pull qwen3-embedding:0.6b  # 1024 dimensions, faster, less memory
-ollama pull qwen3-embedding:8b  # 1024 dimensions, best quality
-```
-
-## Step 7: Pull FunctionGemma for Tool Calling (Required)
-
-MedExpertMatch uses FunctionGemma for tool/function calling operations because MedGemma 1.5 4B doesn't support tools:
-
-```bash
-# Pull FunctionGemma (required for agent skills and tool calling)
-ollama pull functiongemma
-```
-
-**Why FunctionGemma?**
-
-- MedGemma 1.5 4B does NOT support tool calling
-- FunctionGemma DOES support tool calling
-- The `MedicalAgentConfiguration` uses FunctionGemma (`toolCallingChatModel`) for agent operations
-- Regular chat operations still use MedGemma (`primaryChatModel`)
-
-## Step 8: Run MedExpertMatch
-
-Start MedExpertMatch with the local profile:
+Then run:
 
 ```bash
 mvn spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=local
 ```
 
-Or set the profile via environment variable:
+## Option B: LiteLLM
+
+Use LiteLLM when you want one OpenAI-compatible endpoint in front of mixed backends.
+
+Example:
 
 ```bash
-export SPRING_PROFILES_ACTIVE=local
-mvn spring-boot:run
+pip install litellm
+litellm --port 1234
 ```
 
-## Verification
+Then point the same environment variables to `http://127.0.0.1:1234`.
 
-1. **Check Ollama service**:
-   ```bash
-   systemctl status ollama
-   # OR
-   ollama list  # Should show medgemma:1.5-4b
-   ```
+## Option C: vLLM
 
-2. **Check Ollama model**:
-   ```bash
-   ollama show medgemma:1.5-4b  # Verify model details
-   ```
+Use vLLM when you want a dedicated OpenAI-compatible model server for MedGemma or another local model.
 
-3. **Test OpenAI-compatible endpoint** (if using Ollama directly):
-   ```bash
-   curl http://localhost:11434/v1/chat/completions \
-     -H "Content-Type: application/json" \
-     -d '{"model": "medgemma:1.5-4b", "messages": [{"role": "user", "content": "test"}]}'
-   ```
-
-4. **Test LiteLLM** (if using LiteLLM proxy):
-   ```bash
-   curl http://localhost:8000/health  # Check LiteLLM health
-   ```
-
-5. **Test FunctionGemma** (if using Ollama directly):
-   ```bash
-   curl http://localhost:11434/v1/chat/completions \
-     -H "Content-Type: application/json" \
-     -d '{"model": "functiongemma", "messages": [{"role": "user", "content": "test"}]}'
-   ```
-
-6. **Test MedExpertMatch**: Access Swagger UI at `http://localhost:8094/swagger-ui.html` (port 8094 for local profile)
-   and test the API endpoints
-
-## MedGemma Capabilities
-
-MedGemma 1.5 4B supports:
-
-- **Medical image interpretation**: Chest X-rays, CT scans, MRI, histopathology, dermatology, ophthalmology
-- **Medical text comprehension**: Clinical reasoning, medical Q&A, document understanding
-- **EHR interpretation**: Electronic health record understanding and extraction
-- **3D medical imaging**: CT and MRI volume interpretation
-- **Whole-slide histopathology**: Multi-patch WSI interpretation
-- **Longitudinal imaging**: Comparing current vs historical scans
-- **Anatomical localization**: Bounding box detection in medical images
-
-## Troubleshooting
-
-### Model Not Found
-
-If Ollama can't find the model:
+Example outline:
 
 ```bash
-# Check model location
-ollama list
-
-# Re-import if needed (for Q4_K_M model)
-ollama create medgemma:1.5-4b -f Modelfile
-
-# Re-import if needed (for Q8_0 model)
-# ollama create medgemma:1.5-4b-q8 -f Modelfile-Q8_0
+vllm serve your-medgemma-model \
+  --port 1234 \
+  --api-key local-key \
+  --served-model-name medgemma-1.5-4b-it
 ```
 
-### LiteLLM Connection Issues
+Then use the same environment variable pattern as the LM Studio example.
 
-If LiteLLM can't connect to Ollama:
+## Model guidance
 
-1. Verify Ollama service is running: `systemctl status ollama` or `ollama list`
-2. Check LiteLLM logs for connection errors
-3. Ensure LiteLLM uses a different port (e.g., 8000) since Ollama uses 11434
-4. Verify Ollama is accessible: `curl http://localhost:11434/api/tags`
+Recommended local split:
 
-### Using Ollama Directly (Without LiteLLM)
+- **Chat**: MedGemma 1.5 4B or another MedGemma variant
+- **Reranking**: same MedGemma model, often with lower temperature
+- **Embedding**: a dedicated embedding model such as Nomic Embed Text
+- **Tool calling**: Qwen3 4B Instruct or another tool-capable chat model
 
-If your Ollama version supports OpenAI-compatible endpoints:
+## Validation steps
 
-1. Test the endpoint: `curl http://localhost:11434/v1/chat/completions ...`
-2. If it works, configure `CHAT_BASE_URL=http://localhost:11434` directly
-3. No need for LiteLLM proxy
-
-**Note**: Not all Ollama versions have full OpenAI compatibility. LiteLLM ensures 100% compatibility.
-
-### Model Performance
-
-- **Slow inference**: Consider using GPU acceleration or a smaller quantization (Q3_K_M)
-- **Out of memory**: Use a smaller quantization or reduce context window (`num_ctx`)
-
-### Alternative: Use Pre-converted Ollama Model
-
-If MedGemma becomes available as a pre-converted Ollama model:
+### 1. Check the AI server
 
 ```bash
-# Pull directly from Ollama (if available)
-ollama pull medgemma:4b
-
-# Then use in LiteLLM
-litellm --model ollama/medgemma:4b --port 11434
+curl http://127.0.0.1:1234/v1/models
 ```
 
-Update `CHAT_MODEL` to `medgemma:4b` in your configuration.
+### 2. Check the database
 
-## Model Alternatives
+```bash
+docker compose -f docker-compose.dev.yml ps
+```
 
-### Higher Quality Quantization (Q8_0)
+### 3. Start the app
 
-For better quality with larger file size:
+```bash
+mvn spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=local
+```
 
-- Download the Q8_0 quantized model instead of Q4_K_M
-- Follow the same import process but use the Modelfile-Q8_0
-- Update `CHAT_MODEL=medgemma:1.5-4b-q8` in configuration
+### 4. Verify the app
 
-### MedGemma 1 27B (Better Quality)
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- Health: `http://localhost:8080/actuator/health`
 
-For better performance (requires more resources):
+## Common issues
 
-1. Download MedGemma 1 27B GGUF (if available)
-2. Follow the same import process
-3. Update `CHAT_MODEL=medgemma:27b` in configuration
+### Wrong database port
 
-### Other Medical Models
+The development database started by `docker-compose.dev.yml` uses host port `5434`, not `5433`.
 
-You can also use other medical LLMs available in GGUF format:
+### Wrong app port expectation
 
-- Follow the same process with different model files
-- Update the model name in configuration accordingly
+The `local` profile uses port `8080`. Port `8094` is used by the full Docker Compose stack.
 
-## References
+### Non-compatible base URL
 
-- **MedGemma Official Docs**: https://developers.google.com/health-ai-developer-foundations/medgemma
-- **Hugging Face Model**: https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF
-    - **Q4_K_M Model File
-      **: https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF?show_file_info=medgemma-1.5-4b-it-Q4_K_M.gguf
-    - **Q8_0 Model File
-      **: https://huggingface.co/unsloth/medgemma-1.5-4b-it-GGUF?show_file_info=medgemma-1.5-4b-it-Q8_0.gguf
-- **LiteLLM Documentation**: https://github.com/BerriAI/litellm
-- **Ollama Documentation**: https://ollama.ai/docs
+Most OpenAI-compatible providers should use a base URL without `/v1`. Spring AI appends the API path itself.
 
-## Configuration File
+### Tool calls fail with MedGemma
 
-The complete configuration is available in `src/main/resources/application-local.yml`. This file is gitignored and
-should be customized for your local setup.
+Keep MedGemma for medical reasoning, but use a separate tool-capable model for `TOOL_CALLING_MODEL`.
 
-**MedExpertMatch policy**: The application uses **OpenAI-compatible providers only**. Ollama is excluded as a direct
-provider. Use LiteLLM or another OpenAI-compatible proxy when running MedGemma or other models locally.
+## Related documentation
+
+- [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md)
+- [Development Guide](DEVELOPMENT_GUIDE.md)
+- [README](../README.md)

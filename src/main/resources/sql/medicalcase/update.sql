@@ -10,5 +10,7 @@ SET patient_age = :patientAge,
     case_type = :caseType,
     additional_notes = :additionalNotes,
     abstract = :abstract,
+    location_latitude = :locationLatitude,
+    location_longitude = :locationLongitude,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = :id

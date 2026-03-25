@@ -111,6 +111,20 @@ medexpertmatch:
       similarity-threshold: 0.7
     graph:
       max-depth: 3
+    scoring:
+      doctor:
+        vector-weight: ${MEDEXPERTMATCH_RETRIEVAL_DOCTOR_VECTOR_WEIGHT:0.4}
+        graph-weight: ${MEDEXPERTMATCH_RETRIEVAL_DOCTOR_GRAPH_WEIGHT:0.3}
+        historical-weight: ${MEDEXPERTMATCH_RETRIEVAL_DOCTOR_HISTORICAL_WEIGHT:0.3}
+      facility:
+        complexity-weight: ${MEDEXPERTMATCH_RETRIEVAL_FACILITY_COMPLEXITY_WEIGHT:0.3}
+        historical-weight: ${MEDEXPERTMATCH_RETRIEVAL_FACILITY_HISTORICAL_WEIGHT:0.3}
+        capacity-weight: ${MEDEXPERTMATCH_RETRIEVAL_FACILITY_CAPACITY_WEIGHT:0.2}
+        geographic-weight: ${MEDEXPERTMATCH_RETRIEVAL_FACILITY_GEOGRAPHIC_WEIGHT:0.2}
+      priority:
+        urgency-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_URGENCY_WEIGHT:0.5}
+        complexity-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_COMPLEXITY_WEIGHT:0.3}
+        availability-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_AVAILABILITY_WEIGHT:0.2}
   llm: # Concurrency per component; 1 = sequential (safe for local Ollama), increase for remote APIs
     max-tokens: 4096
     temperature: 0.7

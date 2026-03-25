@@ -6,5 +6,5 @@
  * - Integration with Spring AI EmbeddingModel
  * - Batch embedding generation support
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "core :: util", "core :: service", "medicalcase", "medicalcase :: domain", "medicalcase :: service"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "medicalcase"})
 package com.berdachuk.medexpertmatch.embedding;

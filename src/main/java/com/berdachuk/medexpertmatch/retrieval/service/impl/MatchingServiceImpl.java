@@ -16,6 +16,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class MatchingServiceImpl implements MatchingService {
+    private static final double EARTH_RADIUS_KM = 6371.0;
 
     private final MedicalCaseRepository medicalCaseRepository;
     private final DoctorRepository doctorRepository;
@@ -248,9 +250,10 @@ public class MatchingServiceImpl implements MatchingService {
     /**
      * Finds candidate facilities based on medical case and routing options.
      * Queries FacilityRepository and filters by preferred types and required capabilities.
-     * Geographic filter (maxDistanceKm) is not applied; case/facility coordinates would be required.
      */
     private List<Facility> findCandidateFacilities(MedicalCase medicalCase, RoutingOptions options) {
+        validateGeographicFilteringSupport(medicalCase, options);
+
         List<Facility> all = facilityRepository.findAll();
         int limit = Math.max(options.maxResults() * 2, 10);
         return all.stream()
@@ -259,7 +262,52 @@ public class MatchingServiceImpl implements MatchingService {
                         .anyMatch(type -> type.equalsIgnoreCase(f.facilityType()))))
                 .filter(f -> options.requiredCapabilities() == null || options.requiredCapabilities().isEmpty()
                         || (f.capabilities() != null && f.capabilities().containsAll(options.requiredCapabilities())))
+                .filter(f -> options.maxDistanceKm() == null
+                        || isWithinMaxDistance(medicalCase, f, options.maxDistanceKm()))
                 .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    private void validateGeographicFilteringSupport(MedicalCase medicalCase, RoutingOptions options) {
+        if (options.maxDistanceKm() == null) {
+            return;
+        }
+
+        if (medicalCase.locationLatitude() == null || medicalCase.locationLongitude() == null) {
+            throw new IllegalArgumentException(
+                    "maxDistanceKm requires medical case coordinates: " + medicalCase.id());
+        }
+    }
+
+    private boolean isWithinMaxDistance(MedicalCase medicalCase, Facility facility, double maxDistanceKm) {
+        Double distanceKm = calculateDistanceKm(
+                medicalCase.locationLatitude(),
+                medicalCase.locationLongitude(),
+                facility.locationLatitude(),
+                facility.locationLongitude()
+        );
+        return distanceKm != null && distanceKm <= maxDistanceKm;
+    }
+
+    private Double calculateDistanceKm(
+            BigDecimal fromLatitude,
+            BigDecimal fromLongitude,
+            BigDecimal toLatitude,
+            BigDecimal toLongitude) {
+        if (fromLatitude == null || fromLongitude == null || toLatitude == null || toLongitude == null) {
+            return null;
+        }
+
+        double lat1 = Math.toRadians(fromLatitude.doubleValue());
+        double lon1 = Math.toRadians(fromLongitude.doubleValue());
+        double lat2 = Math.toRadians(toLatitude.doubleValue());
+        double lon2 = Math.toRadians(toLongitude.doubleValue());
+
+        double deltaLat = lat2 - lat1;
+        double deltaLon = lon2 - lon1;
+        double a = Math.pow(Math.sin(deltaLat / 2), 2)
+                + Math.cos(lat1) * Math.cos(lat2) * Math.pow(Math.sin(deltaLon / 2), 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return EARTH_RADIUS_KM * c;
     }
 }

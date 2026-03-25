@@ -6,5 +6,5 @@
  * - Repository interfaces and implementations
  * - Facility management
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "core :: repository", "core :: repository.sql"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core"})
 package com.berdachuk.medexpertmatch.facility;

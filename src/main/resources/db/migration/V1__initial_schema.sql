@@ -77,6 +77,8 @@ CREATE TABLE medexpertmatch.medical_cases (
     required_specialty VARCHAR(100),
     case_type VARCHAR(50) NOT NULL CHECK (case_type IN ('INPATIENT', 'SECOND_OPINION', 'CONSULT_REQUEST')),
     additional_notes TEXT,
+    location_latitude DECIMAL(10, 8),
+    location_longitude DECIMAL(11, 8),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- Comprehensive medical case abstract (LLM-enhanced or simple concatenation)

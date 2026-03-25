@@ -1,382 +1,176 @@
 # AI Provider Configuration for MedExpertMatch
 
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-03-25
 
 ## Overview
 
-MedExpertMatch uses MedGemma models via Spring AI with OpenAI-compatible providers only. All AI providers must use
-OpenAI-compatible APIs.
+MedExpertMatch supports **OpenAI-compatible providers only**. The application does not rely on Spring AI's default
+OpenAI auto-configuration. Instead, it creates its own beans in `SpringAIConfig` and reads values from
+`spring.ai.custom.*` properties mapped in [application.yml](/home/berdachuk/projects-ai/med-expert-match-ce/src/main/resources/application.yml).
 
-**Important**:
+Configuration flow:
 
-- MedGemma models must be accessed via OpenAI-compatible endpoints (e.g., Vertex AI Model Garden, or local
-  OpenAI-compatible proxy).
-- The application uses **custom Spring AI configuration** (`SpringAIConfig.java`) that reads from `spring.ai.custom.*`
-  properties, not from `spring.ai.openai.*` auto-configuration.
-- Environment variables (e.g., `CHAT_BASE_URL`) are mapped to `spring.ai.custom.*` properties via `application.yml`.
-
-## Available MedGemma Models
-
-Based on available Ollama MedGemma models, the following are supported:
-
-- **MedGemma 1.5 4B** (`MedAIBase/MedGemma1.5`) - Updated version with improved accuracy on medical text reasoning and
-  2D image interpretation
-- **MedGemma 1.0 4B** (`MedAIBase/MedGemma1.0`) - Original 4B variant
-- **MedGemma 27B** (`MedAIBase/MedGemma1.0`) - 27B text-only variant for complex clinical reasoning
-
-**Reference**: [MedGemma models on Ollama](https://ollama.com/search?q=medgemma&ref=supportnet.ch)
-
-## Configuration Architecture
-
-MedExpertMatch uses **custom Spring AI configuration** (`SpringAIConfig.java`) that:
-
-- Creates separate `ChatModel`, `EmbeddingModel`, and reranking `ChatModel` beans
-- Reads configuration from `spring.ai.custom.*` properties (not `spring.ai.openai.*` auto-configuration)
-- Maps environment variables to Spring properties via `application.yml`
-- Supports independent configuration for chat, embedding, reranking, and tool calling
-
-**Configuration Flow:**
-
-```
-Environment Variables → application.yml (property mapping) → SpringAIConfig.java → Spring AI Beans
+```text
+Environment variables -> application.yml mapping -> SpringAIConfig -> Chat/Embedding beans
 ```
 
-## OpenAI-Compatible Provider Configuration
+## Supported deployment patterns
 
-### Vertex AI Model Garden (Recommended for Production)
+### Checked-in local profile
 
-MedGemma models are available via Vertex AI Model Garden with OpenAI-compatible API:
+The committed [application-local.yml](/home/berdachuk/projects-ai/med-expert-match-ce/src/main/resources/application-local.yml) points to:
 
-**Environment Variables:**
+- PostgreSQL on `localhost:5434`
+- AI endpoint on `https://llm.berdachuk.com`
+- app port `8080`
+
+Use this mode when you want to run the project with repository defaults.
+
+### Self-hosted local AI
+
+Override the component-specific `*_BASE_URL`, `*_API_KEY`, and `*_MODEL` variables to your own OpenAI-compatible
+endpoint, such as:
+
+- LM Studio
+- LiteLLM
+- vLLM
+- a compatible hosted gateway
+- a compatible Ollama endpoint only when it exposes the OpenAI API shape you need
+
+### Full Docker Compose stack
+
+The repository `docker-compose.yml` runs:
+
+- app on `http://localhost:8094`
+- docs on `http://localhost:8094/docs`
+- PostgreSQL on `localhost:5433`
+- AI calls against values defined directly in `docker-compose.yml`
+
+## Environment matrix
+
+| Mode | App | DB | AI |
+|------|-----|----|----|
+| `local` profile | `http://localhost:8080` | `localhost:5434` | `https://llm.berdachuk.com` by default |
+| self-hosted local AI | `http://localhost:8080` | `localhost:5434` | your OpenAI-compatible endpoint |
+| Docker Compose | `http://localhost:8094` | `localhost:5433` | values from `docker-compose.yml` |
+| tests | no public app URL | Testcontainers | mocked/test beans |
+
+## Component-specific variables
+
+Each AI function is configured independently.
+
+### Chat
+
+Used for case analysis and general medical reasoning.
 
 ```bash
 CHAT_PROVIDER=openai
-CHAT_BASE_URL=https://YOUR_REGION-aiplatform.googleapis.com/v1
-CHAT_API_KEY=your-vertex-ai-api-key
-CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-CHAT_TEMPERATURE=0.7
-```
-
-**Note**: These environment variables are mapped to `spring.ai.custom.chat.*` properties in `application.yml`, which are
-then read by `SpringAIConfig.java`.
-
-### Azure OpenAI (If MedGemma Available)
-
-If MedGemma models are available via Azure OpenAI:
-
-**Environment Variables:**
-
-```bash
-CHAT_PROVIDER=openai
-CHAT_BASE_URL=https://YOUR_RESOURCE.openai.azure.com
-CHAT_API_KEY=your-azure-openai-api-key
-CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-CHAT_TEMPERATURE=0.7
-```
-
-### Local OpenAI-Compatible Proxy (Development)
-
-For local development, use an OpenAI-compatible proxy (e.g., LiteLLM, vLLM) that serves MedGemma models:
-
-**Environment Variables:**
-
-```bash
-CHAT_PROVIDER=openai
-CHAT_BASE_URL=http://localhost:8000  # OpenAI-compatible proxy
-CHAT_API_KEY=not-needed-for-local
-CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-CHAT_TEMPERATURE=0.7
-```
-
-**Example with vLLM (OpenAI-compatible server):**
-
-```bash
-# Start vLLM server with OpenAI-compatible API
-vllm serve MedAIBase/MedGemma1.5 \
-  --port 8000 \
-  --api-key token-abc123 \
-  --served-model-name hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-```
-
-**Example with Ollama + LiteLLM Proxy:**
-
-```bash
-# Start LiteLLM proxy (Ollama backend)
-litellm --model ollama/hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS --port 8000
-
-# Configure environment variables
-CHAT_BASE_URL=http://localhost:8000
-CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-```
-
-## Model Selection Guide
-
-### MedGemma 1.5 4B (`MedAIBase/MedGemma1.5`)
-
-**Use Cases:**
-
-- Case analysis and entity extraction
-- ICD-10 code extraction
-- Medical text understanding
-- Urgency classification
-- Faster inference, lower resource requirements
-
-**Configuration:**
-
-```yaml
-CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-CHAT_TEMPERATURE=0.7
-```
-
-### MedGemma 27B (`MedAIBase/MedGemma1.0` - 27B variant)
-
-**Use Cases:**
-
-- Complex clinical reasoning
-- Differential diagnosis
-- Evidence synthesis
-- Treatment recommendations
-- Requires more resources (24GB+ RAM, high-end GPU)
-
-**Configuration:**
-
-```yaml
-CHAT_MODEL=medgemma-27b
-CHAT_TEMPERATURE=0.7
-```
-
-## Component-Specific Configuration
-
-Each component can use different OpenAI-compatible providers. The configuration is read from `spring.ai.custom.*`
-properties, which are mapped from environment variables in `application.yml`.
-
-### Chat Configuration
-
-Creates `primaryChatModel` bean via `SpringAIConfig.primaryChatModel()`.
-
-**Environment Variables:**
-
-```bash
-CHAT_PROVIDER=openai
-CHAT_BASE_URL=https://YOUR_REGION-aiplatform.googleapis.com/v1
+CHAT_BASE_URL=https://your-openai-compatible-endpoint
 CHAT_API_KEY=your-api-key
-CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
+CHAT_MODEL=medgemma-1.5-4b-it
 CHAT_TEMPERATURE=0.7
 CHAT_MAX_TOKENS=6000
 ```
 
-**Spring Properties (mapped automatically):**
+### Embedding
 
-- `spring.ai.custom.chat.provider` → `CHAT_PROVIDER`
-- `spring.ai.custom.chat.base-url` → `CHAT_BASE_URL`
-- `spring.ai.custom.chat.api-key` → `CHAT_API_KEY`
-- `spring.ai.custom.chat.model` → `CHAT_MODEL`
-- `spring.ai.custom.chat.temperature` → `CHAT_TEMPERATURE`
-- `spring.ai.custom.chat.max-tokens` → `CHAT_MAX_TOKENS`
-
-### Embedding Configuration
-
-Creates `primaryEmbeddingModel` bean via `SpringAIConfig.primaryEmbeddingModel()`.
-
-**Environment Variables:**
+Used for vector generation and semantic similarity.
 
 ```bash
 EMBEDDING_PROVIDER=openai
-EMBEDDING_BASE_URL=https://api.openai.com
+EMBEDDING_BASE_URL=https://your-openai-compatible-endpoint
 EMBEDDING_API_KEY=your-api-key
-EMBEDDING_MODEL=text-embedding-3-large
-EMBEDDING_DIMENSIONS=1536
+EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
+EMBEDDING_DIMENSIONS=768
 ```
 
-**Spring Properties (mapped automatically):**
+### Reranking
 
-- `spring.ai.custom.embedding.provider` → `EMBEDDING_PROVIDER`
-- `spring.ai.custom.embedding.base-url` → `EMBEDDING_BASE_URL`
-- `spring.ai.custom.embedding.api-key` → `EMBEDDING_API_KEY`
-- `spring.ai.custom.embedding.model` → `EMBEDDING_MODEL`
-- `spring.ai.custom.embedding.dimensions` → `EMBEDDING_DIMENSIONS`
-
-### Reranking Configuration
-
-Creates `rerankingChatModel` bean via `SpringAIConfig.rerankingChatModel()`.
-
-**Environment Variables:**
+Used for semantic reranking and second-pass scoring.
 
 ```bash
 RERANKING_PROVIDER=openai
-RERANKING_BASE_URL=https://YOUR_REGION-aiplatform.googleapis.com/v1
+RERANKING_BASE_URL=https://your-openai-compatible-endpoint
 RERANKING_API_KEY=your-api-key
-RERANKING_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
+RERANKING_MODEL=medgemma-1.5-4b-it
 RERANKING_TEMPERATURE=0.1
 ```
 
-**Spring Properties (mapped automatically):**
+### Tool calling
 
-- `spring.ai.custom.reranking.provider` → `RERANKING_PROVIDER`
-- `spring.ai.custom.reranking.base-url` → `RERANKING_BASE_URL`
-- `spring.ai.custom.reranking.api-key` → `RERANKING_API_KEY`
-- `spring.ai.custom.reranking.model` → `RERANKING_MODEL`
-- `spring.ai.custom.reranking.temperature` → `RERANKING_TEMPERATURE`
-
-### Tool Calling Configuration
-
-Creates `toolCallingChatModel` bean via `SpringAIConfig.toolCallingChatModel()`. This is separate from the primary chat
-model because MedGemma 1.5 4B doesn't support tool calling, while FunctionGemma does.
-
-**Environment Variables:**
+Used for agent tool invocation. This should usually be a tool-capable model distinct from MedGemma.
 
 ```bash
 TOOL_CALLING_PROVIDER=openai
-TOOL_CALLING_BASE_URL=http://localhost:11434  # Falls back to CHAT_BASE_URL if not set
-TOOL_CALLING_API_KEY=ollama  # Falls back to CHAT_API_KEY if not set
-TOOL_CALLING_MODEL=functiongemma
+TOOL_CALLING_BASE_URL=https://your-openai-compatible-endpoint
+TOOL_CALLING_API_KEY=your-api-key
+TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
 TOOL_CALLING_TEMPERATURE=0.7
 TOOL_CALLING_MAX_TOKENS=4096
 ```
 
-**Spring Properties (mapped automatically):**
+## Property mapping
 
-- `spring.ai.custom.tool-calling.provider` → `TOOL_CALLING_PROVIDER` (defaults to `CHAT_PROVIDER`)
-- `spring.ai.custom.tool-calling.base-url` → `TOOL_CALLING_BASE_URL` (defaults to `CHAT_BASE_URL`)
-- `spring.ai.custom.tool-calling.api-key` → `TOOL_CALLING_API_KEY` (defaults to `CHAT_API_KEY`)
-- `spring.ai.custom.tool-calling.model` → `TOOL_CALLING_MODEL` (defaults to `functiongemma`)
-- `spring.ai.custom.tool-calling.temperature` → `TOOL_CALLING_TEMPERATURE` (defaults to `CHAT_TEMPERATURE`)
-- `spring.ai.custom.tool-calling.max-tokens` → `TOOL_CALLING_MAX_TOKENS` (defaults to `CHAT_MAX_TOKENS`)
+The main mappings are:
 
-**Note**: Tool calling model defaults to chat configuration if not explicitly set, but it's recommended to use
-FunctionGemma for tool calling operations.
+- `CHAT_*` -> `spring.ai.custom.chat.*`
+- `EMBEDDING_*` -> `spring.ai.custom.embedding.*`
+- `RERANKING_*` -> `spring.ai.custom.reranking.*`
+- `TOOL_CALLING_*` -> `spring.ai.custom.tool-calling.*`
 
-## Base URL Format
+The application also keeps separate concurrency settings under `medexpertmatch.llm.*`.
 
-**IMPORTANT**: For OpenAI-compatible APIs, do **NOT** include `/v1` in the base URL for most providers. Spring AI's
-`OpenAiApi` automatically adds `/v1/chat/completions` or `/v1/embeddings`.
+## Base URL rules
 
-**Exception**: Vertex AI Model Garden requires `/v1` in the base URL.
+For most OpenAI-compatible providers, do **not** include `/v1` in the base URL because Spring AI appends the API path.
 
-**Valid Examples:**
+Valid examples:
 
-- `https://api.openai.com` (OpenAI)
-- `https://YOUR_RESOURCE.openai.azure.com` (Azure OpenAI)
-- `https://YOUR_REGION-aiplatform.googleapis.com/v1` (Vertex AI - includes /v1)
-- `http://localhost:8000` (Local OpenAI-compatible proxy)
+- `https://api.openai.com`
+- `https://your-resource.openai.azure.com`
+- `http://127.0.0.1:1234`
+- `https://llm.berdachuk.com`
 
-**Invalid Examples:**
+Vertex AI Model Garden is the main exception and may require `/v1` in the base URL.
 
-- `https://api.openai.com/v1` (includes /v1 for OpenAI - wrong)
-- `http://localhost:11434` (Ollama native endpoint - excluded)
-
-## Provider Selection
-
-**Always use `openai` provider** for all components (chat, embedding, reranking), even when using Vertex AI or other
-OpenAI-compatible services. Spring AI's `OpenAiApi` handles the API format compatibility.
-
-## Model Availability
-
-MedGemma models are available through:
-
-1. **Vertex AI Model Garden** (Recommended)
-    - Official Google Cloud deployment
-    - OpenAI-compatible API
-    - Production-ready with auto-scaling
-
-2. **Local OpenAI-Compatible Proxy**
-    - vLLM server
-    - LiteLLM proxy
-    - Other OpenAI-compatible servers
-
-3. **Other OpenAI-Compatible Services**
-    - Any service that implements OpenAI API format
-    - Can serve MedGemma models via compatible endpoints
-
-## Configuration Examples
-
-### Production Configuration (Vertex AI)
-
-**Environment Variables:**
+## Recommended local override example
 
 ```bash
+export SPRING_PROFILES_ACTIVE=local
+
 export CHAT_PROVIDER=openai
-export CHAT_BASE_URL=https://us-central1-aiplatform.googleapis.com/v1
-export CHAT_API_KEY=your-vertex-ai-api-key
-export CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-export CHAT_TEMPERATURE=0.7
-export CHAT_MAX_TOKENS=6000
+export CHAT_BASE_URL=http://127.0.0.1:1234
+export CHAT_API_KEY=local-key
+export CHAT_MODEL=medgemma-1.5-4b-it
 
 export EMBEDDING_PROVIDER=openai
-export EMBEDDING_BASE_URL=https://api.openai.com
-export EMBEDDING_API_KEY=your-openai-api-key
-export EMBEDDING_MODEL=text-embedding-3-large
-export EMBEDDING_DIMENSIONS=1536
-
-export RERANKING_PROVIDER=openai
-export RERANKING_BASE_URL=https://us-central1-aiplatform.googleapis.com/v1
-export RERANKING_API_KEY=your-vertex-ai-api-key
-export RERANKING_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-export RERANKING_TEMPERATURE=0.1
-
-export TOOL_CALLING_PROVIDER=openai
-export TOOL_CALLING_BASE_URL=https://us-central1-aiplatform.googleapis.com/v1
-export TOOL_CALLING_API_KEY=your-vertex-ai-api-key
-export TOOL_CALLING_MODEL=functiongemma
-export TOOL_CALLING_TEMPERATURE=0.7
-```
-
-### Development Configuration (Local Proxy with Ollama)
-
-**Environment Variables:**
-
-```bash
-export CHAT_PROVIDER=openai
-export CHAT_BASE_URL=http://localhost:11434  # Ollama service or LiteLLM proxy
-export CHAT_API_KEY=ollama
-export CHAT_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-export CHAT_TEMPERATURE=0.7
-export CHAT_MAX_TOKENS=6000
-
-export EMBEDDING_PROVIDER=openai
-export EMBEDDING_BASE_URL=http://localhost:11434
-export EMBEDDING_API_KEY=ollama
-export EMBEDDING_MODEL=nomic-embed-text
+export EMBEDDING_BASE_URL=http://127.0.0.1:1234
+export EMBEDDING_API_KEY=local-key
+export EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
 export EMBEDDING_DIMENSIONS=768
 
 export RERANKING_PROVIDER=openai
-export RERANKING_BASE_URL=http://localhost:11434
-export RERANKING_API_KEY=ollama
-export RERANKING_MODEL=hf.co/unsloth/medgemma-27b-text-it-GGUF:IQ3_XXS
-export RERANKING_TEMPERATURE=0.1
+export RERANKING_BASE_URL=http://127.0.0.1:1234
+export RERANKING_API_KEY=local-key
+export RERANKING_MODEL=medgemma-1.5-4b-it
 
 export TOOL_CALLING_PROVIDER=openai
-export TOOL_CALLING_BASE_URL=http://localhost:11434
-export TOOL_CALLING_API_KEY=ollama
-export TOOL_CALLING_MODEL=functiongemma
-export TOOL_CALLING_TEMPERATURE=0.7
+export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
+export TOOL_CALLING_API_KEY=local-key
+export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
 ```
 
-**Note**: The `application-local.yml` file provides a complete example with detailed comments for local development.
+## Validation checklist
 
-## Testing Configuration
+- `CHAT_PROVIDER`, `EMBEDDING_PROVIDER`, `RERANKING_PROVIDER`, and `TOOL_CALLING_PROVIDER` are all `openai`
+- all base URLs point to OpenAI-compatible APIs
+- embedding dimensions match the configured vector column expectations
+- tool-calling model actually supports tool use
+- `application-local.yml`, `README.md`, and deployment docs agree on ports and endpoint sources
 
-For tests, use mock AI providers (automatically configured in test profile):
+## Related documentation
 
-```yaml
-# application-test.yml
-spring:
-  ai:
-    openai:
-      base-url: http://localhost:${wiremock.server.port}
-      api-key: test-key
-      chat:
-        options:
-          model: test-model
-```
-
-Mock providers are automatically used in tests - no real API calls are made.
-
-## Related Documentation
-
-- [Architecture](ARCHITECTURE.md)
+- [README](../README.md)
 - [Development Guide](DEVELOPMENT_GUIDE.md)
-
----
-
-*Last updated: 2026-01-27*
+- [MedGemma Setup Guide](MEDGEMMA_SETUP.md)
+- [Architecture](ARCHITECTURE.md)

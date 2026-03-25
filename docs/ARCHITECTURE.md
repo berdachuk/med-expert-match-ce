@@ -183,6 +183,8 @@ MedExpertMatch uses a modular structure organized by domain:
     - Network Analyzer: `graph_query_top_experts`, `aggregate_metrics` (uses Apache AGE graph)
     - Routing Planner: `graph_query_candidate_centers`, `semantic_graph_retrieval_route_score` (uses Apache AGE graph)
 - REST: `MedicalAgentController` (agent API endpoints)
+- Architecture note: `llm` is an intentional orchestration-heavy module and is allowed to depend on multiple domain
+  modules to coordinate end-to-end medical workflows.
 
 **graph** - Graph relationship management using Apache AGE
 
@@ -204,6 +206,8 @@ MedExpertMatch uses a modular structure organized by domain:
 - Controllers: `HomeController`, `MatchController`, `QueueController`, `AnalyticsController`, `CaseAnalysisController`,
   `RoutingController`, `DoctorController`, `TestDataWebController`, `LogStreamController`
 - Service: `LogStreamService` (for log streaming)
+- Architecture note: `web` is an intentional composition layer that coordinates UI flows across multiple modules rather
+  than owning core domain logic.
 
 ## Data Model
 
