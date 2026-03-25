@@ -102,7 +102,7 @@ This plan focuses on:
 
 ### Checklist
 
-- [ ] Tighten graph-based integration tests so they do not silently accept generic error responses
+- [x] Tighten graph-based integration tests so they do not silently accept generic error responses
 - [ ] Add startup smoke tests for main profiles and critical beans
 - [ ] Add tests for configuration property binding and validation
 - [ ] Add tests for documentation-sensitive paths where behavior depends on profile configuration

@@ -1023,8 +1023,8 @@ public class MedicalAgentTools {
 
             List<String> expertResults = new ArrayList<>();
             for (Map<String, Object> row : results) {
-                Object doctorIdObj = row.get("doctorId");
-                Object caseCountObj = row.get("caseCount");
+                Object doctorIdObj = firstPresent(row, "doctorId", "c0");
+                Object caseCountObj = firstPresent(row, "caseCount", "c1");
 
                 if (doctorIdObj != null) {
                     String doctorId = doctorIdObj.toString();
@@ -1455,8 +1455,8 @@ public class MedicalAgentTools {
 
             List<String> facilityResults = new ArrayList<>();
             for (Map<String, Object> row : results) {
-                Object facilityIdObj = row.get("facilityId");
-                Object caseCountObj = row.get("caseCount");
+                Object facilityIdObj = firstPresent(row, "facilityId", "c0");
+                Object caseCountObj = firstPresent(row, "caseCount", "c1");
 
                 if (facilityIdObj != null) {
                     String facilityId = facilityIdObj.toString();
@@ -1545,5 +1545,14 @@ public class MedicalAgentTools {
                 .build();
 
         return matchingService.matchFacilitiesForCase(normalizedCaseId, options);
+    }
+
+    private Object firstPresent(Map<String, Object> row, String... keys) {
+        for (String key : keys) {
+            if (row.containsKey(key)) {
+                return row.get(key);
+            }
+        }
+        return null;
     }
 }
