@@ -89,8 +89,8 @@ This plan focuses on:
 
 - [x] Split `MedicalAgentServiceImpl` into smaller workflow-oriented services
 - [x] Extract result formatting and prompt orchestration helpers from `MedicalAgentServiceImpl`
-- [ ] Split `SyntheticDataGenerator` into bootstrap, generation, enrichment, and graph rebuild responsibilities
-  Progress: bootstrap catalog loading and post-processing steps are extracted; generation orchestration remains in `SyntheticDataGenerator`
+ - [ ] Split `SyntheticDataGenerator` into bootstrap, generation, enrichment, and graph rebuild responsibilities
+   Progress: bootstrap catalog loading, generation orchestration, and post-processing/graph steps are now handled by dedicated helpers; `SyntheticDataGenerator` is a thin façade
 - [ ] Reduce constructor breadth where it signals mixed responsibilities
 - [x] Add focused tests around each extracted service
 

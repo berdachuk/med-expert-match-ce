@@ -23,7 +23,7 @@ public class SyntheticDataCatalogState {
     private final Map<String, List<String>> cachedSpecialties = new ConcurrentHashMap<>();
     private final Map<String, List<String>> cachedProcedures = new ConcurrentHashMap<>();
     private final Map<String, List<String>> specialtyProceduresMap = new HashMap<>();
-    private final Map<String, SyntheticDataGenerator.DataSizeConfig> dataSizeConfigs = new LinkedHashMap<>();
+    private final Map<String, SyntheticDataGenerationService.DataSizeConfig> dataSizeConfigs = new LinkedHashMap<>();
 
     private List<String> extendedProcedures = new ArrayList<>();
     private List<String> extendedIcd10Codes = new ArrayList<>();

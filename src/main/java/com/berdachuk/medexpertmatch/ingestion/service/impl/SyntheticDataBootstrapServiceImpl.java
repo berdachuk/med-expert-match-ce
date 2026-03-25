@@ -5,7 +5,7 @@ import com.berdachuk.medexpertmatch.doctor.domain.MedicalSpecialty;
 import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository;
 import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataBootstrapService;
 import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataCatalogState;
-import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerator;
+import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationService;
 import com.berdachuk.medexpertmatch.ingestion.util.CsvDataLoader;
 import com.berdachuk.medexpertmatch.medicalcoding.domain.ICD10Code;
 import com.berdachuk.medexpertmatch.medicalcoding.domain.Procedure;
@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -172,7 +171,7 @@ public class SyntheticDataBootstrapServiceImpl implements SyntheticDataBootstrap
                 continue;
             }
             try {
-                SyntheticDataGenerator.DataSizeConfig config = new SyntheticDataGenerator.DataSizeConfig(
+                SyntheticDataGenerationService.DataSizeConfig config = new SyntheticDataGenerationService.DataSizeConfig(
                         size.toLowerCase(),
                         Integer.parseInt(doctorCount),
                         Integer.parseInt(caseCount),
