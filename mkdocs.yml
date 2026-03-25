@@ -100,9 +100,10 @@ nav:
       - Synthetic Data Generator: SYNTHETIC_DATA_GENERATOR.md
   - Architecture:
       - Architecture Overview: ARCHITECTURE.md
-      - Architecture Analysis: ARCHITECTURE_ANALYSIS.md
+      - Apache AGE Graph Analysis: APACHE_AGE_GRAPH_ANALYSIS.md
       - Integration Plan: INTEGRATION_PLAN.md
   - Development:
+      - Fix Plan: FIX_PLAN.md
       - Implementation Plan: IMPLEMENTATION_PLAN.md
       - Demo Guide: DEMO_GUIDE.md
       - UI Flows and Mockups: UI_FLOWS_AND_MOCKUPS.md

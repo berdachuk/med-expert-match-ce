@@ -196,6 +196,7 @@ class SemanticGraphRetrievalServiceIT extends BaseIntegrationTest {
         assertTrue(result.capacityScore() >= 0 && result.capacityScore() <= 1);
         assertTrue(result.geographicScore() >= 0 && result.geographicScore() <= 1);
         assertNotNull(result.rationale());
+        assertTrue(result.geographicScore() > 0.0);
     }
 
     @Test
@@ -357,5 +358,105 @@ class SemanticGraphRetrievalServiceIT extends BaseIntegrationTest {
 
         PriorityScore highResult = semanticGraphRetrievalService.computePriorityScore(highUrgencyCase);
         assertEquals(0.75, highResult.urgencyScore());
+    }
+
+    @Test
+    void testComputePriorityScoreUsesDoctorAvailability() {
+        doctorRepository.insert(new Doctor(
+                IdGenerator.generateDoctorId(),
+                "Dr. Available Cardiologist",
+                "available-cardio@example.com",
+                List.of("Cardiology"),
+                List.of(),
+                List.of(),
+                true,
+                "AVAILABLE"
+        ));
+        doctorRepository.insert(new Doctor(
+                IdGenerator.generateDoctorId(),
+                "Dr. Busy Cardiologist",
+                "busy-cardio@example.com",
+                List.of("Cardiology"),
+                List.of(),
+                List.of(),
+                true,
+                "BUSY"
+        ));
+
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                52,
+                "Progressive chest pain",
+                "Exertional chest pain",
+                "Possible unstable angina",
+                List.of("I20.0"),
+                List.of(),
+                UrgencyLevel.HIGH,
+                "Cardiology",
+                CaseType.CONSULT_REQUEST,
+                "Availability should reflect matching doctors",
+                null
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        PriorityScore result = semanticGraphRetrievalService.computePriorityScore(medicalCase);
+
+        assertEquals(0.65, result.availabilityScore(), 0.0001);
+    }
+
+    @Test
+    void testSemanticGraphRetrievalRouteScoreUsesLocationCompleteness() {
+        Facility nearbyFacility = new Facility(
+                IdGenerator.generateFacilityId(),
+                "Nearby Center",
+                "ACADEMIC",
+                "Baltimore",
+                "MD",
+                "USA",
+                BigDecimal.valueOf(39.2904),
+                BigDecimal.valueOf(-76.6122),
+                List.of("CARDIOLOGY"),
+                100,
+                40
+        );
+
+        Facility distantFacility = new Facility(
+                IdGenerator.generateFacilityId(),
+                "Distant Center",
+                "ACADEMIC",
+                "Los Angeles",
+                "CA",
+                "USA",
+                BigDecimal.valueOf(34.0522),
+                BigDecimal.valueOf(-118.2437),
+                List.of("CARDIOLOGY"),
+                100,
+                40
+        );
+
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                47,
+                "Referral case",
+                "Cardiac symptoms",
+                "Requires routing",
+                List.of("I21.9"),
+                List.of(),
+                UrgencyLevel.HIGH,
+                "Cardiology",
+                CaseType.INPATIENT,
+                "Compare geography component",
+                null,
+                BigDecimal.valueOf(38.9072),
+                BigDecimal.valueOf(-77.0369)
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        RouteScoreResult nearbyResult =
+                semanticGraphRetrievalService.semanticGraphRetrievalRouteScore(medicalCase, nearbyFacility);
+        RouteScoreResult distantResult =
+                semanticGraphRetrievalService.semanticGraphRetrievalRouteScore(medicalCase, distantFacility);
+
+        assertTrue(nearbyResult.geographicScore() > distantResult.geographicScore());
     }
 }

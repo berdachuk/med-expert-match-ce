@@ -13,7 +13,26 @@ This project is being developed for the MedGemma Impact Challenge - a hackathon 
 
 **Prerequisites:** Java 21, Maven 3.9+, Docker and Docker Compose.
 
-### 1. Build and start the database
+### Runtime modes
+
+MedExpertMatch uses **OpenAI-compatible APIs only**. There are two supported ways to run the app locally:
+
+- **Default `local` profile**: uses the checked-in [application-local.yml](/home/berdachuk/projects-ai/med-expert-match-ce/src/main/resources/application-local.yml) values, which point to:
+  - PostgreSQL on `localhost:5434`
+  - AI endpoints on `https://llm.berdachuk.com`
+- **Self-hosted local AI**: keep the same app profile, but override `CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, and
+  `TOOL_CALLING_*` environment variables to your own OpenAI-compatible server such as LM Studio, LiteLLM, vLLM, or a
+  compatible Ollama endpoint.
+
+### Environment matrix
+
+| Mode | App URL | DB | AI endpoint source |
+|------|---------|----|--------------------|
+| `local` profile | `http://localhost:8080` | `localhost:5434` | `application-local.yml` defaults |
+| Full Docker Compose stack | `http://localhost:8094` | `localhost:5433` | `docker-compose.yml` environment |
+| Tests | none | Testcontainers | mocked/test beans |
+
+### 1. Build and start the local development database
 
 PostgreSQL 17 with Apache AGE and PgVector runs in Docker. Build the dev image, then start the container:
 
@@ -25,7 +44,7 @@ docker compose -f docker-compose.dev.yml build
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-Database: `localhost:5433`, database `medexpertmatch`, user/password `medexpertmatch`.
+Database: `localhost:5434`, database `medexpertmatch`, user/password `medexpertmatch`.
 
 ### 2. Build the application
 
@@ -48,7 +67,7 @@ export SPRING_PROFILES_ACTIVE=local
 mvn spring-boot:run
 ```
 
-The app uses `application-local.yml` and expects the database at `localhost:5433`.
+The app uses `application-local.yml` and expects the database at `localhost:5434`.
 
 ### 3b. Run with security hardening (secure-demo)
 
@@ -61,13 +80,13 @@ mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local,
 ```
 
 Verify: `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health` returns 401;
-`curl -s -u demo:demo http://localhost:8080/actuator/health` returns 200 with details. (Use port 8094 if
-`application-local.yml` sets `server.port`.) See [Security configuration review](docs/SECURITY_CONFIG_REVIEW.md) for
+`curl -s -u demo:demo http://localhost:8080/actuator/health` returns 200 with details. Use `http://localhost:8094`
+when running the full Docker Compose stack. See [Security configuration review](docs/SECURITY_CONFIG_REVIEW.md) for
 full checklist.
 
 ### 4. Deploy full stack with Docker Compose (app + docs + database)
 
-Run the application, documentation site, and PostgreSQL in containers with one command:
+Run the application and PostgreSQL in containers with one command:
 
 ```bash
 # Build and start all services
@@ -80,8 +99,8 @@ docker compose up -d
 
 | Service       | URL                   | Description                          |
 |---------------|-----------------------|--------------------------------------|
-| Application   | http://localhost:8080 | MedExpertMatch API and UI            |
-| Documentation | http://localhost:8081 | MkDocs site (static)                 |
+| Application   | http://localhost:8094 | MedExpertMatch API and UI            |
+| Documentation | http://localhost:8094/docs | Docs served by the app          |
 | PostgreSQL    | localhost:5433        | Database (user/pass: medexpertmatch) |
 
 Stop and remove containers (data volume is preserved):
@@ -93,42 +112,50 @@ docker compose down
 **Docker stack details:**
 
 - **App image**: BellSoft Liberica OpenJDK 21 (Debian). Same PostgreSQL image (Apache AGE + PgVector) as local dev.
-- **Default env**: Matches local run: DB points to the `postgres` service; AI endpoints point to Ollama on the **host**
-  via `host.docker.internal:11434` (same models as in "Optional: Required LLM models" below). On Linux,
-  `host.docker.internal` is set via `extra_hosts` in `docker-compose.yml`.
-- **Override AI**: To use a remote API instead of host Ollama, set `CHAT_BASE_URL`, `CHAT_API_KEY`,
-  `EMBEDDING_BASE_URL`, etc. in `docker-compose.yml` or a `.env` file in the project root.
+- **Default env**: DB points to the `postgres` service via host port `5433`; AI endpoints point to a host-local
+  OpenAI-compatible server at `http://127.0.0.1:11434`.
+- **Override AI**: To use a remote API instead of the host-local server, set `CHAT_BASE_URL`, `CHAT_API_KEY`,
+  `EMBEDDING_BASE_URL`, `RERANKING_BASE_URL`, and `TOOL_CALLING_BASE_URL` in `docker-compose.yml` or a `.env` file in
+  the project root.
 
-### Optional: Required LLM models and AI setup
+### AI setup
 
-When using the `local` profile (or the default Docker Compose env), the app uses the same model roles (via
-OpenAI-compatible APIs, e.g. Ollama at `http://localhost:11434`; in Docker, the app reaches the host Ollama at
-`host.docker.internal:11434`):
+The application supports independent model configuration per component:
 
 | Role             | Purpose                                                  | Model in `application-local.yml`               |
 |------------------|----------------------------------------------------------|------------------------------------------------|
-| **Chat**         | Case analysis, clinical reasoning                        | `MedAIBase/MedGemma1.5:4b`                     |
-| **Reranking**    | Semantic reranking of matches                            | `MedAIBase/MedGemma1.5:4b` (same as chat)      |
-| **Tool calling** | Agent tool invocations (find specialist, evidence, etc.) | `mistral:7b` (MedGemma does not support tools) |
-| **Embedding**    | Vector embeddings for semantic search                    | `nomic-embed-text` (768 dimensions)            |
+| **Chat**         | Case analysis, clinical reasoning                        | `medgemma-1.5-4b-it@q4_k_m`                    |
+| **Reranking**    | Semantic reranking of matches                            | `medgemma-1.5-4b-it@q4_k_m`                    |
+| **Tool calling** | Agent tool invocations (find specialist, evidence, etc.) | `qwen/qwen3-4b-2507`                           |
+| **Embedding**    | Vector embeddings for semantic search                    | `text-embedding-nomic-embed-text-v1.5`         |
 
-**Pull models with Ollama before running** (for both `mvn spring-boot:run` with `local` profile and
-`docker compose up`):
+For self-hosted local AI, override the component-specific environment variables:
 
 ```bash
-# Chat and reranking (MedGemma 1.5 4B)
-ollama pull MedAIBase/MedGemma1.5:4b
+export CHAT_PROVIDER=openai
+export CHAT_BASE_URL=http://127.0.0.1:1234
+export CHAT_API_KEY=local-key
+export CHAT_MODEL=medgemma-1.5-4b-it
 
-# Tool calling (required for agent tools)
-ollama pull mistral:7b
+export EMBEDDING_PROVIDER=openai
+export EMBEDDING_BASE_URL=http://127.0.0.1:1234
+export EMBEDDING_API_KEY=local-key
+export EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
+export EMBEDDING_DIMENSIONS=768
 
-# Embeddings (768 dimensions)
-ollama pull nomic-embed-text
+export RERANKING_PROVIDER=openai
+export RERANKING_BASE_URL=http://127.0.0.1:1234
+export RERANKING_API_KEY=local-key
+export RERANKING_MODEL=medgemma-1.5-4b-it
+
+export TOOL_CALLING_PROVIDER=openai
+export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
+export TOOL_CALLING_API_KEY=local-key
+export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
 ```
 
-Override via environment variables: `CHAT_MODEL`, `TOOL_CALLING_MODEL`, `EMBEDDING_MODEL`, `RERANKING_MODEL`, and
-`*_BASE_URL`, `*_API_KEY` per component. For full local setup, see [MedGemma Setup Guide](docs/MEDGEMMA_SETUP.md). The
-app can also run with mock providers or remote OpenAI-compatible APIs without local models.
+See [AI Provider Configuration](docs/AI_PROVIDER_CONFIGURATION.md) for the configuration matrix and
+[MedGemma Setup Guide](docs/MEDGEMMA_SETUP.md) for a self-hosted OpenAI-compatible MedGemma setup.
 
 ## Key Features
 
@@ -208,22 +235,20 @@ MedExpertMatch uses a modern, scalable architecture:
 
 Full documentation is available at: [docs/index.md](docs/index.md)
 
-- **With Docker Compose**: Documentation is served at http://localhost:8081 (see "Deploy full stack with Docker Compose"
+- **With Docker Compose**: Documentation is served at http://localhost:8094/docs (see "Deploy full stack with Docker Compose"
   above).
 - **Local MkDocs**: `pip install -r requirements-docs.txt` then `mkdocs serve` (default http://localhost:8000).
 
 ## Project Status
 
-**Current Phase**: MVP Complete ✅
+**Current Phase**: Feature-rich MVP under refinement
 
-- ✅ Challenge analysis completed
-- ✅ Architecture design completed
-- ✅ Core implementation completed (134 Java files, 25 integration tests)
-- ✅ All 6 primary use cases implemented and tested
-- ✅ All 7 agent skills implemented (61 tools)
-- ✅ Hybrid GraphRAG retrieval fully functional
-- ✅ Synthetic data generator with automatic embedding and graph building
-- ✅ All tests passing (219 integration tests)
+- Challenge analysis completed
+- Architecture and core domain implementation in place
+- Six primary use cases implemented
+- Seven built-in agent skills documented and packaged
+- Hybrid retrieval, graph, and synthetic data capabilities present
+- Current work focuses on configuration alignment, hardening, and refinement
 
 ## Important Disclaimers
 
@@ -242,17 +267,17 @@ Full documentation is available at: [docs/index.md](docs/index.md)
 
 ## Implementation Metrics
 
-- **Source Files**: 134 Java files
-- **Integration Tests**: 25 test files (219 tests total)
+- **Source Files**: 197 Java files
+- **Test Files**: 40 Java test files
 - **Agent Tools**: 61 `@Tool` methods
-- **Modules**: 13 domain modules fully implemented
-- **Build Status**: ✅ All tests passing
+- **Modules**: 13 top-level domain/application modules
+- **Current Verification**: project compiles successfully with `mvn -q -DskipTests compile`
 
 ## Related Links
 
 - [Architecture](docs/ARCHITECTURE.md) - System architecture and design patterns
 - [Unique Selling Propositions](docs/UNIQUE_SELLING_PROPOSITIONS.md) - USPs and rationale
-- [Implementation Status](docs/IMPLEMENTATION_STATUS.md) - Detailed implementation status and metrics
+- [Project Status](#project-status) - Current implementation status and headline metrics
 - [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) - Phase-by-phase implementation guide
 - [DEVELOPMENT GUIDE](docs/DEVELOPMENT_GUIDE.md)
 

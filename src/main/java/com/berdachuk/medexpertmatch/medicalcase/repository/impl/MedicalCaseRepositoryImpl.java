@@ -197,6 +197,8 @@ public class MedicalCaseRepositoryImpl implements MedicalCaseRepository {
         params.put("caseType", medicalCase.caseType().name());
         params.put("additionalNotes", medicalCase.additionalNotes());
         params.put("abstract", medicalCase.abstractText());
+        params.put("locationLatitude", medicalCase.locationLatitude());
+        params.put("locationLongitude", medicalCase.locationLongitude());
 
         return namedJdbcTemplate.queryForObject(insertSql, params, String.class);
     }
@@ -220,6 +222,8 @@ public class MedicalCaseRepositoryImpl implements MedicalCaseRepository {
         params.put("caseType", medicalCase.caseType().name());
         params.put("additionalNotes", medicalCase.additionalNotes());
         params.put("abstract", medicalCase.abstractText());
+        params.put("locationLatitude", medicalCase.locationLatitude());
+        params.put("locationLongitude", medicalCase.locationLongitude());
 
         int rowsUpdated = namedJdbcTemplate.update(updateSql, params);
         if (rowsUpdated == 0) {
@@ -272,7 +276,9 @@ public class MedicalCaseRepositoryImpl implements MedicalCaseRepository {
                             .addValue("requiredSpecialty", medicalCase.requiredSpecialty())
                             .addValue("caseType", medicalCase.caseType().name())
                             .addValue("additionalNotes", medicalCase.additionalNotes())
-                            .addValue("abstract", medicalCase.abstractText());
+                            .addValue("abstract", medicalCase.abstractText())
+                            .addValue("locationLatitude", medicalCase.locationLatitude())
+                            .addValue("locationLongitude", medicalCase.locationLongitude());
                 })
                 .toArray(SqlParameterSource[]::new);
 
@@ -306,7 +312,9 @@ public class MedicalCaseRepositoryImpl implements MedicalCaseRepository {
                             .addValue("requiredSpecialty", medicalCase.requiredSpecialty())
                             .addValue("caseType", medicalCase.caseType().name())
                             .addValue("additionalNotes", medicalCase.additionalNotes())
-                            .addValue("abstract", medicalCase.abstractText());
+                            .addValue("abstract", medicalCase.abstractText())
+                            .addValue("locationLatitude", medicalCase.locationLatitude())
+                            .addValue("locationLongitude", medicalCase.locationLongitude());
                 })
                 .toArray(SqlParameterSource[]::new);
 

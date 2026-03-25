@@ -547,6 +547,103 @@ class MatchingServiceIT extends BaseIntegrationTest {
     }
 
     @Test
+    void testMatchFacilitiesForCaseWithMaxDistanceKmFiltersByCaseCoordinates() {
+        String nearbyFacilityId = IdGenerator.generateFacilityId();
+        facilityRepository.insert(new Facility(
+                nearbyFacilityId,
+                "Nearby Hospital",
+                "ACADEMIC",
+                "Baltimore",
+                "MD",
+                "US",
+                BigDecimal.valueOf(39.2904),
+                BigDecimal.valueOf(-76.6122),
+                List.of("ICU"),
+                50,
+                20
+        ));
+        String distantFacilityId = IdGenerator.generateFacilityId();
+        facilityRepository.insert(new Facility(
+                distantFacilityId,
+                "Distant Hospital",
+                "ACADEMIC",
+                "Los Angeles",
+                "CA",
+                "US",
+                BigDecimal.valueOf(34.0522),
+                BigDecimal.valueOf(-118.2437),
+                List.of("ICU"),
+                50,
+                20
+        ));
+
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                45,
+                "Chest pain",
+                "Needs routing",
+                "Rule out ACS",
+                List.of("I21.9"),
+                List.of(),
+                UrgencyLevel.HIGH,
+                "Cardiology",
+                CaseType.CONSULT_REQUEST,
+                "Distance filtering should use case coordinates",
+                null,
+                BigDecimal.valueOf(38.9072),
+                BigDecimal.valueOf(-77.0369)
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        List<FacilityMatch> matches = matchingService.matchFacilitiesForCase(
+                medicalCase.id(),
+                RoutingOptions.builder().maxResults(5).maxDistanceKm(100.0).build());
+
+        assertTrue(matches.stream().anyMatch(match -> match.facility().id().equals(nearbyFacilityId)));
+        assertFalse(matches.stream().anyMatch(match -> match.facility().id().equals(distantFacilityId)));
+    }
+
+    @Test
+    void testMatchFacilitiesForCaseWithMaxDistanceKmRequiresCaseCoordinates() {
+        facilityRepository.insert(new Facility(
+                IdGenerator.generateFacilityId(),
+                "Distance Filter Candidate",
+                "ACADEMIC",
+                "Boston",
+                "MA",
+                "US",
+                BigDecimal.valueOf(42.3601),
+                BigDecimal.valueOf(-71.0589),
+                List.of("ICU"),
+                50,
+                20
+        ));
+
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                45,
+                "Chest pain",
+                "Needs routing",
+                "Rule out ACS",
+                List.of("I21.9"),
+                List.of(),
+                UrgencyLevel.HIGH,
+                "Cardiology",
+                CaseType.CONSULT_REQUEST,
+                "Distance filtering requires coordinates",
+                null
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
+                matchingService.matchFacilitiesForCase(
+                        medicalCase.id(),
+                        RoutingOptions.builder().maxResults(5).maxDistanceKm(50.0).build()));
+
+        assertTrue(exception.getMessage().contains("maxDistanceKm requires medical case coordinates"));
+    }
+
+    @Test
     void testMatchDoctorsToCase_RanksAreSequentialAfterSorting() {
         // Create multiple test doctors with different specialties to ensure different scores
         String doctorId1 = IdGenerator.generateDoctorId();

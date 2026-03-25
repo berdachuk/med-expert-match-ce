@@ -45,7 +45,7 @@ See `mkdocs.yml` for navigation structure. Main sections:
 ## Related Documentation
 
 - [Development Guide](DEVELOPMENT_GUIDE.md)
-- [README](https://github.com/your-org/med-expert-match/blob/main/README.md)
+- [README](../README.md)
 
 ---
 

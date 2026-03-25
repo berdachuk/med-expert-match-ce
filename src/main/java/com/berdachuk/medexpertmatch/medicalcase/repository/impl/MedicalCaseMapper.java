@@ -33,7 +33,9 @@ public class MedicalCaseMapper implements RowMapper<MedicalCase> {
                 rs.getString("required_specialty"),
                 CaseType.valueOf(rs.getString("case_type")),
                 rs.getString("additional_notes"),
-                rs.getString("abstract")  // Maps to abstractText field
+                rs.getString("abstract"),
+                rs.getBigDecimal("location_latitude"),
+                rs.getBigDecimal("location_longitude")
         );
     }
 

@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.medicalcase.domain;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -20,6 +21,38 @@ public record MedicalCase(
         String requiredSpecialty,
         CaseType caseType,
         String additionalNotes,
-        String abstractText              // Comprehensive medical case abstract
+        String abstractText,             // Comprehensive medical case abstract
+        BigDecimal locationLatitude,
+        BigDecimal locationLongitude
 ) {
+    public MedicalCase(
+            String id,
+            Integer patientAge,
+            String chiefComplaint,
+            String symptoms,
+            String currentDiagnosis,
+            List<String> icd10Codes,
+            List<String> snomedCodes,
+            UrgencyLevel urgencyLevel,
+            String requiredSpecialty,
+            CaseType caseType,
+            String additionalNotes,
+            String abstractText) {
+        this(
+                id,
+                patientAge,
+                chiefComplaint,
+                symptoms,
+                currentDiagnosis,
+                icd10Codes,
+                snomedCodes,
+                urgencyLevel,
+                requiredSpecialty,
+                caseType,
+                additionalNotes,
+                abstractText,
+                null,
+                null
+        );
+    }
 }

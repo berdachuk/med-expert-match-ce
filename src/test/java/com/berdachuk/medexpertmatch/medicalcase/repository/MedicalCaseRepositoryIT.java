@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -63,6 +64,32 @@ class MedicalCaseRepositoryIT extends BaseIntegrationTest {
         assertEquals(UrgencyLevel.CRITICAL, result.get().urgencyLevel());
         assertEquals(CaseType.INPATIENT, result.get().caseType());
         assertTrue(result.get().icd10Codes().contains("I21.9"));
+    }
+
+    @Test
+    void testFindByIdReturnsCoordinates() {
+        MedicalCase testCase = new MedicalCase(
+                IdGenerator.generateId(),
+                46,
+                "Transfer request",
+                "Needs tertiary center",
+                "Complex cardiac case",
+                List.of("I21.9"),
+                List.of(),
+                UrgencyLevel.HIGH,
+                "Cardiology",
+                CaseType.CONSULT_REQUEST,
+                "Includes geographic context",
+                null,
+                BigDecimal.valueOf(38.9072),
+                BigDecimal.valueOf(-77.0369)
+        );
+
+        medicalCaseRepository.insert(testCase);
+
+        MedicalCase storedCase = medicalCaseRepository.findById(testCase.id()).orElseThrow();
+        assertEquals(0, BigDecimal.valueOf(38.9072).compareTo(storedCase.locationLatitude()));
+        assertEquals(0, BigDecimal.valueOf(-77.0369).compareTo(storedCase.locationLongitude()));
     }
 
     @Test

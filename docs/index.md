@@ -63,6 +63,7 @@ Kaggle.
 
 ### Development
 
+- [Fix Plan](FIX_PLAN.md) - Active tracked checklist for cleanup, alignment, and hardening work
 - [Implementation Plan](IMPLEMENTATION_PLAN.md) - Detailed phase-by-phase implementation guide
 - [Development Guide](DEVELOPMENT_GUIDE.md) - Setup and development workflow
 - [Coding Rules](CODING_RULES.md) - Development guidelines and conventions

@@ -6,5 +6,5 @@
  * - Repository interfaces and implementations
  * - Doctor-case relationship management
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "core :: util", "core :: repository", "core :: repository.sql"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core"})
 package com.berdachuk.medexpertmatch.clinicalexperience;

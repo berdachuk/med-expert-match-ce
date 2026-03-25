@@ -1,4 +1,5 @@
-SELECT id, patient_age, chief_complaint, symptoms, current_diagnosis, icd10_codes, snomed_codes, urgency_level, required_specialty, case_type, additional_notes, abstract
+SELECT id, patient_age, chief_complaint, symptoms, current_diagnosis, icd10_codes, snomed_codes, urgency_level,
+       required_specialty, case_type, additional_notes, abstract, location_latitude, location_longitude
 FROM medexpertmatch.medical_cases
 WHERE case_type = :caseType
 ORDER BY created_at DESC
