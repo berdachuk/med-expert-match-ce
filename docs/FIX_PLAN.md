@@ -87,11 +87,12 @@ This plan focuses on:
 
 ### Checklist
 
-- [ ] Split `MedicalAgentServiceImpl` into smaller workflow-oriented services
-- [ ] Extract result formatting and prompt orchestration helpers from `MedicalAgentServiceImpl`
+- [x] Split `MedicalAgentServiceImpl` into smaller workflow-oriented services
+- [x] Extract result formatting and prompt orchestration helpers from `MedicalAgentServiceImpl`
 - [ ] Split `SyntheticDataGenerator` into bootstrap, generation, enrichment, and graph rebuild responsibilities
+  Progress: bootstrap catalog loading and post-processing steps are extracted; generation orchestration remains in `SyntheticDataGenerator`
 - [ ] Reduce constructor breadth where it signals mixed responsibilities
-- [ ] Add focused tests around each extracted service
+- [x] Add focused tests around each extracted service
 
 ## Phase 5: Test Hardening
 

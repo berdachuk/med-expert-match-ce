@@ -40,6 +40,9 @@ public class SyntheticDataGenerator {
     // Data arrays removed - now loaded from external CSV files via @PostConstruct
 
     private final ResourceLoader resourceLoader;
+    private final SyntheticDataCatalogState catalogState;
+    private final SyntheticDataBootstrapService syntheticDataBootstrapService;
+    private final SyntheticDataPostProcessingService syntheticDataPostProcessingService;
     // Cache for extended results per size (for hierarchical reuse)
     private final Map<String, List<String>> cachedIcd10Codes = new ConcurrentHashMap<>();
     private final Map<String, List<String>> cachedSpecialties = new ConcurrentHashMap<>();
@@ -137,8 +140,14 @@ public class SyntheticDataGenerator {
             MedicalSpecialtyRepository medicalSpecialtyRepository,
             SyntheticDataGenerationProgressService progressService,
             MedicalGraphBuilderService graphBuilderService,
-            MedicalCaseDescriptionService medicalCaseDescriptionService) {
+            MedicalCaseDescriptionService medicalCaseDescriptionService,
+            SyntheticDataCatalogState catalogState,
+            SyntheticDataBootstrapService syntheticDataBootstrapService,
+            SyntheticDataPostProcessingService syntheticDataPostProcessingService) {
         this.resourceLoader = resourceLoader;
+        this.catalogState = catalogState;
+        this.syntheticDataBootstrapService = syntheticDataBootstrapService;
+        this.syntheticDataPostProcessingService = syntheticDataPostProcessingService;
         this.doctorRepository = doctorRepository;
         this.doctorGeneratorService = doctorGeneratorService;
         this.medicalCaseRepository = medicalCaseRepository;
@@ -163,207 +172,28 @@ public class SyntheticDataGenerator {
      */
     @PostConstruct
     public void loadDataFromFiles() {
-        // Load and persist medical specialties from CSV
-        List<Map<String, String>> specialtiesData = CsvDataLoader.loadCsv(resourceLoader, medicalSpecialtiesFile, "medical specialties");
-        persistMedicalSpecialties(specialtiesData);
-        loadedMedicalSpecialties = specialtiesData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} medical specialties from {}", loadedMedicalSpecialties.size(), medicalSpecialtiesFile);
-
-        // Load and persist ICD-10 codes from CSV
-        List<Map<String, String>> icd10Data = CsvDataLoader.loadCsv(resourceLoader, icd10CodesFile, "ICD-10 codes");
-        persistIcd10Codes(icd10Data);
-        loadedIcd10Codes = icd10Data.stream()
-                .map(row -> row.get("code"))
-                .filter(code -> code != null && !code.isEmpty())
-                .collect(Collectors.toList());
-        // Populate ICD-10 code to description mapping from CSV
-        icd10CodeDisplays = icd10Data.stream()
-                .filter(row -> row.get("code") != null && row.get("description") != null)
-                .collect(Collectors.toMap(
-                        row -> row.get("code"),
-                        row -> row.get("description"),
-                        (existing, replacement) -> existing
-                ));
-        log.info("Loaded {} ICD-10 codes from {}", loadedIcd10Codes.size(), icd10CodesFile);
-
-        // Load and persist procedures from CSV
-        List<Map<String, String>> proceduresData = CsvDataLoader.loadCsv(resourceLoader, proceduresFile, "procedures");
-        persistProcedures(proceduresData);
-        loadedProcedures = proceduresData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} procedures from {}", loadedProcedures.size(), proceduresFile);
-
-        // Validate that files were loaded successfully
-        if (loadedMedicalSpecialties.isEmpty()) {
-            throw new IllegalStateException("Failed to load medical specialties from " + medicalSpecialtiesFile);
-        }
-        if (loadedIcd10Codes.isEmpty()) {
-            throw new IllegalStateException("Failed to load ICD-10 codes from " + icd10CodesFile);
-        }
-        if (loadedProcedures.isEmpty()) {
-            throw new IllegalStateException("Failed to load procedures from " + proceduresFile);
-        }
-
-        // Load facility types from CSV
-        List<Map<String, String>> facilityTypesData = CsvDataLoader.loadCsv(resourceLoader, facilityTypesFile, "facility types");
-        loadedFacilityTypes = facilityTypesData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} facility types from {}", loadedFacilityTypes.size(), facilityTypesFile);
-
-        // Load complexity levels from CSV
-        List<Map<String, String>> complexityLevelsData = CsvDataLoader.loadCsv(resourceLoader, complexityLevelsFile, "complexity levels");
-        loadedComplexityLevels = complexityLevelsData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} complexity levels from {}", loadedComplexityLevels.size(), complexityLevelsFile);
-
-        // Load outcomes from CSV
-        List<Map<String, String>> outcomesData = CsvDataLoader.loadCsv(resourceLoader, outcomesFile, "outcomes");
-        loadedOutcomes = outcomesData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} outcomes from {}", loadedOutcomes.size(), outcomesFile);
-
-        // Load availability statuses from CSV
-        List<Map<String, String>> availabilityStatusesData = CsvDataLoader.loadCsv(resourceLoader, availabilityStatusesFile, "availability statuses");
-        loadedAvailabilityStatuses = availabilityStatusesData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} availability statuses from {}", loadedAvailabilityStatuses.size(), availabilityStatusesFile);
-
-        // Load severities from CSV
-        List<Map<String, String>> severitiesData = CsvDataLoader.loadCsv(resourceLoader, severitiesFile, "severities");
-        loadedSeverities = severitiesData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} severities from {}", loadedSeverities.size(), severitiesFile);
-
-        // Load symptoms from CSV
-        List<Map<String, String>> symptomsData = CsvDataLoader.loadCsv(resourceLoader, symptomsFile, "symptoms");
-        loadedSymptoms = symptomsData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} symptoms from {}", loadedSymptoms.size(), symptomsFile);
-
-        // Load encounter classes from CSV
-        List<Map<String, String>> encounterClassesData = CsvDataLoader.loadCsv(resourceLoader, encounterClassesFile, "encounter classes");
-        loadedEncounterClasses = encounterClassesData.stream()
-                .map(row -> row.get("code"))
-                .filter(code -> code != null && !code.isEmpty())
-                .collect(Collectors.toList());
-        // Populate encounter class code to display mapping from CSV
-        encounterClassDisplays = encounterClassesData.stream()
-                .filter(row -> row.get("code") != null && row.get("display") != null)
-                .collect(Collectors.toMap(
-                        row -> row.get("code"),
-                        row -> row.get("display"),
-                        (existing, replacement) -> existing
-                ));
-        log.info("Loaded {} encounter classes from {}", loadedEncounterClasses.size(), encounterClassesFile);
-
-        // Load encounter types from CSV
-        List<Map<String, String>> encounterTypesData = CsvDataLoader.loadCsv(resourceLoader, encounterTypesFile, "encounter types");
-        loadedEncounterTypes = encounterTypesData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} encounter types from {}", loadedEncounterTypes.size(), encounterTypesFile);
-
-        // Load complications from CSV
-        List<Map<String, String>> complicationsData = CsvDataLoader.loadCsv(resourceLoader, complicationsFile, "complications");
-        loadedComplications = complicationsData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} complications from {}", loadedComplications.size(), complicationsFile);
-
-        // Load facility capabilities from CSV
-        List<Map<String, String>> facilityCapabilitiesData = CsvDataLoader.loadCsv(resourceLoader, facilityCapabilitiesFile, "facility capabilities");
-        loadedFacilityCapabilities = facilityCapabilitiesData.stream()
-                .map(row -> row.get("name"))
-                .filter(name -> name != null && !name.isEmpty())
-                .collect(Collectors.toList());
-        log.info("Loaded {} facility capabilities from {}", loadedFacilityCapabilities.size(), facilityCapabilitiesFile);
-
-        // Validate that all critical files were loaded successfully
-        if (loadedFacilityTypes.isEmpty()) {
-            throw new IllegalStateException("Failed to load facility types from " + facilityTypesFile);
-        }
-        if (loadedComplexityLevels.isEmpty()) {
-            throw new IllegalStateException("Failed to load complexity levels from " + complexityLevelsFile);
-        }
-        if (loadedOutcomes.isEmpty()) {
-            throw new IllegalStateException("Failed to load outcomes from " + outcomesFile);
-        }
-        if (loadedSymptoms.isEmpty()) {
-            throw new IllegalStateException("Failed to load symptoms from " + symptomsFile);
-        }
-        if (loadedFacilityCapabilities.isEmpty()) {
-            throw new IllegalStateException("Failed to load facility capabilities from " + facilityCapabilitiesFile);
-        }
-
-        // Load specialty-procedures mapping from CSV
-        List<Map<String, String>> specialtyProceduresData = CsvDataLoader.loadCsv(resourceLoader, specialtyProceduresFile, "specialty-procedures");
-        for (Map<String, String> row : specialtyProceduresData) {
-            String specialtyName = row.get("specialty_name");
-            String procedureNamesStr = row.getOrDefault("procedure_names", "");
-            if (specialtyName != null && !specialtyName.isEmpty() && !procedureNamesStr.isEmpty()) {
-                List<String> procedures = CsvDataLoader.parseCommaSeparatedList(procedureNamesStr);
-                specialtyProceduresMap.put(specialtyName, procedures);
-            }
-        }
-        log.info("Loaded {} specialty-procedure mappings from {}", specialtyProceduresMap.size(), specialtyProceduresFile);
-
-        // Load data size configurations from CSV
-        List<Map<String, String>> dataSizesData = CsvDataLoader.loadCsv(resourceLoader, dataSizesFile, "data sizes");
-        for (Map<String, String> row : dataSizesData) {
-            String size = row.get("size");
-            String doctorCountStr = row.get("doctor_count");
-            String caseCountStr = row.get("case_count");
-            String description = row.getOrDefault("description", "");
-            String estimatedTimeStr = row.getOrDefault("estimated_time_minutes", "0");
-
-            if (size != null && !size.isEmpty() && doctorCountStr != null && caseCountStr != null) {
-                try {
-                    int doctorCount = Integer.parseInt(doctorCountStr);
-                    int caseCount = Integer.parseInt(caseCountStr);
-                    int estimatedTimeMinutes = Integer.parseInt(estimatedTimeStr);
-
-                    DataSizeConfig config = new DataSizeConfig(
-                            size.toLowerCase(),
-                            doctorCount,
-                            caseCount,
-                            description.isEmpty() ? size : description,
-                            estimatedTimeMinutes
-                    );
-                    dataSizeConfigs.put(size.toLowerCase(), config);
-                } catch (NumberFormatException e) {
-                    log.warn("Skipping invalid data size row: size={}, doctor_count={}, case_count={}", size, doctorCountStr, caseCountStr);
-                }
-            }
-        }
-        log.info("Loaded {} data size configurations from {}", dataSizeConfigs.size(), dataSizesFile);
-
-        // Validate that data sizes were loaded
-        if (dataSizeConfigs.isEmpty()) {
-            throw new IllegalStateException("Failed to load data sizes from " + dataSizesFile);
-        }
-
-        // Initialize extended lists with loaded data
-        extendedIcd10Codes = new ArrayList<>(loadedIcd10Codes);
-        extendedProcedures = new ArrayList<>(loadedProcedures);
+        syntheticDataBootstrapService.loadDataFromFiles();
+        loadedMedicalSpecialties = new ArrayList<>(catalogState.getLoadedMedicalSpecialties());
+        loadedIcd10Codes = new ArrayList<>(catalogState.getLoadedIcd10Codes());
+        loadedProcedures = new ArrayList<>(catalogState.getLoadedProcedures());
+        loadedFacilityTypes = new ArrayList<>(catalogState.getLoadedFacilityTypes());
+        loadedComplexityLevels = new ArrayList<>(catalogState.getLoadedComplexityLevels());
+        loadedOutcomes = new ArrayList<>(catalogState.getLoadedOutcomes());
+        loadedAvailabilityStatuses = new ArrayList<>(catalogState.getLoadedAvailabilityStatuses());
+        loadedSeverities = new ArrayList<>(catalogState.getLoadedSeverities());
+        loadedSymptoms = new ArrayList<>(catalogState.getLoadedSymptoms());
+        loadedEncounterClasses = new ArrayList<>(catalogState.getLoadedEncounterClasses());
+        loadedEncounterTypes = new ArrayList<>(catalogState.getLoadedEncounterTypes());
+        loadedComplications = new ArrayList<>(catalogState.getLoadedComplications());
+        loadedFacilityCapabilities = new ArrayList<>(catalogState.getLoadedFacilityCapabilities());
+        specialtyProceduresMap.clear();
+        specialtyProceduresMap.putAll(catalogState.getSpecialtyProceduresMap());
+        dataSizeConfigs.clear();
+        dataSizeConfigs.putAll(catalogState.getDataSizeConfigs());
+        extendedIcd10Codes = new ArrayList<>(catalogState.getExtendedIcd10Codes());
+        extendedProcedures = new ArrayList<>(catalogState.getExtendedProcedures());
+        icd10CodeDisplays = new HashMap<>(catalogState.getIcd10CodeDisplays());
+        encounterClassDisplays = new HashMap<>(catalogState.getEncounterClassDisplays());
     }
 
     /**
@@ -372,47 +202,7 @@ public class SyntheticDataGenerator {
      */
     @Transactional
     public void persistMedicalSpecialties(List<Map<String, String>> specialtiesData) {
-        for (Map<String, String> row : specialtiesData) {
-            String name = row.get("name");
-            if (name == null || name.isEmpty()) {
-                continue;
-            }
-
-            // Check if specialty already exists
-            Optional<MedicalSpecialty> existing = medicalSpecialtyRepository.findByName(name);
-            if (existing.isPresent()) {
-                continue; // Skip if already exists
-            }
-
-            String id = IdGenerator.generateId();
-            String normalizedName = CsvDataLoader.normalize(name);
-            String description = row.getOrDefault("description", "");
-            List<String> icd10CodeRanges = CsvDataLoader.parseCommaSeparatedList(row.getOrDefault("icd10_code_ranges", ""));
-            List<String> relatedSpecialtyNames = CsvDataLoader.parseCommaSeparatedList(row.getOrDefault("related_specialty_names", ""));
-
-            // Resolve related specialty IDs by name
-            List<String> relatedSpecialtyIds = new ArrayList<>();
-            for (String relatedName : relatedSpecialtyNames) {
-                medicalSpecialtyRepository.findByName(relatedName)
-                        .map(MedicalSpecialty::id)
-                        .ifPresent(relatedSpecialtyIds::add);
-            }
-
-            MedicalSpecialty specialty = new MedicalSpecialty(
-                    id,
-                    name,
-                    normalizedName,
-                    description,
-                    icd10CodeRanges,
-                    relatedSpecialtyIds
-            );
-
-            try {
-                medicalSpecialtyRepository.insert(specialty);
-            } catch (DataAccessException e) {
-                log.warn("Failed to insert medical specialty {}: {}", name, e.getMessage());
-            }
-        }
+        syntheticDataBootstrapService.persistMedicalSpecialties(specialtiesData);
     }
 
     /**
@@ -421,39 +211,7 @@ public class SyntheticDataGenerator {
      */
     @Transactional
     public void persistIcd10Codes(List<Map<String, String>> icd10Data) {
-        for (Map<String, String> row : icd10Data) {
-            String code = row.get("code");
-            if (code == null || code.isEmpty()) {
-                continue;
-            }
-
-            // Check if code already exists
-            Optional<ICD10Code> existing = icd10CodeRepository.findByCode(code);
-            if (existing.isPresent()) {
-                continue; // Skip if already exists
-            }
-
-            String id = IdGenerator.generateId();
-            String description = row.getOrDefault("description", "");
-            String category = row.getOrDefault("category", "");
-            String parentCode = row.getOrDefault("parent_code", null);
-            List<String> relatedCodes = CsvDataLoader.parseCommaSeparatedList(row.getOrDefault("related_codes", ""));
-
-            ICD10Code icd10Code = new ICD10Code(
-                    id,
-                    code,
-                    description,
-                    category,
-                    parentCode,
-                    relatedCodes
-            );
-
-            try {
-                icd10CodeRepository.insert(icd10Code);
-            } catch (DataAccessException e) {
-                log.warn("Failed to insert ICD-10 code {}: {}", code, e.getMessage());
-            }
-        }
+        syntheticDataBootstrapService.persistIcd10Codes(icd10Data);
     }
 
     /**
@@ -462,37 +220,7 @@ public class SyntheticDataGenerator {
      */
     @Transactional
     public void persistProcedures(List<Map<String, String>> proceduresData) {
-        for (Map<String, String> row : proceduresData) {
-            String name = row.get("name");
-            if (name == null || name.isEmpty()) {
-                continue;
-            }
-
-            // Check if procedure already exists
-            Optional<Procedure> existing = procedureRepository.findByName(name);
-            if (existing.isPresent()) {
-                continue; // Skip if already exists
-            }
-
-            String id = IdGenerator.generateId();
-            String normalizedName = CsvDataLoader.normalize(name);
-            String description = row.getOrDefault("description", "");
-            String category = row.getOrDefault("category", "");
-
-            Procedure procedure = new Procedure(
-                    id,
-                    name,
-                    normalizedName,
-                    description,
-                    category
-            );
-
-            try {
-                procedureRepository.insert(procedure);
-            } catch (DataAccessException e) {
-                log.warn("Failed to insert procedure {}: {}", name, e.getMessage());
-            }
-        }
+        syntheticDataBootstrapService.persistProcedures(proceduresData);
     }
 
 
@@ -1535,37 +1263,10 @@ public class SyntheticDataGenerator {
      */
     @Transactional
     public void clearTestData() {
-        log.info("Clearing all test data");
-
-        // Clear graph objects first (before deleting database records)
-        log.info("Attempting to clear graph objects...");
-        try {
-            graphBuilderService.clearGraph();
-            log.info("Graph objects cleared successfully");
-        } catch (DataAccessException e) {
-            log.error("Database error clearing graph objects: {}", e.getMessage(), e);
-            // Continue with database cleanup even if graph clearing fails
-        } catch (RuntimeException e) {
-            log.error("Unexpected error clearing graph objects: {}", e.getMessage(), e);
-            // Continue with database cleanup even if graph clearing fails
-        }
-
-        // Clear in dependency order
-        clinicalExperienceRepository.deleteAll();
-        medicalCaseRepository.deleteAll();
-        doctorRepository.deleteAll();
-        facilityRepository.deleteAll();
-        medicalSpecialtyRepository.deleteAll();
-        icd10CodeRepository.deleteAll();
-        procedureRepository.deleteAll();
-
-        // Clear result caches
+        syntheticDataPostProcessingService.clearTestData();
         cachedIcd10Codes.clear();
         cachedSpecialties.clear();
         cachedProcedures.clear();
-        log.debug("Cleared result caches");
-
-        log.info("Synthetic data cleared");
     }
 
     /**
@@ -1576,76 +1277,7 @@ public class SyntheticDataGenerator {
      * @param progress Optional progress tracker
      */
     private void generateMedicalCaseDescriptions(SyntheticDataGenerationProgress progress) {
-        List<com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase> cases = medicalCaseRepository.findWithoutDescriptions();
-
-        int totalRecords = cases.size();
-        log.info("Starting description generation for {} medical cases (batch commit size: {})",
-                totalRecords, descriptionBatchCommitSize);
-
-        if (totalRecords == 0) {
-            log.info("No cases without descriptions found");
-            return;
-        }
-
-        int processedCount = 0;
-        int successCount = 0;
-        int failedCount = 0;
-        long startTime = System.currentTimeMillis();
-        List<CaseDescriptionUpdate> batch = new ArrayList<>();
-
-        for (com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase medicalCase : cases) {
-            if (progress != null && progress.isCancelled()) {
-                log.info("Generation cancelled during description generation");
-                break;
-            }
-
-            try {
-                String description = medicalCaseDescriptionService.generateDescription(medicalCase);
-                if (description != null && !description.isBlank()) {
-                    batch.add(new CaseDescriptionUpdate(medicalCase.id(), description));
-                    successCount++;
-                } else {
-                    log.warn("Generated empty description for case: {}", medicalCase.id());
-                    failedCount++;
-                }
-            } catch (Exception e) {
-                log.error("Error generating description for case: {}", medicalCase.id(), e);
-                failedCount++;
-            }
-
-            processedCount++;
-
-            // Commit batch when it reaches the configured size
-            if (batch.size() >= descriptionBatchCommitSize) {
-                commitDescriptionBatch(batch);
-                batch.clear();
-                log.info("Committed batch of {} descriptions (processed: {}/{})",
-                        descriptionBatchCommitSize, processedCount, totalRecords);
-            }
-
-            // Update progress
-            if (progress != null && (processedCount % 10 == 0 || processedCount == totalRecords)) {
-                int progressPercent = totalRecords > 0 ? (processedCount * 100 / totalRecords) : 0;
-                int descriptionProgress = 55 + (progressPercent * 10 / 100);
-                progress.updateProgress(descriptionProgress, "Descriptions",
-                        String.format("Generating descriptions: %d/%d (%d%%)", processedCount, totalRecords, progressPercent));
-            }
-        }
-
-        // Commit remaining batch
-        if (!batch.isEmpty()) {
-            commitDescriptionBatch(batch);
-            log.info("Committed final batch of {} descriptions", batch.size());
-        }
-
-        long endTime = System.currentTimeMillis();
-        long totalElapsedTime = endTime - startTime;
-        double totalItemsPerSecond = totalElapsedTime > 0 ? (processedCount * 1000.0) / totalElapsedTime : 0;
-
-        log.info(String.format("Description generation completed. Total: %d, Success: %d, Failed: %d, " +
-                        "Total time: %.3fs, Overall rate: %.2f items/sec",
-                processedCount, successCount, failedCount,
-                totalElapsedTime / 1000.0, totalItemsPerSecond));
+        syntheticDataPostProcessingService.generateMedicalCaseDescriptions(progress);
     }
 
     /**
@@ -1656,21 +1288,7 @@ public class SyntheticDataGenerator {
      */
     @Transactional
     public void commitDescriptionBatch(List<CaseDescriptionUpdate> batch) {
-        if (batch == null || batch.isEmpty()) {
-            return;
-        }
-
-        int committedCount = 0;
-        for (CaseDescriptionUpdate update : batch) {
-            try {
-                medicalCaseRepository.updateAbstract(update.caseId(), update.description());
-                committedCount++;
-            } catch (Exception e) {
-                log.error("Error committing description for case: {}", update.caseId(), e);
-            }
-        }
-
-        log.info("Committed {} description updates to database (batch size: {})", committedCount, batch.size());
+        syntheticDataPostProcessingService.commitDescriptionBatch(batch);
     }
 
     /**
@@ -1687,24 +1305,14 @@ public class SyntheticDataGenerator {
      * @param progress Optional progress tracker
      */
     public void generateEmbeddings(SyntheticDataGenerationProgress progress) {
-        embeddingGeneratorService.generateEmbeddings(progress);
+        syntheticDataPostProcessingService.generateEmbeddings(progress);
     }
 
     /**
      * Builds graph relationships from generated data using MedicalGraphBuilderService.
      */
     public void buildGraph() {
-        log.info("Building Apache AGE graph from generated data...");
-        try {
-            graphBuilderService.buildGraph();
-            log.info("Graph building completed successfully");
-        } catch (DataAccessException e) {
-            log.error("Database error building graph: {}", e.getMessage(), e);
-            // Don't throw - graph building is optional for data generation
-        } catch (RuntimeException e) {
-            log.error("Unexpected error building graph: {}", e.getMessage(), e);
-            // Don't throw - graph building is optional for data generation
-        }
+        syntheticDataPostProcessingService.buildGraph();
     }
 
     /**
