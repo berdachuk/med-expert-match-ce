@@ -14,6 +14,7 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
@@ -28,6 +29,7 @@ import java.util.List;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPostProcessingService {
 
     private final ClinicalExperienceRepository clinicalExperienceRepository;
@@ -44,31 +46,6 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
 
     @Value("${medexpertmatch.synthetic-data.description.batch-commit-size:10}")
     private int descriptionBatchCommitSize;
-
-    public SyntheticDataPostProcessingServiceImpl(
-            ClinicalExperienceRepository clinicalExperienceRepository,
-            MedicalCaseRepository medicalCaseRepository,
-            DoctorRepository doctorRepository,
-            FacilityRepository facilityRepository,
-            MedicalSpecialtyRepository medicalSpecialtyRepository,
-            ICD10CodeRepository icd10CodeRepository,
-            ProcedureRepository procedureRepository,
-            MedicalGraphBuilderService graphBuilderService,
-            MedicalCaseDescriptionService medicalCaseDescriptionService,
-            EmbeddingGeneratorService embeddingGeneratorService,
-            SyntheticDataCatalogState catalogState) {
-        this.clinicalExperienceRepository = clinicalExperienceRepository;
-        this.medicalCaseRepository = medicalCaseRepository;
-        this.doctorRepository = doctorRepository;
-        this.facilityRepository = facilityRepository;
-        this.medicalSpecialtyRepository = medicalSpecialtyRepository;
-        this.icd10CodeRepository = icd10CodeRepository;
-        this.procedureRepository = procedureRepository;
-        this.graphBuilderService = graphBuilderService;
-        this.medicalCaseDescriptionService = medicalCaseDescriptionService;
-        this.embeddingGeneratorService = embeddingGeneratorService;
-        this.catalogState = catalogState;
-    }
 
     @Override
     @Transactional

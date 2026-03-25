@@ -6,7 +6,6 @@ import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository
 import com.berdachuk.medexpertmatch.ingestion.service.DoctorGeneratorService;
 import com.berdachuk.medexpertmatch.ingestion.service.FacilityGeneratorService;
 import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataCatalogState;
-import com.berdachuk.medexpertmatch.ingestion.exception.SyntheticDataGenerationException;
 import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationProgress;
 import com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationService;
 import com.berdachuk.medexpertmatch.ingestion.service.MedicalCaseGeneratorService;
@@ -15,6 +14,7 @@ import com.berdachuk.medexpertmatch.medicalcoding.domain.Procedure;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hl7.fhir.r5.model.Bundle;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,6 +38,7 @@ import java.util.function.Function;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerationService {
 
     private final FacilityGeneratorService facilityGeneratorService;
@@ -51,25 +52,6 @@ public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerati
 
     @Value("${medexpertmatch.synthetic-data.batch-size:5000}")
     private int batchSize;
-
-    public SyntheticDataGenerationServiceImpl(
-            FacilityGeneratorService facilityGeneratorService,
-            DoctorGeneratorService doctorGeneratorService,
-            MedicalCaseGeneratorService medicalCaseGeneratorService,
-            ClinicalExperienceGeneratorService clinicalExperienceGeneratorService,
-            MedicalSpecialtyRepository medicalSpecialtyRepository,
-            ICD10CodeRepository icd10CodeRepository,
-            ProcedureRepository procedureRepository,
-            SyntheticDataCatalogState catalogState) {
-        this.facilityGeneratorService = facilityGeneratorService;
-        this.doctorGeneratorService = doctorGeneratorService;
-        this.medicalCaseGeneratorService = medicalCaseGeneratorService;
-        this.clinicalExperienceGeneratorService = clinicalExperienceGeneratorService;
-        this.medicalSpecialtyRepository = medicalSpecialtyRepository;
-        this.icd10CodeRepository = icd10CodeRepository;
-        this.procedureRepository = procedureRepository;
-        this.catalogState = catalogState;
-    }
 
     @Override
     public void generateIcd10Codes(String size, SyntheticDataGenerationProgress progress) {

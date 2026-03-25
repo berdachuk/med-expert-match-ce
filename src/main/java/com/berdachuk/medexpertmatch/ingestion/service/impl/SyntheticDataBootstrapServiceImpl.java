@@ -11,6 +11,7 @@ import com.berdachuk.medexpertmatch.medicalcoding.domain.ICD10Code;
 import com.berdachuk.medexpertmatch.medicalcoding.domain.Procedure;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class SyntheticDataBootstrapServiceImpl implements SyntheticDataBootstrapService {
 
     private final ResourceLoader resourceLoader;
@@ -67,19 +69,6 @@ public class SyntheticDataBootstrapServiceImpl implements SyntheticDataBootstrap
     private String specialtyProceduresFile;
     @Value("${medexpertmatch.synthetic-data.data-files.data-sizes:classpath:/data/data-sizes.csv}")
     private String dataSizesFile;
-
-    public SyntheticDataBootstrapServiceImpl(
-            ResourceLoader resourceLoader,
-            MedicalSpecialtyRepository medicalSpecialtyRepository,
-            ICD10CodeRepository icd10CodeRepository,
-            ProcedureRepository procedureRepository,
-            SyntheticDataCatalogState catalogState) {
-        this.resourceLoader = resourceLoader;
-        this.medicalSpecialtyRepository = medicalSpecialtyRepository;
-        this.icd10CodeRepository = icd10CodeRepository;
-        this.procedureRepository = procedureRepository;
-        this.catalogState = catalogState;
-    }
 
     @Override
     public void loadDataFromFiles() {

@@ -12,6 +12,12 @@ This document describes coding rules and conventions for MedExpertMatch, with a 
 - **Interface-Based Design**: All services and repositories use interfaces
 - **Domain-Driven Design**: Clear module boundaries, domain language
 - **SOLID Principles**: Single Responsibility, Open/Closed, etc.
+- **Lombok First**: Use Lombok to simplify code and reduce boilerplate where appropriate
+
+### Lombok Usage
+
+- Prefer Lombok annotations (`@Getter`, `@Setter`, `@RequiredArgsConstructor`, `@Builder`, `@Slf4j`) to collapse repetitive getters/setters, constructors, and logging setup.
+- Use Lombok-generated constructors and builders for simple DTOs or configuration classes, avoiding hand-written boilerplate unless framework constraints prevent annotation usage.
 
 ## Error Handling & Null Safety
 
