@@ -154,7 +154,9 @@ MedExpertMatch uses a modular structure organized by domain:
 
 **embedding** - Vector embedding generation and management
 
-- Service: `EmbeddingService` (generates embeddings using Spring AI EmbeddingModel)
+- Service: `EmbeddingService` (generates embeddings; uses `EmbeddingModel` or, when configured, `EmbeddingEndpointPool`)
+- Optional **multi-endpoint pool** (`medexpertmatch.embedding.multi-endpoint`): multiple OpenAI-compatible embedding
+  URLs with worker threads, batching, and temporary skip on failure (same pattern as aist-expertmatch)
 - Supports single and batch embedding generation
 - Integrates with test data generation flow
 

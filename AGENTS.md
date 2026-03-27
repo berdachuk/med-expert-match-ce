@@ -422,6 +422,10 @@ independently:
 - **Reranking**: `RERANKING_PROVIDER` (must be `openai`), `RERANKING_BASE_URL`, `RERANKING_API_KEY`, `RERANKING_MODEL`,
   `RERANKING_TEMPERATURE`
 
+Optional **embedding multi-endpoint pool** (multiple URLs, shared API key/dimensions): configure
+`medexpertmatch.embedding.multi-endpoint` in `application.yml` or `application-local.yml`; pool activates when
+`endpoints[0].url` is set.
+
 ### Default Configuration
 
 - **Chat**: `openai` provider, `https://api.openai.com`, `gpt-4` (or MedGemma via compatible endpoint)

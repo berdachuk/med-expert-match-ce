@@ -38,12 +38,15 @@ This project is being developed for the MedGemma Impact Challenge - a hackathon 
 
 MedExpertMatch uses **OpenAI-compatible APIs only**. There are two supported ways to run the app locally:
 
-- **Default `local` profile**: uses the checked-in [application-local.yml](src/main/resources/application-local.yml) values, which point to:
+- **Default `local` profile**: uses the checked-in [application-local.yml](src/main/resources/application-local.yml)
+  (aist-style layout: top-level `CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, `TOOL_CALLING_*` keys bound like environment
+  variables). Typical values:
   - PostgreSQL on `localhost:5434`
-  - AI endpoints as defined in that file (override with `CHAT_*`, `EMBEDDING_*`, and related environment variables)
-- **Self-hosted local AI**: keep the same app profile, but override `CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, and
-  `TOOL_CALLING_*` environment variables to your own OpenAI-compatible server such as LM Studio, LiteLLM, vLLM, or a
-  compatible Ollama endpoint.
+  - Optional **embedding multi-endpoint pool** under `medexpertmatch.embedding.multi-endpoint` (set `endpoints: []` to
+    disable the pool and use a single embedding backend only)
+  - Override any value with the same `*_` environment variables or edit the YAML
+- **Self-hosted local AI**: keep the same profile and point `CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, and
+  `TOOL_CALLING_*` to your OpenAI-compatible server (LM Studio, LiteLLM, vLLM, or a compatible Ollama OpenAI API).
 
 ### Environment matrix
 
@@ -141,14 +144,17 @@ docker compose down
 
 ### AI setup
 
-The application supports independent model configuration per component:
+The application supports independent model configuration per component (`CHAT_MODEL`, `EMBEDDING_MODEL`, etc.).
+Defaults for **no profile** are in [application.yml](src/main/resources/application.yml); the **local** profile uses
+[application-local.yml](src/main/resources/application-local.yml) (see also
+[application-local.yml.sample](src/main/resources/application-local.yml.sample)).
 
-| Role             | Purpose                                                  | Model in `application-local.yml`               |
-|------------------|----------------------------------------------------------|------------------------------------------------|
-| **Chat**         | Case analysis, clinical reasoning                        | `medgemma-1.5-4b-it@q4_k_m`                    |
-| **Reranking**    | Semantic reranking of matches                            | `medgemma-1.5-4b-it@q4_k_m`                    |
-| **Tool calling** | Agent tool invocations (find specialist, evidence, etc.) | `qwen/qwen3-4b-2507`                           |
-| **Embedding**    | Vector embeddings for semantic search                    | `text-embedding-nomic-embed-text-v1.5`         |
+| Role             | Purpose                                                  | Config keys |
+|------------------|----------------------------------------------------------|-------------|
+| **Chat**         | Case analysis, clinical reasoning                        | `CHAT_*`    |
+| **Embedding**    | Vector embeddings for semantic search                  | `EMBEDDING_*`; optional pool in `medexpertmatch.embedding.multi-endpoint` |
+| **Reranking**    | Semantic reranking of matches                            | `RERANKING_*` |
+| **Tool calling** | Agent tool invocations (find specialist, evidence, etc.) | `TOOL_CALLING_*` |
 
 For self-hosted local AI, override the component-specific environment variables:
 

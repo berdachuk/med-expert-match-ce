@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.embedding.service.impl;
 
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
-import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.embedding.multiendpoint.EmbeddingEndpointPool;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@ConditionalOnMissingBean(EmbeddingEndpointPool.class)
 public class EmbeddingServiceImpl implements EmbeddingService {
 
     private final EmbeddingModel embeddingModel;
@@ -118,8 +120,7 @@ public class EmbeddingServiceImpl implements EmbeddingService {
      */
     @Override
     public List<Double> generateEmbeddingForMedicalCase(MedicalCase medicalCase) {
-        String text = descriptionService.getOrGenerateDescription(medicalCase);
-        return generateEmbedding(text);
+        return MedicalCaseEmbeddingSupport.embeddingForMedicalCase(medicalCase, descriptionService, this::generateEmbedding);
     }
 
     /**
@@ -132,20 +133,7 @@ public class EmbeddingServiceImpl implements EmbeddingService {
      */
     @Override
     public List<List<Double>> generateEmbeddingsForMedicalCases(List<MedicalCase> medicalCases) {
-        if (medicalCases.isEmpty()) {
-            return List.of();
-        }
-
-        // Build texts for all cases - use sequential stream if CHAT max concurrent calls is 1
-        int chatMaxConcurrentCalls = llmCallLimiter.getMaxConcurrentCalls(LlmClientType.CHAT);
-        List<String> texts = (chatMaxConcurrentCalls == 1
-                ? medicalCases.stream()
-                : medicalCases.parallelStream())
-                .map(medicalCase -> llmCallLimiter.execute(LlmClientType.CHAT, () ->
-                        descriptionService.getOrGenerateDescription(medicalCase)))
-                .toList();
-
-        // Use batch embedding API for better performance
-        return generateEmbeddings(texts);
+        return MedicalCaseEmbeddingSupport.embeddingsForMedicalCases(
+                medicalCases, descriptionService, llmCallLimiter, this::generateEmbeddings);
     }
 }

@@ -1,3 +1,10 @@
+# MedExpertMatch default configuration (no profile, or base for profile-specific overrides).
+#
+# OpenAI-compatible AI is driven by environment variables mapped in spring.ai.custom.* below:
+#   CHAT_*, EMBEDDING_*, RERANKING_*, TOOL_CALLING_*
+# Optional embedding pool: medexpertmatch.embedding.multi-endpoint (see that section).
+# Override datasource with MEDEXPERTMATCH_DB_* or SPRING_DATASOURCE_*.
+
 spring:
   application:
     name: med-expert-match
@@ -76,6 +83,12 @@ server:
   error:
     include-message: always
     include-binding-errors: always
+  # Optional (e.g. LAN access or long LLM requests); same knobs as aist-expertmatch local profile:
+  # address: 0.0.0.0
+  # connection-timeout: 300000
+  # tomcat:
+  #   connection-timeout: 300000
+  #   keep-alive-timeout: 300000
 
 management:
   endpoints:
@@ -105,6 +118,25 @@ medexpertmatch:
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
     directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
     extra-directory: ${MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY:}
+  embedding:
+    # Multi-endpoint pool (optional): same pattern as aist-expertmatch ingestion embeddings multi-endpoint.
+    # Activates when endpoints[0].url is set. All nodes use spring.ai.custom.embedding api-key and dimensions.
+    multi-endpoint:
+      endpoints: []
+      # Example (uncomment and set hosts/models; keep models aligned with EMBEDDING_MODEL when possible):
+      # endpoints:
+      #   - url: http://192.168.0.73:11434
+      #     model: nomic-embed-text:v1.5
+      #     priority: 1
+      #   - url: http://192.168.0.87:11434
+      #     model: nomic-embed-text:v1.5
+      #     priority: 2
+      #   - url: http://localhost:11434
+      #     model: nomic-embed-text:v1.5
+      #     priority: 3
+      skip-duration-min: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_SKIP_MIN:10}
+      worker-per-endpoint: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_WORKERS:1}
+      api-batch-size: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_API_BATCH_SIZE:50}
   retrieval: # Hybrid GraphRAG: vector + graph + keyword
     vector:
       max-results: 100
@@ -167,6 +199,16 @@ medexpertmatch:
 logging:
   level:
     com.berdachuk.medexpertmatch: INFO
+    com.berdachuk.medexpertmatch.embedding: INFO
+    com.berdachuk.medexpertmatch.embedding.multiendpoint: INFO
+    com.berdachuk.medexpertmatch.embedding.config: INFO
+    org.springframework.web.client.RestClient: INFO
+    org.springframework.ai.openai.api.OpenAiApi: INFO
+    org.springframework.http.client: INFO
+    org.springframework.ai.chat.client: INFO
+    org.springframework.ai.chat.client.advisor: INFO
+    org.springaicommunity.agent.tools: INFO
+    org.springaicommunity.agent: INFO
     org.springframework.ai: INFO
     org.springframework.web: INFO
     org.springframework.security: WARN

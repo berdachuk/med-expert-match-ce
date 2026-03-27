@@ -1,40 +1,59 @@
-# Example local override profile for self-hosted OpenAI-compatible AI on localhost:1234.
-# The development database container started via docker-compose.dev.yml is exposed on localhost:5434.
-# Activate with: --spring.profiles.active=local or SPRING_PROFILES_ACTIVE=local
+# Local profile sample (same structure as aist-expertmatch application-local.yml).
+# Copy to application-local.yml and adjust. docker-compose.dev.yml exposes Postgres on localhost:5434.
+#
+# AI settings use top-level CHAT_*, EMBEDDING_*, RERANKING_*, TOOL_CALLING_* keys; they map to
+# spring.ai.custom.* in application.yml. Optional: medexpertmatch.embedding.multi-endpoint for an embedding pool.
+#
+# Run: --spring.profiles.active=local  or  SPRING_PROFILES_ACTIVE=local
+
+CHAT_PROVIDER: openai
+CHAT_BASE_URL: http://127.0.0.1:1234
+CHAT_API_KEY: llm-studio
+CHAT_MODEL: medgemma-1.5-4b-it@q4_k_m
+CHAT_TEMPERATURE: 0.7
+CHAT_MAX_TOKENS: 6000
+
+EMBEDDING_PROVIDER: openai
+EMBEDDING_BASE_URL: http://127.0.0.1:1234
+EMBEDDING_MODEL: nomic-embed-text:v1.5
+EMBEDDING_API_KEY: llm-studio
+EMBEDDING_DIMENSIONS: 768
+
+RERANKING_PROVIDER: openai
+RERANKING_BASE_URL: http://127.0.0.1:1234
+RERANKING_API_KEY: llm-studio
+RERANKING_MODEL: medgemma-1.5-4b-it@q4_k_m
+RERANKING_TEMPERATURE: 0.1
+
+TOOL_CALLING_PROVIDER: openai
+TOOL_CALLING_BASE_URL: http://127.0.0.1:1234
+TOOL_CALLING_API_KEY: llm-studio
+TOOL_CALLING_MODEL: qwen/qwen3-4b-2507
+TOOL_CALLING_TEMPERATURE: 0.7
+TOOL_CALLING_MAX_TOKENS: 4096
 
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5434/medexpertmatch
     username: medexpertmatch
     password: <your password>
-  ai:
-    custom:
-      chat:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: medgemma-1.5-4b-it@q4_k_m
-        temperature: 0.7
-        max-tokens: 6000
-      embedding:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: text-embedding-nomic-embed-text-v1.5
-        dimensions: 768
-      reranking:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: medgemma-1.5-4b-it@q4_k_m
-        temperature: 0.1
-      tool-calling:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: qwen/qwen3-4b-2507
-        temperature: 0.7
-        max-tokens: 4096
+
+logging:
+  level:
+    com.berdachuk.medexpertmatch: DEBUG
+    com.berdachuk.medexpertmatch.embedding: INFO
+    com.berdachuk.medexpertmatch.embedding.multiendpoint: INFO
+    com.berdachuk.medexpertmatch.embedding.config: INFO
+    org.springframework.web.client.RestClient: DEBUG
+    org.springframework.ai.openai.api.OpenAiApi: DEBUG
+    org.springframework.http.client: DEBUG
+    org.springframework.ai.chat.client: DEBUG
+    org.springframework.ai.chat.client.advisor: DEBUG
+    org.springaicommunity.agent.tools: DEBUG
+    org.springaicommunity.agent: DEBUG
+    org.springframework.ai: DEBUG
+    org.springframework.jdbc: DEBUG
+    com.berdachuk.medexpertmatch.graph: DEBUG
 
 server:
   port: 8080
@@ -44,6 +63,23 @@ medexpertmatch:
     enabled: true
     directory: skills
     extra-directory: ""
+  embedding:
+    multi-endpoint:
+      # [] = single embedding backend only. Uncomment endpoints to enable pool (match EMBEDDING_MODEL per node).
+      endpoints: []
+      # endpoints:
+      #   - url: http://192.168.0.73:11434
+      #     model: nomic-embed-text:v1.5
+      #     priority: 1
+      #   - url: http://192.168.0.87:11434
+      #     model: nomic-embed-text:v1.5
+      #     priority: 2
+      #   - url: http://localhost:11434
+      #     model: nomic-embed-text:v1.5
+      #     priority: 3
+      skip-duration-min: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_SKIP_MIN:10}
+      worker-per-endpoint: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_WORKERS:1}
+      api-batch-size: ${MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_API_BATCH_SIZE:50}
   llm:
     chat:
       max-concurrent-calls: 1
@@ -53,10 +89,3 @@ medexpertmatch:
       max-concurrent-calls: 1
     tool-calling:
       max-concurrent-calls: 1
-
-logging:
-  level:
-    com.berdachuk.medexpertmatch: DEBUG
-    org.springframework.ai: DEBUG
-    org.springframework.jdbc: DEBUG
-    com.berdachuk.medexpertmatch.graph: DEBUG

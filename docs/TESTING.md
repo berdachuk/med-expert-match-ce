@@ -75,7 +75,8 @@ Integration tests for vector embeddings:
     - `testGenerateEmbeddingsInTestDataFlow()` - Integration with test data generation
     - `testGenerateEmbeddingsHandlesEmptyCases()` - Edge case handling
 
-All embedding tests use mocked `EmbeddingModel` to avoid real API calls.
+All embedding tests use mocked `EmbeddingModel` to avoid real API calls. The **embedding multi-endpoint pool** is not
+enabled in tests (`medexpertmatch.embedding.multi-endpoint.endpoints` unset / empty in test configuration).
 
 ## Vector Similarity Testing
 

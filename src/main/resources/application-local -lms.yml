@@ -1,39 +1,56 @@
-# Local profile: DB from docker-compose.dev.yml (localhost:5434), LLM on 127.0.0.1:1234. Use 5433 for main stack.
-# Activate with: --spring.profiles.active=local or SPRING_PROFILES_ACTIVE=local
+# Local profile variant: LM Studio on 127.0.0.1:1234, DB from docker-compose.dev.yml (localhost:5434).
+# Port 8094. Same structure as aist-expertmatch / application-local.yml.sample (env-style AI keys).
+# Activate: --spring.profiles.active=local or SPRING_PROFILES_ACTIVE=local
+# (use spring.config.additional-location or rename/copy if you prefer this file over application-local.yml)
+
+CHAT_PROVIDER: openai
+CHAT_BASE_URL: http://127.0.0.1:1234
+CHAT_API_KEY: llm-studio
+CHAT_MODEL: medgemma-1.5-4b-it@q4_k_m
+CHAT_TEMPERATURE: 0.7
+CHAT_MAX_TOKENS: 6000
+
+EMBEDDING_PROVIDER: openai
+EMBEDDING_BASE_URL: http://127.0.0.1:1234
+EMBEDDING_MODEL: text-embedding-nomic-embed-text-v1.5
+EMBEDDING_API_KEY: llm-studio
+EMBEDDING_DIMENSIONS: 768
+
+RERANKING_PROVIDER: openai
+RERANKING_BASE_URL: http://127.0.0.1:1234
+RERANKING_API_KEY: llm-studio
+RERANKING_MODEL: medgemma-1.5-4b-it@q4_k_m
+RERANKING_TEMPERATURE: 0.1
+
+TOOL_CALLING_PROVIDER: openai
+TOOL_CALLING_BASE_URL: http://127.0.0.1:1234
+TOOL_CALLING_API_KEY: llm-studio
+TOOL_CALLING_MODEL: qwen/qwen3-4b-2507
+TOOL_CALLING_TEMPERATURE: 0.7
+TOOL_CALLING_MAX_TOKENS: 4096
 
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5434/medexpertmatch
     username: medexpertmatch
     password: medexpertmatch
-  ai:
-    custom:
-      chat:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: medgemma-1.5-4b-it@q4_k_m
-        temperature: 0.7
-        max-tokens: 6000
-      embedding:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: text-embedding-nomic-embed-text-v1.5
-        dimensions: 768
-      reranking:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: medgemma-1.5-4b-it@q4_k_m
-        temperature: 0.1
-      tool-calling:
-        provider: openai
-        base-url: http://127.0.0.1:1234
-        api-key: llm-studio
-        model: qwen/qwen3-4b-2507
-        temperature: 0.7
-        max-tokens: 4096
+
+logging:
+  level:
+    com.berdachuk.medexpertmatch: DEBUG
+    com.berdachuk.medexpertmatch.embedding: INFO
+    com.berdachuk.medexpertmatch.embedding.multiendpoint: INFO
+    com.berdachuk.medexpertmatch.embedding.config: INFO
+    org.springframework.web.client.RestClient: DEBUG
+    org.springframework.ai.openai.api.OpenAiApi: DEBUG
+    org.springframework.http.client: DEBUG
+    org.springframework.ai.chat.client: DEBUG
+    org.springframework.ai.chat.client.advisor: DEBUG
+    org.springaicommunity.agent.tools: DEBUG
+    org.springaicommunity.agent: DEBUG
+    org.springframework.ai: DEBUG
+    org.springframework.jdbc: DEBUG
+    com.berdachuk.medexpertmatch.graph: DEBUG
 
 server:
   port: 8094
@@ -43,6 +60,9 @@ medexpertmatch:
     enabled: true
     directory: .claude/skills
     extra-directory: ""
+  embedding:
+    multi-endpoint:
+      endpoints: []
   llm:
     chat:
       max-concurrent-calls: 1
@@ -52,10 +72,3 @@ medexpertmatch:
       max-concurrent-calls: 1
     tool-calling:
       max-concurrent-calls: 1
-
-logging:
-  level:
-    com.berdachuk.medexpertmatch: DEBUG
-    org.springframework.ai: DEBUG
-    org.springframework.jdbc: DEBUG
-    com.berdachuk.medexpertmatch.graph: DEBUG

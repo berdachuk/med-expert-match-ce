@@ -156,7 +156,8 @@ export SPRING_PROFILES_ACTIVE=local
 mvn spring-boot:run
 ```
 
-The application will start on port **8094** (local profile) or **8080** (default).
+The application will start on port **8080** with the `local` profile when using the default
+`application-local.yml` (Docker Compose full stack often uses **8094**).
 
 ### Testing
 
@@ -199,7 +200,8 @@ The embedding generation process:
 
 1. Finds all medical cases without embeddings
 2. Uses stored descriptions (from description generation step) for embedding creation
-3. Generates 1536-dimensional embeddings using Spring AI `EmbeddingModel`
+3. Generates embeddings using Spring AI (`EmbeddingModel` or multi-endpoint pool); vector size must match
+   `EMBEDDING_DIMENSIONS` (often **768** for Nomic-style models in local configs)
 4. Normalizes and stores embeddings in PostgreSQL using pgvector format
 5. Updates embedding dimension metadata
 
