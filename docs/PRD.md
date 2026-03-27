@@ -1,14 +1,14 @@
 # MedExpertMatch Product Requirements Document (PRD)
 
-**Last Updated:** 2026-01-27  
+**Last Updated:** 2026-03-27  
 **Version:** 1.0  
-**Status:** Planning Phase
+**Status:** Planning Phase (see [README](../README.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for current implementation status)
 
 ## Document Purpose
 
 This Product Requirements Document (PRD) defines the complete requirements for MedExpertMatch, an AI-powered medical
 expert recommendation system developed for the MedGemma Impact Challenge. This document consolidates the vision, use
-cases, and architecture into a comprehensive product specification.
+cases, and architecture into a comprehensive product specification. The PRD is maintained in **English** only.
 
 ## Executive Summary
 
@@ -406,8 +406,8 @@ consistent, and measurable.
 - **Organization**: Healthcare facilities and organizations
 - **Bundle**: Container for multiple FHIR resources
 
-**Reference Implementation**: See
-`/home/berdachuk/projects-ai/expert-match-root/expert-match/src/main/java/com/berdachuk/expertmatch/ingestion/service/TestDataGenerator.java`
+**Reference implementation**: See
+`src/main/java/com/berdachuk/medexpertmatch/ingestion/service/SyntheticDataGenerator.java` in this repository.
 
 ### 4.3 Agent Skills
 

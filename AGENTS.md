@@ -98,8 +98,10 @@ mvn test jacoco:report
 ### Test Container Setup
 
 The test container is **built automatically** before integration tests if the image is not found locally.
-`mvn verify` or `mvn integration-test` will run `scripts/ensure-test-container.sh` in the `pre-integration-test`
-phase, which checks for `medexpertmatch-postgres-test:latest` and builds it when missing.
+`mvn verify` or `mvn integration-test` runs `scripts/ensure-test-container.sh` (Linux/macOS) or
+`scripts/ensure-test-container.ps1` (Windows profile) in the `pre-integration-test` phase, which checks for
+`medexpertmatch-postgres-test:latest` and builds it when missing. On Windows 11 with Docker only in WSL, use
+`DOCKER_HOST` or run Maven inside WSL; see README "Windows 11, WSL, and integration tests".
 
 To build manually (e.g. before first run or after Dockerfile changes):
 
@@ -107,7 +109,7 @@ To build manually (e.g. before first run or after Dockerfile changes):
 ./scripts/build-test-container.sh
 ```
 
-Or:
+On Windows PowerShell: `.\scripts\build-test-container.ps1`. Or:
 
 ```bash
 docker build -f docker/Dockerfile.test -t medexpertmatch-postgres-test:latest .
@@ -119,7 +121,8 @@ docker build -f docker/Dockerfile.test -t medexpertmatch-postgres-test:latest .
 - **Image Details**: Based on `apache/age:release_PG17_1.6.0` with PgVector 0.8.0 extension added
 - **Build Script**: Use `./scripts/build-test-container.sh` or
   `docker build -f docker/Dockerfile.test -t medexpertmatch-postgres-test:latest .`
-- **Auto-Build**: Maven runs `scripts/ensure-test-container.sh` in `pre-integration-test` phase; builds image if missing
+- **Auto-Build**: Maven runs `ensure-test-container` script (`.sh` or `.ps1` on Windows) in `pre-integration-test` phase;
+  builds image if missing
 - **Image Location**: `docker/Dockerfile.test`
 - **Container Reuse**: **ENABLED by default** (`withReuse(true)`) for faster test execution
     - Container reuse is automatically **DISABLED** when `mvn clean` is detected (target directory missing)
@@ -687,8 +690,7 @@ docker-compose up -d postgres
 
 ### Documentation Location
 
-- **Documentation Folder**: Use `/home/berdachuk/projects-ai/expert-match-root/med-expert-match/docs` for all
-  documentation files
+- **Documentation folder**: Store documentation under the repository `docs/` directory (project root: `med-expert-match-ce/docs/`)
 - **Documentation Types**: API guides, setup instructions, MedGemma configuration, architecture guides, etc.
 - **Build Exclusion**: The `docs` folder is excluded from build targets and should not be included in JAR/WAR files
 

@@ -23,6 +23,9 @@ import java.time.Duration;
 /**
  * Base class for integration tests using Testcontainers.
  * Provides PostgreSQL container with PgVector and Apache AGE extensions.
+ * <p>
+ * Docker must be reachable from the JVM (Docker Desktop, or Docker in WSL with {@code DOCKER_HOST=tcp://localhost:2375}
+ * from Windows). Alternatively run {@code mvn verify} inside WSL where Docker is installed.
  */
 @SpringBootTest(
         webEnvironment = SpringBootTest.WebEnvironment.NONE,

@@ -13,8 +13,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Monitors MedGemma model for tool calling support.
- * Periodically checks if MedGemma has gained tool calling capabilities.
+ * Monitors the primary chat model for tool calling support.
+ * Periodically checks if the model has gained tool calling capabilities.
  * When tool calling is detected, logs the information for future migration.
  */
 @Slf4j
@@ -34,16 +34,16 @@ public class MedGemmaToolCallingMonitor {
     public MedGemmaToolCallingMonitor(
             @Qualifier("primaryChatModel") ChatModel primaryChatModel) {
         this.medGemmaModel = primaryChatModel;
-        log.info("MedGemmaToolCallingMonitor initialized. Will check for tool calling support periodically.");
+        log.info("LLM tool-calling monitor initialized (primary chat model). Will check for tool calling support periodically.");
     }
 
     /**
-     * Checks if MedGemma supports tool calling by attempting a simple tool call.
+     * Checks if the primary chat model supports tool calling by attempting a simple tool call.
      * Runs periodically based on configured interval.
      */
     @Scheduled(fixedDelayString = "${medexpertmatch.medgemma.tool-calling-check-interval:3600000}")
     public void checkMedGemmaToolCallingSupport() {
-        log.info("Checking MedGemma tool calling support...");
+        log.info("Checking primary chat model (LLM) tool calling support...");
         lastCheckTime.set(LocalDateTime.now());
 
         try {
@@ -69,25 +69,25 @@ public class MedGemmaToolCallingMonitor {
                 toolCallingSupported.set(true);
                 lastCheckResult.set("Tool calling appears to be supported! Response: " +
                         (response.length() > 100 ? response.substring(0, 100) + "..." : response));
-                log.warn("=== MEDGEMMA TOOL CALLING DETECTED ===");
-                log.warn("MedGemma appears to support tool calling. Consider migrating from FunctionGemma.");
+                log.warn("=== LLM TOOL CALLING DETECTED ===");
+                log.warn("Primary chat model (LLM) appears to support tool calling. Consider migrating from FunctionGemma.");
                 log.warn("Response: {}", response);
             } else {
                 toolCallingSupported.set(false);
                 lastCheckResult.set("Tool calling not supported. Response: " +
                         (response != null && response.length() > 100 ? response.substring(0, 100) + "..." : response));
-                log.debug("MedGemma tool calling check: Not supported yet. Response: {}",
+                log.debug("LLM tool calling check: Not supported yet. Response: {}",
                         response != null && response.length() > 200 ? response.substring(0, 200) + "..." : response);
             }
         } catch (Exception e) {
             toolCallingSupported.set(false);
             lastCheckResult.set("Check failed: " + e.getMessage());
-            log.debug("MedGemma tool calling check failed (expected if not supported): {}", e.getMessage());
+            log.debug("LLM tool calling check failed (expected if not supported): {}", e.getMessage());
         }
     }
 
     /**
-     * Gets the current status of MedGemma tool calling support.
+     * Gets the current status of primary chat model tool calling support.
      *
      * @return true if tool calling is supported, false otherwise
      */

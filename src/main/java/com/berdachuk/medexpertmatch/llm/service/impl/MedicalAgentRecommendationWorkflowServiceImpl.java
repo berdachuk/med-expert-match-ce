@@ -91,7 +91,7 @@ public class MedicalAgentRecommendationWorkflowServiceImpl implements MedicalAge
                 metadata.put("matchId", matchId);
                 metadata.put("skills", List.of("doctor-matcher"));
                 metadata.put("hybridApproach", true);
-                metadata.put("medgemmaUsed", true);
+                metadata.put("llmUsed", true);
                 return new MedicalAgentService.AgentResponse(response, metadata);
             }
         } catch (Exception e) {

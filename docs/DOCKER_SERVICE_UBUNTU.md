@@ -6,7 +6,7 @@ This guide explains how to run the full Docker Compose stack (PostgreSQL, applic
 
 - Ubuntu 24.04 (or compatible)
 - Docker Engine and Docker Compose v2 installed
-- Project cloned or copied to the host (e.g. `/home/berdachuk/projects-ai/med-expert-match-ce`)
+- Project cloned or copied to the host (for example `/home/your-user/med-expert-match-ce`)
 
 Ensure Docker is installed and your user can run Docker (e.g. in the `docker` group). The systemd service runs as root and uses the system Docker daemon.
 
@@ -15,7 +15,7 @@ Ensure Docker is installed and your user can run Docker (e.g. in the `docker` gr
 From the project directory:
 
 ```bash
-cd /home/berdachuk/projects-ai/med-expert-match-ce
+cd /path/to/med-expert-match-ce
 docker compose build
 ```
 
@@ -26,16 +26,16 @@ Optional: build without cache for a clean build: `docker compose build --no-cach
 Copy the service file and reload systemd:
 
 ```bash
-sudo cp /home/berdachuk/projects-ai/med-expert-match-ce/scripts/medexpertmatch-stack.service /etc/systemd/system/
+sudo cp /path/to/med-expert-match-ce/scripts/medexpertmatch-stack.service /etc/systemd/system/
 sudo systemctl daemon-reload
 ```
 
-### Apply on this host (Ubuntu 24.04, project at default path)
+### Apply on this host (Ubuntu 24.04, project at a known path)
 
 Run these in order (you will be prompted for your password):
 
 ```bash
-sudo cp /home/berdachuk/projects-ai/med-expert-match-ce/scripts/medexpertmatch-stack.service /etc/systemd/system/
+sudo cp /path/to/med-expert-match-ce/scripts/medexpertmatch-stack.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable medexpertmatch-stack   # enables auto-start on reboot
 sudo systemctl start medexpertmatch-stack
@@ -46,7 +46,7 @@ After `enable`, the stack will start automatically after every reboot. If the st
 
 ### Using a different project path
 
-If the project is not at `/home/berdachuk/projects-ai/med-expert-match-ce`, edit the unit before copying:
+If the project is not at the path you used above, edit the unit before copying:
 
 ```bash
 sudo nano /etc/systemd/system/medexpertmatch-stack.service

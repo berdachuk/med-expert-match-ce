@@ -95,8 +95,8 @@ public class TestAIConfig {
             // Check for interpretation prompts (from interpretResultsWithMedGemma)
             // These prompts ask to interpret tool results and case analysis
             // The prompt template contains "Based on the original case analysis and the tool execution results"
-            // Also check for "You are MedGemma" which is the start of the interpretation prompt template
-            boolean isInterpretationPrompt = (originalPrompt.contains("You are MedGemma") || promptText.contains("you are medgemma")) ||
+            // Also check for "You are a medical LLM" which is the start of the interpretation prompt template
+            boolean isInterpretationPrompt = (originalPrompt.contains("You are a medical LLM") || promptText.contains("you are a medical llm")) ||
                     (promptText.contains("original case analysis") && promptText.contains("tool execution results")) ||
                     (promptText.contains("tool execution results") && (promptText.contains("matched doctors") ||
                             promptText.contains("prioritization") || promptText.contains("routing"))) ||
@@ -1007,7 +1007,7 @@ public class TestAIConfig {
     /**
      * Mock primaryEmbeddingModel for tests.
      * This replaces any auto-configured EmbeddingModel beans.
-     * Returns 1536-dimensional embeddings (MedGemma dimensions).
+     * Returns 1536-dimensional embeddings (typical embedding dimensions).
      */
     @Bean("primaryEmbeddingModel")
     @Primary
@@ -1018,7 +1018,7 @@ public class TestAIConfig {
     /**
      * Mock EmbeddingModel for tests.
      * This replaces any auto-configured EmbeddingModel beans.
-     * Returns 1536-dimensional embeddings (MedGemma dimensions).
+     * Returns 1536-dimensional embeddings (typical embedding dimensions).
      */
     @Bean
     public EmbeddingModel testEmbeddingModel() {

@@ -1,11 +1,20 @@
 # MedExpertMatch Testing Guide
 
-**Last Updated:** 2026-01-20
+**Last Updated:** 2026-03-27
 
 ## Overview
 
 This guide describes testing patterns and best practices for MedExpertMatch, with a focus on medical-specific test data
-considerations.
+considerations. It is maintained in English only.
+
+## Windows 11 and WSL (Docker)
+
+Integration tests require Docker. On **Windows**, Maven uses **PowerShell** in the **pre-integration-test** phase to
+ensure `medexpertmatch-postgres-test:latest` exists (`scripts/ensure-test-container.ps1`); no Git Bash is required.
+
+If Docker runs **only in WSL**: run `mvn verify` from a WSL shell under `/mnt/c/...`, or set on Windows
+`DOCKER_HOST=tcp://localhost:2375` after exposing the Docker daemon in WSL on TCP (see the main [README](../README.md)
+section "Windows 11, WSL, and integration tests"). Testcontainers respects `DOCKER_HOST`.
 
 ## Testing Principles
 

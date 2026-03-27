@@ -45,7 +45,7 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
         logStreamService.setCurrentSessionId(sessionId);
 
         try {
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma case analysis", "Starting comprehensive case analysis");
+            logStreamService.sendLog(sessionId, "INFO", "LLM case analysis", "Starting comprehensive case analysis");
             String caseAnalysis = medicalAgentLlmSupportService.analyzeCaseWithMedGemma(caseId);
 
             String condition = null;
@@ -104,14 +104,14 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
                     caseId, guidelines.size(), pubmedArticleCount);
 
             Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma result interpretation", "Interpreting analysis results");
+            logStreamService.sendLog(sessionId, "INFO", "LLM result interpretation", "Interpreting analysis results");
             String response = medicalAgentLlmSupportService.interpretResultsWithMedGemma(toolResults, caseAnalysis, patientAge);
 
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("caseId", caseId);
             metadata.put("skills", List.of("case-analyzer", "evidence-retriever", "recommendation-engine"));
             metadata.put("hybridApproach", true);
-            metadata.put("medgemmaUsed", true);
+            metadata.put("llmUsed", true);
 
             return new MedicalAgentService.AgentResponse(response, metadata);
         } catch (Exception e) {

@@ -432,7 +432,7 @@ public class MedicalAgentTools {
 
             int limit = (maxResults != null && maxResults > 0) ? maxResults : 10;
 
-            // Build prompt for MedGemma to generate clinical guidelines
+            // Build prompt for LLM to generate clinical guidelines
             StringBuilder promptBuilder = new StringBuilder();
             promptBuilder.append("You are a medical expert providing clinical practice guidelines.\n");
             promptBuilder.append("IMPORTANT MEDICAL DISCLAIMER: These guidelines are for informational and educational purposes only. ");
@@ -461,15 +461,15 @@ public class MedicalAgentTools {
 
             String prompt = promptBuilder.toString();
 
-            log.info("Sending prompt to LLM for clinical guidelines (model: MedGemma, condition: {}, specialty: {}):\n{}", condition, specialty, prompt);
-            log.info("Calling MedGemma for clinical guidelines - condition: {}, specialty: {}", condition, specialty);
+            log.info("Sending prompt to LLM for clinical guidelines (model: LLM, condition: {}, specialty: {}):\n{}", condition, specialty, prompt);
+            log.info("Calling LLM for clinical guidelines - condition: {}, specialty: {}", condition, specialty);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
                     .call()
                     .content();
 
             if (responseText == null || responseText.trim().isEmpty()) {
-                log.warn("Empty response from MedGemma for clinical guidelines");
+                log.warn("Empty response from LLM for clinical guidelines");
                 logStreamService.logToolResult(sessionId, "search_clinical_guidelines",
                         "No guidelines generated");
                 return List.of("No clinical guidelines could be generated for condition: " + condition);
@@ -719,15 +719,15 @@ public class MedicalAgentTools {
 
             String prompt = promptBuilder.toString();
 
-            log.info("Sending prompt to LLM for recommendations (model: MedGemma, caseId: {}, type: {}):\n{}", caseId, normalizedType, prompt);
-            log.info("Calling MedGemma for recommendations - caseId: {}, type: {}", caseId, normalizedType);
+            log.info("Sending prompt to LLM for recommendations (model: LLM, caseId: {}, type: {}):\n{}", caseId, normalizedType, prompt);
+            log.info("Calling LLM for recommendations - caseId: {}, type: {}", caseId, normalizedType);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
                     .call()
                     .content();
 
             if (responseText == null || responseText.trim().isEmpty()) {
-                log.warn("Empty response from MedGemma for recommendations");
+                log.warn("Empty response from LLM for recommendations");
                 logStreamService.logToolResult(sessionId, "generate_recommendations",
                         "No recommendations generated");
                 return "No recommendations could be generated for case: " + caseId;
@@ -815,15 +815,15 @@ public class MedicalAgentTools {
                     "- Stop immediately after providing the " + limit + " diagnoses\n" +
                     "- Do NOT continue generating after the response is complete";
 
-            log.info("Sending prompt to LLM for differential diagnosis (model: MedGemma, caseId: {}):\n{}", caseId, prompt);
-            log.info("Calling MedGemma for differential diagnosis - caseId: {}", caseId);
+            log.info("Sending prompt to LLM for differential diagnosis (model: LLM, caseId: {}):\n{}", caseId, prompt);
+            log.info("Calling LLM for differential diagnosis - caseId: {}", caseId);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
                     .call()
                     .content();
 
             if (responseText == null || responseText.trim().isEmpty()) {
-                log.warn("Empty response from MedGemma for differential diagnosis");
+                log.warn("Empty response from LLM for differential diagnosis");
                 logStreamService.logToolResult(sessionId, "differential_diagnosis",
                         "No differential diagnosis generated");
                 return "No differential diagnosis could be generated for case: " + caseId;
@@ -951,15 +951,15 @@ public class MedicalAgentTools {
 
             String prompt = promptBuilder.toString();
 
-            log.info("Sending prompt to LLM for risk assessment (model: MedGemma, caseId: {}, type: {}):\n{}", caseId, normalizedRiskType, prompt);
-            log.info("Calling MedGemma for risk assessment - caseId: {}, type: {}", caseId, normalizedRiskType);
+            log.info("Sending prompt to LLM for risk assessment (model: LLM, caseId: {}, type: {}):\n{}", caseId, normalizedRiskType, prompt);
+            log.info("Calling LLM for risk assessment - caseId: {}, type: {}", caseId, normalizedRiskType);
             String responseText = medGemmaChatClient.prompt()
                     .user(prompt)
                     .call()
                     .content();
 
             if (responseText == null || responseText.trim().isEmpty()) {
-                log.warn("Empty response from MedGemma for risk assessment");
+                log.warn("Empty response from LLM for risk assessment");
                 logStreamService.logToolResult(sessionId, "risk_assessment",
                         "No risk assessment generated");
                 return "No risk assessment could be generated for case: " + caseId;

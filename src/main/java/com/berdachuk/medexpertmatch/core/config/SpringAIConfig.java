@@ -63,12 +63,12 @@ public class SpringAIConfig {
 
     /**
      * Dedicated ChatClient for CaseAnalysisService.
-     * Always uses MedGemma (primaryChatModel) regardless of skills configuration.
-     * This ensures medical case analysis always uses MedGemma's medical domain expertise.
+     * Always uses primaryChatModel regardless of skills configuration.
+     * This ensures medical case analysis uses the configured LLM.
      */
     @Bean("caseAnalysisChatClient")
     public ChatClient caseAnalysisChatClient(@Qualifier("primaryChatModel") ChatModel primaryChatModel) {
-        log.info("Creating caseAnalysisChatClient with MedGemma (primaryChatModel): {}", primaryChatModel.getClass().getSimpleName());
+        log.info("Creating caseAnalysisChatClient with primary LLM (primaryChatModel): {}", primaryChatModel.getClass().getSimpleName());
         return ChatClient.builder(primaryChatModel).build();
     }
 

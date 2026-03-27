@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration test for MedicalAgentService hybrid approach.
- * Verifies that MedGemma is used for medical reasoning and FunctionGemma for tool orchestration.
+ * Verifies that the primary LLM is used for medical reasoning and FunctionGemma for tool orchestration.
  */
 class MedicalAgentServiceHybridApproachIT extends BaseIntegrationTest {
 
@@ -93,11 +93,11 @@ class MedicalAgentServiceHybridApproachIT extends BaseIntegrationTest {
         assertEquals(true, response.metadata().get("hybridApproach"),
                 "hybridApproach should be true");
 
-        // Verify MedGemma was used
-        assertTrue(response.metadata().containsKey("medgemmaUsed"),
-                "Metadata should indicate MedGemma was used");
-        assertEquals(true, response.metadata().get("medgemmaUsed"),
-                "medgemmaUsed should be true");
+        // Verify primary LLM was used
+        assertTrue(response.metadata().containsKey("llmUsed"),
+                "Metadata should indicate LLM was used");
+        assertEquals(true, response.metadata().get("llmUsed"),
+                "llmUsed should be true");
 
         // Verify FunctionGemma was used for tool orchestration
         assertTrue(response.metadata().containsKey("toolLlmUsed"),
@@ -105,7 +105,7 @@ class MedicalAgentServiceHybridApproachIT extends BaseIntegrationTest {
         assertEquals(false, response.metadata().get("toolLlmUsed"),
                 "toolLlmUsed should be false as we now call tools directly");
 
-        // Verify response contains medical reasoning (from MedGemma)
+        // Verify response contains medical reasoning (from LLM)
         String responseText = response.response().toLowerCase();
         assertTrue(responseText.contains("cardiology") ||
                         responseText.contains("specialist") ||
@@ -116,7 +116,7 @@ class MedicalAgentServiceHybridApproachIT extends BaseIntegrationTest {
 
     @Test
     void testMatchDoctors_MedGemmaCaseAnalysis() {
-        // Test that case analysis uses MedGemma
+        // Test that case analysis uses the primary LLM
         // This is verified by checking that the response includes case analysis
         MedicalAgentService.AgentResponse response = medicalAgentService.matchDoctors(
                 testCaseId,
@@ -126,8 +126,8 @@ class MedicalAgentServiceHybridApproachIT extends BaseIntegrationTest {
         assertNotNull(response);
         assertNotNull(response.response());
 
-        // Response should include analysis from MedGemma
-        // Even if FunctionGemma refuses, MedGemma analysis should be present
+        // Response should include analysis from the primary LLM
+        // Even if FunctionGemma refuses, case analysis should be present
         String responseText = response.response();
         assertTrue(responseText.length() > 0, "Response should contain content");
     }
@@ -198,8 +198,8 @@ class MedicalAgentServiceHybridApproachIT extends BaseIntegrationTest {
             if (response.metadata().containsKey("hybridApproach")) {
                 assertEquals(true, response.metadata().get("hybridApproach"));
             }
-            if (response.metadata().containsKey("medgemmaUsed")) {
-                assertEquals(true, response.metadata().get("medgemmaUsed"));
+            if (response.metadata().containsKey("llmUsed")) {
+                assertEquals(true, response.metadata().get("llmUsed"));
             }
         }
     }

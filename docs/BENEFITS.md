@@ -1,6 +1,7 @@
 # Benefits of MedExpertMatch
 
-This document lists the main benefits of the MedExpertMatch application for patients, clinicians, and organizations.
+This document lists the main benefits of the MedExpertMatch application for patients, clinicians, and organizations. It
+is written in English for consistency with the rest of the project documentation.
 
 ## Clinical and Patient Benefits
 

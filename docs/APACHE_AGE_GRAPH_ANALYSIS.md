@@ -358,13 +358,13 @@ RETURN count(*) as relationshipCount
 
 ### What's Implemented (Updated):
 
-1. ✅ **MedicalGraphBuilderService** - Service to populate the graph with vertices and edges
-2. ✅ **Automatic graph building** - Graph is automatically built after synthetic data generation
-3. ✅ **Graph synchronization** - Graph is populated from relational database data
+1. **MedicalGraphBuilderService** - Service to populate the graph with vertices and edges
+2. **Automatic graph building** - Graph is automatically built after synthetic data generation
+3. **Graph synchronization** - Graph is populated from relational database data
 
-### MedicalGraphBuilderService:
+### MedicalGraphBuilderService
 
-MedExpertMatch now has a `MedicalGraphBuilderService` (similar to ExpertMatch's `GraphBuilderService`) that:
+MedExpertMatch provides a `MedicalGraphBuilderService` that:
 
 - Creates vertices for doctors, medical cases, ICD-10 codes, specialties, and facilities
 - Creates edges based on relationships (TREATED, SPECIALIZES_IN, HAS_CONDITION, etc.)

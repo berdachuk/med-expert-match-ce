@@ -1,8 +1,8 @@
 # MedExpertMatch Architecture
 
-**Last Updated:** 2026-02-03  
+**Last Updated:** 2026-03-27  
 **Version:** 1.2  
-**Status:** MVP Complete
+**Status:** MVP complete (see [PRD](PRD.md) for full product requirements; PRD status may differ)
 
 ## Overview
 
@@ -627,7 +627,8 @@ The initial UI is implemented using Thymeleaf for server-side rendering:
 - **Controllers**: Use `@Controller` annotation (not `@RestController`) for Thymeleaf views
 - **Pattern**: Controllers return template names (e.g., `return "index"`) and use `Model` to pass data
 - **Development**: Templates automatically reload with Spring Boot DevTools
-- **Reference**: See `/home/berdachuk/projects-ai/expert-match-root/expert-match` for implementation patterns
+- **Reference**: See `src/main/java/com/berdachuk/medexpertmatch/web/` controllers and `src/main/resources/templates/`
+  for implementation patterns
 
 ### UI Pages
 

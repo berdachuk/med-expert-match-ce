@@ -14,7 +14,7 @@ import java.util.TimeZone;
  * MedExpertMatch Application
  * <p>
  * AI-powered medical expert recommendation system
- * that matches medical cases with appropriate specialists using MedGemma models,
+ * that matches medical cases with appropriate specialists using LLM models,
  * hybrid GraphRAG architecture, and intelligent agent skills.
  */
 @Slf4j

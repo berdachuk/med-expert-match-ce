@@ -8,7 +8,7 @@ import java.util.Map;
 public interface MedicalAgentRoutingWorkflowService {
 
     /**
-     * Routes a case to facilities using retrieval tools and MedGemma summarization.
+     * Routes a case to facilities using retrieval tools and LLM summarization.
      *
      * @param caseId The medical case ID
      * @param request Request parameters

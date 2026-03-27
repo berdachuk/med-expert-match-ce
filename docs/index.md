@@ -1,6 +1,11 @@
 # MedExpertMatch Documentation
 
-Welcome to the MedExpertMatch documentation!
+Welcome to the MedExpertMatch documentation.
+
+## Language
+
+All documentation in this site and in the repository `docs/` folder is written in **English**. User-facing UI strings in
+the application may be localized separately; technical specs, guides, and README files stay in English.
 
 ## About MedExpertMatch
 
@@ -159,14 +164,14 @@ This documentation is organized into several sections:
 
 ## Important Disclaimers
 
-⚠️ **MedGemma is NOT a Medical Device**:
+**Warning: MedGemma is not a medical device**
 
 - Models are not certified for clinical use
 - Additional validation required for real-world deployment
 - Not intended for diagnostic decisions without human-in-the-loop
 - All applications are for research and educational purposes
 
-⚠️ **HIPAA Compliance**:
+**HIPAA compliance**
 
 - All patient data must be anonymized
 - Local deployment option for privacy

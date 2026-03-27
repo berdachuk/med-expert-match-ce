@@ -14,8 +14,9 @@ Use one of these OpenAI-compatible frontends:
 - **vLLM** exposing an OpenAI-compatible endpoint
 - a compatible Ollama endpoint only when it matches the OpenAI API shape well enough for your chosen models
 
-If you just want the repository defaults, you do **not** need this guide. The committed local profile already points to
-`https://llm.berdachuk.com`.
+If you just want the repository defaults, you do **not** need this guide. The committed local profile already sets AI
+endpoints in [application-local.yml](../src/main/resources/application-local.yml); change them with environment
+variables if you use a different gateway.
 
 ## What MedExpertMatch needs
 

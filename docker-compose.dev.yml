@@ -12,7 +12,8 @@ services:
     ports:
       - "5434:5432"  # Host 5434 to avoid conflict with main stack (5433)
     volumes:
-      - ~/data/medexpertmatch-postgres:/var/lib/postgresql/data
+      # Named volume works on Windows, Linux, and macOS (bind to ~/data is unreliable on Windows Docker)
+      - medexpertmatch-postgres-dev-data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U medexpertmatch" ]
       interval: 10s
@@ -24,3 +25,6 @@ services:
 networks:
   medexpertmatch-network:
     driver: bridge
+
+volumes:
+  medexpertmatch-postgres-dev-data:

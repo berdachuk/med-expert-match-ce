@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Shared MedGemma support for workflow-oriented agent services.
+ * Shared LLM support for workflow-oriented agent services.
  */
 @Slf4j
 @Service
@@ -58,9 +58,9 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
     @Override
     public String analyzeCaseWithMedGemma(String caseId) {
-        log.info("Analyzing case {} with MedGemma", caseId);
+        log.info("Analyzing case {} with LLM", caseId);
         String sessionId = logStreamService.getCurrentSessionId();
-        logStreamService.sendLog(sessionId, "INFO", "MedGemma case analysis", "Starting case analysis for: " + caseId);
+        logStreamService.sendLog(sessionId, "INFO", "LLM case analysis", "Starting case analysis for: " + caseId);
 
         try {
             MedicalCase medicalCase = medicalCaseRepository.findById(caseId)
@@ -91,27 +91,27 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
             log.info("LLM model: {} completed case analysis (caseId: {}), response length: {}",
                     medGemmaModelName, caseId, analysis != null ? analysis.length() : 0);
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma case analysis",
+            logStreamService.sendLog(sessionId, "INFO", "LLM case analysis",
                     String.format("Analysis completed successfully using model: %s", medGemmaModelName));
-            log.debug("MedGemma case analysis result: {}", analysis);
+            log.debug("LLM case analysis result: {}", analysis);
             return analysis;
         } catch (Exception e) {
-            log.error("Error analyzing case with MedGemma: {}", caseId, e);
-            logStreamService.logError(sessionId, "MedGemma case analysis failed", e.getMessage());
+            log.error("Error analyzing case with LLM: {}", caseId, e);
+            logStreamService.logError(sessionId, "LLM case analysis failed", e.getMessage());
             return String.format("{\"requiredSpecialty\":\"General\",\"urgencyLevel\":\"MEDIUM\",\"clinicalFindings\":[],\"icd10Codes\":[],\"caseSummary\":\"Case %s - Analysis incomplete due to error\"}", caseId);
         }
     }
 
     @Override
     public String interpretResultsWithMedGemma(String toolResults, String caseAnalysis, Integer patientAgeFromCase) {
-        log.info("Interpreting tool results with MedGemma");
+        log.info("Interpreting tool results with LLM");
         String sessionId = logStreamService.getCurrentSessionId();
-        logStreamService.sendLog(sessionId, "INFO", "MedGemma result interpretation", "Interpreting tool results");
+        logStreamService.sendLog(sessionId, "INFO", "LLM result interpretation", "Interpreting tool results");
 
         try {
             if (toolResults == null || toolResults.trim().isEmpty()) {
-                log.warn("Empty tool results provided to interpretResultsWithMedGemma, returning case analysis");
-                return "Based on MedGemma case analysis:\n\n" + caseAnalysis;
+                log.warn("Empty tool results provided, returning case analysis only");
+                return "Based on LLM case analysis:\n\n" + caseAnalysis;
             }
 
             String limitedToolResults = toolResults;
@@ -160,7 +160,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                     .content());
 
             if (interpretation != null && interpretation.length() > 10000) {
-                log.warn("MedGemma response very long ({} chars), checking for repetition", interpretation.length());
+                log.warn("LLM response very long ({} chars), checking for repetition", interpretation.length());
                 String firstPart = interpretation.substring(0, Math.min(1000, interpretation.length()));
                 int occurrences = (interpretation.length() - interpretation.replace(firstPart, "").length()) / firstPart.length();
                 if (occurrences > 3) {
@@ -173,15 +173,15 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
             log.info("LLM model: {} completed result interpretation, response length: {}",
                     medGemmaModelName, interpretation != null ? interpretation.length() : 0);
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma result interpretation",
+            logStreamService.sendLog(sessionId, "INFO", "LLM result interpretation",
                     String.format("Interpretation completed successfully using model: %s, length: %d",
                             medGemmaModelName, interpretation != null ? interpretation.length() : 0));
-            log.debug("MedGemma interpretation result (first 500 chars): {}",
+            log.debug("LLM interpretation result (first 500 chars): {}",
                     interpretation != null && interpretation.length() > 500 ? interpretation.substring(0, 500) + "..." : interpretation);
-            return interpretation != null ? interpretation : "Error: Empty response from MedGemma";
+            return interpretation != null ? interpretation : "Error: Empty response from LLM";
         } catch (Exception e) {
-            log.error("Error interpreting results with MedGemma", e);
-            logStreamService.logError(sessionId, "MedGemma result interpretation failed", e.getMessage());
+            log.error("Error interpreting results with LLM", e);
+            logStreamService.logError(sessionId, "LLM result interpretation failed", e.getMessage());
             throw e;
         }
     }

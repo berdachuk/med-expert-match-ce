@@ -79,7 +79,7 @@ public class MedicalAgentQueuePrioritizationWorkflowServiceImpl implements Medic
 
         try {
             if (caseIds != null && !caseIds.isEmpty()) {
-                logStreamService.sendLog(sessionId, "INFO", "MedGemma urgency analysis", "Analyzing urgency for " + caseIds.size() + " cases");
+                logStreamService.sendLog(sessionId, "INFO", "LLM urgency analysis", "Analyzing urgency for " + caseIds.size() + " cases");
 
                 List<CaseUrgencyEntry> entries = new ArrayList<>();
                 for (String caseId : caseIds) {
@@ -103,7 +103,7 @@ public class MedicalAgentQueuePrioritizationWorkflowServiceImpl implements Medic
                 Map<String, Object> metadata = new HashMap<>();
                 metadata.put("skills", List.of("case-analyzer"));
                 metadata.put("hybridApproach", true);
-                metadata.put("medgemmaUsed", true);
+                metadata.put("llmUsed", true);
                 metadata.put("deterministicOrder", true);
                 return new MedicalAgentService.AgentResponse(response, metadata);
             }

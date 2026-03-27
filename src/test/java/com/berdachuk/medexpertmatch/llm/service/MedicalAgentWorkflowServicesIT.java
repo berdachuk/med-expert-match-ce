@@ -113,7 +113,7 @@ class MedicalAgentWorkflowServicesIT extends BaseIntegrationTest {
         assertNotNull(response.response());
         assertFalse(response.response().isBlank());
         assertEquals(Boolean.TRUE, response.metadata().get("hybridApproach"));
-        assertEquals(Boolean.TRUE, response.metadata().get("medgemmaUsed"));
+        assertEquals(Boolean.TRUE, response.metadata().get("llmUsed"));
     }
 
     @Test
@@ -142,7 +142,7 @@ class MedicalAgentWorkflowServicesIT extends BaseIntegrationTest {
         assertNotNull(response.response());
         assertFalse(response.response().isBlank());
         assertEquals(Boolean.TRUE, response.metadata().get("hybridApproach"));
-        assertEquals(Boolean.TRUE, response.metadata().get("medgemmaUsed"));
+        assertEquals(Boolean.TRUE, response.metadata().get("llmUsed"));
     }
 
     @Test

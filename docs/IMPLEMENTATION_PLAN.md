@@ -1,14 +1,14 @@
 # MedExpertMatch Implementation Plan
 
-**Last Updated:** 2026-01-22  
+**Last Updated:** 2026-03-27  
 **Version:** 1.1  
-**Status:** MVP Complete ✅
+**Status:** MVP complete
 
 ## Document Purpose
 
 This implementation plan provides a detailed, phase-by-phase guide for implementing MedExpertMatch based on the Product
 Requirements Document (PRD), Architecture, and Use Cases. The plan follows Test-Driven Development (TDD) principles and
-uses patterns from the expert-match codebase as reference.
+uses patterns established in this repository. This document is written in English only.
 
 **Related Documentation**:
 
@@ -51,7 +51,7 @@ The project requires Docker containers for:
 
 #### 1.1.1 Initialize Spring Boot Project
 
-**Reference**: See expert-match `pom.xml` structure
+**Reference**: See the repository root `pom.xml` structure
 
 **Tasks**:
 
@@ -88,7 +88,7 @@ com.berdachuk.medexpertmatch/
 
 #### 1.1.2 Docker Container Setup
 
-**Reference**: See expert-match `docker/Dockerfile.dev`, `docker/Dockerfile.test`, `docker-compose.dev.yml`
+**Reference**: See `docker/Dockerfile.dev`, `docker/Dockerfile.test`, and `docker-compose.dev.yml` in this repository
 
 **Create Docker Files**:
 
@@ -267,7 +267,7 @@ echo "  mvn test -Dtest=*IT"
 
 #### 1.1.3 Database Schema Design
 
-**Reference**: See expert-match `src/main/resources/db/migration/V1__initial_schema.sql`
+**Reference**: See `src/main/resources/db/migration/V1__initial_schema.sql`
 
 **Tasks**:
 
@@ -293,7 +293,7 @@ echo "  mvn test -Dtest=*IT"
 
 ### 1.2 Domain Models
 
-**Reference**: See expert-match `src/main/java/com/berdachuk/expertmatch/employee/domain/Employee.java`
+**Reference**: See `src/main/java/com/berdachuk/medexpertmatch/doctor/domain/Doctor.java` for a comparable domain type
 
 #### 1.2.1 Doctor Domain Model
 
@@ -380,7 +380,7 @@ public record Doctor(
 
 ### 1.3 Repository Layer
 
-**Reference**: See expert-match `src/main/java/com/berdachuk/expertmatch/employee/repository/EmployeeRepository.java`
+**Reference**: See `src/main/java/com/berdachuk/medexpertmatch/doctor/repository/DoctorRepository.java`
 and implementation
 
 #### 1.3.1 DoctorRepository
@@ -456,7 +456,7 @@ public interface DoctorRepository {
 
 ### 1.4 Base Integration Test Setup
 
-**Reference**: See expert-match `src/test/java/com/berdachuk/expertmatch/integration/BaseIntegrationTest.java`
+**Reference**: See `src/test/java/com/berdachuk/medexpertmatch/integration/BaseIntegrationTest.java`
 
 **Location**: `src/test/java/com/berdachuk/medexpertmatch/integration/BaseIntegrationTest.java`
 
@@ -519,7 +519,7 @@ public abstract class BaseIntegrationTest {
 
 ### 2.1 CaseAnalysisService
 
-**Reference**: See expert-match query processing and entity extraction patterns
+**Reference**: See query processing and entity extraction patterns under `com.berdachuk.medexpertmatch.caseanalysis` and related modules
 
 **Location**: `src/main/java/com/berdachuk/medexpertmatch/query/service/CaseAnalysisService.java`
 
@@ -613,7 +613,7 @@ public abstract class BaseIntegrationTest {
 
 ### 3.1 Agent Skills Setup
 
-**Reference**: See expert-match `src/main/resources/skills/` directory structure
+**Reference**: See `src/main/resources/skills/` directory structure
 and [Architecture - Agent Skills](ARCHITECTURE.md#agent-skills)
 
 **Tasks**:
@@ -633,7 +633,7 @@ and [Architecture - Agent Skills](ARCHITECTURE.md#agent-skills)
 
 ### 3.2 Java Tool Methods
 
-**Reference**: See expert-match `@Tool` method patterns
+**Reference**: See `@Tool` method patterns in `com.berdachuk.medexpertmatch.llm.tools`
 
 **Tasks**:
 
@@ -701,10 +701,10 @@ details
 
 ### 4.1 TestDataGeneratorService
 
-**Reference**: See expert-match `src/main/java/com/berdachuk/expertmatch/ingestion/service/TestDataGenerator.java`
+**Reference**: See `src/main/java/com/berdachuk/medexpertmatch/ingestion/service/SyntheticDataGenerator.java`
 and [FHIR R5 specification (v5.0.0)](https://www.hl7.org/fhir/)
 
-**Location**: `src/main/java/com/berdachuk/medexpertmatch/ingestion/service/TestDataGenerator.java`
+**Location**: `src/main/java/com/berdachuk/medexpertmatch/ingestion/service/SyntheticDataGenerator.java`
 
 **FHIR Compliance**: All test data must be compatible with [FHIR R5 specification (v5.0.0)](https://www.hl7.org/fhir/)
 to ensure interoperability and realistic testing scenarios.
@@ -884,7 +884,7 @@ Check [HAPI FHIR releases](https://github.com/hapifhir/hapi-fhir/releases) for l
 
 ### 5.1 Thymeleaf Setup
 
-**Reference**: See expert-match Thymeleaf implementation patterns and [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md)
+**Reference**: See Thymeleaf implementation patterns under `src/main/resources/templates/` and [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md)
 for wireframe mockups
 
 **Tasks**:
@@ -1092,12 +1092,12 @@ mvn test -Dtest=*IT
 - **Demo**: Use separate demo database container
 - **Test Data Generator**: Use Datafaker for realistic synthetic data
 
-## Code Examples from expert-match
+## Code examples in this repository
 
-### Repository Pattern
+### Repository pattern
 
 **Reference**:
-`expert-match/src/main/java/com/berdachuk/expertmatch/employee/repository/impl/EmployeeRepositoryImpl.java`
+`src/main/java/com/berdachuk/medexpertmatch/doctor/repository/impl/DoctorRepositoryImpl.java`
 
 **Pattern**:
 
@@ -1106,9 +1106,9 @@ mvn test -Dtest=*IT
 - RowMapper in `repository/impl/jdbc/` package
 - SQL files in `src/main/resources/sql/`
 
-### Service Pattern
+### Service pattern
 
-**Reference**: `expert-match/src/main/java/com/berdachuk/expertmatch/employee/service/impl/EmployeeServiceImpl.java`
+**Reference**: `src/main/java/com/berdachuk/medexpertmatch/retrieval/service/impl/MatchingServiceImpl.java` (or another `service/impl` class in this codebase)
 
 **Pattern**:
 
@@ -1117,9 +1117,9 @@ mvn test -Dtest=*IT
 - Use `@Transactional` on service methods
 - Inject repository interfaces, not implementations
 
-### Test Data Generator Pattern
+### Synthetic data generator pattern
 
-**Reference**: `expert-match/src/main/java/com/berdachuk/expertmatch/ingestion/service/TestDataGenerator.java`
+**Reference**: `src/main/java/com/berdachuk/medexpertmatch/ingestion/service/SyntheticDataGenerator.java`
 
 **Pattern**:
 

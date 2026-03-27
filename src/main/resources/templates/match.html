@@ -569,9 +569,9 @@
             if (!document.getElementById('matchProgressBar')) return;
 
             if (!hasProgressPct) {
-                if (message.includes('Step 1: MedGemma case analysis')) {
+                if (message.includes('Step 1: LLM case analysis')) {
                     progress = 20;
-                    statusText = 'Analyzing case with MedGemma...';
+                    statusText = 'Analyzing case with LLM...';
                 } else if (message.includes('Step 2: FunctionGemma tool orchestration')) {
                     progress = 40;
                     statusText = 'Generating tool call plan...';

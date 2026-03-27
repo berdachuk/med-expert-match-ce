@@ -40,7 +40,7 @@ public class MedicalAgentRoutingWorkflowServiceImpl implements MedicalAgentRouti
         logStreamService.setCurrentSessionId(sessionId);
 
         try {
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma routing analysis", "Analyzing case for routing");
+            logStreamService.sendLog(sessionId, "INFO", "LLM routing analysis", "Analyzing case for routing");
             String caseAnalysis = medicalAgentLlmSupportService.analyzeCaseWithMedGemma(caseId);
 
             logStreamService.sendLog(sessionId, "INFO", "Routing tools", "Calling match_facilities_for_case");
@@ -67,7 +67,7 @@ public class MedicalAgentRoutingWorkflowServiceImpl implements MedicalAgentRouti
             }
             String toolResults = raw.toString();
 
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma routing interpretation", "Summarizing routing results");
+            logStreamService.sendLog(sessionId, "INFO", "LLM routing interpretation", "Summarizing routing results");
             String response = medicalAgentLlmSupportService.summarizeRoutingResults(toolResults, caseAnalysis);
 
             logStreamService.logCompletion(sessionId, "Case routing", "Successfully completed facility routing");
@@ -76,7 +76,7 @@ public class MedicalAgentRoutingWorkflowServiceImpl implements MedicalAgentRouti
             metadata.put("caseId", caseId);
             metadata.put("skills", List.of("case-analyzer", "routing-planner"));
             metadata.put("hybridApproach", true);
-            metadata.put("medgemmaUsed", true);
+            metadata.put("llmUsed", true);
             metadata.put("facilityMatchCount", facilityMatches != null ? facilityMatches.size() : 0);
 
             return new MedicalAgentService.AgentResponse(response, metadata);

@@ -53,7 +53,7 @@ public class MedicalAgentPromptSupportServiceImpl implements MedicalAgentPromptS
     public String buildPrompt(List<String> skills, String userRequest, Map<String, Object> requestParams) {
         StringBuilder promptBuilder = new StringBuilder();
         promptBuilder.append("You are an expert matching assistant. Your role is to match healthcare specialists to medical cases.\n\n");
-        promptBuilder.append("IMPORTANT: This is NOT a diagnostic system. Medical analysis is handled by MedGemma.\n");
+        promptBuilder.append("IMPORTANT: This is NOT a diagnostic system. Medical analysis is handled by the LLM.\n");
         promptBuilder.append("Your task is to orchestrate tool calls to find matching doctors, not to provide medical diagnosis.\n\n");
         promptBuilder.append("Use the following guidance for expert matching:\n\n");
 

@@ -58,10 +58,10 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
             logStreamService.logMatchDoctorsStep(sessionId, "Starting match doctors operation", "Case ID: " + caseId);
             logStreamService.sendProgress(sessionId, 5);
 
-            logStreamService.sendLog(sessionId, "INFO", "Step 1: MedGemma case analysis", "Analyzing case with MedGemma");
+            logStreamService.sendLog(sessionId, "INFO", "Step 1: LLM case analysis", "Analyzing case with LLM");
             logStreamService.sendProgress(sessionId, 15);
             String caseAnalysisJson = medicalAgentLlmSupportService.analyzeCaseWithMedGemma(caseId);
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma analysis complete", "Case analysis received from MedGemma");
+            logStreamService.sendLog(sessionId, "INFO", "LLM analysis complete", "Case analysis received from LLM");
             logStreamService.sendProgress(sessionId, 35);
 
             logStreamService.sendProgress(sessionId, 45);
@@ -71,10 +71,10 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
             logStreamService.sendProgress(sessionId, 55);
 
             Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
-            logStreamService.sendLog(sessionId, "INFO", "Step 3: MedGemma result interpretation", "Interpreting tool results with MedGemma");
+            logStreamService.sendLog(sessionId, "INFO", "Step 3: LLM result interpretation", "Interpreting tool results with LLM");
             logStreamService.sendProgress(sessionId, 65);
             response = medicalAgentLlmSupportService.interpretResultsWithMedGemma(jsonResponse, caseAnalysisJson, patientAge);
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma interpretation complete", "Final response generated");
+            logStreamService.sendLog(sessionId, "INFO", "LLM interpretation complete", "Final response generated");
             logStreamService.sendProgress(sessionId, 85);
         } catch (Exception e) {
             log.error("Error in matchDoctors", e);
@@ -92,7 +92,7 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
         metadata.put("caseId", caseId);
         metadata.put("skills", List.of("case-analyzer", "doctor-matcher"));
         metadata.put("hybridApproach", true);
-        metadata.put("medgemmaUsed", true);
+        metadata.put("llmUsed", true);
         metadata.put("toolLlmUsed", false);
 
         logStreamService.sendProgress(sessionId, 100);

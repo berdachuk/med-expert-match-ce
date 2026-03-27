@@ -101,14 +101,14 @@ Seven medical-specific Agent Skills:
 
 ## Important Disclaimers
 
-⚠️ **MedGemma is NOT a Medical Device**:
+**Warning: MedGemma is not a medical device**
 
 - Models are not certified for clinical use
 - Additional validation required for real-world deployment
 - Not intended for diagnostic decisions without human-in-the-loop
 - All applications are for research and educational purposes
 
-⚠️ **HIPAA Compliance**:
+**HIPAA compliance**
 
 - All patient data must be anonymized
 - Local deployment option for privacy

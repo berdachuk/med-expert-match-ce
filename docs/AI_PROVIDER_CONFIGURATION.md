@@ -6,7 +6,7 @@
 
 MedExpertMatch supports **OpenAI-compatible providers only**. The application does not rely on Spring AI's default
 OpenAI auto-configuration. Instead, it creates its own beans in `SpringAIConfig` and reads values from
-`spring.ai.custom.*` properties mapped in [application.yml](/home/berdachuk/projects-ai/med-expert-match-ce/src/main/resources/application.yml).
+`spring.ai.custom.*` properties mapped in [application.yml](../src/main/resources/application.yml).
 
 Configuration flow:
 
@@ -18,10 +18,10 @@ Environment variables -> application.yml mapping -> SpringAIConfig -> Chat/Embed
 
 ### Checked-in local profile
 
-The committed [application-local.yml](/home/berdachuk/projects-ai/med-expert-match-ce/src/main/resources/application-local.yml) points to:
+The committed [application-local.yml](../src/main/resources/application-local.yml) points to:
 
 - PostgreSQL on `localhost:5434`
-- AI endpoint on `https://llm.berdachuk.com`
+- AI endpoint on the URL configured in that file (override with `CHAT_*` and related env vars for your deployment)
 - app port `8080`
 
 Use this mode when you want to run the project with repository defaults.
@@ -50,7 +50,7 @@ The repository `docker-compose.yml` runs:
 
 | Mode | App | DB | AI |
 |------|-----|----|----|
-| `local` profile | `http://localhost:8080` | `localhost:5434` | `https://llm.berdachuk.com` by default |
+| `local` profile | `http://localhost:8080` | `localhost:5434` | values in `application-local.yml` (override by env) |
 | self-hosted local AI | `http://localhost:8080` | `localhost:5434` | your OpenAI-compatible endpoint |
 | Docker Compose | `http://localhost:8094` | `localhost:5433` | values from `docker-compose.yml` |
 | tests | no public app URL | Testcontainers | mocked/test beans |
@@ -129,7 +129,7 @@ Valid examples:
 - `https://api.openai.com`
 - `https://your-resource.openai.azure.com`
 - `http://127.0.0.1:1234`
-- `https://llm.berdachuk.com`
+- your deployed OpenAI-compatible gateway URL
 
 Vertex AI Model Garden is the main exception and may require `/v1` in the base URL.
 

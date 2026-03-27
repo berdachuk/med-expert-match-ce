@@ -107,8 +107,8 @@ public class MedicalAgentConfiguration {
      * This ChatClient includes SkillsTool for skill discovery, FileSystemTools
      * for reading reference materials, and MedicalAgentTools for Java @Tool methods.
      * <p>
-     * Uses toolCallingChatModel (FunctionGemma) instead of primaryChatModel (MedGemma)
-     * because FunctionGemma supports tool calling while MedGemma doesn't.
+     * Uses toolCallingChatModel (FunctionGemma) instead of primaryChatModel (LLM)
+     * because FunctionGemma supports tool calling while the primary chat model often does not.
      * <p>
      * This bean is marked as @Primary when Agent Skills are enabled,
      * ensuring that MedicalAgentService uses the ChatClient with tools.

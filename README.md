@@ -13,13 +13,34 @@ This project is being developed for the MedGemma Impact Challenge - a hackathon 
 
 **Prerequisites:** Java 21, Maven 3.9+, Docker and Docker Compose.
 
+### Windows 11, WSL, and integration tests
+
+- **Integration tests** (`mvn verify`) use Testcontainers and **Docker**. On Windows, Maven activates a profile that runs
+  `scripts/ensure-test-container.ps1` in the **pre-integration-test** phase (no Git Bash required). The test image
+  `medexpertmatch-postgres-test:latest` is built automatically if missing.
+- **Using Docker only in WSL** (Docker Engine in Ubuntu, no Docker Desktop): either run the build **inside WSL** (paths
+  use `/mnt/c/...` for the Windows project on `C:`), or run Maven on Windows and point Docker at the WSL daemon:
+  1. In WSL, configure the Docker daemon to listen on TCP (e.g. `/etc/docker/daemon.json` with `hosts` including
+     `tcp://0.0.0.0:2375`) and restart Docker; **secure this host** if it is not localhost-only.
+  2. On Windows: `$env:DOCKER_HOST = "tcp://localhost:2375"` (WSL2 forwards `localhost` to WSL). Testcontainers and
+     `docker build` both honor `DOCKER_HOST`.
+- **One-liner from PowerShell** (replace the `cd` path with your clone location on the `C:` drive; under WSL it is
+  usually `/mnt/c/Users/<YourWindowsUser>/<path>/med-expert-match-ce`):
+
+  ```powershell
+  wsl -e bash -c "cd /mnt/c/path/to/med-expert-match-ce && (docker info >/dev/null 2>&1 || sudo service docker start) && mvn verify"
+  ```
+
+- **Shell scripts** under `scripts/*.sh` are Bash. On Windows you can use **Git Bash**, **WSL**, or the PowerShell
+  equivalents (`build-test-container.ps1`, `ensure-test-container.ps1`).
+
 ### Runtime modes
 
 MedExpertMatch uses **OpenAI-compatible APIs only**. There are two supported ways to run the app locally:
 
-- **Default `local` profile**: uses the checked-in [application-local.yml](/home/berdachuk/projects-ai/med-expert-match-ce/src/main/resources/application-local.yml) values, which point to:
+- **Default `local` profile**: uses the checked-in [application-local.yml](src/main/resources/application-local.yml) values, which point to:
   - PostgreSQL on `localhost:5434`
-  - AI endpoints on `https://llm.berdachuk.com`
+  - AI endpoints as defined in that file (override with `CHAT_*`, `EMBEDDING_*`, and related environment variables)
 - **Self-hosted local AI**: keep the same app profile, but override `CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, and
   `TOOL_CALLING_*` environment variables to your own OpenAI-compatible server such as LM Studio, LiteLLM, vLLM, or a
   compatible Ollama endpoint.
@@ -233,6 +254,9 @@ MedExpertMatch uses a modern, scalable architecture:
 
 ## Documentation
 
+All technical documentation in this repository is written in **English** (README, `docs/`, OpenAPI descriptions, and
+inline technical comments in code).
+
 Full documentation is available at: [docs/index.md](docs/index.md)
 
 - **With Docker Compose**: Documentation is served at http://localhost:8094/docs (see "Deploy full stack with Docker Compose"
@@ -252,14 +276,14 @@ Full documentation is available at: [docs/index.md](docs/index.md)
 
 ## Important Disclaimers
 
-⚠️ **MedGemma is NOT a Medical Device**:
+**Warning: MedGemma is not a medical device**
 
 - Models are not certified for clinical use
 - Additional validation required for real-world deployment
 - Not intended for diagnostic decisions without human-in-the-loop
 - All applications are for research and educational purposes
 
-⚠️ **HIPAA Compliance**:
+**HIPAA compliance**
 
 - All patient data must be anonymized
 - Local deployment option for privacy
@@ -289,4 +313,4 @@ Copyright (c) 2025 Siarhei Berdachuk
 
 ---
 
-*Last updated: 2026-02-08*
+*Last updated: 2026-03-27*

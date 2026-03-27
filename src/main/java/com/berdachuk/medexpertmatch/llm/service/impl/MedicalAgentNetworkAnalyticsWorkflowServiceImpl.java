@@ -74,7 +74,7 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
             raw.append("## Aggregate metrics (condition)\n").append(conditionMetrics).append("\n");
             raw.append("## Aggregate metrics (doctor)\n").append(doctorMetrics).append("\n");
 
-            logStreamService.sendLog(sessionId, "INFO", "MedGemma", "Summarizing results for user");
+            logStreamService.sendLog(sessionId, "INFO", "LLM", "Summarizing results for user");
             String response = medicalAgentLlmSupportService.summarizeNetworkAnalyticsResults(raw.toString());
 
             logStreamService.logCompletion(sessionId, "Network analytics", "Successfully completed network analytics");

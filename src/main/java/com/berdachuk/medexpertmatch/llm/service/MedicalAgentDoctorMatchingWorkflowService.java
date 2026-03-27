@@ -8,7 +8,7 @@ import java.util.Map;
 public interface MedicalAgentDoctorMatchingWorkflowService {
 
     /**
-     * Matches doctors to a case using MedGemma analysis and retrieval tools.
+     * Matches doctors to a case using LLM analysis and retrieval tools.
      *
      * @param caseId The medical case ID
      * @param request Request parameters

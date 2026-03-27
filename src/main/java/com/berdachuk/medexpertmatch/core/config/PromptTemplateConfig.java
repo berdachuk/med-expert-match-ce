@@ -160,7 +160,7 @@ public class PromptTemplateConfig {
     }
 
     /**
-     * Creates a PromptTemplate for system instructions in MedGemma case analysis.
+     * Creates a PromptTemplate for system instructions in LLM case analysis.
      * Contains role definition, disclaimer, task, response format, and output limits.
      */
     @Bean
@@ -173,7 +173,7 @@ public class PromptTemplateConfig {
     }
 
     /**
-     * Creates a PromptTemplate for user data in MedGemma case analysis.
+     * Creates a PromptTemplate for user data in LLM case analysis.
      * Contains case-specific variables (case ID, chief complaint, symptoms, additional notes).
      */
     @Bean
@@ -186,7 +186,7 @@ public class PromptTemplateConfig {
     }
 
     /**
-     * Creates a PromptTemplate for system instructions in MedGemma result interpretation.
+     * Creates a PromptTemplate for system instructions in LLM result interpretation.
      * Contains role definition, disclaimer, task, response format, and output limits.
      */
     @Bean
@@ -199,7 +199,7 @@ public class PromptTemplateConfig {
     }
 
     /**
-     * Creates a PromptTemplate for user data in MedGemma result interpretation.
+     * Creates a PromptTemplate for user data in LLM result interpretation.
      * Contains case analysis and tool execution results.
      */
     @Bean
