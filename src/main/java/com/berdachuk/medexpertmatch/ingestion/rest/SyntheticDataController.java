@@ -322,7 +322,7 @@ public class SyntheticDataController {
     public ResponseEntity<List<Map<String, Object>>> getAvailableSizes() {
         log.info("GET /api/v1/synthetic-data/sizes");
 
-        Map<String, com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerator.DataSizeConfig> sizes =
+        Map<String, com.berdachuk.medexpertmatch.ingestion.service.SyntheticDataGenerationService.DataSizeConfig> sizes =
                 syntheticDataGenerator.getAvailableSizes();
 
         List<Map<String, Object>> response = sizes.values().stream()

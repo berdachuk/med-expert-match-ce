@@ -1,13 +1,11 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.lang.reflect.Method;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,135 +15,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests the stripLlmReasoning method to ensure LLM internal reasoning is properly removed.
  */
 class MedicalAgentServiceImplTest {
-
-    private Method stripLlmReasoningMethod;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        // Get the private stripLlmReasoning method using reflection
-        stripLlmReasoningMethod = MedicalAgentServiceImpl.class.getDeclaredMethod("stripLlmReasoning", String.class);
-        stripLlmReasoningMethod.setAccessible(true);
-    }
-
-    /**
-     * Helper method to invoke the private stripLlmReasoning method.
-     * Since it's a private instance method, we pass null as the instance
-     * because the method doesn't use any instance fields.
-     */
-    private String invokeStripLlmReasoning(String input) {
-        try {
-            // The method doesn't use any instance fields, so we can pass null
-            // But we need to handle the case where the method might check for null instance
-            // Let's create a mock instance using default constructor or use null
-            return (String) stripLlmReasoningMethod.invoke(null, input);
-        } catch (Exception e) {
-            // If invocation with null fails, the method might need an instance
-            // In that case, we'll test the logic directly
-            return stripLlmReasoningLogic(input);
-        }
-    }
-
-    /**
-     * Direct implementation of stripLlmReasoning logic for testing.
-     * This mirrors the actual implementation to test the logic independently.
-     */
     private String stripLlmReasoningLogic(String response) {
-        if (response == null || response.isBlank()) {
-            return response;
-        }
-        String cleaned = response.trim();
-        
-        // Remove special LLM markers like <unused94>, <unused95>, etc.
-        cleaned = cleaned.replaceAll("<unused\\d+>", "");
-        
-        // Common reasoning section headers that LLMs output before the actual response
-        String[] reasoningHeaders = {
-            "Understand the Goal:", "Analyze the", "Step 1:", "Step 2:", "Step 3:",
-            "Thought:", "Thinking:", "Reasoning:", "Analysis:", "Let me think",
-            "Let's analyze", "First, I'll", "I need to", "The task is", "Key Information"
-        };
-        
-        // Check if response starts with a reasoning header
-        for (String header : reasoningHeaders) {
-            if (cleaned.toLowerCase().startsWith(header.toLowerCase())) {
-                // Find where the actual response starts (after the reasoning section)
-                // Look for double newline followed by the actual content
-                int doubleNewlineIdx = cleaned.indexOf("\n\n");
-                if (doubleNewlineIdx > 0 && doubleNewlineIdx < cleaned.length() - 2) {
-                    String afterReasoning = cleaned.substring(doubleNewlineIdx + 2).trim();
-                    // Check if there's more reasoning after the first double newline
-                    boolean foundActualContent = false;
-                    for (String h : reasoningHeaders) {
-                        if (afterReasoning.toLowerCase().startsWith(h.toLowerCase())) {
-                            // More reasoning found, skip it too
-                            int nextDoubleNewline = afterReasoning.indexOf("\n\n");
-                            if (nextDoubleNewline > 0) {
-                                afterReasoning = afterReasoning.substring(nextDoubleNewline + 2).trim();
-                            }
-                            break;
-                        }
-                    }
-                    cleaned = afterReasoning;
-                    foundActualContent = true;
-                    break;
-                }
-            }
-        }
-        
-        // Check if response starts with "thought" (case-insensitive)
-        if (cleaned.toLowerCase().startsWith("thought")) {
-            int doubleNewlineIdx = cleaned.indexOf("\n\n");
-            if (doubleNewlineIdx > 0 && doubleNewlineIdx < cleaned.length() - 2) {
-                cleaned = cleaned.substring(doubleNewlineIdx + 2).trim();
-            } else {
-                // Try to find where reasoning ends by looking for common response start patterns
-                String[] patterns = {
-                    "Based on the routing", "The top", "According to", "In summary",
-                    "```json", "```", "{\"", "{\"requiredSpecialty"
-                };
-                for (String pattern : patterns) {
-                    int idx = cleaned.indexOf(pattern);
-                    if (idx > 0) {
-                        cleaned = cleaned.substring(idx).trim();
-                        break;
-                    }
-                }
-            }
-        }
-        
-        // Remove any remaining "thought" markers at the start
-        while (cleaned.toLowerCase().startsWith("thought")) {
-            int newlineIdx = cleaned.indexOf('\n');
-            if (newlineIdx > 0) {
-                cleaned = cleaned.substring(newlineIdx + 1).trim();
-            } else {
-                break;
-            }
-        }
-        
-        // If response still contains JSON code blocks, extract just the content
-        if (cleaned.contains("```json")) {
-            int jsonStart = cleaned.indexOf("```json");
-            int jsonEnd = cleaned.lastIndexOf("```");
-            if (jsonStart >= 0 && jsonEnd > jsonStart + 7) {
-                cleaned = cleaned.substring(jsonStart + 7, jsonEnd).trim();
-            }
-        } else if (cleaned.contains("```")) {
-            // Handle generic code blocks
-            int codeStart = cleaned.indexOf("```");
-            int codeEnd = cleaned.lastIndexOf("```");
-            if (codeStart >= 0 && codeEnd > codeStart + 3) {
-                String content = cleaned.substring(codeStart + 3, codeEnd).trim();
-                // Skip language identifier if present on first line
-                int firstNewline = content.indexOf('\n');
-                if (firstNewline > 0 && firstNewline < 20) {
-                    content = content.substring(firstNewline + 1).trim();
-                }
-                cleaned = content;
-            }
-        }
-        
-        return cleaned;
+        return LlmResponseSanitizer.stripLlmReasoning(response);
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.doctor.domain.Doctor;
 import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.facility.domain.Facility;
 import com.berdachuk.medexpertmatch.facility.repository.FacilityRepository;
+import com.berdachuk.medexpertmatch.graph.service.GraphService;
 import com.berdachuk.medexpertmatch.graph.service.MedicalGraphBuilderService;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
 import com.berdachuk.medexpertmatch.medicalcase.domain.CaseType;
@@ -45,6 +46,9 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Autowired
     private MedicalGraphBuilderService graphBuilderService;
+
+    @Autowired
+    private GraphService graphService;
 
     private String testCaseId;
     private String testDoctorId;
@@ -122,13 +126,8 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
         );
         clinicalExperienceRepository.insert(experience);
 
-        // Build graph for graph-based tools
-        try {
-            graphBuilderService.buildGraph();
-        } catch (Exception e) {
-            // Graph building might fail if graph already exists or AGE is not available
-            // This is acceptable for tests - graph-based tools will handle gracefully
-        }
+        graphBuilderService.buildGraph();
+        assertTrue(graphService.graphExists(), "Graph should exist for graph-based tool tests");
     }
 
     // ============================================
@@ -167,16 +166,11 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
         List<String> results = medicalAgentTools.graph_query_candidate_centers(conditionCode, 10);
 
         assertNotNull(results);
-        // Results might be empty if graph is not populated, but should not throw exception
-        // If graph is populated, should contain facility information
-        // If graph query fails due to Apache AGE compatibility, may return error message
-        if (!results.isEmpty()) {
-            assertTrue(results.get(0).contains("Facility ID") ||
-                    results.get(0).contains("not available") ||
-                    results.get(0).contains("Error querying") ||
-                    results.get(0).contains("Error") ||
-                    results.get(0).contains("No facilities found"));
-        }
+        assertFalse(results.isEmpty(), "Graph query should return at least one facility");
+        assertTrue(results.stream().noneMatch(result -> result.startsWith("Error")),
+                "Graph query should not return error-like responses when graph is available");
+        assertTrue(results.stream().allMatch(result -> result.contains("Facility ID:") && result.contains("Cases:")),
+                "Graph query should return structured facility graph results");
     }
 
     @Test
@@ -196,16 +190,15 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
         List<String> results = medicalAgentTools.graph_query_top_experts(conditionCode, 10);
 
         assertNotNull(results);
-        // Results might be empty if graph is not populated, but should not throw exception
-        // If graph is populated, should contain doctor information
-        // If graph query fails due to Apache AGE compatibility, may return error message
-        if (!results.isEmpty()) {
-            assertTrue(results.get(0).contains("Doctor ID") ||
-                    results.get(0).contains("not available") ||
-                    results.get(0).contains("No experts found") ||
-                    results.get(0).contains("Error querying") ||
-                    results.get(0).contains("Error"));
-        }
+        assertFalse(results.isEmpty(), "Graph query should return at least one expert");
+        assertTrue(results.stream().noneMatch(result -> result.startsWith("Error")),
+                "Graph query should not return error-like responses when graph is available");
+        assertTrue(results.stream().allMatch(result ->
+                        result.contains("Doctor ID:") &&
+                                result.contains("Cases:") &&
+                                result.contains("Avg Rating:") &&
+                                result.contains("Success Rate:")),
+                "Graph query should return structured expert graph results");
     }
 
     @Test

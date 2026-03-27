@@ -87,11 +87,12 @@ This plan focuses on:
 
 ### Checklist
 
-- [ ] Split `MedicalAgentServiceImpl` into smaller workflow-oriented services
-- [ ] Extract result formatting and prompt orchestration helpers from `MedicalAgentServiceImpl`
-- [ ] Split `SyntheticDataGenerator` into bootstrap, generation, enrichment, and graph rebuild responsibilities
+- [x] Split `MedicalAgentServiceImpl` into smaller workflow-oriented services
+- [x] Extract result formatting and prompt orchestration helpers from `MedicalAgentServiceImpl`
+ - [ ] Split `SyntheticDataGenerator` into bootstrap, generation, enrichment, and graph rebuild responsibilities
+   Progress: bootstrap catalog loading, generation orchestration, and post-processing/graph steps are now handled by dedicated helpers; `SyntheticDataGenerator` is a thin façade
 - [ ] Reduce constructor breadth where it signals mixed responsibilities
-- [ ] Add focused tests around each extracted service
+- [x] Add focused tests around each extracted service
 
 ## Phase 5: Test Hardening
 
@@ -102,7 +103,7 @@ This plan focuses on:
 
 ### Checklist
 
-- [ ] Tighten graph-based integration tests so they do not silently accept generic error responses
+- [x] Tighten graph-based integration tests so they do not silently accept generic error responses
 - [ ] Add startup smoke tests for main profiles and critical beans
 - [ ] Add tests for configuration property binding and validation
 - [ ] Add tests for documentation-sensitive paths where behavior depends on profile configuration
