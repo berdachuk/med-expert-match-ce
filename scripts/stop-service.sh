@@ -1,9 +1,13 @@
 #!/bin/bash
 
-# Stop MedExpertMatch service
+# Stop MedExpertMatch service and MkDocs (mkdocs serve) started by scripts/start-mkdocs.sh
 # Usage: ./scripts/stop-service.sh [remote_host] [remote_user]
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="$(cd "$SCRIPT_DIR/.." && pwd)"
+REMOTE_PROJECT_PATH="${REMOTE_PROJECT_PATH:-/home/berdachuk/projects-ai/expert-match-root/med-expert-match}"
 
 if [ "$1" == "remote" ]; then
     REMOTE_HOST="192.168.0.87"
@@ -18,7 +22,6 @@ else
     REMOTE_USER="berdachuk"
     RUN_REMOTE=false
 fi
-PROJECT_PATH="/home/berdachuk/projects-ai/expert-match-root/med-expert-match"
 
 # Colors for output
 RED='\033[0;31m'
@@ -35,7 +38,7 @@ if [ "$RUN_REMOTE" == "true" ]; then
     
     ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << EOF
         set -e
-        cd ${PROJECT_PATH}
+        cd ${REMOTE_PROJECT_PATH}
         
         echo "Checking for running service..."
         if pgrep -f "med-expert-match.*spring-boot:run" > /dev/null; then
@@ -58,6 +61,13 @@ if [ "$RUN_REMOTE" == "true" ]; then
             fi
         else
             echo -e "${YELLOW}No running service found${NC}"
+        fi
+        
+        if pgrep -f "mkdocs serve" > /dev/null; then
+            echo "Stopping MkDocs..."
+            pkill -f "mkdocs serve" || true
+            sleep 1
+            echo -e "${GREEN}MkDocs stopped${NC}"
         fi
 EOF
 else
@@ -86,6 +96,13 @@ else
         fi
     else
         echo -e "${YELLOW}No running service found${NC}"
+    fi
+    
+    if pgrep -f "mkdocs serve" > /dev/null; then
+        echo "Stopping MkDocs..."
+        pkill -f "mkdocs serve" || true
+        sleep 1
+        echo -e "${GREEN}MkDocs stopped${NC}"
     fi
 fi
 

@@ -1,12 +1,16 @@
 #!/bin/bash
 
-# Restart MedExpertMatch service with local profile
-# This script stops any running instance and starts a new one
+# Restart MedExpertMatch service with local profile, then MkDocs (scripts/start-mkdocs.sh).
+# This script stops any running instance and starts a new one.
+# Project root is the parent of this scripts/ directory (override REMOTE_PROJECT_PATH for remote SSH).
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="$(cd "$SCRIPT_DIR/.." && pwd)"
+REMOTE_PROJECT_PATH="${REMOTE_PROJECT_PATH:-/home/berdachuk/projects-ai/expert-match-root/med-expert-match}"
+
 # Configuration
-PROJECT_PATH="/home/berdachuk/projects-ai/expert-match-root/med-expert-match"
 PROFILE="local"
 LOG_FILE="${PROJECT_PATH}/logs/med-expert-match.log"
 REMOTE_HOST="192.168.0.87"
@@ -24,52 +28,55 @@ echo ""
 # Check if running locally or remotely
 if [ "$1" == "remote" ]; then
     echo -e "${YELLOW}Restarting service remotely on ${REMOTE_HOST}...${NC}"
-    
+    REMOTE_LOG_FILE="${REMOTE_PROJECT_PATH}/logs/med-expert-match.log"
+
     ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << EOF
         set -e
-        cd ${PROJECT_PATH}
-        
+        cd ${REMOTE_PROJECT_PATH}
+
         # Stop existing service
         echo "Stopping existing service..."
         pkill -f "med-expert-match.*spring-boot:run" || echo "No running service found"
         sleep 2
-        
+
         # Verify service stopped
         if pgrep -f "med-expert-match.*spring-boot:run" > /dev/null; then
             echo -e "${RED}Failed to stop service${NC}"
             exit 1
         fi
-        
+
         # Create logs directory if it doesn't exist
-        mkdir -p ${PROJECT_PATH}/logs
-        
+        mkdir -p ${REMOTE_PROJECT_PATH}/logs
+
         # Start service
         echo "Starting service with profile: ${PROFILE}..."
-        cd ${PROJECT_PATH}
-        nohup mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=${PROFILE}" > ${LOG_FILE} 2>&1 &
+        cd ${REMOTE_PROJECT_PATH}
+        nohup mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=${PROFILE}" > ${REMOTE_LOG_FILE} 2>&1 &
         SERVICE_PID=\$!
         echo "Service started with PID: \$SERVICE_PID"
-        
+
         # Wait a moment for service to start
         sleep 5
-        
+
         # Check if service is running
         if ps -p \$SERVICE_PID > /dev/null; then
             echo -e "${GREEN}Service restarted successfully${NC}"
             echo "PID: \$SERVICE_PID"
-            echo "Log file: ${LOG_FILE}"
+            echo "Log file: ${REMOTE_LOG_FILE}"
             echo "Service URL: http://${REMOTE_HOST}:8094"
         else
             echo -e "${RED}Service failed to start${NC}"
-            echo "Check logs: tail -f ${LOG_FILE}"
+            echo "Check logs: tail -f ${REMOTE_LOG_FILE}"
             exit 1
         fi
+
+        MKDOCS_RESTART=1 bash ${REMOTE_PROJECT_PATH}/scripts/start-mkdocs.sh || true
 EOF
 else
     echo -e "${YELLOW}Restarting service locally...${NC}"
-    
+
     cd ${PROJECT_PATH}
-    
+
     # Stop existing service and free port 8094
     echo "Stopping existing service..."
     pkill -f "med-expert-match.*spring-boot:run" || echo "No running service found"
@@ -86,29 +93,25 @@ else
         echo -e "${RED}Port 8094 still in use${NC}"
         exit 1
     fi
-    
+
     # Create logs directory if it doesn't exist
     mkdir -p ${PROJECT_PATH}/logs
-    
+
     # Start service
     echo "Starting service with profile: ${PROFILE}..."
-    # Set correct application-specific database environment variables
-    # These override any incorrect SPRING_DATASOURCE_* variables
-    # Docker container uses medexpertmatch, not expertmatch
     export MEDEXPERTMATCH_DB_URL=jdbc:postgresql://localhost:5433/medexpertmatch
     export MEDEXPERTMATCH_DB_USERNAME=medexpertmatch
     export MEDEXPERTMATCH_DB_PASSWORD=medexpertmatch
-    # Unset any incorrect Spring Boot standard variables that might conflict
     unset SPRING_DATASOURCE_USERNAME
     unset SPRING_DATASOURCE_PASSWORD
     unset SPRING_DATASOURCE_URL
     nohup mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=${PROFILE}" > ${LOG_FILE} 2>&1 &
     SERVICE_PID=$!
     echo "Service started with PID: $SERVICE_PID"
-    
+
     # Wait a moment for service to start
     sleep 5
-    
+
     # Check if service is running
     if ps -p $SERVICE_PID > /dev/null; then
         echo -e "${GREEN}Service restarted successfully${NC}"
@@ -123,6 +126,9 @@ else
         echo "Check logs: tail -f ${LOG_FILE}"
         exit 1
     fi
+
+    echo ""
+    MKDOCS_RESTART=1 bash "${SCRIPT_DIR}/start-mkdocs.sh" || true
 fi
 
 echo ""

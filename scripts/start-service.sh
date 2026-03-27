@@ -1,9 +1,14 @@
 #!/bin/bash
 
-# Start MedExpertMatch service with local profile
+# Start MedExpertMatch service with local profile, then MkDocs (scripts/start-mkdocs.sh) when available.
 # Usage: ./scripts/start-service.sh [remote_host] [remote_user]
+# Remote repo path on SSH host: set REMOTE_PROJECT_PATH if different from default.
 
 set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_PATH="$(cd "$SCRIPT_DIR/.." && pwd)"
+REMOTE_PROJECT_PATH="${REMOTE_PROJECT_PATH:-/home/berdachuk/projects-ai/expert-match-root/med-expert-match}"
 
 # When first arg is "remote", use default host 192.168.0.87; otherwise host is first arg
 if [ "$1" == "remote" ]; then
@@ -19,9 +24,9 @@ else
     REMOTE_USER="berdachuk"
     RUN_REMOTE=false
 fi
-PROJECT_PATH="/home/berdachuk/projects-ai/expert-match-root/med-expert-match"
 PROFILE="local"
 LOG_FILE="${PROJECT_PATH}/logs/med-expert-match.log"
+REMOTE_LOG_FILE="${REMOTE_PROJECT_PATH}/logs/med-expert-match.log"
 SERVICE_PORT="8094"
 
 # Colors for output
@@ -42,7 +47,7 @@ if [ "$RUN_REMOTE" == "true" ]; then
     
     ssh -o StrictHostKeyChecking=no ${REMOTE_USER}@${REMOTE_HOST} << EOF
         set -e
-        cd ${PROJECT_PATH}
+        cd ${REMOTE_PROJECT_PATH}
         
         # Check if service is already running
         if pgrep -f "med-expert-match.*spring-boot:run" > /dev/null; then
@@ -51,15 +56,16 @@ if [ "$RUN_REMOTE" == "true" ]; then
                 echo "PID: \$pid"
                 ps -p \$pid -o pid,cmd,etime
             done
+            MKDOCS_RESTART=0 bash ${REMOTE_PROJECT_PATH}/scripts/start-mkdocs.sh || true
             exit 0
         fi
         
         # Create logs directory if it doesn't exist
-        mkdir -p ${PROJECT_PATH}/logs
+        mkdir -p ${REMOTE_PROJECT_PATH}/logs
         
         # Start service
         echo "Starting service with profile: ${PROFILE}..."
-        nohup mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=${PROFILE}" > ${LOG_FILE} 2>&1 &
+        nohup mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=${PROFILE}" > ${REMOTE_LOG_FILE} 2>&1 &
         SERVICE_PID=\$!
         echo "Service started with PID: \$SERVICE_PID"
         
@@ -70,17 +76,19 @@ if [ "$RUN_REMOTE" == "true" ]; then
         # Check if service is running
         if ps -p \$SERVICE_PID > /dev/null; then
             echo -e "${GREEN}Service is running (PID: \$SERVICE_PID)${NC}"
-            echo "Log file: ${LOG_FILE}"
+            echo "Log file: ${REMOTE_LOG_FILE}"
             echo "Service URL: http://${REMOTE_HOST}:${SERVICE_PORT}"
             echo ""
-            echo "To view logs: tail -f ${LOG_FILE}"
+            echo "To view logs: tail -f ${REMOTE_LOG_FILE}"
             echo "To check health: curl http://localhost:${SERVICE_PORT}/actuator/health"
         else
             echo -e "${RED}Service process not found - may have failed to start${NC}"
             echo "Last 30 lines of log:"
-            tail -30 ${LOG_FILE}
+            tail -30 ${REMOTE_LOG_FILE}
             exit 1
         fi
+        
+        MKDOCS_RESTART=0 bash ${REMOTE_PROJECT_PATH}/scripts/start-mkdocs.sh || true
 EOF
 else
     echo -e "${YELLOW}Starting service locally...${NC}"
@@ -94,6 +102,7 @@ else
             echo "PID: $pid"
             ps -p $pid -o pid,cmd,etime
         done
+        MKDOCS_RESTART=0 bash "${SCRIPT_DIR}/start-mkdocs.sh" || true
         exit 0
     fi
     
@@ -131,6 +140,9 @@ else
         tail -30 ${LOG_FILE}
         exit 1
     fi
+    
+    echo ""
+    MKDOCS_RESTART=0 bash "${SCRIPT_DIR}/start-mkdocs.sh" || true
 fi
 
 echo ""
