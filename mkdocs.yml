@@ -45,6 +45,11 @@ theme:
 plugins:
   - search:
       lang: en
+  # Browser presentations: Markdown + Reveal.js (see docs/presentations/)
+  - revealjs:
+      transition: slide
+      controls: true
+      progress: true
 
 # Extensions
 markdown_extensions:
@@ -79,6 +84,11 @@ markdown_extensions:
 # Navigation
 nav:
   - Home: index.md
+  - Presentations:
+      - Overview: presentations/index.md
+      - Video (1 slide): presentations/medexpertmatch-video-one-slide.md
+      - Sales pitch (~3 min): presentations/medexpertmatch-sales-3min.md
+      - Full talk (45 min, English): presentations/medexpertmatch-full-presentation.md
   - Overview:
       - Vision: VISION.md
       - Product Requirements: PRD.md

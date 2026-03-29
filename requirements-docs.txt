@@ -7,6 +7,12 @@ markdown-include==0.8.1
 # PlantUML support - using plantuml-markdown extension
 plantuml-markdown==3.11.1
 
+# Reveal.js slides inside MkDocs (browser presentations)
+mkdocs-revealjs==0.8.5
+
+# Normalize slide PNGs to exact 3:4 (scripts/normalize_presentation_images_to_3x4.py)
+Pillow>=10.0.0
+
 # Optional: For local PlantUML rendering (alternative to online server)
 # Requires Java to be installed separately
 # plantuml==1.2023.12

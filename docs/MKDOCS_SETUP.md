@@ -37,10 +37,16 @@ Configuration is in `mkdocs.yml`. Key features:
 See `mkdocs.yml` for navigation structure. Main sections:
 
 - Home
+- **Presentations** — Reveal.js slide decks in the browser (`docs/presentations/`, `mkdocs-revealjs` plugin)
 - Overview
 - Architecture
 - Development
 - Configuration
+
+### Browser presentations (`docs/presentations/`)
+
+Markdown files can embed a full-screen Reveal.js deck when front matter sets `revealjs.presentation: true`. See
+[presentations/index.md](presentations/index.md) for authoring notes and keyboard shortcuts (**F** / **O** / **S**).
 
 ## Related Documentation
 

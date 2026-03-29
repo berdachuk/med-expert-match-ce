@@ -53,6 +53,64 @@
     width: 100%;
 }
 
+/* Reveal decks: override Material 0.64rem table text (parent em does not apply). */
+.md-typeset .mkdocs-revealjs-wrapper table {
+    font-size: 1.2rem !important;
+}
+
+/*
+ * Reveal two-column slides: golden ratio phi ~1.618 between text (phi) and image (1).
+ * Share of row width: text phi/(1+phi) ~61.8%, image 1/(1+phi) ~38.2%.
+ */
+#mkdocs-revealjs .reveal-slide-row,
+.md-typeset .mkdocs-revealjs-wrapper .reveal-slide-row {
+    --phi: 1.6180339887;
+    display: flex !important;
+    align-items: flex-start;
+    gap: 1.5rem;
+    text-align: left;
+    padding: 0.75rem 1.25rem 0.75rem 1.5rem;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+#mkdocs-revealjs .reveal-slide-text-col,
+.md-typeset .mkdocs-revealjs-wrapper .reveal-slide-text-col {
+    flex: var(--phi) 1 0;
+    min-width: 0;
+    max-width: 100%;
+}
+
+#mkdocs-revealjs .reveal-slide-image-col,
+.md-typeset .mkdocs-revealjs-wrapper .reveal-slide-image-col {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    align-self: flex-start;
+    min-height: 0;
+}
+
+/* 3:4 portrait inside the golden-ratio image band (768x1024 assets) */
+#mkdocs-revealjs img.reveal-slide-image,
+.md-typeset .mkdocs-revealjs-wrapper img.reveal-slide-image {
+    aspect-ratio: 3 / 4 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: min(65vh, 32rem) !important;
+    margin: 0 !important;
+    object-fit: contain !important;
+    object-position: center center;
+    border-radius: 0.5rem;
+    display: block;
+}
+
 .md-typeset pre {
     width: 100%;
 }

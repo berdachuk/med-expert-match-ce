@@ -3,6 +3,8 @@
 This document is a ready-to-deliver sales presentation with slide content, speaker script, and a **built-in application
 demo** in the scenario. **Total duration: no more than 3 min** (slides ~1 min 35 s + demo ~45 s + slides 7–8 ~30 s).
 
+**Browser deck (Reveal.js):** [Sales pitch (~3 min)](presentations/medexpertmatch-sales-3min.md) in MkDocs Presentations (same slide order; speaker notes below each slide).
+
 ---
 
 ## Slide text and timing (what to show and when)
