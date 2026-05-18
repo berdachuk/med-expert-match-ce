@@ -13,7 +13,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 MKDOCS_PORT="${MKDOCS_PORT:-8000}"
-MKDOCS_ADDR="${MKDOCS_ADDR:-127.0.0.1}"
+MKDOCS_ADDR="${MKDOCS_ADDR:-0.0.0.0}"
 LOG_FILE="${PROJECT_ROOT}/logs/mkdocs.log"
 
 cd "$PROJECT_ROOT"
