@@ -1,0 +1,7 @@
+# Verbose logging when profile "debug" is active (e.g. local,debug).
+logging:
+  level:
+    com.berdachuk.medexpertmatch: DEBUG
+    com.berdachuk.medexpertmatch.graph: DEBUG
+    org.springframework.ai: DEBUG
+    org.springframework.jdbc: DEBUG

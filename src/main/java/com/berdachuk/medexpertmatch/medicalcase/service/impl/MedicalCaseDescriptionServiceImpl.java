@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.medicalcase.service.impl;
 
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
+import com.berdachuk.medexpertmatch.medicalcase.service.ChatCompletionTextClient;
 import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -8,6 +9,7 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,15 +29,18 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
     private final ChatClient chatClient;
     private final PromptTemplate systemPromptTemplate;
     private final PromptTemplate userPromptTemplate;
+    private final ChatCompletionTextClient openAiCompatibleCompletion;
 
     @Autowired
     public MedicalCaseDescriptionServiceImpl(
             @Qualifier("descriptionGenerationChatClient") ChatClient chatClient,
             @Qualifier("descriptionGenerationSystemPromptTemplate") PromptTemplate systemPromptTemplate,
-            @Qualifier("descriptionGenerationUserPromptTemplate") PromptTemplate userPromptTemplate) {
+            @Qualifier("descriptionGenerationUserPromptTemplate") PromptTemplate userPromptTemplate,
+            ChatCompletionTextClient openAiCompatibleCompletion) {
         this.chatClient = chatClient;
         this.systemPromptTemplate = systemPromptTemplate;
         this.userPromptTemplate = userPromptTemplate;
+        this.openAiCompatibleCompletion = openAiCompatibleCompletion;
     }
 
     @Override
@@ -50,7 +55,7 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
         try {
             String systemPrompt = systemPromptTemplate.render(Collections.emptyMap());
             String userPrompt = userPromptTemplate.render(variables);
-            log.info("[Description Generation] Starting LLM call for case: {}", medicalCase.id());
+            log.debug("[Description Generation] Starting LLM call for case: {}", medicalCase.id());
             log.debug("[Description Generation] System prompt: {}", systemPrompt);
             log.debug("[Description Generation] User prompt: {}", userPrompt);
 
@@ -60,19 +65,26 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
                     .call()
                     .content();
 
+            if (!StringUtils.hasText(enhancedText)) {
+                enhancedText = openAiCompatibleCompletion.complete(systemPrompt, userPrompt).orElse(null);
+                if (StringUtils.hasText(enhancedText)) {
+                    log.debug("[Description Generation] Used OpenAI-compatible JSON parse fallback (caseId={}, length={})",
+                            medicalCase.id(), enhancedText.length());
+                }
+            }
+
             long endTime = System.currentTimeMillis();
             long totalDuration = endTime - startTime;
-            log.info("[Description Generation] Total time: {} ms ({} seconds) for case: {}",
+            log.debug("[Description Generation] Total time: {} ms ({} seconds) for case: {}",
                     totalDuration, totalDuration / 1000.0, medicalCase.id());
 
-            if (enhancedText != null && !enhancedText.trim().isEmpty()) {
-                log.info("[Description Generation] Successfully generated LLM-enhanced description for case: {}, length: {}",
+            if (StringUtils.hasText(enhancedText)) {
+                log.debug("[Description Generation] Successfully generated LLM-enhanced description for case: {}, length: {}",
                         medicalCase.id(), enhancedText.length());
                 return enhancedText.trim();
-            } else {
-                log.warn("[Description Generation] LLM returned empty text for case: {}, falling back to simple text",
-                        medicalCase.id());
             }
+            log.warn("[Description Generation] LLM returned empty text for case: {} (ChatClient and JSON fallback)",
+                    medicalCase.id());
         } catch (IllegalArgumentException e) {
             long duration = System.currentTimeMillis() - startTime;
             log.error("[Description Generation] Invalid input for case: {}, falling back to simple text. Error: {} | Total elapsed: {} ms",
@@ -90,7 +102,7 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
                     medicalCase.id(), e.getMessage(), e.getClass().getName(), duration, e);
         }
 
-        log.info("[Description Generation] Falling back to simple description for case: {}", medicalCase.id());
+        log.debug("[Description Generation] Falling back to simple description for case: {}", medicalCase.id());
         return buildSimpleDescription(medicalCase);
     }
 

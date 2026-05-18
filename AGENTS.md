@@ -100,8 +100,8 @@ mvn test jacoco:report
 The test container is **built automatically** before integration tests if the image is not found locally.
 `mvn verify` or `mvn integration-test` runs `scripts/ensure-test-container.sh` (Linux/macOS) or
 `scripts/ensure-test-container.ps1` (Windows profile) in the `pre-integration-test` phase, which checks for
-`medexpertmatch-postgres-test:latest` and builds it when missing. On Windows 11 with Docker only in WSL, use
-`DOCKER_HOST` or run Maven inside WSL; see README "Windows 11, WSL, and integration tests".
+`medexpertmatch-postgres-test:latest` and builds it when missing. On Windows 11 with Docker only in WSL2, use `DOCKER_HOST`, run Maven **and** `docker compose` from WSL, or use Docker
+Desktop WSL integration; see README "Windows 11, WSL, and integration tests".
 
 To build manually (e.g. before first run or after Dockerfile changes):
 

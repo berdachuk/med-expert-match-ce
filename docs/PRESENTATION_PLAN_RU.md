@@ -26,6 +26,8 @@ The medical domain as a stress test for the PostgreSQL, PgVector, Apache AGE, an
 
 **Источники в репозитории:** [VISION.md](VISION.md), [PRD.md](PRD.md), [ARCHITECTURE.md](ARCHITECTURE.md), [USE_CASES.md](USE_CASES.md), [DEMO_GUIDE.md](DEMO_GUIDE.md).
 
+**Сценарий по слайдам колоды (RU):** [medexpertmatch-full-presentation-speaker-ru.md](presentations/medexpertmatch-full-presentation-speaker-ru.md) — что говорить на каждом слайде [полной английской презентации](presentations/medexpertmatch-full-presentation.md) в порядке выступления.
+
 **Короткий формат:** если нужно уложиться в 25–30 минут, вычеркните помеченные «★ deepen» подразделы и сократите демо до сценариев A и D.
 
 **Сокращение SGR:** **SGR** = **Semantic Graph Retrieval** (семантический графовый ретривер). В проекте это слой скоринга, который сочетает **векторное сходство** (PgVector), **связи в графе** (Apache AGE, Cypher) и **исторические показатели** (исходы, рейтинги) при подборе врачей, маршрутов и смежных сценариях; в коде — `SemanticGraphRetrievalService`. Подробнее: [ARCHITECTURE.md](ARCHITECTURE.md).

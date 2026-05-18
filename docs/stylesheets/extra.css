@@ -115,6 +115,21 @@
     width: 100%;
 }
 
+/* Mermaid inside Reveal decks (mkdocs-revealjs + mermaid.activate) */
+#mkdocs-revealjs .reveal .mermaid.reveal-graph-slide,
+.md-typeset .mkdocs-revealjs-wrapper .reveal .mermaid.reveal-graph-slide {
+    margin: 0.5rem auto;
+    max-width: 100%;
+    text-align: center;
+}
+
+#mkdocs-revealjs .reveal .mermaid.reveal-graph-slide svg,
+.md-typeset .mkdocs-revealjs-wrapper .reveal .mermaid.reveal-graph-slide svg {
+    max-height: min(58vh, 30rem);
+    max-width: 100%;
+    height: auto;
+}
+
 /* Navigation toggle buttons */
 .md-header__nav-toggle {
     display: flex !important;

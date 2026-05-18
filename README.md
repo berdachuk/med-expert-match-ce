@@ -22,8 +22,11 @@ This project is being developed for the MedGemma Impact Challenge - a hackathon 
   use `/mnt/c/...` for the Windows project on `C:`), or run Maven on Windows and point Docker at the WSL daemon:
   1. In WSL, configure the Docker daemon to listen on TCP (e.g. `/etc/docker/daemon.json` with `hosts` including
      `tcp://0.0.0.0:2375`) and restart Docker; **secure this host** if it is not localhost-only.
-  2. On Windows: `$env:DOCKER_HOST = "tcp://localhost:2375"` (WSL2 forwards `localhost` to WSL). Testcontainers and
-     `docker build` both honor `DOCKER_HOST`.
+  2. On Windows: `$env:DOCKER_HOST = "tcp://localhost:2375"` (WSL2 forwards `localhost` to WSL). Testcontainers,
+     `docker build`, and **`docker compose`** (full stack, image rebuilds) all honor `DOCKER_HOST`.
+- **Docker Compose on Windows when Docker lives in WSL2 only:** PowerShell may not see the daemon (`docker compose`
+  fails or shows no containers). Run compose from **WSL** (`cd /mnt/c/.../med-expert-match-ce && docker compose up -d
+  --build`) or use **Docker Desktop** with WSL2 integration so the Windows `docker` CLI talks to the same engine.
 - **One-liner from PowerShell** (replace the `cd` path with your clone location on the `C:` drive; under WSL it is
   usually `/mnt/c/Users/<YourWindowsUser>/<path>/med-expert-match-ce`):
 

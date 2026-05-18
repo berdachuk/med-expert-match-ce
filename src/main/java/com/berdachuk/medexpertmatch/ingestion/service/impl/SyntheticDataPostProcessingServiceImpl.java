@@ -32,6 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPostProcessingService {
 
+    private static final String DESCRIPTIONS_PROGRESS_LABEL = "Descriptions";
+
     private final ClinicalExperienceRepository clinicalExperienceRepository;
     private final MedicalCaseRepository medicalCaseRepository;
     private final DoctorRepository doctorRepository;
@@ -79,10 +81,10 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
     public void generateMedicalCaseDescriptions(SyntheticDataGenerationProgress progress) {
         List<com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase> cases = medicalCaseRepository.findWithoutDescriptions();
         int totalRecords = cases.size();
-        log.info("Starting description generation for {} medical cases (batch commit size: {})",
+        log.info("Generating medical case descriptions: starting {} cases (batch commit size: {})",
                 totalRecords, descriptionBatchCommitSize);
         if (totalRecords == 0) {
-            log.info("No cases without descriptions found");
+            log.info("Generating medical case descriptions: nothing to do (no cases without descriptions)");
             return;
         }
 
@@ -94,48 +96,60 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
 
         for (com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase medicalCase : cases) {
             if (progress != null && progress.isCancelled()) {
-                log.info("Generation cancelled during description generation");
+                log.info("Generating medical case descriptions: cancelled after {} of {} cases",
+                        processedCount, totalRecords);
                 break;
             }
+            long caseStartMs = System.currentTimeMillis();
+            String outcomeSummary;
             try {
                 String description = medicalCaseDescriptionService.generateDescription(medicalCase);
                 if (description != null && !description.isBlank()) {
                     batch.add(new CaseDescriptionUpdate(medicalCase.id(), description));
                     successCount++;
+                    outcomeSummary = "stored abstract, length=" + description.length();
                 } else {
-                    log.warn("Generated empty description for case: {}", medicalCase.id());
+                    log.warn("Generating medical case descriptions: empty result for caseId={}", medicalCase.id());
                     failedCount++;
+                    outcomeSummary = "empty description";
                 }
             } catch (Exception e) {
-                log.error("Error generating description for case: {}", medicalCase.id(), e);
+                log.error("Generating medical case descriptions: error for caseId={}", medicalCase.id(), e);
                 failedCount++;
+                outcomeSummary = "exception";
             }
             processedCount++;
+            long caseElapsedMs = System.currentTimeMillis() - caseStartMs;
+            log.info("Generating medical case descriptions: {}/{} finished (caseId={}, {} ms, {})",
+                    processedCount, totalRecords, medicalCase.id(), caseElapsedMs, outcomeSummary);
 
             if (batch.size() >= descriptionBatchCommitSize) {
                 commitDescriptionBatch(batch);
                 batch.clear();
-                log.info("Committed batch of {} descriptions (processed: {}/{})",
+                log.info("Generating medical case descriptions: committed DB batch of {} (checkpoint {}/{})",
                         descriptionBatchCommitSize, processedCount, totalRecords);
             }
 
-            if (progress != null && (processedCount % 10 == 0 || processedCount == totalRecords)) {
+            if (progress != null) {
                 int progressPercent = totalRecords > 0 ? (processedCount * 100 / totalRecords) : 0;
                 int descriptionProgress = 55 + (progressPercent * 10 / 100);
-                progress.updateProgress(descriptionProgress, "Descriptions",
-                        String.format("Generating descriptions: %d/%d (%d%%)", processedCount, totalRecords, progressPercent));
+                progress.updateProgress(descriptionProgress, DESCRIPTIONS_PROGRESS_LABEL,
+                        String.format("Generating medical case descriptions: %d/%d (%d%%)",
+                                processedCount, totalRecords, progressPercent));
             }
         }
 
         if (!batch.isEmpty()) {
             commitDescriptionBatch(batch);
-            log.info("Committed final batch of {} descriptions", batch.size());
+            log.info("Generating medical case descriptions: committed final DB batch of {} rows",
+                    batch.size());
         }
 
         long totalElapsedTime = System.currentTimeMillis() - startTime;
         double totalItemsPerSecond = totalElapsedTime > 0 ? (processedCount * 1000.0) / totalElapsedTime : 0;
-        log.info(String.format("Description generation completed. Total: %d, Success: %d, Failed: %d, Total time: %.3fs, Overall rate: %.2f items/sec",
-                processedCount, successCount, failedCount, totalElapsedTime / 1000.0, totalItemsPerSecond));
+        log.info("Generating medical case descriptions: phase complete. processed={}, success={}, failed={}, duration={}s, rate={} cases/s",
+                processedCount, successCount, failedCount, totalElapsedTime / 1000.0,
+                String.format("%.2f", totalItemsPerSecond));
     }
 
     @Override

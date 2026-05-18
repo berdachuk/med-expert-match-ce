@@ -253,45 +253,45 @@ graph LR
 ```mermaid
 sequenceDiagram
     participant Matching as MatchingService
-    participant Semantic Graph Retrieval as SemanticGraphRetrievalService
+    participant SGR as SemanticGraphRetrievalService
     participant Graph as GraphService
     participant AGE as Apache AGE Graph
     
-    Matching->>Semantic Graph Retrieval: score(case, doctor)
+    Matching->>SGR: score(case, doctor)
     
-    Note over Semantic Graph Retrieval,AGE: Graph Relationship Scoring
-    Semantic Graph Retrieval->>Graph: graphExists()?
-    Graph-->>Semantic Graph Retrieval: true/false
+    Note over SGR,AGE: Graph Relationship Scoring
+    SGR->>Graph: graphExists()?
+    Graph-->>SGR: true/false
     
     alt Graph Available
-        Semantic Graph Retrieval->>Graph: executeCypher(direct relationship query)
+        SGR->>Graph: executeCypher(direct relationship query)
         Graph->>AGE: MATCH Doctor-TREATED-Case
         AGE-->>Graph: relationshipCount
-        Graph-->>Semantic Graph Retrieval: directScore (40%)
+        Graph-->>SGR: directScore (40%)
         
-        Semantic Graph Retrieval->>Graph: executeCypher(condition expertise query)
+        SGR->>Graph: executeCypher(condition expertise query)
         Graph->>AGE: MATCH Doctor-TREATS_CONDITION-ICD10Code
         AGE-->>Graph: matchingConditions
-        Graph-->>Semantic Graph Retrieval: conditionScore (25%)
+        Graph-->>SGR: conditionScore (25%)
         
-        Semantic Graph Retrieval->>Graph: executeCypher(specialization query)
+        SGR->>Graph: executeCypher(specialization query)
         Graph->>AGE: MATCH Doctor-SPECIALIZES_IN-Specialty
         AGE-->>Graph: specializationMatch
-        Graph-->>Semantic Graph Retrieval: specialtyScore (25%)
+        Graph-->>SGR: specialtyScore (25%)
         
-        Semantic Graph Retrieval->>Graph: executeCypher(similar cases query)
+        SGR->>Graph: executeCypher(similar cases query)
         Graph->>AGE: MATCH Doctor-TREATED-Case-HAS_CONDITION-ICD10Code
         AGE-->>Graph: similarCaseCount
-        Graph-->>Semantic Graph Retrieval: similarScore (10%)
+        Graph-->>SGR: similarScore (10%)
         
-        Semantic Graph Retrieval->>Semantic Graph Retrieval: Combine: 40% + 25% + 25% + 10%
-        Semantic Graph Retrieval->>Semantic Graph Retrieval: graphScore (0.0 - 1.0)
+        SGR->>SGR: Combine: 40% + 25% + 25% + 10%
+        SGR->>SGR: graphScore (0.0 - 1.0)
     else Graph Unavailable
-        Semantic Graph Retrieval->>Semantic Graph Retrieval: Return neutral score (0.5)
+        SGR->>SGR: Return neutral score (0.5)
     end
     
-    Semantic Graph Retrieval->>Semantic Graph Retrieval: Final score = 40% vector + 30% graph + 30% historical
-    Semantic Graph Retrieval-->>Matching: ScoreResult
+    SGR->>SGR: Final score = 40% vector + 30% graph + 30% historical
+    SGR-->>Matching: ScoreResult
 ```
 
 ### 1. SemanticGraphRetrievalService (Semantic Graph Retrieval)
@@ -505,7 +505,7 @@ graph TB
     end
     
     subgraph Usage["Graph Usage"]
-        Semantic Graph Retrieval[SemanticGraphRetrievalService<br/>Graph Scoring]
+        SGRSvc[SemanticGraphRetrievalService<br/>Graph Scoring]
         Tools[MedicalAgentTools<br/>Graph Queries]
     end
     
@@ -522,17 +522,17 @@ graph TB
     Step4 --> R6
     Step4 --> R7
     
-    R1 --> Semantic Graph Retrieval
-    R2 --> Semantic Graph Retrieval
-    R3 --> Semantic Graph Retrieval
-    R4 --> Semantic Graph Retrieval
-    R5 --> Semantic Graph Retrieval
-    R6 --> Semantic Graph Retrieval
+    R1 --> SGRSvc
+    R2 --> SGRSvc
+    R3 --> SGRSvc
+    R4 --> SGRSvc
+    R5 --> SGRSvc
+    R6 --> SGRSvc
     R7 --> Tools
     
     style Step1 fill:#e3f2fd
     style Step4 fill:#fff3e0
-    style Semantic Graph Retrieval fill:#e8f5e9
+    style SGRSvc fill:#e8f5e9
     style Tools fill:#f3e5f5
 ```
 

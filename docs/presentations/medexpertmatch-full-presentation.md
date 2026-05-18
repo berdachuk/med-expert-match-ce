@@ -64,11 +64,10 @@ Note: Evidence from data, not only intuition. Support tool; clinicians and polic
 
 <div class="reveal-slide-text-col">
 
-1. **Problems and value** (~10 min)
-2. **Architecture** (~20 min)
-3. **Live demo** (~7 min)
-4. **Wrap-up** (~2 min)
-5. **Q&A** (~14 min) — separate block after slides
+1. **Problems and value**
+2. **Architecture** 
+3. **Live demo**
+4. **Q&A**
 
 </div>
 
@@ -284,29 +283,6 @@ Note: Typical inputs: **FHIR bundle** or **text** (`match-from-text`) depending 
 
 ---
 
-## Metrics and honesty
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-- **Direction:** Reduce time-to-match; aim for reliable operation of critical matching paths (see PRD)
-- **Maturity:** Distinguish **MVP / prototype** from full PRD scope when you speak
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-metrics-honesty.png" alt="Honest metrics and maturity framing" />
-
-</div>
-
-</div>
-
-Note: Align numbers with your actual release; do not oversell production metrics.
-
----
-
 ## Request path (Find Specialist)
 
 <div class="reveal-slide-row">
@@ -352,6 +328,35 @@ Note: Walk this once slowly; it anchors the rest of the architecture section.
 </div>
 
 Note: Deeper question: each hit earns **1 / (k + rank)** from every list where it appears (**k** is a small constant in the paper; implementations pick a value). Scores add across lists—still no raw-score calibration between channels.
+
+---
+
+## Graph structure diagram
+
+<div class="mermaid reveal-graph-slide">
+graph TB
+    subgraph Vertices["Graph vertices"]
+        D[Doctor]
+        C[MedicalCase]
+        I[ICD10Code]
+        S[MedicalSpecialty]
+        F[Facility]
+    end
+    D -->|TREATED| C
+    D -->|CONSULTED_ON| C
+    D -->|SPECIALIZES_IN| S
+    D -->|TREATS_CONDITION| I
+    D -->|AFFILIATED_WITH| F
+    C -->|HAS_CONDITION| I
+    C -->|REQUIRES_SPECIALTY| S
+    style D fill:#e3f2fd
+    style C fill:#fff3e0
+    style I fill:#f3e5f5
+    style S fill:#e8f5e9
+    style F fill:#fce4ec
+</div>
+
+Note: Built with `MedicalGraphBuilderService`; Cypher via `GraphService`. Same model as [Apache AGE graph analysis](../APACHE_AGE_GRAPH_ANALYSIS.md).
 
 ---
 

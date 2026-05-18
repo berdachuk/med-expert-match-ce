@@ -1,4 +1,5 @@
-# Full stack: PostgreSQL and MedExpertMatch application (docs embedded at /docs).
+# Full stack: PostgreSQL and MedExpertMatch application (MkDocs site embedded at /docs from Dockerfile.app).
+# Windows + Docker Engine in WSL2 only: run `docker compose` from WSL or set DOCKER_HOST (see README).
 # Usage: docker compose up -d
 # App: http://localhost:8094  Docs: http://localhost:8094/docs  DB: localhost:5433
 # Remote: App at http://<server-ip>:8094/ (e.g. http://192.168.0.87:8094/). Ensure host firewall allows TCP 8094.
@@ -39,7 +40,7 @@ services:
     # volumes:
     #   - ./custom-skills:/app/custom-skills
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_PROFILES_ACTIVE: local,debug
       # Database: postgres container exposes 5433 on host
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/medexpertmatch
       SPRING_DATASOURCE_USERNAME: medexpertmatch
@@ -80,11 +81,6 @@ services:
       MEDEXPERTMATCH_SKILLS_ENABLED: "true"
       MEDEXPERTMATCH_SKILLS_DIRECTORY: "skills"
       MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY: "/app/skills"
-      # Logging (aligned with local debug)
-      LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH: DEBUG
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_AI: DEBUG
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_JDBC: DEBUG
-      LOGGING_LEVEL_COM_BERDACHUK_MEDEXPERTMATCH_GRAPH: DEBUG
     depends_on:
       postgres:
         condition: service_healthy
