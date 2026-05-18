@@ -99,7 +99,8 @@ public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerati
 
         Set<String> extendedIcd10CodesSet = new LinkedHashSet<>(baseCodes);
         extendedIcd10CodesSet.addAll(extendedCodes);
-        catalogState.setExtendedIcd10Codes(new ArrayList<>(extendedIcd10CodesSet));
+        catalogState.setExtendedIcd10Codes(new ArrayList<>(extendedIcd10CodesSet).stream()
+                .limit(targetCodeCount).toList());
 
         log.info("Total ICD-10 codes to generate: {} ({} base + {} unique extended)",
                 catalogState.getExtendedIcd10Codes().size(), baseCodes.size(),
@@ -232,6 +233,8 @@ public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerati
         Set<String> extendedSpecialtiesSet = new LinkedHashSet<>(baseSpecialties);
         extendedSpecialtiesSet.addAll(extendedSpecialtiesList);
         List<String> extendedSpecialties = new ArrayList<>(extendedSpecialtiesSet);
+        // Trim to target count so doctor generation can cover all specialties
+        extendedSpecialties = new ArrayList<>(extendedSpecialties.subList(0, Math.min(targetSpecialtyCount, extendedSpecialties.size())));
 
         log.info("Total specialties to generate: {} ({} base + {} unique extended)",
                 extendedSpecialties.size(), baseSpecialties.size(), extendedSpecialtiesList.size());
@@ -463,48 +466,29 @@ public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerati
 
     private int calculateTargetIcd10Count(String size) {
         int baseCodeCount = catalogState.getLoadedIcd10Codes().size();
-        return switch (size.toLowerCase()) {
-            case "tiny" -> Math.max(baseCodeCount, 4);
-            case "small" -> Math.max(baseCodeCount, 50);
-            case "medium" -> Math.max(baseCodeCount, 100);
-            case "large" -> Math.max(baseCodeCount, 200);
-            case "huge" -> Math.max(baseCodeCount, 500);
-            default -> baseCodeCount;
-        };
+        DataSizeConfig config = catalogState.getDataSizeConfigs().get(size.toLowerCase());
+        if (config != null) {
+            return Math.min(baseCodeCount, Math.max(4, config.doctorCount() * 5));
+        }
+        return Math.min(baseCodeCount, 200);
     }
 
     private int calculateTargetSpecialtyCount(String size) {
         int baseSpecialtyCount = catalogState.getLoadedMedicalSpecialties().size();
         DataSizeConfig config = catalogState.getDataSizeConfigs().get(size.toLowerCase());
         if (config != null) {
-            int targetCount = Math.max(3, Math.min(config.doctorCount() / 10, baseSpecialtyCount));
-            return Math.max(baseSpecialtyCount, targetCount);
+            return Math.min(baseSpecialtyCount, Math.max(3, config.doctorCount() * 2));
         }
-        return switch (size.toLowerCase()) {
-            case "tiny" -> Math.max(baseSpecialtyCount, 3);
-            case "small" -> Math.max(baseSpecialtyCount, 25);
-            case "medium" -> Math.max(baseSpecialtyCount, 50);
-            case "large" -> Math.max(baseSpecialtyCount, 100);
-            case "huge" -> Math.max(baseSpecialtyCount, 200);
-            default -> baseSpecialtyCount;
-        };
+        return Math.min(baseSpecialtyCount, 100);
     }
 
     private int calculateTargetProcedureCount(String size) {
         int baseProcedureCount = catalogState.getLoadedProcedures().size();
         DataSizeConfig config = catalogState.getDataSizeConfigs().get(size.toLowerCase());
         if (config != null) {
-            int targetCount = Math.max(3, Math.min(config.doctorCount() / 5, baseProcedureCount));
-            return Math.max(baseProcedureCount, targetCount);
+            return Math.min(baseProcedureCount, Math.max(3, config.doctorCount() * 3));
         }
-        return switch (size.toLowerCase()) {
-            case "tiny" -> Math.max(baseProcedureCount, 3);
-            case "small" -> Math.max(baseProcedureCount, 30);
-            case "medium" -> Math.max(baseProcedureCount, 50);
-            case "large" -> Math.max(baseProcedureCount, 100);
-            case "huge" -> Math.max(baseProcedureCount, 200);
-            default -> baseProcedureCount;
-        };
+        return Math.min(baseProcedureCount, 100);
     }
 
     private List<String> generateIcd10CodesFromBaseList(int count) {

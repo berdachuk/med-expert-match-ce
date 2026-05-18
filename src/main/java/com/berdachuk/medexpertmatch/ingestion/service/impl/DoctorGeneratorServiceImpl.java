@@ -77,6 +77,12 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
         List<Doctor> doctors = new ArrayList<>();
         // Track which facilities have been assigned to at least one doctor
         Set<String> assignedFacilityIds = new HashSet<>();
+        // Track which specialties have been assigned to at least one doctor
+        Set<String> assignedSpecialties = new HashSet<>();
+        // Build a shuffled queue of specialties to cycle through so every specialty gets at least one doctor
+        List<String> specialtyQueue = new ArrayList<>(loadedMedicalSpecialties);
+        Collections.shuffle(specialtyQueue, random);
+        int specialtyQueueIndex = 0;
         for (int i = 0; i < count; i++) {
             if (progress != null && progress.isCancelled()) {
                 log.info("Generation cancelled during doctor generation at {}/{}", i, count);
@@ -109,10 +115,18 @@ public class DoctorGeneratorServiceImpl implements DoctorGeneratorService {
             List<String> specialties = new ArrayList<>();
             int specialtyCount = random.nextInt(MAX_SPECIALTIES_PER_DOCTOR - MIN_SPECIALTIES_PER_DOCTOR + 1) + MIN_SPECIALTIES_PER_DOCTOR;
             Set<String> selectedSpecialties = new HashSet<>();
+
+            // Ensure each specialty gets assigned to at least one doctor by cycling through the queue
+            if (specialtyQueueIndex < specialtyQueue.size()) {
+                selectedSpecialties.add(specialtyQueue.get(specialtyQueueIndex % specialtyQueue.size()));
+                specialtyQueueIndex++;
+            }
+
             while (selectedSpecialties.size() < specialtyCount) {
                 selectedSpecialties.add(loadedMedicalSpecialties.get(random.nextInt(loadedMedicalSpecialties.size())));
             }
             specialties.addAll(selectedSpecialties);
+            assignedSpecialties.addAll(selectedSpecialties);
 
             List<String> certifications = new ArrayList<>();
             if (random.nextBoolean()) {
