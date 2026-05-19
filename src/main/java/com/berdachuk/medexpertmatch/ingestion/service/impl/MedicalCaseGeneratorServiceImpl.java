@@ -106,6 +106,10 @@ public class MedicalCaseGeneratorServiceImpl implements MedicalCaseGeneratorServ
 
         List<Bundle> bundles = new ArrayList<>();
 
+        // Ensure every ICD-10 code is used at least once by cycling through them first
+        List<String> allCodes = new ArrayList<>(loadedExtendedIcd10Codes);
+        Collections.shuffle(allCodes, random);
+
         for (int i = 0; i < count; i++) {
             Bundle bundle = new Bundle();
             bundle.setType(Bundle.BundleType.COLLECTION);
@@ -114,7 +118,9 @@ public class MedicalCaseGeneratorServiceImpl implements MedicalCaseGeneratorServ
             Patient patient = createAnonymizedPatient();
             bundle.addEntry().setResource(patient);
 
-            Condition condition = createCondition(patient.getId(), loadedIcd10Codes, loadedExtendedIcd10Codes, loadedSeverities);
+            // Cycle through codes for first N cases, then random
+            List<String> availableCodes = i < allCodes.size() ? List.of(allCodes.get(i)) : loadedExtendedIcd10Codes;
+            Condition condition = createCondition(patient.getId(), loadedIcd10Codes, availableCodes, loadedSeverities);
             bundle.addEntry().setResource(condition);
 
             int observationCount = random.nextInt(MAX_OBSERVATIONS_PER_CASE - MIN_OBSERVATIONS_PER_CASE + 1) + MIN_OBSERVATIONS_PER_CASE;

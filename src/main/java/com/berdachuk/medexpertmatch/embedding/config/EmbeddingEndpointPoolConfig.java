@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,18 +36,16 @@ public class EmbeddingEndpointPoolConfig {
 
         List<EndpointState> endpointStates = new ArrayList<>();
         List<Integer> workersPerEndpoint = new ArrayList<>();
+
         for (MultiEndpointEmbeddingProperties.EndpointConfig ep : sortedEndpoints) {
             if (ep.getUrl() == null || ep.getUrl().isBlank()) {
                 log.warn("Skipping endpoint with empty URL");
                 continue;
             }
 
-            OpenAiApi api = OpenAiApi.builder()
+            OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder()
                     .baseUrl(ep.getUrl())
-                    .apiKey(embeddingApiKey != null ? embeddingApiKey : "")
-                    .build();
-
-            OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder();
+                    .apiKey(embeddingApiKey != null ? embeddingApiKey : "");
             if (ep.getModel() != null && !ep.getModel().isBlank()) {
                 optionsBuilder.model(ep.getModel());
             }
@@ -60,10 +57,7 @@ public class EmbeddingEndpointPoolConfig {
                 }
             }
 
-            OpenAiEmbeddingModel model = new OpenAiEmbeddingModel(
-                    api,
-                    MetadataMode.EMBED,
-                    optionsBuilder.build());
+            OpenAiEmbeddingModel model = new OpenAiEmbeddingModel(MetadataMode.EMBED, optionsBuilder.build());
 
             EndpointState state = new EndpointState(ep.getUrl(), ep.getModel(), model);
             endpointStates.add(state);

@@ -26,7 +26,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
         <!-- Dependency Versions -->
-        <spring-ai.version>2.0.0-M2</spring-ai.version>
+        <spring-ai.version>2.0.0-M6</spring-ai.version>
         <springdoc-openapi.version>2.8.4</springdoc-openapi.version>
         <pgvector.version>0.1.4</pgvector.version>
         <testcontainers.version>2.0.3</testcontainers.version>
@@ -114,7 +114,7 @@
         <dependency>
             <groupId>org.springaicommunity</groupId>
             <artifactId>spring-ai-agent-utils</artifactId>
-            <version>0.4.2</version>
+            <version>0.5.0</version>
         </dependency>
 
         <!-- Database -->

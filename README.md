@@ -165,7 +165,7 @@ For self-hosted local AI, override the component-specific environment variables:
 export CHAT_PROVIDER=openai
 export CHAT_BASE_URL=http://127.0.0.1:1234
 export CHAT_API_KEY=local-key
-export CHAT_MODEL=medgemma-1.5-4b-it
+export CHAT_MODEL=medgemma1.5:4b
 
 export EMBEDDING_PROVIDER=openai
 export EMBEDDING_BASE_URL=http://127.0.0.1:1234
@@ -176,12 +176,12 @@ export EMBEDDING_DIMENSIONS=768
 export RERANKING_PROVIDER=openai
 export RERANKING_BASE_URL=http://127.0.0.1:1234
 export RERANKING_API_KEY=local-key
-export RERANKING_MODEL=medgemma-1.5-4b-it
+export RERANKING_MODEL=medgemma1.5:4b
 
 export TOOL_CALLING_PROVIDER=openai
 export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
 export TOOL_CALLING_API_KEY=local-key
-export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
+export TOOL_CALLING_MODEL=functiongemma:270m
 ```
 
 See [AI Provider Configuration](docs/AI_PROVIDER_CONFIGURATION.md) for the configuration matrix and

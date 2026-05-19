@@ -114,11 +114,12 @@ else
     export MEDEXPERTMATCH_DB_URL=jdbc:postgresql://localhost:5433/medexpertmatch
     export MEDEXPERTMATCH_DB_USERNAME=medexpertmatch
     export MEDEXPERTMATCH_DB_PASSWORD=medexpertmatch
+    export SERVER_PORT=8094
     unset SPRING_DATASOURCE_USERNAME
     unset SPRING_DATASOURCE_PASSWORD
     unset SPRING_DATASOURCE_URL
     
-    nohup mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=${PROFILE}" > ${LOG_FILE} 2>&1 &
+    nohup mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=${PROFILE} --server.port=8094" > ${LOG_FILE} 2>&1 &
     SERVICE_PID=$!
     echo "Service started with PID: $SERVICE_PID"
     

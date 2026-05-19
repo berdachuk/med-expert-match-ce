@@ -45,6 +45,7 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
     private static final int MIN_RATING = 1;
     private static final int MAX_RATING = 5;
     private static final int BATCH_SIZE = 5000;
+    private static final int MAX_MATCHING_DOCTORS_PER_CASE = 5;
 
     private final DoctorRepository doctorRepository;
     private final MedicalCaseRepository medicalCaseRepository;
@@ -91,15 +92,13 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
             return;
         }
 
-        // Filter to requested counts (prefer newest entities)
-        List<Doctor> doctors = filterToCount(allDoctors, doctorCount);
-        List<MedicalCase> cases = filterToCount(allCases, caseCount);
+        // Use ALL cases in the database to avoid dangling cases
+        List<MedicalCase> cases = allCases;
+        List<Doctor> doctors = allDoctors;
 
         // Log selection statistics
-        log.info("Selected {} doctors out of {} total in database (newest: {})",
-                doctors.size(), allDoctors.size(), doctors.stream().map(Doctor::id).toList());
-        log.info("Selected {} cases out of {} total in database (newest: {})",
-                cases.size(), allCases.size(), cases.stream().map(MedicalCase::id).toList());
+        log.info("Using all {} doctors and all {} cases for clinical experience linking",
+                doctors.size(), cases.size());
 
         List<MedicalSpecialty> allSpecialties = medicalSpecialtyRepository.findAll();
         Map<String, MedicalSpecialty> specialtyMap = allSpecialties.stream()
@@ -116,22 +115,21 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
 
         // Phase 1: Guarantee each doctor gets at least one case
         log.info("Phase 1: Ensuring every doctor gets at least one case");
-        // Process ALL doctors in the database to ensure none are left without cases
-        for (int i = 0; i < allDoctors.size(); i++) {
-            Doctor doctor = allDoctors.get(i);
+        for (int i = 0; i < doctors.size(); i++) {
+            Doctor doctor = doctors.get(i);
 
             if (progress != null && progress.isCancelled()) {
-                log.info("Generation cancelled during Phase 1 at {}/{}", i, allDoctors.size());
+                log.info("Generation cancelled during Phase 1 at {}/{}", i, doctors.size());
                 return;
             }
 
-            if (progress != null && allDoctors.size() > 0 && (i + 1) % Math.max(1, allDoctors.size() / 10) == 0) {
-                int phase1Progress = 90 + ((i + 1) * 4 / allDoctors.size());
+            if (progress != null && doctors.size() > 0 && (i + 1) % Math.max(1, doctors.size() / 10) == 0) {
+                int phase1Progress = 90 + ((i + 1) * 4 / doctors.size());
                 progress.updateProgress(phase1Progress, "Clinical Experiences (Phase 1)",
-                        String.format("Assigning cases to doctors: {}/{}", i + 1, allDoctors.size()));
+                        String.format("Assigning cases to doctors: %d/%d", i + 1, doctors.size()));
             }
 
-            // Find matching cases for this doctor from the filtered cases set
+            // Find matching cases for this doctor from all cases
             List<MedicalCase> matchingCases = findMatchingCasesForDoctor(doctor, cases, specialtyMap);
 
             // Filter to only unassigned cases
@@ -145,7 +143,7 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
                 assignedCase = unassignedMatchingCases.get(random.nextInt(unassignedMatchingCases.size()));
                 matchedCount++;
             } else {
-                // Find any unassigned case from the filtered cases set
+                // Find any unassigned case from all cases
                 List<MedicalCase> unassignedCases = cases.stream()
                         .filter(c -> !assignedCaseIds.contains(c.id()))
                         .toList();
@@ -173,13 +171,14 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
             doctorCaseCount.put(doctor.id(), doctorCaseCount.getOrDefault(doctor.id(), 0) + 1);
         }
 
-        // Phase 2: Distribute remaining unassigned cases
+        // Phase 2: Assign each remaining case to multiple matching doctors
+        // to build TREATED and TREATS_CONDITION density for meaningful graph scoring
         List<MedicalCase> remainingCases = cases.stream()
                 .filter(c -> !assignedCaseIds.contains(c.id()))
                 .toList();
 
         if (!remainingCases.isEmpty()) {
-            log.info("Phase 2: Distributing {} remaining cases", remainingCases.size());
+            log.info("Phase 2: Distributing {} remaining cases to multiple doctors each", remainingCases.size());
 
             for (int i = 0; i < remainingCases.size(); i++) {
                 MedicalCase medicalCase = remainingCases.get(i);
@@ -189,28 +188,27 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
                     return;
                 }
 
-                // Find matching doctors for this case (still use filtered doctors for distribution)
+                // Find matching doctors for this case
                 List<Doctor> matchingDoctors = findMatchingDoctorsForCase(medicalCase, doctors, specialtyMap);
 
-                Doctor assignedDoctor;
+                // Limit to avoid over-assignment
+                int maxDoctors = Math.min(matchingDoctors.size(), MAX_MATCHING_DOCTORS_PER_CASE);
+
                 if (!matchingDoctors.isEmpty()) {
-                    assignedDoctor = matchingDoctors.get(random.nextInt(matchingDoctors.size()));
-                    matchedCount++;
-                } else {
-                    // Use filtered doctors for distribution but ensure all doctors eventually get cases
-                    assignedDoctor = doctors.get(random.nextInt(doctors.size()));
-                    unmatchedCount++;
+                    // Shuffle and take up to MAX_MATCHING_DOCTORS_PER_CASE
+                    Collections.shuffle(matchingDoctors, random);
+                    List<Doctor> selected = matchingDoctors.subList(0, maxDoctors);
+                    for (Doctor doctor : selected) {
+                        ClinicalExperience experience = createClinicalExperience(doctor, medicalCase,
+                                loadedComplexityLevels, loadedOutcomes, loadedComplications,
+                                loadedSpecialtyProceduresMap, loadedExtendedProcedures);
+                        experiences.add(experience);
+                        experienceCount++;
+                        matchedCount++;
+                        doctorCaseCount.put(doctor.id(), doctorCaseCount.getOrDefault(doctor.id(), 0) + 1);
+                    }
                 }
-
-                // Create clinical experience
-                ClinicalExperience experience = createClinicalExperience(assignedDoctor, medicalCase,
-                        loadedComplexityLevels, loadedOutcomes, loadedComplications,
-                        loadedSpecialtyProceduresMap, loadedExtendedProcedures);
-                experiences.add(experience);
-                experienceCount++;
-
-                // Track doctor case count
-                doctorCaseCount.put(assignedDoctor.id(), doctorCaseCount.getOrDefault(assignedDoctor.id(), 0) + 1);
+                // No fallback to random doctors — unmatched case just gets skipped
             }
         }
 
@@ -249,7 +247,7 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
         // Log statistics for all doctors in the database
         Map<String, Integer> allDoctorCaseCounts = new HashMap<>();
         // Initialize all doctors with 0 cases
-        for (Doctor doctor : allDoctors) {
+        for (Doctor doctor : doctors) {
             allDoctorCaseCounts.put(doctor.id(), 0);
         }
         // Update with actual case counts
@@ -265,13 +263,16 @@ public class ClinicalExperienceGeneratorServiceImpl implements ClinicalExperienc
                     .count();
 
             log.info("Clinical Experience Statistics:");
-            log.info("  Total doctors: {}", allDoctors.size());
+            log.info("  Total doctors: {}", doctors.size());
             log.info("  Total cases: {}", cases.size());
             log.info("  Doctors with 0 cases: {}", doctorsWithZeroCases);
             log.info("  Cases per doctor - Min: {}, Max: {}, Average: {:.2f}",
                     stats.getMin(), stats.getMax(), stats.getAverage());
             log.info("  Generated {} clinical experiences ({} matched to expertise, {} unmatched, {} inserted, {} updated)",
                     experienceCount, matchedCount, unmatchedCount, toInsert.size(), toUpdate.size());
+            if (doctorsWithZeroCases > 0) {
+                log.error("CRITICAL: {} doctors still have 0 cases after generation!", doctorsWithZeroCases);
+            }
         } else {
             log.info("Generated {} clinical experiences for {} cases ({} matched to expertise, {} unmatched, {} inserted, {} updated)",
                     experienceCount, cases.size(), matchedCount, unmatchedCount, toInsert.size(), toUpdate.size());

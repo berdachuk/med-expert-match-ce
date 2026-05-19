@@ -9,7 +9,6 @@ import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -93,11 +92,10 @@ public class SpringAIConfig {
         if (!"openai".equalsIgnoreCase(chatProvider)) {
             return primaryChatModel;
         }
-        OpenAiApi chatApi = OpenAiApi.builder()
+        String apiKey = chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key";
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
                 .baseUrl(chatBaseUrl)
-                .apiKey(chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key")
-                .build();
-        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
+                .apiKey(apiKey);
         if (chatModelName != null && !chatModelName.isEmpty()) {
             optionsBuilder.model(chatModelName);
         }
@@ -116,8 +114,7 @@ public class SpringAIConfig {
         }
         log.info("Creating descriptionGenerationChatModel with max_tokens: {}", descriptionMaxTokens);
         return OpenAiChatModel.builder()
-                .openAiApi(chatApi)
-                .defaultOptions(optionsBuilder.build())
+                .options(optionsBuilder.build())
                 .build();
     }
 
@@ -155,15 +152,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + embeddingProvider);
             }
 
-            // Create OpenAI-compatible EmbeddingModel
-            log.info("Creating OpenAiApi for EmbeddingModel! Base URL: {}", embeddingBaseUrl);
-            OpenAiApi embeddingApi = OpenAiApi.builder()
+            String apiKey = embeddingApiKey != null && !embeddingApiKey.isEmpty() ? embeddingApiKey : "dummy-key";
+            OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder()
                     .baseUrl(embeddingBaseUrl)
-                    .apiKey(embeddingApiKey != null && !embeddingApiKey.isEmpty() ? embeddingApiKey : "dummy-key")
-                    .build();
-            log.info("OpenAiApi created!");
-
-            OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder();
+                    .apiKey(apiKey);
             if (embeddingModel != null && !embeddingModel.isEmpty()) {
                 optionsBuilder.model(embeddingModel);
             }
@@ -176,10 +168,7 @@ public class SpringAIConfig {
             }
 
             log.info("Creating OpenAiEmbeddingModel!");
-            OpenAiEmbeddingModel model = new OpenAiEmbeddingModel(
-                    embeddingApi,
-                    MetadataMode.EMBED,
-                    optionsBuilder.build());
+            OpenAiEmbeddingModel model = new OpenAiEmbeddingModel(MetadataMode.EMBED, optionsBuilder.build());
             log.info("OpenAiEmbeddingModel created! Type: {}", model.getClass().getName());
             return model;
         }
@@ -234,15 +223,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + chatProvider);
             }
 
-            // Create OpenAI-compatible ChatModel
-            log.info("Creating OpenAiApi for ChatModel! Base URL: {}", chatBaseUrl);
-            OpenAiApi chatApi = OpenAiApi.builder()
+            String apiKey = chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key";
+            OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
                     .baseUrl(chatBaseUrl)
-                    .apiKey(chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key")
-                    .build();
-            log.info("OpenAiApi created!");
-
-            OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder();
+                    .apiKey(apiKey);
             if (chatModel != null && !chatModel.isEmpty()) {
                 optionsBuilder.model(chatModel);
             }
@@ -263,8 +247,7 @@ public class SpringAIConfig {
 
             log.info("Creating OpenAiChatModel!");
             OpenAiChatModel model = OpenAiChatModel.builder()
-                    .openAiApi(chatApi)
-                    .defaultOptions(optionsBuilder.build())
+                    .options(optionsBuilder.build())
                     .build();
             log.info("OpenAiChatModel created! Type: {}", model.getClass().getName());
             return model;
@@ -319,15 +302,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + rerankingProvider);
             }
 
-            // Create OpenAI-compatible ChatModel for reranking
-            log.info("Creating OpenAiApi for reranking ChatModel! Base URL: {}", rerankingBaseUrl);
-            OpenAiApi rerankingApi = OpenAiApi.builder()
-                    .baseUrl(rerankingBaseUrl)
-                    .apiKey(rerankingApiKey != null && !rerankingApiKey.isEmpty() ? rerankingApiKey : "dummy-key")
-                    .build();
-            log.info("OpenAiApi created!");
-
+            String apiKey = rerankingApiKey != null && !rerankingApiKey.isEmpty() ? rerankingApiKey : "dummy-key";
             OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
+                    .baseUrl(rerankingBaseUrl)
+                    .apiKey(apiKey)
                     .model(rerankingModel);
             try {
                 optionsBuilder.temperature(Double.parseDouble(rerankingTemperature));
@@ -338,8 +316,7 @@ public class SpringAIConfig {
 
             log.info("Creating OpenAiChatModel for reranking!");
             OpenAiChatModel rerankingModelInstance = OpenAiChatModel.builder()
-                    .openAiApi(rerankingApi)
-                    .defaultOptions(optionsBuilder.build())
+                    .options(optionsBuilder.build())
                     .build();
             log.info("OpenAiChatModel created! Type: {}", rerankingModelInstance.getClass().getName());
             return rerankingModelInstance;
@@ -387,15 +364,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + toolCallingProvider);
             }
 
-            // Create OpenAI-compatible ChatModel for tool calling
-            log.info("Creating OpenAiApi for tool calling ChatModel! Base URL: {}", toolCallingBaseUrl);
-            OpenAiApi toolCallingApi = OpenAiApi.builder()
-                    .baseUrl(toolCallingBaseUrl)
-                    .apiKey(toolCallingApiKey != null && !toolCallingApiKey.isEmpty() ? toolCallingApiKey : "dummy-key")
-                    .build();
-            log.info("OpenAiApi created!");
-
+            String apiKey = toolCallingApiKey != null && !toolCallingApiKey.isEmpty() ? toolCallingApiKey : "dummy-key";
             OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
+                    .baseUrl(toolCallingBaseUrl)
+                    .apiKey(apiKey)
                     .model(toolCallingModel);
             try {
                 optionsBuilder.temperature(Double.parseDouble(toolCallingTemperature));
@@ -413,8 +385,7 @@ public class SpringAIConfig {
 
             log.info("Creating OpenAiChatModel for tool calling!");
             OpenAiChatModel toolCallingModelInstance = OpenAiChatModel.builder()
-                    .openAiApi(toolCallingApi)
-                    .defaultOptions(optionsBuilder.build())
+                    .options(optionsBuilder.build())
                     .build();
             log.info("OpenAiChatModel created! Type: {}", toolCallingModelInstance.getClass().getName());
             return toolCallingModelInstance;

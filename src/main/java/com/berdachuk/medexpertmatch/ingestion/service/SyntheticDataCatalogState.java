@@ -43,4 +43,5 @@ public class SyntheticDataCatalogState {
 
     private Map<String, String> icd10CodeDisplays = new HashMap<>();
     private Map<String, String> encounterClassDisplays = new HashMap<>();
+    private List<String> extendedMedicalSpecialties = new ArrayList<>();
 }
