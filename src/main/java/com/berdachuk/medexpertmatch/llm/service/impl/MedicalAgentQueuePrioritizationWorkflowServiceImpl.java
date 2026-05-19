@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentQueuePrioritizationWorkflowService;
@@ -13,6 +14,7 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -69,6 +71,7 @@ public class MedicalAgentQueuePrioritizationWorkflowServiceImpl implements Medic
         log.info("prioritizeConsults() called");
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
         @SuppressWarnings("unchecked")
         List<String> caseIds = (List<String>) request.get("caseIds");
@@ -110,27 +113,38 @@ public class MedicalAgentQueuePrioritizationWorkflowServiceImpl implements Medic
         } catch (Exception e) {
             log.warn("Error in hybrid prioritizeConsults, falling back to standard approach", e);
         } finally {
+            OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
 
-        String caseAnalyzerSkill = medicalAgentPromptSupportService.loadSkill("case-analyzer");
-        String userRequest = (caseIds != null && !caseIds.isEmpty())
-                ? "Prioritize consultation queue based on case urgency and complexity."
-                : "There are no cases in the consultation queue. Briefly describe how consultation queue prioritization would work when cases are present (by urgency and complexity). Do not invent specific case details or doctor names.";
-        String prompt = medicalAgentPromptSupportService.buildPrompt(List.of(caseAnalyzerSkill), userRequest, request);
+        logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
-        log.info("Sending prompt to LLM for consult prioritization fallback (model: {}):\n{}", functionGemmaModelName, prompt);
-        log.info("Calling LLM model: {} for consult prioritization (fallback)", functionGemmaModelName);
-        String response = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content());
-        log.info("LLM model: {} completed consult prioritization (fallback), response length: {}",
-                functionGemmaModelName, response != null ? response.length() : 0);
+        try {
+            String caseAnalyzerSkill = medicalAgentPromptSupportService.loadSkill("case-analyzer");
+            String userRequest = (caseIds != null && !caseIds.isEmpty())
+                    ? "Prioritize consultation queue based on case urgency and complexity."
+                    : "There are no cases in the consultation queue. Briefly describe how consultation queue prioritization would work when cases are present (by urgency and complexity). Do not invent specific case details or doctor names.";
+            String prompt = medicalAgentPromptSupportService.buildPrompt(List.of(caseAnalyzerSkill), userRequest, request);
 
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("skills", List.of("case-analyzer"));
-        return new MedicalAgentService.AgentResponse(response, metadata);
+            log.info("Sending prompt to LLM for consult prioritization fallback (model: {}):\n{}", functionGemmaModelName, prompt);
+            log.info("Calling LLM model: {} for consult prioritization (fallback)", functionGemmaModelName);
+            String response = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
+                    .user(prompt)
+                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY,
+                            OrchestrationContextHolder.sessionIdOrNull()))
+                    .call()
+                    .content());
+            log.info("LLM model: {} completed consult prioritization (fallback), response length: {}",
+                    functionGemmaModelName, response != null ? response.length() : 0);
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("skills", List.of("case-analyzer"));
+            return new MedicalAgentService.AgentResponse(response, metadata);
+        } finally {
+            OrchestrationContextHolder.clear();
+            logStreamService.clearCurrentSessionId();
+        }
     }
 
     private CaseUrgencyEntry parseUrgencyFromAnalysis(String caseId, String caseAnalysis, MedicalCase medicalCase) {

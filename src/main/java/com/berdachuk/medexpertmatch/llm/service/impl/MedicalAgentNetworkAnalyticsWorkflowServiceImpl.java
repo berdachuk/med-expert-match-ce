@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentNetworkAnalyticsWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -48,6 +49,7 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
         log.info("networkAnalytics() called");
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
         try {
             logStreamService.sendLog(sessionId, "INFO", "Network analytics", "Starting network analytics (run tools, then summarize)");
@@ -88,6 +90,7 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
             logStreamService.logError(sessionId, "Network analytics failed", e.getMessage());
             throw e;
         } finally {
+            OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
     }

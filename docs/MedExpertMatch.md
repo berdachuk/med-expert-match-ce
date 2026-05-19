@@ -1,9 +1,9 @@
 # MedExpertMatch: AI-Powered Medical Expert Recommendation System
 
 **Project Name:** MedExpertMatch  
-**Version:** 1.0  
-**Date:** 2026-01-27  
-**Status:** Planning Phase
+**Version:** 1.1  
+**Date:** 2026-05-19  
+**Status:** MVP complete with agentic improvements
 
 ## Overview
 
@@ -46,6 +46,8 @@ MedExpertMatch uses a modern, scalable architecture:
 - **Hybrid GraphRAG**: Vector search + Graph traversal + Keyword search
 - **Spring AI Integration**: MedGemma models via Spring AI
 - **Agent Skills**: 7 medical-specific skills for modular knowledge
+- **Session Memory**: Conversation history compaction via SessionMemoryAdvisor (JDBC-backed)
+- **AutoMemory**: Cross-session durable memory (LLM self-curated facts)
 - **PostgreSQL + PgVector + Apache AGE**: Unified database architecture
 
 ## Key Features
@@ -88,7 +90,8 @@ Seven medical-specific Agent Skills:
 
 - **Backend**: Spring Boot 4.0.2, Java 21
 - **Database**: PostgreSQL 17, PgVector 0.1.4 (client), Apache AGE 1.6.0
-- **AI Framework**: Spring AI 2.0.0-M2
+- **AI Framework**: Spring AI 2.0.0-M6
+- **Session**: Spring AI Session JDBC 0.2.0
 - **Medical AI**: MedGemma 1.5 4B, MedGemma 27B (via OpenAI-compatible providers: Vertex AI, vLLM, LiteLLM)
 - **Testing**: JUnit 5, Testcontainers 2.0.3
 

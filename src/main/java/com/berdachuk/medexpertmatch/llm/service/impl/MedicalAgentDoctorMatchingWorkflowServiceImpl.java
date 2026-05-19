@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentDoctorMatchingWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -52,6 +53,7 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         log.info("Using sessionId: {} for log streaming", sessionId);
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
         String response;
         try {
@@ -97,6 +99,7 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
 
         logStreamService.sendProgress(sessionId, 100);
         logStreamService.logCompletion(sessionId, "Match doctors operation", "Successfully matched doctors for case: " + caseId);
+        OrchestrationContextHolder.clear();
         logStreamService.clearCurrentSessionId();
 
         return new MedicalAgentService.AgentResponse(response, metadata);

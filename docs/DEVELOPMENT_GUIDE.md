@@ -1,7 +1,7 @@
 # MedExpertMatch Development Guide
 
-**Last Updated:** 2026-02-04  
-**Status:** Implementation Phase
+**Last Updated:** 2026-05-19  
+**Status:** MVP complete with agentic improvements
 
 ## Overview
 
@@ -34,7 +34,13 @@ med-expert-match/
 │       │       ├── facility/           # Facility domain
 │       │       ├── caseanalysis/       # Case analysis service
 │       │       ├── retrieval/          # Matching and Semantic Graph Retrieval services
-│       │       ├── llm/                 # LLM orchestration, agent skills
+│       │       ├── llm/                 # LLM orchestration, agent skills, memory, evaluation
+│       │   ├── agent/            #   OrchestrationContextHolder
+│       │   ├── automemory/       #   AutoMemoryService, AutoMemoryTools
+│       │   ├── config/           #   MedicalAgentConfiguration
+│       │   ├── evaluation/       #   EvaluationService, EvalScorer
+│       │   ├── service/          #   Workflow services
+│       │   └── tools/            #   MedicalAgentTools
 │       │       ├── graph/               # Graph service (Apache AGE)
 │       │       ├── ingestion/          # Data ingestion, FHIR adapters
 │       │       └── web/                # Web UI controllers

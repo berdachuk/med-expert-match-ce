@@ -46,6 +46,10 @@ public class PromptTemplateConfig {
     private Resource embeddingTextGenerationSystemResource;
     @Value("classpath:/prompts/embedding-text-generation-user.st")
     private Resource embeddingTextGenerationUserResource;
+    @Value("classpath:/prompts/routing-summarization.st")
+    private Resource routingSummarizationResource;
+    @Value("classpath:/prompts/network-analytics-summarization.st")
+    private Resource networkAnalyticsSummarizationResource;
 
     @Bean
     public StTemplateRenderer stTemplateRenderer() {
@@ -247,6 +251,24 @@ public class PromptTemplateConfig {
         return PromptTemplate.builder()
                 .renderer(renderer)
                 .resource(embeddingTextGenerationUserResource)
+                .build();
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("routingSummarizationPromptTemplate")
+    public PromptTemplate routingSummarizationPromptTemplate(StTemplateRenderer renderer) {
+        return PromptTemplate.builder()
+                .renderer(renderer)
+                .resource(routingSummarizationResource)
+                .build();
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("networkAnalyticsSummarizationPromptTemplate")
+    public PromptTemplate networkAnalyticsSummarizationPromptTemplate(StTemplateRenderer renderer) {
+        return PromptTemplate.builder()
+                .renderer(renderer)
+                .resource(networkAnalyticsSummarizationResource)
                 .build();
     }
 }

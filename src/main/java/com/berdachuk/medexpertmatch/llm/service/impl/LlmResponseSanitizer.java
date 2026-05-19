@@ -87,4 +87,141 @@ final class LlmResponseSanitizer {
 
         return cleaned;
     }
+
+    static String toHumanReadable(String response) {
+        if (response == null || response.isBlank()) {
+            return response;
+        }
+        String cleaned = response.trim();
+
+        cleaned = stripJsonPrefix(cleaned);
+        cleaned = stripFinalResponsePrefix(cleaned);
+        cleaned = cleanJsonOnlyContent(cleaned);
+
+        return cleaned;
+    }
+
+    private static String stripJsonPrefix(String response) {
+        String[] prefixes = {"final response:", "final answer:", "response:", "answer:",
+                "here is the", "the result is:"};
+        String lower = response.toLowerCase().trim();
+        for (String prefix : prefixes) {
+            if (lower.startsWith(prefix)) {
+                String after = response.substring(prefix.length()).trim();
+                if (!after.isEmpty()) {
+                    return after;
+                }
+            }
+        }
+        return response;
+    }
+
+    private static String stripFinalResponsePrefix(String response) {
+        String cleaned = response.trim();
+        String lower = cleaned.toLowerCase();
+
+        String[] headers = {"final response:", "final answer:", "response:", "answer:",
+                "final response", "final answer"};
+        for (String header : headers) {
+            if (lower.startsWith(header)) {
+                String after = cleaned.substring(header.length()).trim();
+                if (!after.isEmpty()) {
+                    cleaned = after;
+                    lower = cleaned.toLowerCase();
+                }
+            }
+        }
+        return cleaned;
+    }
+
+    private static String cleanJsonOnlyContent(String response) {
+        String trimmed = response.trim();
+
+        if (isJsonOnly(trimmed)) {
+            return "[Data received; unable to display formatted response]";
+        }
+
+        if (trimmed.startsWith("[") && looksLikeJsonArray(trimmed)) {
+            int closeIdx = findClosingBracket(trimmed);
+            if (closeIdx > 0 && isJsonOnly(trimmed.substring(0, closeIdx + 1))) {
+                String remainder = trimmed.substring(closeIdx + 1).trim();
+                if (remainder.isEmpty()) {
+                    return "[Data received; unable to display formatted response]";
+                }
+                return remainder;
+            }
+        }
+
+        if (trimmed.startsWith("{") && looksLikeJsonObject(trimmed)) {
+            int closeIdx = findClosingBrace(trimmed);
+            if (closeIdx > 0 && isJsonOnly(trimmed.substring(0, closeIdx + 1))) {
+                String remainder = trimmed.substring(closeIdx + 1).trim();
+                if (remainder.isEmpty()) {
+                    return "[Data received; unable to display formatted response]";
+                }
+                return remainder;
+            }
+        }
+
+        return response;
+    }
+
+    private static boolean isJsonOnly(String text) {
+        String trimmed = text.trim();
+        if (trimmed.startsWith("[")) {
+            int closeIdx = findClosingBracket(trimmed);
+            return closeIdx == trimmed.length() - 1;
+        }
+        if (trimmed.startsWith("{")) {
+            int closeIdx = findClosingBrace(trimmed);
+            return closeIdx == trimmed.length() - 1;
+        }
+        return false;
+    }
+
+    private static boolean looksLikeJsonArray(String text) {
+        return text.startsWith("[") && (text.contains("\"") || text.contains("{"));
+    }
+
+    private static boolean looksLikeJsonObject(String text) {
+        return text.startsWith("{") && text.contains("\"");
+    }
+
+    private static int findClosingBracket(String text) {
+        int depth = 0;
+        boolean inString = false;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '"' && (i == 0 || text.charAt(i - 1) != '\\')) {
+                inString = !inString;
+            }
+            if (!inString) {
+                if (c == '[') depth++;
+                if (c == ']') {
+                    depth--;
+                    if (depth == 0) return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private static int findClosingBrace(String text) {
+        int depth = 0;
+        boolean inString = false;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '"' && (i == 0 || text.charAt(i - 1) != '\\')) {
+                inString = !inString;
+            }
+            if (!inString) {
+                if (c == '{') depth++;
+                if (c == '}') {
+                    depth--;
+                    if (depth == 0) return i;
+                }
+            }
+        }
+        return -1;
+    }
 }

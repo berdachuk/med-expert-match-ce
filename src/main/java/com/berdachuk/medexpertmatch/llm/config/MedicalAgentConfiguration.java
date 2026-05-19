@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
+import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
 import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.agent.tools.FileSystemTools;
@@ -7,6 +8,10 @@ import org.springaicommunity.agent.tools.SkillsTool;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.session.SessionService;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
+import org.springframework.ai.session.compaction.SlidingWindowCompactionStrategy;
+import org.springframework.ai.session.compaction.TurnCountTrigger;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -102,6 +107,14 @@ public class MedicalAgentConfiguration {
                 .build();
     }
 
+    @Bean
+    SessionMemoryAdvisor sessionMemoryAdvisor(SessionService sessionService) {
+        return SessionMemoryAdvisor.builder(sessionService)
+                .compactionTrigger(new TurnCountTrigger(15))
+                .compactionStrategy(SlidingWindowCompactionStrategy.builder().maxEvents(30).build())
+                .build();
+    }
+
     /**
      * Creates a ChatClient with Agent Skills and Medical Tools enabled.
      * This ChatClient includes SkillsTool for skill discovery, FileSystemTools
@@ -119,18 +132,18 @@ public class MedicalAgentConfiguration {
             @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
             @org.springframework.beans.factory.annotation.Qualifier("skillsTool") ToolCallback skillsTool,
             FileSystemTools fileSystemTools,
-            MedicalAgentTools medicalAgentTools
+            MedicalAgentTools medicalAgentTools,
+            AutoMemoryTools autoMemoryTools,
+            SessionMemoryAdvisor sessionMemoryAdvisor
     ) {
         log.info("Creating medicalAgentChatClient with Agent Skills and Medical Tools enabled");
         log.info("Using toolCallingChatModel: {} for tool invocations", toolCallingChatModel.getClass().getSimpleName());
 
-        // Build ChatClient with tools
-        // Note: SkillsTool is registered as ToolCallback, but it should only handle skill-based tool calls
-        // Regular Java @Tool methods are handled by defaultTools registration
         ChatClient.Builder builder = ChatClient.builder(toolCallingChatModel)
-                .defaultTools(fileSystemTools)  // File reading tools
-                .defaultTools(medicalAgentTools)  // Java @Tool methods
-                .defaultAdvisors(new SimpleLoggerAdvisor());
+                .defaultTools(fileSystemTools)
+                .defaultTools(medicalAgentTools)
+                .defaultTools(autoMemoryTools)
+                .defaultAdvisors(sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
         // Only add SkillsTool if it's properly configured
         try {

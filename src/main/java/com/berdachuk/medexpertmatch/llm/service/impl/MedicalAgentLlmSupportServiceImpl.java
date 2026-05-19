@@ -32,6 +32,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     private final PromptTemplate medgemmaCaseAnalysisUserPromptTemplate;
     private final PromptTemplate medgemmaResultInterpretationSystemPromptTemplate;
     private final PromptTemplate medgemmaResultInterpretationUserPromptTemplate;
+    private final PromptTemplate routingSummarizationPromptTemplate;
+    private final PromptTemplate networkAnalyticsSummarizationPromptTemplate;
     private final LogStreamService logStreamService;
     private final LlmCallLimiter llmCallLimiter;
 
@@ -42,6 +44,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             @Qualifier("medgemmaCaseAnalysisUserPromptTemplate") PromptTemplate medgemmaCaseAnalysisUserPromptTemplate,
             @Qualifier("medgemmaResultInterpretationSystemPromptTemplate") PromptTemplate medgemmaResultInterpretationSystemPromptTemplate,
             @Qualifier("medgemmaResultInterpretationUserPromptTemplate") PromptTemplate medgemmaResultInterpretationUserPromptTemplate,
+            @Qualifier("routingSummarizationPromptTemplate") PromptTemplate routingSummarizationPromptTemplate,
+            @Qualifier("networkAnalyticsSummarizationPromptTemplate") PromptTemplate networkAnalyticsSummarizationPromptTemplate,
             @Value("${spring.ai.custom.chat.model:medgemma:1.5-4b}") String medGemmaModelName,
             LogStreamService logStreamService,
             LlmCallLimiter llmCallLimiter) {
@@ -52,6 +56,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         this.medgemmaCaseAnalysisUserPromptTemplate = medgemmaCaseAnalysisUserPromptTemplate;
         this.medgemmaResultInterpretationSystemPromptTemplate = medgemmaResultInterpretationSystemPromptTemplate;
         this.medgemmaResultInterpretationUserPromptTemplate = medgemmaResultInterpretationUserPromptTemplate;
+        this.routingSummarizationPromptTemplate = routingSummarizationPromptTemplate;
+        this.networkAnalyticsSummarizationPromptTemplate = networkAnalyticsSummarizationPromptTemplate;
         this.logStreamService = logStreamService;
         this.llmCallLimiter = llmCallLimiter;
     }
@@ -94,11 +100,11 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             logStreamService.sendLog(sessionId, "INFO", "LLM case analysis",
                     String.format("Analysis completed successfully using model: %s", medGemmaModelName));
             log.debug("LLM case analysis result: {}", analysis);
-            return analysis;
+            return LlmResponseSanitizer.toHumanReadable(analysis);
         } catch (Exception e) {
             log.error("Error analyzing case with LLM: {}", caseId, e);
             logStreamService.logError(sessionId, "LLM case analysis failed", e.getMessage());
-            return String.format("{\"requiredSpecialty\":\"General\",\"urgencyLevel\":\"MEDIUM\",\"clinicalFindings\":[],\"icd10Codes\":[],\"caseSummary\":\"Case %s - Analysis incomplete due to error\"}", caseId);
+            return String.format("Case %s analysis is currently unavailable. The system encountered an error while processing this request.", caseId);
         }
     }
 
@@ -178,7 +184,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                             medGemmaModelName, interpretation != null ? interpretation.length() : 0));
             log.debug("LLM interpretation result (first 500 chars): {}",
                     interpretation != null && interpretation.length() > 500 ? interpretation.substring(0, 500) + "..." : interpretation);
-            return interpretation != null ? interpretation : "Error: Empty response from LLM";
+            return LlmResponseSanitizer.toHumanReadable(interpretation != null ? interpretation : "Error: Empty response from LLM");
         } catch (Exception e) {
             log.error("Error interpreting results with LLM", e);
             logStreamService.logError(sessionId, "LLM result interpretation failed", e.getMessage());
@@ -188,16 +194,9 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
     @Override
     public String summarizeRoutingResults(String rawToolResults, String caseAnalysis) {
-        String prompt = """
-                Summarize the following facility routing results for the user in 1-2 short paragraphs.
-                Use the case analysis for context. Focus on: recommended facilities, why they match, and any next steps.
-                Do not include tool names or procedural text. Write in plain language for a medical or operations reader.
-                Case analysis (context):
-                %s
-
-                Routing tool results:
-                %s
-                """.formatted(caseAnalysis != null ? caseAnalysis : "", rawToolResults != null ? rawToolResults : "");
+        String prompt = routingSummarizationPromptTemplate.render(Map.of(
+                "caseAnalysis", caseAnalysis != null ? caseAnalysis : "",
+                "rawToolResults", rawToolResults != null ? rawToolResults : ""));
         try {
             String response = llmCallLimiter.execute(LlmClientType.CHAT,
                     () -> medGemmaChatClient.prompt().user(prompt).call().content());
@@ -210,17 +209,12 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
     @Override
     public String summarizeNetworkAnalyticsResults(String rawResults) {
-        String prompt = """
-                Summarize the following network analytics results for the user in 1-2 short paragraphs.
-                Focus on key findings: which conditions were analyzed, how many experts, and main metrics.
-                Do not include tool names, step numbers, code snippets, or procedural text.
-                Write in plain language for a medical or analytics reader.
-                Raw results:
-                %s
-                """.formatted(rawResults);
+        String prompt = networkAnalyticsSummarizationPromptTemplate.render(Map.of(
+                "rawResults", rawResults != null ? rawResults : ""));
         try {
-            return llmCallLimiter.execute(LlmClientType.CHAT,
+            String response = llmCallLimiter.execute(LlmClientType.CHAT,
                     () -> medGemmaChatClient.prompt().user(prompt).call().content());
+            return LlmResponseSanitizer.toHumanReadable(response);
         } catch (Exception e) {
             log.warn("Summarization failed, returning raw results", e);
             return rawResults;

@@ -1,7 +1,7 @@
 # Medical Agent System: Skills, Tools, and Implementation
 
-**Last Updated:** 2026-02-03  
-**Status:** All tools implemented
+**Last Updated:** 2026-05-19  
+**Status:** All tools implemented (18 MedicalAgentTools + 5 AutoMemoryTools)
 
 ## Agent Skills Architecture
 
@@ -218,7 +218,11 @@ medexpertmatch:
 
 ### MedicalAgentTools Component
 
-The `MedicalAgentTools` class serves as the bridge between agent skills and system services:
+The `MedicalAgentTools` class (1558 lines, 18 `@Tool` methods) serves as the bridge between agent skills and system services.
+The `AutoMemoryTools` class (5 `@Tool` methods) provides cross-session durable memory for the LLM orchestrator.
+
+Both are registered as `defaultTools` on the `medicalAgentChatClient` in `MedicalAgentConfiguration`, along with
+`FileSystemTools` and `SkillsTool`.
 
 - Contains 18 `@Tool` annotated methods covering all 7 agent skills (case-analyzer 5, doctor-matcher 3,
   evidence-retriever 2, recommendation-engine 1, clinical-advisor 2, network-analyzer 2, routing-planner 3)
@@ -226,6 +230,18 @@ The `MedicalAgentTools` class serves as the bridge between agent skills and syst
 - Implements comprehensive error handling and logging
 - Uses MedGemma chat client for LLM-based operations
 - Integrates with real-time log streaming for monitoring
+
+### AutoMemoryTools Component
+
+`AutoMemoryTools` provides 5 `@Tool` methods for durable cross-session memory, enabling the LLM to self-curate facts and preferences that survive process restarts.
+
+- **automemory_append(type, markdownLine)**: Persist a fact to a typed markdown file (`user.md`, `feedback.md`, `project.md`, `reference.md`)
+- **automemory_read(type)**: Read durable memory entries by type (or `"all"` for everything)
+- **automemory_index()**: View the `MEMORY.md` index with timestamps and types
+- **appendPreference(markdownLine)**: Convenience wrapper for `automemory_append("user", ...)`
+- **readPreferences()**: Convenience wrapper for `automemory_read("user")`
+
+Storage: `${user.home}/.medexpertmatch/automemory/` (configurable via `medexpertmatch.automemory.root`). Filesystem-backed Markdown, human-readable and survives DB resets.
 
 ### Agent Orchestration Flow
 

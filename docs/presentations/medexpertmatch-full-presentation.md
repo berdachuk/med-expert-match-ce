@@ -419,8 +419,10 @@ Note: `web` composes UI; core domain logic stays in domain modules.
 <div class="reveal-slide-text-col">
 
 - **`MedicalAgentService`** + workflow services  
-- **`MedicalAgentTools`** — Spring AI `@Tool` calls into domain services (no raw LLM → DB)  
-- **Prompts** — external `.st` templates, `PromptTemplate` beans  
+- **`MedicalAgentTools`** — Spring AI `@Tool` calls into domain services (no raw LLM -> DB)  
+- **`AutoMemoryTools`** — cross-session durable memory (LLM self-curates facts across sessions)
+- **Session memory** — `SessionMemoryAdvisor` compacts history after 15 turns (JDBC-backed)
+- **Prompts** — external `.st` templates, `PromptTemplate` beans (17 templates, StringTemplate4)  
 
 </div>
 

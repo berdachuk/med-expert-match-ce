@@ -43,6 +43,10 @@ spring:
     schemas: medexpertmatch
     default-schema: medexpertmatch
   ai:
+    session:
+      repository:
+        jdbc:
+          initialize-schema: never
     openai:
       enabled: false
     # OpenAI-compatible providers only; base-url must include /v1 for Ollama (M6 official SDK)
@@ -118,6 +122,8 @@ medexpertmatch:
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
     directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
     extra-directory: ${MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY:}
+  automemory:
+    root: ${MEDEXPERTMATCH_AUTOMEMORY_ROOT:${user.home}/.medexpertmatch/automemory}
   embedding:
     # Multi-endpoint pool (optional): same pattern as aist-expertmatch ingestion embeddings multi-endpoint.
     # Activates when endpoints[0].url is set. All nodes use spring.ai.custom.embedding api-key and dimensions.

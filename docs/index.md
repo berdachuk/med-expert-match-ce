@@ -104,9 +104,11 @@ Kaggle.
 - **Clinical Recommendations**: Generate evidence-based clinical recommendations using MedGemma (all tools implemented)
 - **Network Analytics**: Query graph for top experts and aggregate metrics (all tools implemented)
 - **Regional Routing**: Score facility-case routing matches using Semantic Graph Retrieval (all tools implemented)
-- **Agent Skills**: 7 medical-specific Agent Skills for modular knowledge
-  management ([Medical Agent Tools](MEDICAL_AGENT_TOOLS.md))
+- **Agent Skills**: 7 medical-specific Agent Skills for modular knowledge management
+- **Session Memory**: JDBC-backed conversation history compaction (SlidingWindow, turn-triggered)
+- **AutoMemory**: Cross-session durable memory (LLM self-curated, filesystem-backed Markdown)
 - **Hybrid GraphRAG**: Combines vector, graph, and keyword search for optimal matching
+- **Evaluation Module**: Heuristics-based LLM output quality measurement (YAML datasets, JSON reports)
 - **Privacy-First**: Local deployment capability, HIPAA-compliant data handling
 - **Simulated security**: User selector (Regular User / Administrator); Synthetic Data and Graph Visualization are
   admin-only. See [Architecture - Simulated Security](ARCHITECTURE.md#role-based-simulated-security).
@@ -130,7 +132,8 @@ MedExpertMatch uses a modern, scalable architecture:
 
 - **Backend**: Spring Boot 4.0.2, Java 21
 - **Database**: PostgreSQL 17 with PgVector and Apache AGE 1.6.0
-- **AI/ML**: Spring AI 2.0.0-M2 with MedGemma models
+- **AI/ML**: Spring AI 2.0.0-M6 with MedGemma models
+- **Session**: Spring AI Session JDBC 0.2.0
 - **Vector Search**: PgVector with HNSW indexing
 - **Graph Database**: Apache AGE for relationship traversal
 - **Agent Skills**: Spring AI Agent Skills for medical domain knowledge
@@ -192,4 +195,4 @@ documentation section.
 
 ---
 
-*Last updated: 2026-02-03*
+*Last updated: 2026-05-19*

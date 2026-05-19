@@ -6,6 +6,7 @@ import com.berdachuk.medexpertmatch.clinicalexperience.domain.ClinicalExperience
 import com.berdachuk.medexpertmatch.clinicalexperience.repository.ClinicalExperienceRepository;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.doctor.domain.Doctor;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.evidence.domain.PubMedArticle;
 import com.berdachuk.medexpertmatch.evidence.service.PubMedService;
@@ -73,8 +74,7 @@ public class MedicalAgentTools {
     }
 
     private String getSessionId() {
-        // Get session ID from thread-local context
-        return logStreamService.getCurrentSessionId();
+        return OrchestrationContextHolder.sessionIdOrNull();
     }
 
     // ============================================

@@ -482,6 +482,6 @@ e.g. "slow zoom in" or "subtle parallax").
 Card and Thumbnail Image
 Dimensions for the image (560 x 280)
 
-*Last updated: 2026-02-08*
+*Last updated: 2026-05-19*
 
 
