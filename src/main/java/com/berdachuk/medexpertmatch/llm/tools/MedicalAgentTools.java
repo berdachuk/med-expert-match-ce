@@ -1281,7 +1281,7 @@ public class MedicalAgentTools {
 
         for (MedicalCase medicalCase : cases) {
             if (medicalCase.urgencyLevel() != null) {
-                urgencyDistribution.merge(medicalCase.urgencyLevel().toUpperCase(), 1, Integer::sum);
+                urgencyDistribution.merge(medicalCase.urgencyLevel().name(), 1, Integer::sum);
             }
             if (medicalCase.icd10Codes() != null) {
                 for (String code : medicalCase.icd10Codes()) {
