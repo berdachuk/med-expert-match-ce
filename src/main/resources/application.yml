@@ -204,6 +204,17 @@ medexpertmatch:
       complications: classpath:/data/complications.csv
       facility-capabilities: classpath:/data/facility-capabilities.csv
       specialty-procedures: classpath:/data/specialty-procedures.csv
+  evaluation:
+    dataset: ${MEDEXPERTMATCH_EVALUATION_DATASET:medical-eval-v1}
+    semantic-threshold: ${MEDEXPERTMATCH_EVALUATION_SEMANTIC_THRESHOLD:0.80}
+  documents:
+    enabled: ${MEDEXPERTMATCH_DOCUMENTS_ENABLED:false}
+    ingestion:
+      directory: ${MEDEXPERTMATCH_DOCUMENTS_INGESTION_DIRECTORY:}
+    chunking:
+      default-strategy: ${MEDEXPERTMATCH_DOCUMENTS_CHUNKING_STRATEGY:adaptive}
+      chunk-size: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_SIZE:512}
+      chunk-overlap: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_OVERLAP:64}
 
 logging:
   level:
@@ -228,16 +239,4 @@ logging:
     max-size: 10MB
     max-history: 30
 
-# Evaluation CLI configuration
-medexpertmatch:
-  evaluation:
-    dataset: ${MEDEXPERTMATCH_EVALUATION_DATASET:medical-eval-v1}
-    semantic-threshold: ${MEDEXPERTMATCH_EVALUATION_SEMANTIC_THRESHOLD:0.80}
-  documents:
-    enabled: ${MEDEXPERTMATCH_DOCUMENTS_ENABLED:false}
-    ingestion:
-      directory: ${MEDEXPERTMATCH_DOCUMENTS_INGESTION_DIRECTORY:}
-    chunking:
-      default-strategy: ${MEDEXPERTMATCH_DOCUMENTS_CHUNKING_STRATEGY:adaptive}
-      chunk-size: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_SIZE:512}
-      chunk-overlap: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_OVERLAP:64}
+
