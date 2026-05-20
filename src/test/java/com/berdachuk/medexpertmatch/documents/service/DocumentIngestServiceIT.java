@@ -1,0 +1,183 @@
+package com.berdachuk.medexpertmatch.documents.service;
+
+import com.berdachuk.medexpertmatch.documents.api.DocumentIngestApi;
+import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class DocumentIngestServiceIT extends BaseIntegrationTest {
+
+    @Autowired
+    private DocumentIngestApi documentIngestApi;
+
+    @Autowired
+    private NamedParameterJdbcTemplate namedJdbcTemplate;
+
+    @TempDir
+    Path tempDir;
+
+    @BeforeEach
+    void setUp() {
+        namedJdbcTemplate.getJdbcTemplate().execute("DELETE FROM medexpertmatch.document_chunk");
+        namedJdbcTemplate.getJdbcTemplate().execute("DELETE FROM medexpertmatch.source_document");
+    }
+
+    private static final String LONG_TEXT_TEMPLATE = "This is a detailed medical document that contains substantial content for chunking purposes. "
+            + "It covers multiple paragraphs and topics related to clinical practice guidelines and evidence-based medicine. "
+            + "The content includes detailed descriptions of treatment protocols, diagnostic criteria, and patient management strategies. "
+            + "This document serves as an important reference for healthcare professionals seeking to understand %s. "
+            + "Multiple studies have shown the effectiveness of these approaches in improving patient outcomes and reducing complications. "
+            + "Further research is needed to validate these findings in diverse patient populations and clinical settings.";
+
+    private String longText(String topic) {
+        return String.format(LONG_TEXT_TEMPLATE, topic);
+    }
+
+    @Test
+    void shouldIngestJsonlFileAndPersistDocuments() throws Exception {
+        Path jsonlFile = tempDir.resolve("test-docs.jsonl");
+        Files.writeString(jsonlFile,
+                "{\"id\": \"ext-1\", \"title\": \"Doc One\", \"category\": \"clinical\", \"source\": \"Test\", \"url\": \"http://example.com/1\", \"text\": \"" + longText("hypertension management") + "\"}\n"
+                        + "{\"id\": \"ext-2\", \"title\": \"Doc Two\", \"category\": \"research\", \"source\": \"Test\", \"url\": \"http://example.com/2\", \"text\": \"" + longText("diabetes care protocols") + "\"}\n"
+                        + "{\"id\": \"ext-3\", \"title\": \"Doc Three\", \"category\": \"clinical\", \"source\": \"Test\", \"url\": \"http://example.com/3\", \"text\": \"" + longText("cardiovascular disease treatment") + "\"}\n");
+
+        int count = documentIngestApi.ingestPaths(List.of(jsonlFile.toString()));
+
+        assertEquals(3, count);
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document ORDER BY title");
+        assertEquals(3, docs.size());
+        assertEquals("Doc One", docs.get(0).get("title"));
+        assertEquals("Doc Three", docs.get(1).get("title"));
+        assertEquals("Doc Two", docs.get(2).get("title"));
+
+        List<Map<String, Object>> chunks = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.document_chunk");
+        assertTrue(chunks.size() > 0, "Expected at least one chunk across all documents");
+    }
+
+    @Test
+    void shouldCreateChunksForIngestedDocuments() throws Exception {
+        Path jsonlFile = tempDir.resolve("chunk-test.jsonl");
+        Files.writeString(jsonlFile,
+                "{\"id\": \"chunk-ext-1\", \"title\": \"Chunk Test\", \"category\": \"research\", \"source\": \"Test\", \"url\": \"http://example.com/chunk\", \"text\": \"" + longText("neurological disorder management and treatment guidelines") + "\"}\n");
+
+        documentIngestApi.ingestPaths(List.of(jsonlFile.toString()));
+
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT id, external_id, category, source_format FROM medexpertmatch.source_document WHERE external_id = 'chunk-ext-1'");
+        assertEquals(1, docs.size());
+        assertEquals("jsonl", docs.get(0).get("source_format"));
+
+        List<Map<String, Object>> chunks = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.document_chunk WHERE document_id = ?", docs.get(0).get("id"));
+
+        assertFalse(chunks.isEmpty(), "Expected at least one chunk");
+        for (Map<String, Object> chunk : chunks) {
+            assertNotNull(chunk.get("id"));
+            assertEquals(docs.get(0).get("id"), chunk.get("document_id"));
+            assertNotNull(chunk.get("chunk_text"));
+            assertTrue(((String) chunk.get("chunk_text")).length() > 0);
+            assertTrue(chunk.containsKey("embedding"), "Chunk should have embedding column");
+        }
+    }
+
+    @Test
+    void shouldDeduplicateByContentHash() throws Exception {
+        Path jsonlFile = tempDir.resolve("dedup-test.jsonl");
+        String text = longText("oncology treatment protocols and chemotherapy guidelines");
+        Files.writeString(jsonlFile,
+                "{\"id\": \"dedup-1\", \"title\": \"Unique Doc\", \"category\": \"clinical\", \"source\": \"Test\", \"text\": \"" + text + "\"}\n");
+
+        int firstCount = documentIngestApi.ingestPaths(List.of(jsonlFile.toString()));
+        assertEquals(1, firstCount);
+
+        int secondCount = documentIngestApi.ingestPaths(List.of(jsonlFile.toString()));
+
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document");
+        assertEquals(1, docs.size(), "Only one document should exist after deduplication");
+
+        List<Map<String, Object>> chunks = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.document_chunk");
+        int firstChunkCount = chunks.size();
+
+        int thirdCount = documentIngestApi.ingestPaths(List.of(jsonlFile.toString()));
+
+        List<Map<String, Object>> docsAfterThird = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document");
+        assertEquals(1, docsAfterThird.size(), "Still only one document after third ingest");
+
+        List<Map<String, Object>> chunksAfterThird = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.document_chunk");
+        assertEquals(firstChunkCount, chunksAfterThird.size(), "Chunk count should not change after re-ingest");
+    }
+
+    @Test
+    void shouldSkipUnsupportedFileFormat() throws Exception {
+        Path unsupportedFile = tempDir.resolve("test.txt");
+        Files.writeString(unsupportedFile, "This is a plain text file with unsupported format.");
+
+        int count = documentIngestApi.ingestPaths(List.of(unsupportedFile.toString()));
+
+        assertEquals(0, count);
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document");
+        assertTrue(docs.isEmpty(), "Unsupported format should produce no documents");
+    }
+
+    @Test
+    void shouldSkipNonExistentFileGracefully() {
+        Path nonExistent = tempDir.resolve("does-not-exist.jsonl");
+
+        int count = documentIngestApi.ingestPaths(List.of(nonExistent.toString()));
+
+        assertEquals(0, count);
+    }
+
+    @Test
+    void shouldIngestFromDirectory() throws Exception {
+        Path docDir = tempDir.resolve("docs");
+        Files.createDirectory(docDir);
+
+        Files.writeString(docDir.resolve("a.jsonl"),
+                "{\"id\": \"dir-1\", \"title\": \"Directory Doc 1\", \"category\": \"clinical\", \"source\": \"Test\", \"text\": \"" + longText("cardiovascular disease management") + "\"}\n");
+        Files.writeString(docDir.resolve("b.jsonl"),
+                "{\"id\": \"dir-2\", \"title\": \"Directory Doc 2\", \"category\": \"research\", \"source\": \"Test\", \"text\": \"" + longText("neurological disorders and treatment") + "\"}\n");
+
+        int count = documentIngestApi.ingestFromDirectory(docDir.toString());
+
+        assertEquals(2, count);
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document ORDER BY title");
+        assertEquals(2, docs.size());
+    }
+
+    @Test
+    void shouldHandleMixedValidAndInvalidPaths() throws Exception {
+        Path validFile = tempDir.resolve("mixed-valid.jsonl");
+        Files.writeString(validFile,
+                "{\"id\": \"mixed-1\", \"title\": \"Mixed Valid\", \"category\": \"clinical\", \"source\": \"Test\", \"text\": \"" + longText("mixed-path ingestion test validation") + "\"}\n");
+
+        int count = documentIngestApi.ingestPaths(List.of(
+                validFile.toString(),
+                tempDir.resolve("nonexistent.jsonl").toString(),
+                tempDir.resolve("bad.txt").toString()
+        ));
+
+        assertEquals(1, count);
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document");
+        assertEquals(1, docs.size());
+    }
+}

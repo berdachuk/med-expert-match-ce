@@ -1036,7 +1036,7 @@ public class TestAIConfig {
             // Create one embedding per input text
             List<org.springframework.ai.embedding.Embedding> embeddings = new java.util.ArrayList<>();
             for (int i = 0; i < texts.size(); i++) {
-                float[] embeddingArray = new float[1536];
+                float[] embeddingArray = new float[768];
                 // Fill with some values to make each embedding unique
                 for (int j = 0; j < embeddingArray.length; j++) {
                     embeddingArray[j] = (float) (i * 0.001 + j * 0.000001);

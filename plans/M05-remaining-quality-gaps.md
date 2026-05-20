@@ -90,3 +90,16 @@ Tests:
 ## Execution Order
 
 Steps 1-4 are independent, can run in parallel. Total ~3h.
+
+---
+
+## Status: COMPLETED (2026-05-20)
+
+| # | Improvement | Status |
+|---|---|---|
+| 1 | Chunker strategy tests (ChunkerIT.java, ChunkerFactoryIT.java) | Completed |
+| 2 | Document ingest & embedding pipeline tests | Completed → DocumentEmbeddingPipelineIT.java (was already done) + DocumentIngestServiceIT.java (new) |
+| 3 | Evaluation REST endpoint (EvaluationController.java) | Completed |
+| 4 | DocumentSearchServiceIT | Completed |
+
+**Additionally fixed:** Mock embedding dimension in TestAIConfig (1536 → 768) to match DB schema vector(768).
