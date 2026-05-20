@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentRecommendationWorkflowService;
@@ -11,6 +12,7 @@ import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -56,6 +58,7 @@ public class MedicalAgentRecommendationWorkflowServiceImpl implements MedicalAge
         log.info("generateRecommendations() called - matchId: {}", matchId);
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
         try {
             String caseId = (String) request.get("caseId");
@@ -78,6 +81,8 @@ public class MedicalAgentRecommendationWorkflowServiceImpl implements MedicalAge
                         String.format("Calling model: %s for recommendation generation", functionGemmaModelName));
                 String toolResults = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
                         .user(prompt)
+                        .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY,
+                                OrchestrationContextHolder.sessionIdOrNull()))
                         .call()
                         .content());
                 log.info("LLM model: {} completed recommendation generation (matchId: {}), response length: {}",
@@ -97,29 +102,40 @@ public class MedicalAgentRecommendationWorkflowServiceImpl implements MedicalAge
         } catch (Exception e) {
             log.warn("Error in hybrid generateRecommendations, falling back to standard approach", e);
         } finally {
+            OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
 
-        String doctorMatcherSkill = medicalAgentPromptSupportService.loadSkill("doctor-matcher");
-        String prompt = medicalAgentPromptSupportService.buildPrompt(
-                List.of(doctorMatcherSkill),
-                String.format("Generate expert recommendations for match %s.", matchId),
-                request
-        );
+        logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
-        log.info("Sending prompt to LLM for recommendation generation fallback (model: {}, matchId: {}):\n{}",
-                functionGemmaModelName, matchId, prompt);
-        log.info("Calling LLM model: {} for recommendation generation (fallback, matchId: {})", functionGemmaModelName, matchId);
-        String response = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
-                .user(prompt)
-                .call()
-                .content());
-        log.info("LLM model: {} completed recommendation generation (fallback, matchId: {}), response length: {}",
-                functionGemmaModelName, matchId, response != null ? response.length() : 0);
+        try {
+            String doctorMatcherSkill = medicalAgentPromptSupportService.loadSkill("doctor-matcher");
+            String prompt = medicalAgentPromptSupportService.buildPrompt(
+                    List.of(doctorMatcherSkill),
+                    String.format("Generate expert recommendations for match %s.", matchId),
+                    request
+            );
 
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("matchId", matchId);
-        metadata.put("skills", List.of("doctor-matcher"));
-        return new MedicalAgentService.AgentResponse(response, metadata);
+            log.info("Sending prompt to LLM for recommendation generation fallback (model: {}, matchId: {}):\n{}",
+                    functionGemmaModelName, matchId, prompt);
+            log.info("Calling LLM model: {} for recommendation generation (fallback, matchId: {})", functionGemmaModelName, matchId);
+            String response = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
+                    .user(prompt)
+                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY,
+                            OrchestrationContextHolder.sessionIdOrNull()))
+                    .call()
+                    .content());
+            log.info("LLM model: {} completed recommendation generation (fallback, matchId: {}), response length: {}",
+                    functionGemmaModelName, matchId, response != null ? response.length() : 0);
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("matchId", matchId);
+            metadata.put("skills", List.of("doctor-matcher"));
+            return new MedicalAgentService.AgentResponse(response, metadata);
+        } finally {
+            OrchestrationContextHolder.clear();
+            logStreamService.clearCurrentSessionId();
+        }
     }
 }

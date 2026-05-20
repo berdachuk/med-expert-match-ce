@@ -1,8 +1,8 @@
 # MedExpertMatch Implementation Plan
 
-**Last Updated:** 2026-03-27  
-**Version:** 1.1  
-**Status:** MVP complete
+**Last Updated:** 2026-05-19  
+**Version:** 1.2  
+**Status:** MVP complete with DocuRAG improvements
 
 ## Document Purpose
 

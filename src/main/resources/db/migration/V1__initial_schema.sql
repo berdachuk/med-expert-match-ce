@@ -297,3 +297,80 @@ CREATE TRIGGER update_facilities_updated_at BEFORE UPDATE ON medexpertmatch.faci
 
 CREATE TRIGGER update_consultation_matches_updated_at BEFORE UPDATE ON medexpertmatch.consultation_matches
     FOR EACH ROW EXECUTE FUNCTION medexpertmatch.update_updated_at_column();
+
+-- ============================================
+-- AI Session Tables (Spring AI Session JDBC)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS AI_SESSION (
+    id            VARCHAR(255)  NOT NULL PRIMARY KEY,
+    user_id       VARCHAR(255)  NOT NULL,
+    created_at    TIMESTAMP     NOT NULL,
+    expires_at    TIMESTAMP,
+    metadata      TEXT,
+    event_version BIGINT        NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_session_user_id
+    ON AI_SESSION (user_id);
+
+CREATE INDEX IF NOT EXISTS idx_ai_session_expires_at
+    ON AI_SESSION (expires_at);
+
+CREATE TABLE IF NOT EXISTS AI_SESSION_EVENT (
+    id              VARCHAR(255)  NOT NULL PRIMARY KEY,
+    session_id      VARCHAR(255)  NOT NULL,
+    "timestamp"     TIMESTAMP     NOT NULL,
+    message_type    VARCHAR(20)   NOT NULL,
+    message_content TEXT,
+    message_data    TEXT,
+    synthetic       BOOLEAN       NOT NULL DEFAULT FALSE,
+    branch          VARCHAR(500),
+    metadata        TEXT,
+    CONSTRAINT fk_ai_session_event_session
+        FOREIGN KEY (session_id) REFERENCES AI_SESSION (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ai_session_event_session_ts
+    ON AI_SESSION_EVENT (session_id, "timestamp");
+
+-- ============================================
+-- Evaluation Tables
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS evaluation_dataset (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    name VARCHAR(255) NOT NULL UNIQUE,
+    version VARCHAR(50),
+    description TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_case (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    dataset_id CHAR(24) NOT NULL REFERENCES evaluation_dataset(id) ON DELETE CASCADE,
+    question TEXT NOT NULL,
+    ground_truth_answer TEXT NOT NULL,
+    meta_json JSONB
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_run (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    dataset_id CHAR(24) NOT NULL REFERENCES evaluation_dataset(id),
+    normalized_accuracy DOUBLE PRECISION,
+    mean_semantic_similarity DOUBLE PRECISION,
+    semantic_accuracy_at_threshold DOUBLE PRECISION,
+    config JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_result (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    run_id CHAR(24) NOT NULL REFERENCES evaluation_run(id) ON DELETE CASCADE,
+    case_id CHAR(24) NOT NULL REFERENCES evaluation_case(id),
+    predicted_answer TEXT,
+    exact_match BOOLEAN NOT NULL DEFAULT FALSE,
+    normalized_match BOOLEAN NOT NULL DEFAULT FALSE,
+    semantic_similarity DOUBLE PRECISION,
+    semantic_pass BOOLEAN NOT NULL DEFAULT FALSE
+);

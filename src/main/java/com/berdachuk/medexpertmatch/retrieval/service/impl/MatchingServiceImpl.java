@@ -10,6 +10,7 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import com.berdachuk.medexpertmatch.retrieval.domain.*;
 import com.berdachuk.medexpertmatch.retrieval.repository.ConsultationMatchRepository;
 import com.berdachuk.medexpertmatch.retrieval.service.MatchingService;
+import com.berdachuk.medexpertmatch.retrieval.service.RerankingService;
 import com.berdachuk.medexpertmatch.retrieval.service.SemanticGraphRetrievalService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -37,6 +38,7 @@ public class MatchingServiceImpl implements MatchingService {
     private final SemanticGraphRetrievalService semanticGraphRetrievalService;
     private final ConsultationMatchRepository consultationMatchRepository;
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
+    private final RerankingService rerankingService;
 
     public MatchingServiceImpl(
             MedicalCaseRepository medicalCaseRepository,
@@ -44,13 +46,15 @@ public class MatchingServiceImpl implements MatchingService {
             FacilityRepository facilityRepository,
             SemanticGraphRetrievalService semanticGraphRetrievalService,
             ConsultationMatchRepository consultationMatchRepository,
-            NamedParameterJdbcTemplate namedJdbcTemplate) {
+            NamedParameterJdbcTemplate namedJdbcTemplate,
+            RerankingService rerankingService) {
         this.medicalCaseRepository = medicalCaseRepository;
         this.doctorRepository = doctorRepository;
         this.facilityRepository = facilityRepository;
         this.semanticGraphRetrievalService = semanticGraphRetrievalService;
         this.consultationMatchRepository = consultationMatchRepository;
         this.namedJdbcTemplate = namedJdbcTemplate;
+        this.rerankingService = rerankingService;
     }
 
     @Override
@@ -96,13 +100,15 @@ public class MatchingServiceImpl implements MatchingService {
         // Sort by score descending, assign correct ranks, and limit results
         List<DoctorMatch> sortedMatches = unsortedMatches.stream()
                 .sorted(Comparator.comparing(DoctorMatch::matchScore).reversed())
-                .limit(options.maxResults())
                 .collect(Collectors.toList());
+
+        List<DoctorMatch> reranked = rerankingService.rerank(normalizedCaseId, sortedMatches, options.maxResults());
+        List<DoctorMatch> limited = reranked.stream().limit(options.maxResults()).toList();
 
         // Assign correct ranks after sorting (1 = best match)
         List<DoctorMatch> result = new ArrayList<>();
         int rank = 1;
-        for (DoctorMatch m : sortedMatches) {
+        for (DoctorMatch m : limited) {
             result.add(new DoctorMatch(
                     m.doctor(),
                     m.matchScore(),

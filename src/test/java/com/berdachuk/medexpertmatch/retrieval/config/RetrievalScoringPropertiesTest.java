@@ -12,7 +12,8 @@ class RetrievalScoringPropertiesTest {
         assertDoesNotThrow(() -> new RetrievalScoringProperties(
                 0.4, 0.3, 0.3,
                 0.3, 0.3, 0.2, 0.2,
-                0.5, 0.3, 0.2
+                0.5, 0.3, 0.2,
+                "weighted"
         ));
     }
 
@@ -21,7 +22,8 @@ class RetrievalScoringPropertiesTest {
         assertThrows(IllegalArgumentException.class, () -> new RetrievalScoringProperties(
                 0.5, 0.3, 0.3,
                 0.3, 0.3, 0.2, 0.2,
-                0.5, 0.3, 0.2
+                0.5, 0.3, 0.2,
+                "weighted"
         ));
     }
 }

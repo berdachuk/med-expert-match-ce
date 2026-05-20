@@ -1,6 +1,6 @@
 # PlantUML Usage in MedExpertMatch Documentation
 
-**Last Updated:** 2026-01-27
+**Last Updated:** 2026-05-19
 
 ## Overview
 

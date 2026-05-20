@@ -22,6 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +38,7 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
     private static final int AVAILABILITY_DOCTOR_LIMIT = 100;
     private static final double EARTH_RADIUS_KM = 6371.0;
     private static final double GEOGRAPHIC_DECAY_DISTANCE_KM = 500.0;
+    private static final double RRF_K = 60;
 
     private static final int FACILITY_DOCTOR_LIMIT = 500;
 
@@ -77,21 +80,19 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         logStreamService.sendLog(sessionId, "INFO", "Graph usage: Starting Semantic Graph Retrieval scoring",
                 String.format("Case: %s, Doctor: %s", medicalCase.id(), doctor.id()));
 
-        // Calculate vector similarity score
         double vectorScore = calculateVectorSimilarityScore(medicalCase, doctor);
-
-        // Calculate graph relationship score
         double graphScore = calculateGraphRelationshipScore(medicalCase, doctor);
-
-        // Calculate historical performance score
         double historicalScore = calculateHistoricalPerformanceScore(doctor, medicalCase);
 
-        // Combine scores with weighted average
-        double overallScore = (vectorScore * scoringProperties.getDoctorVectorWeight()) +
-                (graphScore * scoringProperties.getDoctorGraphWeight()) +
-                (historicalScore * scoringProperties.getDoctorHistoricalWeight());
+        double overallScore;
+        if ("rrf".equals(scoringProperties.getFusionStrategy())) {
+            overallScore = calculateRrfScore(medicalCase, doctor);
+        } else {
+            overallScore = (vectorScore * scoringProperties.getDoctorVectorWeight()) +
+                    (graphScore * scoringProperties.getDoctorGraphWeight()) +
+                    (historicalScore * scoringProperties.getDoctorHistoricalWeight());
+        }
 
-        // Scale to 0-100
         overallScore = overallScore * 100;
 
         String rationale = String.format(
@@ -366,8 +367,48 @@ public class SemanticGraphRetrievalServiceImpl implements SemanticGraphRetrieval
         } catch (Exception e) {
             log.error("Failed to calculate historical performance score for doctor {}: {}",
                     doctor.id(), e.getMessage(), e);
-            return 0.0; // Return zero score on error instead of neutral
+            return 0.0;
         }
+    }
+
+    private double calculateRrfScore(MedicalCase medicalCase, Doctor doctor) {
+        List<String> allDoctorIds = doctorRepository.findAllIds(1000);
+        if (allDoctorIds.isEmpty()) {
+            return 0.0;
+        }
+        List<Doctor> allDoctors = doctorRepository.findByIds(allDoctorIds);
+        if (allDoctors.isEmpty()) {
+            return 0.0;
+        }
+
+        List<String> vectorRanked = allDoctors.stream()
+                .sorted(Comparator.comparing((Doctor d) -> {
+                    return calculateVectorSimilarityScore(medicalCase, d);
+                }).reversed())
+                .map(Doctor::id)
+                .toList();
+
+        List<String> graphRanked = allDoctors.stream()
+                .sorted(Comparator.comparing((Doctor d) -> {
+                    return calculateGraphRelationshipScore(medicalCase, d);
+                }).reversed())
+                .map(Doctor::id)
+                .toList();
+
+        List<String> historicalRanked = allDoctors.stream()
+                .sorted(Comparator.comparing((Doctor d) -> {
+                    return calculateHistoricalPerformanceScore(d, medicalCase);
+                }).reversed())
+                .map(Doctor::id)
+                .toList();
+
+        Map<String, Double> rrfScores = new HashMap<>();
+        for (List<String> channel : List.of(vectorRanked, graphRanked, historicalRanked)) {
+            for (int rank = 0; rank < channel.size(); rank++) {
+                rrfScores.merge(channel.get(rank), 1.0 / (RRF_K + rank + 1), Double::sum);
+            }
+        }
+        return rrfScores.getOrDefault(doctor.id(), 0.0);
     }
 
     /**

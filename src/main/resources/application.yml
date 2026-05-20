@@ -43,6 +43,10 @@ spring:
     schemas: medexpertmatch
     default-schema: medexpertmatch
   ai:
+    session:
+      repository:
+        jdbc:
+          initialize-schema: never
     openai:
       enabled: false
     # OpenAI-compatible providers only; base-url must include /v1 for Ollama (M6 official SDK)
@@ -118,6 +122,8 @@ medexpertmatch:
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
     directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
     extra-directory: ${MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY:}
+  automemory:
+    root: ${MEDEXPERTMATCH_AUTOMEMORY_ROOT:${user.home}/.medexpertmatch/automemory}
   embedding:
     # Multi-endpoint pool (optional): same pattern as aist-expertmatch ingestion embeddings multi-endpoint.
     # Activates when endpoints[0].url is set. All nodes use spring.ai.custom.embedding api-key and dimensions.
@@ -157,6 +163,9 @@ medexpertmatch:
         urgency-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_URGENCY_WEIGHT:0.5}
         complexity-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_COMPLEXITY_WEIGHT:0.3}
         availability-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_AVAILABILITY_WEIGHT:0.2}
+    reranking:
+      enabled: ${MEDEXPERTMATCH_RETRIEVAL_RERANKING_ENABLED:false}
+      top-k: ${MEDEXPERTMATCH_RETRIEVAL_RERANKING_TOP_K:20}
   llm: # Concurrency per component; 1 = sequential (safe for local Ollama), increase for remote APIs
     max-tokens: 4096
     temperature: 0.7
@@ -195,6 +204,17 @@ medexpertmatch:
       complications: classpath:/data/complications.csv
       facility-capabilities: classpath:/data/facility-capabilities.csv
       specialty-procedures: classpath:/data/specialty-procedures.csv
+  evaluation:
+    dataset: ${MEDEXPERTMATCH_EVALUATION_DATASET:medical-eval-v1}
+    semantic-threshold: ${MEDEXPERTMATCH_EVALUATION_SEMANTIC_THRESHOLD:0.80}
+  documents:
+    enabled: ${MEDEXPERTMATCH_DOCUMENTS_ENABLED:false}
+    ingestion:
+      directory: ${MEDEXPERTMATCH_DOCUMENTS_INGESTION_DIRECTORY:}
+    chunking:
+      default-strategy: ${MEDEXPERTMATCH_DOCUMENTS_CHUNKING_STRATEGY:adaptive}
+      chunk-size: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_SIZE:512}
+      chunk-overlap: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_OVERLAP:64}
 
 logging:
   level:
@@ -218,3 +238,5 @@ logging:
     name: logs/med-expert-match.log
     max-size: 10MB
     max-history: 30
+
+

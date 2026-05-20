@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentCaseIntakeWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentDoctorMatchingWorkflowService;
@@ -56,6 +57,7 @@ public class MedicalAgentCaseIntakeWorkflowServiceImpl implements MedicalAgentCa
 
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
         logStreamService.sendLog(sessionId, "INFO", "matchFromText started", "Creating case from text input");
 
         try {
@@ -157,6 +159,7 @@ public class MedicalAgentCaseIntakeWorkflowServiceImpl implements MedicalAgentCa
             logStreamService.sendLog(sessionId, "ERROR", "matchFromText failed", e.getMessage());
             throw new AgentExecutionException("Failed to match doctors from text: " + e.getMessage(), e);
         } finally {
+            OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
     }

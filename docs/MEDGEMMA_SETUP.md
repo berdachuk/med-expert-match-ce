@@ -1,6 +1,6 @@
 # MedGemma Setup Guide for Local Development
 
-**Last Updated:** 2026-03-25
+**Last Updated:** 2026-05-19
 
 This guide describes a **self-hosted local AI** setup for MedExpertMatch using MedGemma behind an
 **OpenAI-compatible API**. The application itself only supports OpenAI-compatible providers.

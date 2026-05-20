@@ -1,6 +1,6 @@
 # MedExpertMatch Coding Rules
 
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-05-19
 
 ## Overview
 
@@ -156,6 +156,47 @@ public void processBatch(List<MedicalCase> cases) {
 
 **Rationale**: Rate limiting is infrastructure concern, not business logic. Service should focus on description
 generation, callers manage concurrency.
+
+### Session ID Propagation
+
+**OrchestrationContextHolder pattern** - Session IDs propagate to `@Tool` methods and advisors via ThreadLocal, decoupled from `LogStreamService`:
+
+```java
+OrchestrationContextHolder.setSessionId(sessionId);
+try {
+    // workflow logic or ChatClient calls
+} finally {
+    OrchestrationContextHolder.clear();
+}
+```
+
+Workflow services set the context at method entry and clear in a `finally` block. Fallback paths that clear/re-enter the parent `try` block must re-set the context before executing:
+
+```java
+try {
+    OrchestrationContextHolder.setSessionId(sessionId);
+    // ... primary path ...
+} finally {
+    OrchestrationContextHolder.clear();
+}
+// fallback: re-set before ChatClient usage
+OrchestrationContextHolder.setSessionId(sessionId);
+try {
+    // ... fallback path ...
+} finally {
+    OrchestrationContextHolder.clear();
+}
+```
+
+`@Tool` methods access the session ID via `OrchestrationContextHolder.sessionIdOrNull()`. This enables `AutoMemoryTools` and `SessionMemoryAdvisor` to associate actions with sessions.
+
+### AutoMemory Conventions
+
+- Memory types: `user`, `feedback`, `project`, `reference` (case-sensitive, validated by `AutoMemoryService`)
+- Storage: `${user.home}/.medexpertmatch/automemory/` (configurable via `medexpertmatch.automemory.root`)
+- Filesystem-backed Markdown, human-readable, survives DB resets
+- `AutoMemoryTools` methods are registered on `medicalAgentChatClient` in `MedicalAgentConfiguration`
+- Tests disable skills (`medexpertmatch.skills.enabled=false`), so `AutoMemoryTools` is not wired in test profiles
 
 ## Medical Domain Adaptations
 
