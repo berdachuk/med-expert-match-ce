@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.documents.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@ConditionalOnProperty(name = "medexpertmatch.documents.enabled", havingValue = "true")
 public class StructuredFileParser {
 
     private final ObjectMapper objectMapper;

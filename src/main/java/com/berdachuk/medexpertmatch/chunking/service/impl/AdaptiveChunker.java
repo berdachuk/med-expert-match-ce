@@ -1,10 +1,12 @@
 package com.berdachuk.medexpertmatch.chunking.service.impl;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "medexpertmatch.documents.enabled", havingValue = "true")
 public class AdaptiveChunker implements com.berdachuk.medexpertmatch.chunking.api.Chunker {
 
     private final SemanticChunker semanticChunker;

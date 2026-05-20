@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.documents.service.impl;
 import com.berdachuk.medexpertmatch.documents.api.DocumentCatalogApi;
 import com.berdachuk.medexpertmatch.documents.domain.SourceDocumentEntity;
 import com.berdachuk.medexpertmatch.documents.repository.SourceDocumentRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@ConditionalOnProperty(name = "medexpertmatch.documents.enabled", havingValue = "true")
 public class DocumentCatalogServiceImpl implements DocumentCatalogApi {
 
     private final SourceDocumentRepository repository;

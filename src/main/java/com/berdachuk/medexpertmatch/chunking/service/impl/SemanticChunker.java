@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.chunking.service.impl;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -7,6 +8,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 @Component
+@ConditionalOnProperty(name = "medexpertmatch.documents.enabled", havingValue = "true")
 public class SemanticChunker implements com.berdachuk.medexpertmatch.chunking.api.Chunker {
 
     private static final Pattern SENTENCE_BOUNDARY = Pattern.compile("(?<=[.!?])\\s+");

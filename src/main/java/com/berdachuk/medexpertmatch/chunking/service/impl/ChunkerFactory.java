@@ -1,9 +1,11 @@
 package com.berdachuk.medexpertmatch.chunking.service.impl;
 
 import com.berdachuk.medexpertmatch.chunking.api.Chunker;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@ConditionalOnProperty(name = "medexpertmatch.documents.enabled", havingValue = "true")
 public class ChunkerFactory {
 
     private final AdaptiveChunker adaptiveChunker;

@@ -8,6 +8,7 @@ import com.berdachuk.medexpertmatch.documents.api.DocumentIngestApi;
 import com.berdachuk.medexpertmatch.documents.domain.SourceDocumentEntity;
 import com.berdachuk.medexpertmatch.documents.repository.SourceDocumentRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "medexpertmatch.documents.enabled", havingValue = "true")
 public class DocumentIngestServiceImpl implements DocumentIngestApi {
 
     private final SourceDocumentRepository sourceDocumentRepository;
