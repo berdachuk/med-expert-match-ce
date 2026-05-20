@@ -1,5 +1,7 @@
 # MedExpertMatch Agentic Improvements Plan
 
+**Last Updated:** 2026-05-19
+
 Analysis of [ai-architect-6-agents](https://github.com/berdachuk/ai-architect) for agentic patterns applicable to med-expert-match.
 
 ## Current State

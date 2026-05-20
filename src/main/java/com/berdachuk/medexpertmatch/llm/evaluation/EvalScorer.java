@@ -1,108 +1,78 @@
 package com.berdachuk.medexpertmatch.llm.evaluation;
 
+import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public final class EvalScorer {
+@Component
+public class EvalScorer {
 
-    private EvalScorer() {}
+    private static final double DEFAULT_SEMANTIC_THRESHOLD = 0.80;
 
-    public static EvalScore score(EvalCase evalCase, String response) {
-        if (response == null || response.isBlank()) {
-            return new EvalScore(evalCase.id(), false, List.of("empty_response"));
-        }
+    private final EmbeddingService embeddingService;
 
-        List<String> failures = new ArrayList<>();
-        String responseLower = response.toLowerCase();
-
-        checkRequiredFields(evalCase.requiredFields(), responseLower, failures);
-
-        switch (evalCase.type()) {
-            case "doctor-match" -> checkDoctorMatch(evalCase, responseLower, failures);
-            case "case-analysis" -> checkCaseAnalysis(evalCase, responseLower, failures);
-            case "facility-routing" -> checkFacilityRouting(evalCase, responseLower, failures);
-            case "queue-priority" -> checkQueuePriority(responseLower, failures);
-            default -> log.warn("Unknown eval case type: {}", evalCase.type());
-        }
-
-        boolean passed = failures.isEmpty();
-        if (!passed) {
-            log.debug("Eval case {} failed: {}", evalCase.id(), failures);
-        }
-        return new EvalScore(evalCase.id(), passed, failures);
+    public EvalScorer(EmbeddingService embeddingService) {
+        this.embeddingService = embeddingService;
     }
 
-    private static void checkRequiredFields(List<String> requiredFields, String responseLower,
-                                            List<String> failures) {
-        if (requiredFields == null || requiredFields.isEmpty()) {
-            return;
+    public EvalScore score(String caseId, String predicted, String groundTruth) {
+        return score(caseId, predicted, groundTruth, DEFAULT_SEMANTIC_THRESHOLD);
+    }
+
+    public EvalScore score(String caseId, String predicted, String groundTruth, double semanticThreshold) {
+        if (predicted == null || predicted.isBlank()) {
+            return new EvalScore(caseId, false, false, 0.0, false);
         }
-        for (String field : requiredFields) {
-            if (!responseLower.contains(field.toLowerCase())) {
-                failures.add("missing_field:" + field);
+
+        boolean exactMatch = predicted.trim().equalsIgnoreCase(groundTruth.trim());
+        boolean normalizedMatch = normalizeWhitespace(predicted).equals(normalizeWhitespace(groundTruth));
+        double semanticSimilarity = calculateSemanticSimilarity(predicted, groundTruth);
+        boolean semanticPass = semanticSimilarity >= semanticThreshold;
+
+        return new EvalScore(caseId, exactMatch, normalizedMatch, semanticSimilarity, semanticPass);
+    }
+
+    private double calculateSemanticSimilarity(String predicted, String groundTruth) {
+        try {
+            float[] predEmbedding = embeddingService.generateEmbeddingAsFloatArray(predicted);
+            float[] gtEmbedding = embeddingService.generateEmbeddingAsFloatArray(groundTruth);
+            if (predEmbedding == null || gtEmbedding == null || predEmbedding.length == 0 || gtEmbedding.length == 0) {
+                return 0.0;
             }
+            return cosineSimilarity(predEmbedding, gtEmbedding);
+        } catch (Exception e) {
+            log.warn("Failed to calculate semantic similarity: {}", e.getMessage());
+            return 0.0;
         }
     }
 
-    private static void checkDoctorMatch(EvalCase evalCase, String responseLower, List<String> failures) {
-        if (evalCase.expectedSpecialty() != null && !evalCase.expectedSpecialty().isBlank()) {
-            if (!responseLower.contains(evalCase.expectedSpecialty().toLowerCase())) {
-                failures.add("missing_specialty:" + evalCase.expectedSpecialty());
-            }
+    private static double cosineSimilarity(float[] a, float[] b) {
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+        int minLen = Math.min(a.length, b.length);
+        for (int i = 0; i < minLen; i++) {
+            dotProduct += (double) a[i] * b[i];
+            normA += (double) a[i] * a[i];
+            normB += (double) b[i] * b[i];
         }
-        if (evalCase.minMatches() != null && evalCase.minMatches() > 0) {
-            int matchCount = countMatches(responseLower);
-            if (matchCount < evalCase.minMatches()) {
-                failures.add("insufficient_matches:" + matchCount + "<" + evalCase.minMatches());
-            }
+        if (normA == 0.0 || normB == 0.0) {
+            return 0.0;
         }
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
-    private static void checkCaseAnalysis(EvalCase evalCase, String responseLower, List<String> failures) {
-    }
-
-    private static void checkFacilityRouting(EvalCase evalCase, String responseLower, List<String> failures) {
-        if (evalCase.minMatches() != null && evalCase.minMatches() > 0) {
-            int facilityCount = countFacilities(responseLower);
-            if (facilityCount < evalCase.minMatches()) {
-                failures.add("insufficient_facilities:" + facilityCount + "<" + evalCase.minMatches());
-            }
+    private static String normalizeWhitespace(String text) {
+        if (text == null) {
+            return "";
         }
+        return text.trim().replaceAll("\\s+", " ").toLowerCase();
     }
 
-    private static void checkQueuePriority(String responseLower, List<String> failures) {
-        boolean hasUrgency = responseLower.contains("critical")
-                || responseLower.contains("high")
-                || responseLower.contains("medium");
-        if (!hasUrgency) {
-            failures.add("no_urgency_reference");
-        }
-    }
-
-    private static int countMatches(String response) {
-        int count = 0;
-        int idx = 0;
-        String marker = "doctor";
-        while ((idx = response.indexOf(marker, idx)) != -1) {
-            count++;
-            idx += marker.length();
-        }
-        return count;
-    }
-
-    private static int countFacilities(String response) {
-        int count = 0;
-        int idx = 0;
-        String marker = "facility";
-        while ((idx = response.indexOf(marker, idx)) != -1) {
-            count++;
-            idx += marker.length();
-        }
-        return count;
-    }
-
-    public record EvalScore(String caseId, boolean passed, List<String> failures) {}
+    public record EvalScore(String caseId, boolean exactMatch, boolean normalizedMatch,
+                             double semanticSimilarity, boolean semanticPass) {}
 }

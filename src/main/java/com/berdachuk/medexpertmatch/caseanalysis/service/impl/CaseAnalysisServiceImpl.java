@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.caseanalysis.exception.CaseAnalysisException
 import com.berdachuk.medexpertmatch.caseanalysis.service.CaseAnalysisService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.llm.service.impl.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -301,33 +302,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
      * Extracts JSON from response text, handling markdown code blocks.
      */
     private String extractJsonFromResponse(String responseText) {
-        if (responseText == null || responseText.trim().isEmpty()) {
-            return null;
-        }
-
-        String jsonText = responseText.trim();
-
-        // Try to extract JSON from markdown code blocks
-        if (jsonText.contains("```json")) {
-            int startIdx = jsonText.indexOf("```json") + 7;
-            int endIdx = jsonText.indexOf("```", startIdx);
-            if (endIdx > startIdx) {
-                jsonText = jsonText.substring(startIdx, endIdx).trim();
-            }
-        } else if (jsonText.contains("```")) {
-            int startIdx = jsonText.indexOf("```") + 3;
-            int endIdx = jsonText.indexOf("```", startIdx);
-            if (endIdx > startIdx) {
-                jsonText = jsonText.substring(startIdx, endIdx).trim();
-            }
-        }
-
-        // If still empty after extraction, return null
-        if (jsonText.trim().isEmpty()) {
-            return null;
-        }
-
-        return jsonText;
+        return LlmResponseSanitizer.extractJson(responseText);
     }
 
     /**

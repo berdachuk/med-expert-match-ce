@@ -185,6 +185,13 @@
             <version>${commons-lang3.version}</version>
         </dependency>
 
+        <!-- PDFBox for document ingestion and text extraction -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
+        </dependency>
+
         <!-- Spring Retry (explicit version; Boot 4 removed dependency management) -->
         <dependency>
             <groupId>org.springframework.retry</groupId>

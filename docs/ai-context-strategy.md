@@ -1,0 +1,65 @@
+# AI Context Strategy
+
+## Layer Model
+
+```
+.agents/skills/          ← Single source of truth (canonical skill definitions)
+AGENTS.md                ← Root index: repo overview, commands, boundaries, skill triggers
+{module}/AGENTS.md       ← Module-specific conventions (5 files: core, retrieval, llm, ingestion, web)
+.cursor/                 ← Optional IDE adapter (generated from skills, not canonical)
+```
+
+## Design Principles
+
+1. **Skills are canonical** — `.agents/skills/**/SKILL.md` is the single source of truth. All adapters derive from it.
+2. **Root AGENTS.md is an index** — compact, never bloated; points to skills and nested AGENTS.md for detail.
+3. **Nested AGENTS.md are scoped** — only at major module boundaries (2-5 files), each focused on that module's conventions.
+4. **Adapters are generated** — `.cursor/`, `.kilo/`, or other IDE adapters should transform `.agents/skills/` into tool-specific format, never duplicate content.
+
+## How the Architecture Analysis Feeds This Structure
+
+- **Module dependency tiers** (foundation → domain → processing → orchestration → presentation) determine which modules get nested AGENTS.md (orchestration and infrastructure modules need them most).
+- **Domain model ownership** (which entities live in which modules) is documented in `domain-modeling` skill.
+- **Cross-module rules** (who can depend on whom) are encoded in `core-architecture` skill.
+
+## Adding a New Skill
+
+1. Create `.agents/skills/{skill-name}/SKILL.md`
+2. Follow the template: Description, When to use, Instructions, Boundaries
+3. Register the skill in root `AGENTS.md` Skills Index table
+4. If the skill applies to a specific module, add a pointer in that module's AGENTS.md
+
+## Updating an Existing Skill
+
+1. Edit `.agents/skills/{skill-name}/SKILL.md` directly
+2. If adding new trigger conditions, update root AGENTS.md Skills Index
+3. If the change impacts module conventions, update the relevant nested AGENTS.md
+
+## Keeping Everything in Sync
+
+| Change | Files to update |
+|--------|----------------|
+| New module added | `core-architecture/SKILL.md`, root `AGENTS.md` (Repo Map), optional nested AGENTS.md |
+| New domain entity | `domain-modeling/SKILL.md` (entity ownership table) |
+| New Flyway migration rule | `db-migrations/SKILL.md` |
+| New Cypher pattern | `graph-db/SKILL.md` |
+| Code style change | `code-style/SKILL.md`, all nested AGENTS.md that reference it |
+| New prompt template | `llm-prompts/SKILL.md` |
+
+## IDE Adapter Design (future)
+
+```
+.agents/skills/          → Read directly by tools that support SKILL.md format
+                           OR
+                         → Transformed into:
+                           .cursor/rules/{skill}.mdc     (Cursor)
+                           .kilo/command/{skill}.md      (Kilo)
+                           .github/copilot-instructions/  (GitHub Copilot)
+```
+
+Adapters should be auto-generated scripts that:
+1. Read `.agents/skills/**/SKILL.md`
+2. Transform into tool-specific format
+3. Write to tool-specific directory
+
+Do NOT manually maintain tool-specific copies — they go stale.

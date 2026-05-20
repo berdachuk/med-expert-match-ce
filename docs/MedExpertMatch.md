@@ -1,9 +1,9 @@
 # MedExpertMatch: AI-Powered Medical Expert Recommendation System
 
 **Project Name:** MedExpertMatch  
-**Version:** 1.1  
+**Version:** 1.2  
 **Date:** 2026-05-19  
-**Status:** MVP complete with agentic improvements
+**Status:** MVP complete with agentic improvements and DocuRAG improvements
 
 ## Overview
 
@@ -137,4 +137,4 @@ See [Use Cases](USE_CASES.md) for detailed workflows and technical implementatio
 
 ---
 
-*Last updated: 2026-01-27*
+*Last updated: 2026-05-19*

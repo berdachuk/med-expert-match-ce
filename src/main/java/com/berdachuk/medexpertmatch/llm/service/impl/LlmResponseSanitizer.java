@@ -1,8 +1,38 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
-final class LlmResponseSanitizer {
+public final class LlmResponseSanitizer {
 
     private LlmResponseSanitizer() {
+    }
+
+    public static String extractJson(String llmOutput) {
+        if (llmOutput == null || llmOutput.isBlank()) {
+            return llmOutput;
+        }
+        String result = llmOutput.trim();
+        if (result.contains("```json")) {
+            int start = result.indexOf("```json") + 7;
+            int end = result.lastIndexOf("```");
+            if (end > start) {
+                result = result.substring(start, end).trim();
+            }
+        } else if (result.contains("```")) {
+            int start = result.indexOf("```") + 3;
+            int end = result.lastIndexOf("```");
+            if (end > start) {
+                result = result.substring(start, end).trim();
+            }
+        }
+        int lastBrace = result.lastIndexOf('}');
+        int lastBracket = result.lastIndexOf(']');
+        int lastClose = Math.max(lastBrace, lastBracket);
+        if (lastClose > 0 && lastClose < result.length() - 1) {
+            String after = result.substring(lastClose + 1).trim();
+            if (!after.isEmpty() && !after.startsWith(",") && !after.startsWith("}")) {
+                result = result.substring(0, lastClose + 1);
+            }
+        }
+        return result;
     }
 
     static String stripLlmReasoning(String response) {

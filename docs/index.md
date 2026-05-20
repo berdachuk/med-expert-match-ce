@@ -20,12 +20,15 @@ the application may be localized separately; technical specs, guides, and README
 
 MedExpertMatch leverages a **Hybrid GraphRAG architecture**, combining:
 
-- **Vector Similarity Search** (PgVector) - Semantic matching based on clinical experiences (40% weight in scoring)
-- **Graph Traversal** (Apache AGE) - Relationship-based discovery of doctor-case connections (30% weight in scoring)
-- **Historical Performance** - Past outcomes, ratings, and success rates (30% weight in scoring)
-- **Keyword Search** - Traditional text matching for medical terms
-- **Semantic Reranking** - Precision optimization using MedGemma
-- **LLM Orchestration** - Natural language answer generation with MedGemma models
+- **Vector Similarity Search** (PgVector) — Semantic matching based on clinical experiences
+- **Graph Traversal** (Apache AGE) — Relationship-based discovery of doctor-case connections
+- **Historical Performance** — Past outcomes, ratings, and success rates
+- **Reciprocal Rank Fusion (RRF)** — Configurable rank-based fusion (k=60) as alternative to weighted average
+- **Semantic Re-ranking** — Precision optimization via `RerankingService` using existing reranking model
+- **Keyword Search** — Traditional text matching for medical terms
+- **LLM Orchestration** — Natural language answer generation with MedGemma models
+- **Document Ingestion** — PDF, JSONL, JSON, CSV parsing with SHA-256 dedup and adaptive chunking
+- **Evaluation Framework** — 4-metric eval (exact, normalized, semantic similarity, semantic pass) with JDBC persistence and CLI mode
 
 **Note**: The Find Specialist flow actively uses Apache AGE graph for relationship scoring.
 See [Find Specialist Flow](FIND_SPECIALIST_FLOW.md#apache-age-graph-usage) for details.
@@ -108,7 +111,10 @@ Kaggle.
 - **Session Memory**: JDBC-backed conversation history compaction (SlidingWindow, turn-triggered)
 - **AutoMemory**: Cross-session durable memory (LLM self-curated, filesystem-backed Markdown)
 - **Hybrid GraphRAG**: Combines vector, graph, and keyword search for optimal matching
-- **Evaluation Module**: Heuristics-based LLM output quality measurement (YAML datasets, JSON reports)
+- **Evaluation Module**: 4-metric LLM output quality measurement (YAML datasets, JSON reports, JDBC persistence, CLI mode)
+- **Document Ingestion**: PDF/JSONL/JSON/CSV parsing with SHA-256 dedup and adaptive chunking
+- **Semantic Re-ranking**: Configurable re-ranking via `RerankingService` (disabled by default)
+- **Reciprocal Rank Fusion**: Configurable RRF (k=60) as alternative to weighted average scoring
 - **Privacy-First**: Local deployment capability, HIPAA-compliant data handling
 - **Simulated security**: User selector (Regular User / Administrator); Synthetic Data and Graph Visualization are
   admin-only. See [Architecture - Simulated Security](ARCHITECTURE.md#role-based-simulated-security).

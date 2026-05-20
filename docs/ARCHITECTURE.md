@@ -1,8 +1,8 @@
 # MedExpertMatch Architecture
 
 **Last Updated:** 2026-05-19  
-**Version:** 1.3  
-**Status:** MVP complete with agentic improvements (see [PRD](PRD.md) for full product requirements; PRD status may differ)
+**Version:** 1.4  
+**Status:** MVP complete with agentic improvements and DocuRAG improvements (see [improvements-from-docu-rag](improvements-from-docu-rag.md))
 
 ## Overview
 
@@ -164,11 +164,13 @@ MedExpertMatch uses a modular structure organized by domain:
 
 - Domain: `DoctorMatch`, `FacilityMatch`, `MatchOptions`, `RoutingOptions`, `ScoreResult`, `RouteScoreResult`,
   `PriorityScore`
-- Service: `MatchingService`, `SemanticGraphRetrievalService` (Semantic Graph Retrieval)
+- Service: `MatchingService`, `SemanticGraphRetrievalService` (Semantic Graph Retrieval), `RerankingService`
 - **Scoring Components**:
-    - Vector similarity (40% weight) - PgVector embeddings comparison using cosine distance
-    - Graph relationships (30% weight) - Apache AGE graph traversal for relationship-based scoring
-    - Historical performance (30% weight) - Past outcomes, ratings, and success rates
+    - Vector similarity (configurable weight) — PgVector embeddings comparison using cosine distance
+    - Graph relationships (configurable weight) — Apache AGE graph traversal for relationship-based scoring
+    - Historical performance (configurable weight) — Past outcomes, ratings, and success rates
+    - **Reciprocal Rank Fusion** (configurable via `fusion-strategy`) — Rank-based fusion with k=60, alternative to weighted average
+- **Re-ranking**: Semantic re-ranking via `RerankingService` using existing `rerankingChatModel` bean (disabled by default)
 - **Used in Find Specialist Flow**: Graph relationships are actively used via
   `SemanticGraphRetrievalService.calculateGraphRelationshipScore()` for doctor-case matching
 
@@ -179,7 +181,7 @@ MedExpertMatch uses a modular structure organized by domain:
 - Workflow services: `MedicalAgentDoctorMatchingWorkflowService`, `MedicalAgentQueuePrioritizationWorkflowService`, etc.
 - Tools: `MedicalAgentTools` (18 tools), `AutoMemoryTools` (5 tools for cross-session durable memory)
 - Agent infrastructure: `OrchestrationContextHolder` (ThreadLocal session ID propagation)
-- Evaluation: `EvaluationService`, `EvalScorer`, `EvalDatasetLoader` (heuristics-based LLM output scoring)
+- Evaluation: `EvaluationService` (4-metric: exact match, normalized, semantic similarity, semantic pass), `EvalScorer` (cosine similarity via EmbeddingService), `EvaluationJdbcRepository`, `EvaluationDatasetSeeder`, `EvaluationProgressTracker`, `EvalCliRunner` (@Profile("eval-cli"))
 - Rest: `MedicalAgentController` (agent API endpoints)
 - Architecture note: `llm` is an intentional orchestration-heavy module and is allowed to depend on multiple domain
   modules to coordinate end-to-end medical workflows.
@@ -198,6 +200,21 @@ MedExpertMatch uses a modular structure organized by domain:
   `FhirObservationAdapter`)
 - Service: `SyntheticDataGenerator` (includes automatic embedding generation and graph building)
 - REST: `SyntheticDataController` (ingestion API), `SyntheticDataWebController` (web UI)
+
+**documents** - Document ingestion (PDF, JSONL, JSON, CSV)
+
+- Repository: `SourceDocumentRepository` (JDBC CRUD with SHA-256 dedup)
+- Service: `DocumentIngestServiceImpl`, `DocumentCatalogServiceImpl`
+- Extractors: `PdfTextExtractor` (PDFBox 3.0.3), `StructuredFileParser`, `ContentHasher`
+- Allowed dependencies: core, embedding
+
+**chunking** - Adaptive text chunking strategies
+
+- Interface: `Chunker` (chunk with configurable size, overlap, min chars)
+- Strategies: `AdaptiveChunker` (meta-chunker), `SemanticChunker` (sentence-boundary), `RecursiveCharacterChunker`
+- Factory: `ChunkerFactory` (strategy registry)
+- Repository: `ChunkRepository` (JDBC CRUD for document_chunk)
+- Allowed dependencies: core
 
 **web** - Web UI with Thymeleaf templates (server-side rendering)
 
@@ -804,8 +821,11 @@ Results flow back -> Agent formats response -> REST API returns JSON
 - **Session Memory**: `SessionMemoryAdvisor` with JDBC persistence compacts conversation history after 15 turns (sliding window, max 30 events)
 - **AutoMemory**: Cross-session durable memory via `AutoMemoryTools` (filesystem-backed Markdown, survives DB resets)
 - **OrchestrationContextHolder**: ThreadLocal session ID propagation decoupled from logging infrastructure
-- **Evaluation Module**: Heuristics-based LLM output quality measurement (YAML datasets, JSON reports)
-- **Hybrid Retrieval**: Vector (40%) + Graph (30%) + Historical (30%) provides comprehensive matching
+- **Evaluation Module**: 4-metric LLM output quality measurement with JDBC persistence, dataset seeding from classpath `.jsonl`, CLI mode (`@Profile("eval-cli")`), semantic similarity via EmbeddingService
+- **Hybrid Retrieval**: Vector + Graph + Historical with configurable weighted average or RRF fusion (k=60)
+- **Re-ranking**: Semantic re-ranking via `RerankingService` (disabled by default, uses existing `rerankingChatModel`)
+- **Document Ingestion**: New `documents/` module (PDF, JSONL, JSON, CSV parsing with SHA-256 dedup) and `chunking/` module (ADAPTIVE, SEMANTIC, RECURSIVE_CHARACTER strategies)
+- **Broswer Auto-Launch**: `LocalHomeBrowserLauncher` auto-opens browser on `local` profile startup
 - **Vector Embeddings**: Automatic embedding generation for medical cases using Spring AI EmbeddingModel
 - **PgVector Integration**: PostgreSQL pgvector extension with HNSW indexing for fast similarity search
 - **FHIR Compatibility**: Supports healthcare interoperability standards (FHIR R4)

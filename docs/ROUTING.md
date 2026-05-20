@@ -1,5 +1,7 @@
 # Regional Routing
 
+**Last Updated:** 2026-05-19
+
 ## Purpose
 
 Regional Routing (Use Case 6) lets regional health authorities and multi-hospital networks route medical cases to the

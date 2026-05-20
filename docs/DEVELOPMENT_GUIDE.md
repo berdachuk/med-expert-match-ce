@@ -1,7 +1,7 @@
 # MedExpertMatch Development Guide
 
 **Last Updated:** 2026-05-19  
-**Status:** MVP complete with agentic improvements
+**Status:** MVP complete with agentic improvements and DocuRAG improvements
 
 ## Overview
 
@@ -33,15 +33,18 @@ med-expert-match/
 │       │       ├── clinicalexperience/ # Clinical experience
 │       │       ├── facility/           # Facility domain
 │       │       ├── caseanalysis/       # Case analysis service
-│       │       ├── retrieval/          # Matching and Semantic Graph Retrieval services
+│       │       ├── retrieval/          # Matching and SGR services (RRF fusion, RerankingService)
 │       │       ├── llm/                 # LLM orchestration, agent skills, memory, evaluation
-│       │   ├── agent/            #   OrchestrationContextHolder
-│       │   ├── automemory/       #   AutoMemoryService, AutoMemoryTools
-│       │   ├── config/           #   MedicalAgentConfiguration
-│       │   ├── evaluation/       #   EvaluationService, EvalScorer
-│       │   ├── service/          #   Workflow services
-│       │   └── tools/            #   MedicalAgentTools
+│       │       │   ├── agent/            #   OrchestrationContextHolder
+│       │       │   ├── automemory/       #   AutoMemoryService, AutoMemoryTools
+│       │       │   ├── config/           #   MedicalAgentConfiguration
+│       │       │   ├── evaluation/       #   EvaluationService (4-metric), EvalScorer, EvalCliRunner
+│       │       │   ├── service/          #   Workflow services
+│       │       │   └── tools/            #   MedicalAgentTools
 │       │       ├── graph/               # Graph service (Apache AGE)
+│       │       ├── embedding/           # Embedding service (single + multi-endpoint pool)
+│       │       ├── documents/           # Document ingestion (PDF/JSONL/JSON/CSV, SHA-256 dedup)
+│       │       ├── chunking/            # Adaptive chunking (ADAPTIVE, SEMANTIC, RECURSIVE_CHARACTER)
 │       │       ├── ingestion/          # Data ingestion, FHIR adapters
 │       │       └── web/                # Web UI controllers
 │       └── resources/
@@ -83,12 +86,14 @@ See [Architecture](ARCHITECTURE.md) for detailed module descriptions.
 - ✅ Text input endpoint (`POST /api/v1/agent/match-from-text`) for direct text input
 - ✅ Case search endpoint (`GET /api/cases/search`) for searching existing cases
 - ✅ UI text input form and case search modal
-
-### In Progress
-
-- 🔄 Integration testing
-- 🔄 Performance optimization
-- 🔄 UI implementation completion
+- ✅ Reciprocal Rank Fusion (RRF) scoring with configurable fusion strategy (weighted/rrf)
+- ✅ Semantic re-ranking via `RerankingService` (disabled by default, uses existing `rerankingChatModel`)
+- ✅ Document ingestion module (`documents/`) with PDF/JSONL/JSON/CSV parsing and SHA-256 dedup
+- ✅ Adaptive chunking module (`chunking/`) with ADAPTIVE, SEMANTIC, RECURSIVE_CHARACTER strategies
+- ✅ 4-metric evaluation framework (exact, normalized, semantic similarity, semantic pass) with JDBC persistence
+- ✅ Evaluation CLI mode (`@Profile("eval-cli")`) with dataset seeding from classpath `.jsonl`
+- ✅ Structured LLM output parsing with `LlmResponseSanitizer.extractJson()`
+- ✅ Browser auto-launch on `local` profile via `LocalHomeBrowserLauncher`
 
 ### Configuration
 

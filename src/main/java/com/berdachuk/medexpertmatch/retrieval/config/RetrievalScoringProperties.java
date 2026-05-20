@@ -23,6 +23,7 @@ public class RetrievalScoringProperties {
     private final double priorityUrgencyWeight;
     private final double priorityComplexityWeight;
     private final double priorityAvailabilityWeight;
+    private final String fusionStrategy;
 
     public RetrievalScoringProperties(
             @Value("${medexpertmatch.retrieval.scoring.doctor.vector-weight:0.4}") double doctorVectorWeight,
@@ -34,7 +35,8 @@ public class RetrievalScoringProperties {
             @Value("${medexpertmatch.retrieval.scoring.facility.geographic-weight:0.2}") double facilityGeographicWeight,
             @Value("${medexpertmatch.retrieval.scoring.priority.urgency-weight:0.5}") double priorityUrgencyWeight,
             @Value("${medexpertmatch.retrieval.scoring.priority.complexity-weight:0.3}") double priorityComplexityWeight,
-            @Value("${medexpertmatch.retrieval.scoring.priority.availability-weight:0.2}") double priorityAvailabilityWeight) {
+            @Value("${medexpertmatch.retrieval.scoring.priority.availability-weight:0.2}") double priorityAvailabilityWeight,
+            @Value("${medexpertmatch.retrieval.scoring.fusion-strategy:weighted}") String fusionStrategy) {
         this.doctorVectorWeight = doctorVectorWeight;
         this.doctorGraphWeight = doctorGraphWeight;
         this.doctorHistoricalWeight = doctorHistoricalWeight;
@@ -45,6 +47,7 @@ public class RetrievalScoringProperties {
         this.priorityUrgencyWeight = priorityUrgencyWeight;
         this.priorityComplexityWeight = priorityComplexityWeight;
         this.priorityAvailabilityWeight = priorityAvailabilityWeight;
+        this.fusionStrategy = fusionStrategy;
 
         validateWeightGroup("doctor scoring", doctorVectorWeight, doctorGraphWeight, doctorHistoricalWeight);
         validateWeightGroup("facility scoring",
