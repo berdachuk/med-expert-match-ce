@@ -6,5 +6,5 @@
  * - Medical graph builder service for populating graph relationships
  * - Graph visualization services
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "doctor", "medicalcase", "clinicalexperience", "medicalcoding", "facility"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *", "doctor :: *", "medicalcase :: *", "clinicalexperience :: *", "medicalcoding :: *", "facility :: *"})
 package com.berdachuk.medexpertmatch.graph;

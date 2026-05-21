@@ -1,48 +1,65 @@
-# AI context strategy (MedExpertMatch)
+# AI Context Strategy
 
-This document describes how coding agents should load context for this repository. It is tool-agnostic: Cursor, Claude Code, Copilot Agents, or others should treat these paths as canonical.
+## Layer Model
 
-## Layer model
+```
+.agents/skills/          ← Single source of truth (canonical skill definitions)
+AGENTS.md                ← Root index: repo overview, commands, boundaries, skill triggers
+{module}/AGENTS.md       ← Module-specific conventions (5 files: core, retrieval, llm, ingestion, web)
+.cursor/                 ← Optional IDE adapter (generated from skills, not canonical)
+```
 
-1. **Root `AGENTS.md`** (repository root)  
-   Compact index: purpose, repo map, essential commands, global boundaries, links to nested guides and skills. Target: short enough to scan in under a minute.
+## Design Principles
 
-2. **Nested `AGENTS.md`** (2–5 files under major Java module packages)  
-   Module-specific stack slices, boundaries, and commands that differ from the rest of the app. They do not repeat the full stack documentation.
+1. **Skills are canonical** — `.agents/skills/**/SKILL.md` is the single source of truth. All adapters derive from it.
+2. **Root AGENTS.md is an index** — compact, never bloated; points to skills and nested AGENTS.md for detail.
+3. **Nested AGENTS.md are scoped** — only at major module boundaries (2-5 files), each focused on that module's conventions.
+4. **Adapters are generated** — `.cursor/`, `.kilo/`, or other IDE adapters should transform `.agents/skills/` into tool-specific format, never duplicate content.
 
-3. **`.agents/skills/<name>/SKILL.md`** (single source of truth for deep guidance)  
-   Procedures, conventions, and examples that would bloat root or module files. Agents should load the relevant skill when the task matches its trigger list.
+## How the Architecture Analysis Feeds This Structure
 
-4. **Optional IDE adapters** (e.g. `.cursor/rules`, MCP, vendor-specific config)  
-   Not required for correctness. If added later, they should **reference or generate from** `.agents/skills` instead of duplicating long rules.
+- **Module dependency tiers** (foundation → domain → processing → orchestration → presentation) determine which modules get nested AGENTS.md (orchestration and infrastructure modules need them most).
+- **Domain model ownership** (which entities live in which modules) is documented in `domain-modeling` skill.
+- **Cross-module rules** (who can depend on whom) are encoded in `core-architecture` skill.
 
-## How module and domain analysis feeds the layout
+## Adding a New Skill
 
-Spring Modulith `@ApplicationModule` annotations in each module’s `package-info.java` define **allowed dependencies**. That graph drives:
+1. Create `.agents/skills/{skill-name}/SKILL.md`
+2. Follow the template: Description, When to use, Instructions, Boundaries
+3. Register the skill in root `AGENTS.md` Skills Index table
+4. If the skill applies to a specific module, add a pointer in that module's AGENTS.md
 
-- Where nested `AGENTS.md` files are placed (edge vs orchestration vs core vs retrieval).
-- Which skills mention which modules and what cross-module work is allowed.
-- Warnings in skills when touching `core` (shared infrastructure intentionally used broadly).
+## Updating an Existing Skill
 
-Domain entities live under `*/domain/` per module (e.g. `MedicalCase`, `Doctor`, `ConsultationMatch`). Skills reference **ownership**: only the owning module should define persistence and REST for that aggregate unless an orchestration module coordinates reads.
+1. Edit `.agents/skills/{skill-name}/SKILL.md` directly
+2. If adding new trigger conditions, update root AGENTS.md Skills Index
+3. If the change impacts module conventions, update the relevant nested AGENTS.md
 
-## Adding a new skill
+## Keeping Everything in Sync
 
-1. Create `.agents/skills/<skill-name>/SKILL.md` using the standard sections: Description, When to use, Instructions, Boundaries.
-2. Add a row to the Skills Index table in root `AGENTS.md`.
-3. If the skill is module-specific, add one line under the relevant nested `AGENTS.md` “Skills” section pointing to it.
+| Change | Files to update |
+|--------|----------------|
+| New module added | `core-architecture/SKILL.md`, root `AGENTS.md` (Repo Map), optional nested AGENTS.md |
+| New domain entity | `domain-modeling/SKILL.md` (entity ownership table) |
+| New Flyway migration rule | `db-migrations/SKILL.md` |
+| New Cypher pattern | `graph-db/SKILL.md` |
+| Code style change | `code-style/SKILL.md`, all nested AGENTS.md that reference it |
+| New prompt template | `llm-prompts/SKILL.md` |
 
-## Updating skills
+## IDE Adapter Design (future)
 
-- Prefer editing `.agents/skills/.../SKILL.md` over growing root `AGENTS.md`.
-- When behavior changes (e.g. new integration test rule), update the skill and, if needed, one line in root or nested index.
+```
+.agents/skills/          → Read directly by tools that support SKILL.md format
+                           OR
+                         → Transformed into:
+                           .cursor/rules/{skill}.mdc     (Cursor)
+                           .kilo/command/{skill}.md      (Kilo)
+                           .github/copilot-instructions/  (GitHub Copilot)
+```
 
-## Keeping tools in sync
+Adapters should be auto-generated scripts that:
+1. Read `.agents/skills/**/SKILL.md`
+2. Transform into tool-specific format
+3. Write to tool-specific directory
 
-- **Canonical**: `.agents/skills/**/SKILL.md`, nested `AGENTS.md`, root `AGENTS.md`, this file.
-- **Generated or mirrored configs**: document in the adapter’s README or comment that the source of truth is `.agents/skills` and give the generation command if any.
-
-## Related project docs
-
-- `docs/` for human-facing architecture and setup guides (English only).
-- `src/main/resources/api/openapi.yaml` for HTTP contract.
+Do NOT manually maintain tool-specific copies — they go stale.

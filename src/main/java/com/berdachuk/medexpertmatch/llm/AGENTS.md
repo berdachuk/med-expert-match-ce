@@ -1,28 +1,40 @@
-# Module: `llm`
+# LLM Module
+
+Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modules to coordinate complex medical workflows.
 
 ## Purpose
 
-**AI orchestration**: medical agent workflows, tools, REST for agent operations, and coordination across **doctor**, **medicalcase**, **retrieval**, **graph**, **caseanalysis**, **embedding**, and related modules per `package-info.java`.
+- `MedicalAgentService` — primary orchestrator
+- Workflow services for: case analysis, case intake, doctor matching, queue prioritization, routing, recommendations, network analytics
+- `LlmResponseSanitizer` — strips PHI from LLM outputs before logging/storage
+- Spring AI Agent Utils integration (runtime skills in `src/main/resources/skills/`)
 
-## Owned domain
+## Owned Domain Models
 
-- Job/status types under `llm/domain` (e.g. match, route, prioritize, analyze job status).
-- Agent-facing DTOs and controllers under `llm/rest` and `llm/service`.
+- `AnalyzeJobStatus`, `MatchJobStatus`, `PrioritizeJobStatus`, `RouteJobStatus` — async job state enums/records
 
-## Spring AI (this repo)
+## Module Dependencies
 
-- **Providers**: OpenAI-compatible only; configure via `spring.ai.*` and `spring.ai.custom.*` (see `SpringAIConfig` and `application.yml`).
-- **Prompts**: `PromptTemplate` + `src/main/resources/prompts/*.st` only.
-- **Tests**: `TestAIConfig` supplies mocks; stub `getDefaultOptions()` on mocked `ChatModel` when Spring AI builds merged prompts.
+`@ApplicationModule(allowedDependencies = {"core", "evidence", "doctor", "facility", "medicalcase", "clinicalexperience", "graph", "retrieval", "caseanalysis", "medicalcoding", "embedding", "web"})`
 
-## Boundaries
+## Conventions
 
-- Prefer **orchestration** here over duplicating domain persistence owned by other modules.
-- Respect **Modulith `allowedDependencies`** for `llm` (wide but explicit list in `package-info.java`).
-- Never log PHI; include medical disclaimers in AI-facing templates per project policy.
+- All LLM prompts use external `.st` files in `src/main/resources/prompts/` — never hardcode prompt strings
+- Prompt templates are configured as Spring beans in `PromptTemplateConfig` with `@Qualifier`
+- Medical disclaimers must be included in ALL medical AI prompts
+- Agent Skills (runtime) live in `src/main/resources/skills/` — distinct from `.agents/skills/` (development)
+- Sanitize all LLM outputs through `LlmResponseSanitizer` before logging or storing
 
-## Skills
+## Constraints
 
-- `.agents/skills/domain-modeling/SKILL.md` — clinical entities referenced by agents.
-- `.agents/skills/code-style/SKILL.md` — prompts and service patterns.
-- `.agents/skills/testing/SKILL.md` — mock LLM and IT behavior.
+- OpenAI-compatible providers ONLY (no Ollama, no Anthropic direct)
+- Never expose patient data in LLM prompts without anonymization
+- Never hardcode API keys — use environment variables or Spring config
+- Agent Skill .md files in `src/main/resources/skills/` are runtime prompts, NOT development guides
+
+## Related Skills
+
+- `llm-prompts` — prompt template creation and management
+- `code-style` — service implementation patterns
+- `testing` — mocking AI providers in integration tests
+- `core-architecture` — cross-module orchestration boundaries

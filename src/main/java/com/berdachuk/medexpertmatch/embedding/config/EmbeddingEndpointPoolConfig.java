@@ -36,6 +36,7 @@ public class EmbeddingEndpointPoolConfig {
 
         List<EndpointState> endpointStates = new ArrayList<>();
         List<Integer> workersPerEndpoint = new ArrayList<>();
+
         for (MultiEndpointEmbeddingProperties.EndpointConfig ep : sortedEndpoints) {
             if (ep.getUrl() == null || ep.getUrl().isBlank()) {
                 log.warn("Skipping endpoint with empty URL");

@@ -96,6 +96,11 @@
                        target="_blank" title="Documentation">
                         <i aria-hidden="true" class="bi bi-journal-text"></i>
                     </a>
+                    <a class="text-white text-decoration-none" th:href="@{/documents}" th:if="${currentPage == 'index'}">Documents</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${currentPage == 'documents'}">Documents</span>
+                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
+                          th:if="${currentPage != 'index' and currentPage != 'documents'}">Documents</span>
                     <div class="dropdown">
                         <button aria-expanded="false" class="btn btn-outline-light btn-sm dropdown-toggle"
                                 data-bs-toggle="dropdown"

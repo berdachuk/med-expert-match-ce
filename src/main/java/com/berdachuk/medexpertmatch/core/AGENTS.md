@@ -1,24 +1,35 @@
-# Module: `core`
+# Core Module
+
+Shared infrastructure used by all modules. No domain entities owned here.
 
 ## Purpose
 
-Shared **infrastructure** used across the application: configuration, health checks, JDBC utilities, security-related cross-cutting helpers, exception model, and other non-domain-specific building blocks.
+- Spring AI configuration (`SpringAIConfig`, `PromptTemplateConfig`)
+- Exception hierarchy (`MedExpertMatchException`, `RetrievalException`, `ErrorCode`)
+- Utilities (`IdGenerator`, `LlmCallLimiter`, `RetryWithBackoff`)
+- Log streaming (`LogStreamService`)
+- Health monitoring (`HealthCheck`, `DatabaseHealthCheck`)
+- SQL injection utilities (`InjectSql`, `SqlInjectBeanPostProcessor`)
 
-## Owned artifacts
+## Module Dependencies
 
-- No clinical domain aggregates; may define cross-cutting types (errors, health, generic utilities).
-- SQL helpers under `core/repository/sql` and related infrastructure.
+`@ApplicationModule` (no allowedDependencies — accessible from all modules).
 
-## Boundaries
+## Conventions
 
-- Other modules **may depend on `core`**; `core` should not depend on clinical domain modules (`medicalcase`, `doctor`, etc.).
-- Keep domain rules out of `core`; only generic technical policies belong here.
+- Shared config beans go in `config/`, not scattered across modules
+- Exceptions extend `MedExpertMatchException`; never throw generic `RuntimeException`
+- `IdGenerator` is the single source of ID generation; never use raw UUIDs
+- `RetryWithBackoff` for all external API calls (LLM, PubMed, embedding endpoints)
+- `LlmCallLimiter` respects configured rate limits; check before calling LLM
 
-## Commands
+## Constraints
 
-Same as repository root (`mvn clean install`, `mvn verify`). No separate build.
+- Do NOT add domain entities here — core is infrastructure, not domain
+- Do NOT add business logic — orchestrate from the service module that owns the flow
+- Do NOT reference specific domain modules in core utilities
 
-## Skills
+## Related Skills
 
-- `.agents/skills/core-architecture/SKILL.md` — Modulith graph and `GraphService` usage.
-- `.agents/skills/code-style/SKILL.md` — implementation patterns for infra code.
+- `core-architecture` — module boundaries and cross-module rules
+- `code-style` — shared coding conventions

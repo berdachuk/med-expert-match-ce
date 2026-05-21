@@ -1,28 +1,79 @@
-# Code style and implementation patterns
+# Code Style
 
 ## Description
-
-Java and Spring **idioms** for this repository: interfaces for services/repositories, Lombok, formatting, JavaDoc on interfaces, repository insert/update split, and prompt externalization.
+Project-wide Java, SQL, and template coding conventions. Covers naming, formatting, imports, error handling, logging, Lombok usage, and documentation rules.
 
 ## When to use
-
-- Writing new Java classes in any module.
-- Implementing repositories, services, REST controllers, or tests.
-- Choosing between records vs classes, checked vs unchecked exceptions, logging style.
+- Writing or modifying any Java code, SQL query files, or Thymeleaf templates
+- Before committing — verify code matches conventions
+- Code review preparation
+- Answering: "How should I format/name this?"
 
 ## Instructions
 
-- **Interfaces**: define `*Service` / `*Repository` in API packages; implementations in `impl` subpackages with mappers where used.
-- **Transactions**: `@Transactional` on service layer; read-only for queries.
-- **Repositories**: separate `insert` and `update`; no combined `saveOrUpdate` at repository level.
-- **SQL**: prefer external `.sql` files where the project already does; dedicated row mappers.
-- **JavaDoc**: full JavaDoc on **interface** methods; avoid duplicating on impl unless adding implementation-specific throws.
-- **Comments**: keep short (team rule: brief comments; avoid long blocks in code).
-- **LLM prompts**: only `PromptTemplate` + files under `src/main/resources/prompts/*.st` (no large inline strings).
-- **Formatting**: 4 spaces, 120 columns, standard brace style.
+### Java Formatting
+
+- 4 spaces indentation, no tabs
+- Max 120 characters per line
+- Opening brace on same line (K&R style)
+- Use imports, never fully-qualified class names
+- Static imports only for well-known constants/utilities
+
+### Naming
+
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Classes | PascalCase | `DoctorService` |
+| Methods | camelCase | `findById()` |
+| Variables | camelCase | `doctorId` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
+| Packages | lowercase.dots | `com.berdachuk.medexpertmatch.doctor` |
+| DB columns | snake_case | `doctor_id` |
+| JSON fields | camelCase | `doctorId` |
+
+### Interface-Based Design (mandatory)
+
+- Every service and repository must have an interface + separate implementation class
+- Interface: `{Name}.java` in root of `service/` or `repository/`
+- Implementation: `{Name}Impl.java` in `service/impl/` or `repository/impl/`
+- Inject interfaces, never concrete implementations
+- RowMappers: `{Entity}Mapper.java` in `repository/impl/`
+
+### Error Handling
+
+- Never implement silent fallback mechanisms
+- Fail fast — throw exceptions, do not suppress errors
+- Use module-specific unchecked exceptions extending `MedExpertMatchException`
+- Never expose PHI or patient data in error messages
+- Never catch generic `Exception`
+
+### Logging
+
+- Use `@Slf4j` (Lombok) for all logging
+- Never log patient identifiers or PHI
+- Log levels: ERROR for failures, WARN for degraded operations, INFO for milestones, DEBUG for diagnostics
+
+### Lombok Rules
+
+- **Use on**: service implementations, repository implementations, utility classes
+- **Annotations**: `@Slf4j`, `@RequiredArgsConstructor`, `@Getter`, `@Setter`, `@Builder`
+- **Do NOT use on**: domain entities (they are Java records)
+
+### Comments
+
+- Max 3 lines per comment/JavaDoc
+- Interface methods: JavaDoc required (params, returns, throws)
+- Implementation methods: no duplicate JavaDoc if interface has it
+- All code, comments, docs in English
+- No emojis in any project files
+
+### Transaction Management
+
+- `@Transactional` on service methods, never on controllers or repositories
+- Use `readOnly = true` for read-only operations
+- Separate insert/update repository methods — never `createOrUpdate`
 
 ## Boundaries
-
-- Do not add generic `catch (Exception)` or `printStackTrace`.
-- Do not add silent fallbacks for errors (fail fast).
-- Do not weaken medical-data logging rules to “make debugging easier.”
+- Do NOT reformat entire files without human approval
+- Do NOT change comment style conventions
+- Do NOT disable or suppress error handling rules

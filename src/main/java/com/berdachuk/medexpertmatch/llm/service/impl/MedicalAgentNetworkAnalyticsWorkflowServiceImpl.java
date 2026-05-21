@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentNetworkAnalyticsWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -48,6 +49,7 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
         log.info("networkAnalytics() called");
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
         try {
             logStreamService.sendLog(sessionId, "INFO", "Network analytics", "Starting network analytics (run tools, then summarize)");
@@ -56,11 +58,13 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
 
             StringBuilder raw = new StringBuilder();
             int maxConditions = Math.min(MAX_NETWORK_ANALYTICS_CONDITIONS, conditionCodes.size());
+            Map<String, List<String>> conditionExperts = new HashMap<>();
 
             for (int i = 0; i < maxConditions; i++) {
                 String code = conditionCodes.get(i);
                 logStreamService.sendLog(sessionId, "INFO", "Graph query", "Querying top experts for condition: " + code);
                 List<String> experts = medicalAgentTools.graph_query_top_experts(code, MAX_EXPERTS_PER_CONDITION);
+                conditionExperts.put(code, experts);
                 raw.append("## Top experts for condition ").append(code).append("\n");
                 for (String line : experts) {
                     raw.append("- ").append(line).append("\n");
@@ -82,12 +86,16 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("skills", List.of("network-analyzer"));
             metadata.put("conditionCodes", conditionCodes);
+            metadata.put("conditionExperts", conditionExperts);
+            metadata.put("conditionMetrics", conditionMetrics);
+            metadata.put("doctorMetrics", doctorMetrics);
             return new MedicalAgentService.AgentResponse(response, metadata);
         } catch (Exception e) {
             log.error("Error in network analytics", e);
             logStreamService.logError(sessionId, "Network analytics failed", e.getMessage());
             throw e;
         } finally {
+            OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
     }

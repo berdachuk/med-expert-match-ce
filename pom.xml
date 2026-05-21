@@ -56,6 +56,14 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+            <!-- Spring AI Session BOM -->
+            <dependency>
+                <groupId>org.springaicommunity</groupId>
+                <artifactId>spring-ai-session-bom</artifactId>
+                <version>0.2.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -114,7 +122,13 @@
         <dependency>
             <groupId>org.springaicommunity</groupId>
             <artifactId>spring-ai-agent-utils</artifactId>
-            <version>0.4.2</version>
+            <version>0.5.0</version>
+        </dependency>
+
+        <!-- Spring AI Session JDBC -->
+        <dependency>
+            <groupId>org.springaicommunity</groupId>
+            <artifactId>spring-ai-starter-session-jdbc</artifactId>
         </dependency>
 
         <!-- Database -->
@@ -169,6 +183,13 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons-lang3.version}</version>
+        </dependency>
+
+        <!-- PDFBox for document ingestion and text extraction -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.3</version>
         </dependency>
 
         <!-- Spring Retry (explicit version; Boot 4 removed dependency management) -->

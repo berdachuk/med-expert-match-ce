@@ -92,9 +92,10 @@ public class SpringAIConfig {
         if (!"openai".equalsIgnoreCase(chatProvider)) {
             return primaryChatModel;
         }
+        String apiKey = chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key";
         OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
                 .baseUrl(chatBaseUrl)
-                .apiKey(chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key");
+                .apiKey(apiKey);
         if (chatModelName != null && !chatModelName.isEmpty()) {
             optionsBuilder.model(chatModelName);
         }
@@ -151,11 +152,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + embeddingProvider);
             }
 
-            // Create OpenAI-compatible EmbeddingModel (OpenAI Java SDK via Spring AI options)
-            log.info("Creating OpenAiEmbeddingModel for base URL: {}", embeddingBaseUrl);
+            String apiKey = embeddingApiKey != null && !embeddingApiKey.isEmpty() ? embeddingApiKey : "dummy-key";
             OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder()
                     .baseUrl(embeddingBaseUrl)
-                    .apiKey(embeddingApiKey != null && !embeddingApiKey.isEmpty() ? embeddingApiKey : "dummy-key");
+                    .apiKey(apiKey);
             if (embeddingModel != null && !embeddingModel.isEmpty()) {
                 optionsBuilder.model(embeddingModel);
             }
@@ -223,11 +223,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + chatProvider);
             }
 
-            // Create OpenAI-compatible ChatModel
-            log.info("Creating OpenAiChatModel for base URL: {}", chatBaseUrl);
+            String apiKey = chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key";
             OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
                     .baseUrl(chatBaseUrl)
-                    .apiKey(chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key");
+                    .apiKey(apiKey);
             if (chatModel != null && !chatModel.isEmpty()) {
                 optionsBuilder.model(chatModel);
             }
@@ -303,11 +302,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + rerankingProvider);
             }
 
-            // Create OpenAI-compatible ChatModel for reranking
-            log.info("Creating OpenAiChatModel for reranking, base URL: {}", rerankingBaseUrl);
+            String apiKey = rerankingApiKey != null && !rerankingApiKey.isEmpty() ? rerankingApiKey : "dummy-key";
             OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
                     .baseUrl(rerankingBaseUrl)
-                    .apiKey(rerankingApiKey != null && !rerankingApiKey.isEmpty() ? rerankingApiKey : "dummy-key")
+                    .apiKey(apiKey)
                     .model(rerankingModel);
             try {
                 optionsBuilder.temperature(Double.parseDouble(rerankingTemperature));
@@ -366,11 +364,10 @@ public class SpringAIConfig {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + toolCallingProvider);
             }
 
-            // Create OpenAI-compatible ChatModel for tool calling
-            log.info("Creating OpenAiChatModel for tool calling, base URL: {}", toolCallingBaseUrl);
+            String apiKey = toolCallingApiKey != null && !toolCallingApiKey.isEmpty() ? toolCallingApiKey : "dummy-key";
             OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
                     .baseUrl(toolCallingBaseUrl)
-                    .apiKey(toolCallingApiKey != null && !toolCallingApiKey.isEmpty() ? toolCallingApiKey : "dummy-key")
+                    .apiKey(apiKey)
                     .model(toolCallingModel);
             try {
                 optionsBuilder.temperature(Double.parseDouble(toolCallingTemperature));

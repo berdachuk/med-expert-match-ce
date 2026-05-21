@@ -1,62 +1,130 @@
-# MedExpertMatch — agent index
+# MedExpertMatch
 
-AI-assisted medical **expert–case matching**: Spring Boot monolith, PostgreSQL with pgvector and Apache AGE, Thymeleaf UI, Spring AI (OpenAI-compatible providers only).
+Medical expert recommendation system — Spring Boot 4.0 + Spring Modulith + GraphRAG (PostgreSQL/PgVector/Apache AGE) + Spring AI 2.0.
 
-## Repo map
+**Stack**: Java 21, Maven 3.9+, Spring Modulith 2.0, Thymeleaf, Flyway, Testcontainers, Docker.
 
-- `src/main/java/com/berdachuk/medexpertmatch/<module>/` — Spring Modulith modules; boundaries in each `package-info.java` (`@ApplicationModule`).
-- `src/main/resources/` — `application*.yml`, Flyway `db/migration`, Thymeleaf, static assets, **`prompts/*.st`** (LLM templates).
-- `src/test/java/...` — unit tests (`*Test`); integration tests (`*IT`) use Testcontainers.
-- `docs/` — English documentation; agent layering: [docs/ai-context-strategy.md](docs/ai-context-strategy.md).
-- `.agents/skills/` — **canonical deep rules** for agents (load by task type).
+## Repo Map
 
-## Architecture (modules)
-
-**Infrastructure hub:** `core`. **HTTP/UI edge:** `web`. **LLM orchestration:** `llm`. **Semantic graph retrieval (SgrService):** `retrieval`. **Clinical and data domains:** `medicalcase`, `doctor`, `clinicalexperience`, `facility`, `medicalcoding`, `embedding`, `graph`, `evidence`, `caseanalysis`, `ingestion`, `system`.
-
-Dependency edges are defined by `allowedDependencies` in each module’s `package-info.java` (for example `web` depends on `llm`, `medicalcase`, `retrieval`, and others; `retrieval` depends on many domain modules; most domain modules depend only on `core`).
+```
+src/main/java/.../medexpertmatch/
+├── core/           # Shared infrastructure (exception, config, util, health)
+├── doctor/         # Doctor/MedicalSpecialty entities + repos + REST
+├── medicalcase/    # MedicalCase/CaseType/UrgencyLevel entities + repos + REST
+├── medicalcoding/  # ICD10Code/Procedure entities + repos + REST
+├── facility/       # Facility entity + repos
+├── clinicalexperience/  # ClinicalExperience entity + repos (doctor-case history)
+├── caseanalysis/   # LLM-based case analysis (→core, medicalcase)
+├── evidence/       # PubMed clinical evidence retrieval (→core)
+├── embedding/      # PgVector embeddings + multi-endpoint pool (→core, medicalcase)
+├── graph/          # Apache AGE Cypher graph ops (→core + 5 domain modules)
+├── retrieval/      # Hybrid GraphRAG matching/scoring/routing (→core + 8 modules)
+├── ingestion/      # FHIR adapters + synthetic data generation (→core + 7 modules)
+├── llm/            # LLM orchestration + Agent Skills (→core + 11 modules)
+├── chunking/       # Document chunking strategies (→core)
+├── documents/      # Document management + PDF/JSONL parsing (→core, embedding)
+├── web/            # Thymeleaf SSR web UI (→core, llm + 6 modules)
+└── system/         # System health indicators
+plans/              # Implementation plans: M{NN}-{goal-slug}.md
+src/main/resources/
+├── prompts/        # Spring AI StringTemplate (.st) prompt files
+├── skills/         # Spring AI Agent Skills (runtime; distinct from .agents/skills/)
+├── sql/            # External SQL query files
+├── templates/      # Thymeleaf templates
+└── static/         # CSS/JS/images
+```
 
 ## Commands
 
-| Goal | Command |
-|------|---------|
-| Full build | `mvn clean install` |
-| Skip tests | `mvn clean install -DskipTests` |
-| Unit tests only | `mvn test -Dtest="!*IT"` |
-| Integration + verify | `mvn verify` (requires **Docker** and the test Postgres image; see `scripts/`) |
-| Run local | `mvn spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=local` |
+```bash
+mvn spring-boot:run -Plocal          # Run app (local profile)
+mvn clean install                    # Full build
+mvn clean install -DskipTests        # Build without tests
+mvn test                             # Unit tests only (*Test.java, *Tests.java)
+mvn verify                           # Integration tests (*IT.java) + package
+mvn test -Dtest=DoctorRepositoryIT   # Single IT class
+mvn test jacoco:report               # Coverage report
+mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
+./scripts/build-test-container.sh    # Build custom Postgres+AGE+PgVector test image
+./scripts/restart-service-local.sh   # Restart local service
+```
 
-## Module `AGENTS.md` (nested)
+## Module Guidance (nested AGENTS.md)
 
-| Path | Role |
-|------|------|
-| [core/AGENTS.md](src/main/java/com/berdachuk/medexpertmatch/core/AGENTS.md) | Shared infrastructure |
-| [llm/AGENTS.md](src/main/java/com/berdachuk/medexpertmatch/llm/AGENTS.md) | Agents, Spring AI, prompts |
-| [web/AGENTS.md](src/main/java/com/berdachuk/medexpertmatch/web/AGENTS.md) | REST and Thymeleaf edge |
-| [retrieval/AGENTS.md](src/main/java/com/berdachuk/medexpertmatch/retrieval/AGENTS.md) | Scoring and retrieval layer |
+| Module | File | Focus |
+|--------|------|-------|
+| core | `core/AGENTS.md` | Shared infrastructure rules, exception patterns, config boundaries |
+| retrieval | `retrieval/AGENTS.md` | GraphRAG matching/scoring/routing flows, module orchestration |
+| llm | `llm/AGENTS.md` | LLM orchestration, agent workflows, prompt management, medical compliance |
+| ingestion | `ingestion/AGENTS.md` | FHIR adapters, synthetic data generation, multi-module bootstrapping |
+| web | `web/AGENTS.md` | Thymeleaf controllers, SSR patterns, web UI conventions |
 
-## Skills index (`.agents/skills/`)
+> All other domain modules (doctor, medicalcase, medicalcoding, facility, clinicalexperience, evidence, embedding, chunking, documents, caseanalysis, graph) follow the same patterns documented in skills. Their conventions are covered by `core-architecture`, `domain-modeling`, and `code-style` skills — no individual AGENTS.md needed.
 
-| Skill directory | When to load |
-|-----------------|--------------|
-| `core-architecture` | Modulith boundaries, `GraphService`, module dependencies |
-| `domain-modeling` | Types under `*/domain/`, PHI safety, ICD-10 |
-| `code-style` | Java idioms, repositories and services, JavaDoc, Lombok |
-| `testing` | Surefire vs Failsafe, Docker IT, `TestAIConfig` mocks |
-| `db-migrations` | Flyway on primary DB, V1 consolidation |
-| `api-design` | OpenAPI, controllers, Thymeleaf and static assets |
+## Skills Index (`.agents/skills/`)
 
-Each skill: `.agents/skills/<name>/SKILL.md` (single source of truth).
+| Skill | File | When to load |
+|-------|------|-------------|
+| core-architecture | `core-architecture/SKILL.md` | Adding/changing modules, understanding module boundaries, cross-module changes |
+| domain-modeling | `domain-modeling/SKILL.md` | Creating entities, value objects, DTOs; understanding domain ownership |
+| code-style | `code-style/SKILL.md` | Writing any Java/Template/SQL code; style checks before commits |
+| testing | `testing/SKILL.md` | Writing tests (unit or IT), configuring Testcontainers, mocking AI providers |
+| llm-prompts | `llm-prompts/SKILL.md` | Creating/modifying LLM prompt templates (.st files), Spring AI configuration |
+| graph-db | `graph-db/SKILL.md` | Cypher queries via GraphService, Apache AGE MERGE patterns, graph schema changes |
+| db-migrations | `db-migrations/SKILL.md` | Schema changes via Flyway V1 consolidation, SQL patterns, migration rules |
 
-## Global boundaries
+## Global Boundaries
 
-- **Allowed:** refactors inside one module respecting `allowedDependencies`; tests; English docs under `docs/`.
-- **Careful:** cross-module wiring, anything that could log clinical narrative or identifiers.
-- **Disallowed:** silent generic error swallowing; hardcoded LLM prompt strings in Java (use `prompts/*.st`); Flyway on a non-primary datasource; real patient data in repo; Ollama as a first-class provider.
+**Always allowed, no approval needed:**
+- Create/modify files within a single module following existing patterns
+- Add tests (unit or IT) for any code
+- Create new domain entities, DTOs, repositories following module conventions
+- Modify prompt templates (.st files) within existing patterns
 
-## Stack pointers
+**Use caution, consider skill guidance:**
+- Cross-module dependency changes (update `package-info.java` allowedDependencies)
+- New module creation (follow `core-architecture` skill)
+- Flyway migration changes (follow `db-migrations` skill)
+- Cypher/AGE queries (follow `graph-db` skill)
 
-- Dependency versions: root `pom.xml`.
-- HTTP contract: `src/main/resources/api/openapi.yaml` when changing APIs.
+**Forbidden without explicit human approval:**
+- Remove or weaken HIPAA/PHI protections
+- Log or expose patient data in any form
+- Change AI provider from OpenAI-compatible to Ollama or other non-OpenAI providers
+- Modify `pom.xml` dependency versions (except adding new test deps)
+- Merge PRs or deploy to staging/prod
+- Delete or archive modules or domain entities
 
-Read [docs/ai-context-strategy.md](docs/ai-context-strategy.md) for how root, nested `AGENTS.md`, and skills relate.
+## Plan Files
+
+- Location: `plans/` directory at project root
+- Naming: `M{NN}-{goal-slug}.md` (e.g., `M01-upgrade-spring-ai-to-m6.md`)
+- `{NN}` is a zero-padded milestone number; `{goal-slug}` is a kebab-case short goal
+- Do NOT create auto-generated IDs (timestamps or random strings) for plan filenames
+- When a plan is fully implemented and verified, move it to `plans/archive/`
+
+## Key Rules at a Glance
+
+- TDD: test first, prefer integration tests (`*IT.java` suffix)
+- Interface-based design: every service/repo has interface + impl
+- Java records for domain entities (immutable), Lombok for services/impls only
+- External `.st` files for LLM prompts (never hardcode prompt strings)
+- External `.sql` files for repository queries
+- Service-layer transactions (`@Transactional` on service methods)
+- Separate insert/update repository methods (never `createOrUpdate`)
+- Single-entity repositories with batch-loading for related data
+- Graph operations only through `GraphService` interface
+- Flyway V1 consolidation (no V2/V3 until post-MVP)
+- OpenAI-compatible providers only (no Ollama)
+- All patient data must be anonymized; no PHI in logs/errors/tests
+
+## Layer Model
+
+```
+.agents/skills/       ← Single source of truth for domain skills
+AGENTS.md             ← Root index (this file)
+{module}/AGENTS.md    ← Module-specific conventions (2-5 files only)
+.cursor/              ← Optional IDE adapter (generated from skills)
+```
+
+See `docs/ai-context-strategy.md` for adapter design and sync rules.

@@ -39,7 +39,7 @@
                 cancelled.
             </div>
 
-            <div class="card" id="result-card" th:classappend="${analyticsResult == null} ? 'd-none' : ''">
+            <div class="card mb-4" id="result-card" th:classappend="${analyticsResult == null} ? 'd-none' : ''">
                 <div class="card-header">
                     <h5 class="mb-0">Analytics Results</h5>
                 </div>
@@ -47,6 +47,15 @@
                     <div class="markdown-body mb-0" id="result-body"
                          th:attr="data-raw=${analyticsResult != null ? analyticsResult.response : null}"></div>
                 </div>
+            </div>
+
+            <div class="card mb-4" id="details-card" th:classappend="${analyticsResult == null || analyticsResult.metadata == null} ? 'd-none' : ''">
+                <div class="card-header">
+                    <h5 class="mb-0">Analysis Details</h5>
+                </div>
+                <div class="card-body" id="details-body"></div>
+                <script type="application/json" id="ssr-metadata-data" th:if="${analyticsMetadataJson != null}"
+                        th:utext="${analyticsMetadataJson}"></script>
             </div>
 
             <div class="card d-none mb-4" id="log-panel">
@@ -139,6 +148,8 @@
         var cancelledAlert = document.getElementById('cancelled-alert');
         var resultCard = document.getElementById('result-card');
         var resultBody = document.getElementById('result-body');
+        var detailsCard = document.getElementById('details-card');
+        var detailsBody = document.getElementById('details-body');
         var longRunningMsg = document.getElementById('long-running-msg');
         var logPanel = document.getElementById('log-panel');
         var logPanelBody = document.getElementById('log-panel-body');
@@ -232,6 +243,51 @@
             resultCard.classList.remove('d-none');
         }
 
+        function showDetails(metadata) {
+            if (!metadata) {
+                detailsCard.classList.add('d-none');
+                return;
+            }
+            var html = '';
+
+            if (metadata.conditionCodes && metadata.conditionCodes.length > 0) {
+                html += '<h6 class="fw-bold mb-2">Condition Codes Analyzed</h6>';
+                html += '<p class="mb-3">' + escapeHtml(metadata.conditionCodes.join(', ')) + '</p>';
+            }
+
+            if (metadata.conditionExperts) {
+                html += '<h6 class="fw-bold mb-2">Top Experts by Condition (Graph Query)</h6>';
+                var expertKeys = Object.keys(metadata.conditionExperts);
+                for (var k = 0; k < expertKeys.length; k++) {
+                    var code = expertKeys[k];
+                    var experts = metadata.conditionExperts[code];
+                    html += '<p class="mb-1 fw-semibold">ICD-10 ' + escapeHtml(code) + '</p>';
+                    if (experts && experts.length > 0) {
+                        html += '<ul class="small mb-2">';
+                        for (var e = 0; e < experts.length; e++) {
+                            html += '<li>' + escapeHtml(experts[e]) + '</li>';
+                        }
+                        html += '</ul>';
+                    } else {
+                        html += '<p class="small text-muted mb-2">No results</p>';
+                    }
+                }
+            }
+
+            if (metadata.conditionMetrics) {
+                html += '<h6 class="fw-bold mb-2">Condition Metrics</h6>';
+                html += '<pre class="bg-light p-2 rounded small mb-3" style="max-height:200px; overflow-y:auto;">' + escapeHtml(metadata.conditionMetrics) + '</pre>';
+            }
+
+            if (metadata.doctorMetrics) {
+                html += '<h6 class="fw-bold mb-2">Doctor Metrics</h6>';
+                html += '<pre class="bg-light p-2 rounded small mb-0" style="max-height:200px; overflow-y:auto;">' + escapeHtml(metadata.doctorMetrics) + '</pre>';
+            }
+
+            detailsBody.innerHTML = html;
+            detailsCard.classList.remove('d-none');
+        }
+
         function showError(message) {
             errorAlert.textContent = message || 'Request failed.';
             errorAlert.classList.remove('d-none');
@@ -290,6 +346,9 @@
                     setLoading(false);
                     abortController = null;
                     showResult(data.response != null ? data.response : JSON.stringify(data));
+                    if (data.metadata) {
+                        showDetails(data.metadata);
+                    }
                     addLogEntry('[INFO] Network analytics completed.', 'info');
                 })
                 .catch(function (err) {
@@ -316,6 +375,10 @@
         if (raw) {
             resultBody.innerHTML = renderMarkdown(raw);
             resultBody.removeAttribute('data-raw');
+            var ssrDataEl = document.getElementById('ssr-metadata-data');
+            if (ssrDataEl && ssrDataEl.textContent) {
+                try { showDetails(JSON.parse(ssrDataEl.textContent)); } catch (e) {}
+            }
         }
     })();
 </script>

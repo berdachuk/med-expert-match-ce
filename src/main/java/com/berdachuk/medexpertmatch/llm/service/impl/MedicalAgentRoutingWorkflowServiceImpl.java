@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentRoutingWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -38,6 +39,7 @@ public class MedicalAgentRoutingWorkflowServiceImpl implements MedicalAgentRouti
         log.info("routeCase() called - caseId: {}", caseId);
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
         try {
             logStreamService.sendLog(sessionId, "INFO", "LLM routing analysis", "Analyzing case for routing");
@@ -85,6 +87,7 @@ public class MedicalAgentRoutingWorkflowServiceImpl implements MedicalAgentRouti
             logStreamService.logError(sessionId, "Case routing failed", e.getMessage());
             throw e;
         } finally {
+            OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
     }

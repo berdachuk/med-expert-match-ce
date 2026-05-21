@@ -165,7 +165,7 @@ For self-hosted local AI, override the component-specific environment variables:
 export CHAT_PROVIDER=openai
 export CHAT_BASE_URL=http://127.0.0.1:1234
 export CHAT_API_KEY=local-key
-export CHAT_MODEL=medgemma-1.5-4b-it
+export CHAT_MODEL=medgemma1.5:4b
 
 export EMBEDDING_PROVIDER=openai
 export EMBEDDING_BASE_URL=http://127.0.0.1:1234
@@ -176,12 +176,12 @@ export EMBEDDING_DIMENSIONS=768
 export RERANKING_PROVIDER=openai
 export RERANKING_BASE_URL=http://127.0.0.1:1234
 export RERANKING_API_KEY=local-key
-export RERANKING_MODEL=medgemma-1.5-4b-it
+export RERANKING_MODEL=medgemma1.5:4b
 
 export TOOL_CALLING_PROVIDER=openai
 export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
 export TOOL_CALLING_API_KEY=local-key
-export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
+export TOOL_CALLING_MODEL=functiongemma:270m
 ```
 
 See [AI Provider Configuration](docs/AI_PROVIDER_CONFIGURATION.md) for the configuration matrix and
@@ -195,6 +195,11 @@ See [AI Provider Configuration](docs/AI_PROVIDER_CONFIGURATION.md) for the confi
 - **Clinical Recommendations**: Generate evidence-based clinical recommendations using MedGemma
 - **Agent Skills**: 7 medical-specific Agent Skills for modular knowledge management (see [Agent Skills](#agent-skills))
 - **Hybrid GraphRAG**: Combines vector, graph, and keyword search for optimal matching
+- **Reciprocal Rank Fusion**: Configurable rank-based fusion (k=60, default weighted average)
+- **Semantic Re-ranking**: Configurable re-ranking via `RerankingService` (disabled by default)
+- **Document Ingestion**: PDF, JSONL, JSON, CSV parsing with SHA-256 dedup and adaptive chunking
+- **Evaluation Framework**: 4-metric LLM output evaluation with JDBC persistence, dataset seeding, CLI mode
+- **Structured Output Parsing**: LLM JSON extraction with markdown fence handling
 - **Privacy-First**: Local deployment capability, HIPAA-compliant data handling
 
 ## Unique Selling Propositions (USP)
@@ -256,10 +261,11 @@ guides AI assistants on when and how to use the application's tools for medical 
 
 MedExpertMatch uses a modern, scalable architecture:
 
-- **Hybrid GraphRAG**: Vector search + Graph traversal + Keyword search
+- **Hybrid GraphRAG**: Vector search + Graph traversal + Keyword search + RRF fusion + Semantic re-ranking
 - **Spring AI Integration**: MedGemma models via Spring AI
 - **Agent Skills**: Medical-specific skills for modular knowledge
 - **PostgreSQL + PgVector + Apache AGE**: Unified database architecture
+- **Document Ingestion**: `documents/` module for PDF/JSONL/JSON/CSV + `chunking/` module for adaptive chunking
 
 ## Documentation
 
@@ -274,14 +280,17 @@ Full documentation is available at: [docs/index.md](docs/index.md)
 
 ## Project Status
 
-**Current Phase**: Feature-rich MVP under refinement
+**Current Phase**: Feature-rich MVP under refinement (DocuRAG improvements implemented 2026-05-19)
 
 - Challenge analysis completed
 - Architecture and core domain implementation in place
 - Six primary use cases implemented
 - Seven built-in agent skills documented and packaged
 - Hybrid retrieval, graph, and synthetic data capabilities present
-- Current work focuses on configuration alignment, hardening, and refinement
+- RRF fusion and semantic re-ranking integrated
+- Document ingestion with adaptive chunking added (PDF, JSONL, JSON, CSV)
+- 4-metric evaluation framework with JDBC persistence and CLI mode
+- Browser auto-launch on local profile
 
 ## Important Disclaimers
 

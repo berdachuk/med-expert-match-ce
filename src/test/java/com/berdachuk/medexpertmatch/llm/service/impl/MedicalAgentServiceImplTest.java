@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

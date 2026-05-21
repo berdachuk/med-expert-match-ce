@@ -6,5 +6,5 @@
  * - Case analysis service using LLM models
  * - Entity extraction and urgency classification
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "medicalcase"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *", "medicalcase :: *"})
 package com.berdachuk.medexpertmatch.caseanalysis;

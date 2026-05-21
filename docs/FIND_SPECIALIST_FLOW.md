@@ -2,6 +2,8 @@
 
 ## Overview
 
+**Last Updated:** 2026-05-19
+
 The "Find Specialist" feature matches medical cases to appropriate doctors using AI-powered analysis. This document
 describes the complete flow, architecture, and how MedGemma model capabilities are leveraged.
 
@@ -18,8 +20,9 @@ The system supports two input methods:
 
 - **AI-powered matching** – MedGemma for medical reasoning and case analysis, FunctionGemma for tool orchestration;
   matching is driven by clinical context and structured tools.
-- **Hybrid scoring** – Semantic Graph Retrieval combines vector similarity (40%), graph relationships (30%), and
-  historical performance (30%) for optimal doctor-case fit.
+- **Hybrid scoring** – Semantic Graph Retrieval combines vector similarity, graph relationships, and
+  historical performance for optimal doctor-case fit. Configurable fusion strategy (weighted average or RRF with k=60).
+- **Semantic re-ranking** – Optional re-ranking via `RerankingService` (uses existing `rerankingChatModel`, disabled by default).
 - **Graph-aware discovery** – Apache AGE graph is used for relationship-based discovery (direct doctor-case links,
   condition expertise, specialty, similar case experience).
 - **Flexible input** – Select an existing case from the dropdown or enter case information as text; supports handwritten

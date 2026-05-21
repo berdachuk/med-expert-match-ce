@@ -1,20 +1,34 @@
-# Module: `web`
+# Web Module
+
+Thymeleaf server-side rendering for the web UI. The presentation layer for all use cases.
 
 ## Purpose
 
-**HTTP edge**: Spring MVC controllers, Thymeleaf views, and web-specific services that expose the application to browsers and HTTP clients. Declared dependency hub into `llm`, `medicalcase`, `doctor`, `retrieval`, `graph`, `ingestion`, and `core`.
+- Thymeleaf controllers for all UI pages (Home, Doctor, Queue, Case Analysis, Match, Routing, Analytics, etc.)
+- `LogStreamController` — SSE-based log streaming to browser
+- `SyntheticDataWebController` — UI for synthetic data generation
+- `GraphVisualizationWebController` — graph visualization in browser
 
-## Owned artifacts
+## Module Dependencies
 
-- Controllers and view models for UI and public HTTP entry points under `web` (and thin REST adapters if placed here by convention).
+`@ApplicationModule(allowedDependencies = {"core", "llm", "medicalcase", "doctor", "clinicalexperience", "graph", "ingestion", "retrieval"})`
 
-## Boundaries
+## Conventions
 
-- **No heavy domain logic** in controllers; delegate to module services.
-- Do not bypass security or CORS policies defined for the app.
-- Keep Thymeleaf templates and static assets in `src/main/resources/templates` and `static/`.
+- Use `@Controller` (not `@RestController`) — return template name strings
+- Use `Model` parameter to pass data to templates
+- Templates in `src/main/resources/templates/`, fragments in `templates/fragments/`
+- Static resources (CSS/JS/images) in `src/main/resources/static/`
+- Thymeleaf templates auto-reload via Spring Boot DevTools in `local` profile
 
-## Skills
+## Constraints
 
-- `.agents/skills/api-design/SKILL.md` — REST, OpenAPI, Thymeleaf layout.
-- `.agents/skills/domain-modeling/SKILL.md` — DTOs shaped for UI/API.
+- Never expose raw API responses in UI — always transform to view-friendly models
+- Never log or display PHI in web pages
+- Keep controller logic thin — delegate to service modules for business logic
+- Do NOT add domain logic in controllers
+
+## Related Skills
+
+- `code-style` — naming and formatting conventions
+- `testing` — controller integration test patterns

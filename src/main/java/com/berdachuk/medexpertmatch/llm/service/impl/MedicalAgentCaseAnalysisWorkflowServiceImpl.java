@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentCaseAnalysisWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -43,6 +44,7 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
         log.info("analyzeCase() called - caseId: {}", caseId);
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         logStreamService.setCurrentSessionId(sessionId);
+        OrchestrationContextHolder.setSessionId(sessionId);
 
         try {
             logStreamService.sendLog(sessionId, "INFO", "LLM case analysis", "Starting comprehensive case analysis");
@@ -119,6 +121,7 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
             logStreamService.logError(sessionId, "Case analysis failed", e.getMessage());
             throw e;
         } finally {
+            OrchestrationContextHolder.clear();
             logStreamService.clearCurrentSessionId();
         }
     }

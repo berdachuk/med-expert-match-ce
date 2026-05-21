@@ -1,5 +1,7 @@
 # Evidence Retrieval
 
+**Last Updated:** 2026-05-19
+
 ## Purpose
 
 Evidence Retrieval provides clinical guidelines and PubMed search so case analysis (Use Case 5: Decision Support) can

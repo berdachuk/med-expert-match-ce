@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.web.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.berdachuk.medexpertmatch.llm.rest.MedicalAgentController;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +23,11 @@ import java.util.Map;
 public class AnalyticsController {
 
     private final MedicalAgentController medicalAgentController;
+    private final ObjectMapper objectMapper;
 
-    public AnalyticsController(MedicalAgentController medicalAgentController) {
+    public AnalyticsController(MedicalAgentController medicalAgentController, ObjectMapper objectMapper) {
         this.medicalAgentController = medicalAgentController;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping
@@ -39,7 +42,11 @@ public class AnalyticsController {
 
         try {
             ResponseEntity<MedicalAgentService.AgentResponse> response = medicalAgentController.networkAnalytics(Map.of());
-            model.addAttribute("analyticsResult", response.getBody());
+            MedicalAgentService.AgentResponse body = response.getBody();
+            model.addAttribute("analyticsResult", body);
+            if (body != null && body.metadata() != null) {
+                model.addAttribute("analyticsMetadataJson", objectMapper.writeValueAsString(body.metadata()));
+            }
             model.addAttribute("error", null);
         } catch (Exception e) {
             log.error("Error getting network analytics", e);

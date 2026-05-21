@@ -1,8 +1,8 @@
 # MedExpertMatch Product Requirements Document (PRD)
 
-**Last Updated:** 2026-03-27  
-**Version:** 1.0  
-**Status:** Planning Phase (see [README](../README.md) and [ARCHITECTURE.md](ARCHITECTURE.md) for current implementation status)
+**Last Updated:** 2026-05-19  
+**Version:** 1.1  
+**Status:** MVP complete with DocuRAG improvements
 
 ## Document Purpose
 

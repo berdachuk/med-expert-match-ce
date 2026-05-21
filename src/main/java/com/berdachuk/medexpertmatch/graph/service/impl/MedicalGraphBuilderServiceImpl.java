@@ -56,13 +56,10 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
         long startTime = System.currentTimeMillis();
         log.info("Starting medical graph build process...");
 
-        // Use graphService.createGraphIfNotExists() to ensure consistent transaction handling
-        // This method uses REQUIRES_NEW propagation, which is necessary for graph operations
         log.info("Ensuring graph structure exists...");
         graphService.createGraphIfNotExists();
         log.info("Graph structure ready");
 
-        // Build graph vertices and edges
         log.info("Building graph vertices and edges...");
         long verticesStartTime = System.currentTimeMillis();
 
@@ -99,12 +96,10 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
         long verticesEndTime = System.currentTimeMillis();
         log.info("Graph vertices creation completed in {}ms", verticesEndTime - verticesStartTime);
 
-        // Create graph indexes for better query performance
         log.info("Creating graph indexes...");
         createGraphIndexes();
         log.info("Graph indexes creation completed");
 
-        // Create relationships
         log.info("Building graph relationships...");
         long relationshipsStartTime = System.currentTimeMillis();
 
@@ -186,26 +181,6 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
                 namedJdbcTemplate.getJdbcTemplate().execute(caseIndexSql);
             } catch (Exception e) {
                 log.debug("Could not create MedicalCase index: {}", e.getMessage());
-            }
-
-            try {
-                String icd10IndexSql = String.format("""
-                        CREATE INDEX IF NOT EXISTS idx_%s_icd10code_props_code 
-                        ON ag_catalog.ag_%s_ICD10Code USING gin ((properties jsonb_path_ops))
-                        """, graphName, graphName);
-                namedJdbcTemplate.getJdbcTemplate().execute(icd10IndexSql);
-            } catch (Exception e) {
-                log.debug("Could not create ICD10Code index: {}", e.getMessage());
-            }
-
-            try {
-                String specialtyIndexSql = String.format("""
-                        CREATE INDEX IF NOT EXISTS idx_%s_medicalspecialty_props_id 
-                        ON ag_catalog.ag_%s_MedicalSpecialty USING gin ((properties jsonb_path_ops))
-                        """, graphName, graphName);
-                namedJdbcTemplate.getJdbcTemplate().execute(specialtyIndexSql);
-            } catch (Exception e) {
-                log.debug("Could not create MedicalSpecialty index: {}", e.getMessage());
             }
 
             try {
@@ -301,12 +276,26 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
      */
     private void createMedicalSpecialtyVertices() {
         List<com.berdachuk.medexpertmatch.doctor.domain.MedicalSpecialty> specialties = medicalSpecialtyRepository.findAll();
+        Set<String> assignedSpecialtyNames = new HashSet<>();
+        List<String> doctorIds = doctorRepository.findAllIds(0);
+        for (String doctorId : doctorIds) {
+            doctorRepository.findById(doctorId).ifPresent(doctor -> {
+                if (doctor.specialties() != null) {
+                    assignedSpecialtyNames.addAll(doctor.specialties());
+                }
+            });
+        }
         int created = 0;
+        int skipped = 0;
         for (var specialty : specialties) {
+            if (!assignedSpecialtyNames.contains(specialty.name())) {
+                skipped++;
+                continue;
+            }
             createMedicalSpecialtyVertex(specialty.id(), specialty.name());
             created++;
         }
-        log.info("  Created {} medical specialty vertices", created);
+        log.info("  Created {} medical specialty vertices ({} skipped)", created, skipped);
     }
 
     /**
@@ -314,9 +303,23 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
      */
     private void createFacilityVertices() {
         List<com.berdachuk.medexpertmatch.facility.domain.Facility> facilities = facilityRepository.findAll();
+        Set<String> assignedFacilityIds = new HashSet<>();
+        List<String> doctorIds = doctorRepository.findAllIds(0);
+        for (String doctorId : doctorIds) {
+            doctorRepository.findById(doctorId).ifPresent(doctor -> {
+                if (doctor.facilityIds() != null) {
+                    assignedFacilityIds.addAll(doctor.facilityIds());
+                }
+            });
+        }
         int created = 0;
+        int skipped = 0;
         int failed = 0;
         for (var facility : facilities) {
+            if (!assignedFacilityIds.contains(facility.id())) {
+                skipped++;
+                continue;
+            }
             try {
                 createFacilityVertex(
                         facility.id(),
@@ -327,10 +330,9 @@ public class MedicalGraphBuilderServiceImpl implements MedicalGraphBuilderServic
             } catch (Exception e) {
                 failed++;
                 log.warn("Failed to create facility vertex for facility {}: {}", facility.id(), e.getMessage());
-                // Continue with next facility
             }
         }
-        log.info("  Created {} facility vertices ({} failed)", created, failed);
+        log.info("  Created {} facility vertices ({} skipped, {} failed)", created, skipped, failed);
     }
 
     /**

@@ -48,28 +48,28 @@ services:
       SERVER_PORT: "8094"
       # Chat/LLM (Ollama on host at 127.0.0.1:11434)
       CHAT_PROVIDER: openai
-      CHAT_BASE_URL: http://127.0.0.1:11434
+      CHAT_BASE_URL: http://127.0.0.1:11434/v1
       CHAT_API_KEY: any
-      CHAT_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q8_0
+      CHAT_MODEL: medgemma1.5:4b
       CHAT_TEMPERATURE: "0.7"
       CHAT_MAX_TOKENS: "6000"
       # Embedding
       EMBEDDING_PROVIDER: openai
-      EMBEDDING_BASE_URL: http://127.0.0.1:11434
+      EMBEDDING_BASE_URL: http://127.0.0.1:11434/v1
       EMBEDDING_API_KEY: any
       EMBEDDING_MODEL: nomic-embed-text:v1.5
       EMBEDDING_DIMENSIONS: "768"
       # Reranking
       RERANKING_PROVIDER: openai
-      RERANKING_BASE_URL: http://127.0.0.1:11434
+      RERANKING_BASE_URL: http://127.0.0.1:11434/v1
       RERANKING_API_KEY: any
-      RERANKING_MODEL: hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q8_0
+      RERANKING_MODEL: medgemma1.5:4b
       RERANKING_TEMPERATURE: "0.1"
-      # Tool calling (Qwen3 4B)
+      # Tool calling
       TOOL_CALLING_PROVIDER: openai
-      TOOL_CALLING_BASE_URL: http://127.0.0.1:11434
+      TOOL_CALLING_BASE_URL: http://127.0.0.1:11434/v1
       TOOL_CALLING_API_KEY: any
-      TOOL_CALLING_MODEL: hf.co/unsloth/Qwen3-4B-Instruct-2507-GGUF:Q4_K_M
+      TOOL_CALLING_MODEL: functiongemma:270m
       TOOL_CALLING_TEMPERATURE: "0.7"
       TOOL_CALLING_MAX_TOKENS: "4096"
       # LLM concurrency (sequential for local LLM)

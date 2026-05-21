@@ -1,26 +1,52 @@
-# Core architecture (Spring Modulith)
+# Core Architecture
 
 ## Description
-
-Explains how MedExpertMatch is structured as a **Spring Boot monolith** with **Spring Modulith** modules under `com.berdachuk.medexpertmatch`. Covers `core` as shared infrastructure, dependency rules in `package-info.java`, and where orchestration is allowed.
+System architecture, Spring Modulith module boundaries, dependency rules, and cross-module integration patterns. Covers all 17 modules and their tiered dependency structure.
 
 ## When to use
-
-- Refactors that touch more than one top-level package under `medexpertmatch`.
-- Questions about **which module may depend on which** (see `allowedDependencies`).
-- Adding a new module or moving classes across module boundaries.
-- Using **GraphService** for Apache AGE (all Cypher goes through it; MERGE patterns).
+- Adding a new module or modifying `package-info.java` dependencies
+- Debugging module boundary violations or circular dependencies
+- Understanding how modules communicate and where to place new code
+- Designing cross-module service orchestration
+- Answering: "Which module should own this logic?"
 
 ## Instructions
 
-- Open the target module’s `package-info.java` and list `allowedDependencies` before adding imports from another module.
-- Treat **`core`** as intentional shared infrastructure (config, health, utilities, JDBC helpers), not a violation to depend on from domain modules.
-- **Orchestration** that legitimately spans domains belongs in **`llm`** (and similar coordinators), not in repositories.
-- **Graph**: use `GraphService.executeCypher` only; embed parameters per project rules; avoid raw JDBC for Cypher.
-- **Spring Modulith verification**: project may disable strict verification tests; still follow declared dependencies in code reviews.
+### Module Dependency Tiers
+
+```
+Tier 1 — Foundation:   core (shared by all, no domain entities)
+Tier 2 — Domain:       doctor, medicalcase, medicalcoding, facility, clinicalexperience, evidence, chunking
+Tier 3 — Processing:   caseanalysis, embedding, documents, graph
+Tier 4 — Orchestration: retrieval, ingestion, llm
+Tier 5 — Presentation:  web
+Tier 6 — System:        system
+```
+
+### Adding a New Module
+
+1. Create directory under `src/main/java/.../medexpertmatch/{modulename}/`
+2. Create `domain/`, `repository/`, `service/`, `rest/` subdirectories as needed
+3. Add `package-info.java` with `@ApplicationModule(allowedDependencies = {...})`
+4. Declare ONLY the modules you actually reference in imports — never over-declare
+5. Add tests following `testing` skill conventions
+6. If the module needs DB tables, update Flyway V1 (follow `db-migrations` skill)
+
+### Cross-Module Patterns
+
+- Domain modules (Tier 2) depend ONLY on `core`
+- Processing modules (Tier 3) depend on `core` + specific domain modules
+- Orchestration modules (Tier 4) depend on `core` + all modules they orchestrate
+- Web module (Tier 5) depends on orchestration + core
+- Never create dependencies from a domain module to an orchestration module (Tier 2 → Tier 4 is forbidden)
+
+### Service Orchestration
+
+- `MedicalAgentServiceImpl` in `llm` coordinates workflows across domain modules — this is intentional
+- `SyntheticDataBootstrapService` in `ingestion` writes to multiple domain modules — also intentional
+- Orchestrators use interface-based injection; never new-up dependencies directly
 
 ## Boundaries
-
-- Do not relax module boundaries “just for this PR” without updating `package-info.java` and team agreement.
-- Do not introduce circular dependencies between modules.
-- Do not bypass `GraphService` for graph access.
+- Do NOT reorganize module dependency tiers without human approval
+- Do NOT add `allowedDependencies` entries speculatively — only declare actual imports
+- Do NOT merge domain modules or delete them from the dependency graph

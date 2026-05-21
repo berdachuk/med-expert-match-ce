@@ -1,23 +1,41 @@
-# Module: `retrieval`
+# Retrieval Module
+
+Hybrid GraphRAG retrieval engine — combines vector similarity (PgVector), graph relationships (Apache AGE), and keyword matching with LLM-based reranking.
 
 ## Purpose
 
-**Semantic graph retrieval** (project “SGR” in the `SgrService` sense): scoring and ranking for doctor–case matching, facility routing, and related retrieval using embeddings, relational data, and graph signals as implemented in this module.
+- Doctor-case matching via `MatchingService`
+- Semantic Graph Retrieval via `SemanticGraphRetrievalService` (SgrService)
+- Priority scoring for consultation queues
+- Route scoring for facility routing
+- Result reranking via `RerankingService`
 
-## Owned domain
+## Owned Domain Models
 
-- Match and scoring types (e.g. `DoctorMatch`, `ConsultationMatch`, `ScoreResult`, routing options) under `retrieval/domain`.
+- `DoctorMatch`, `FacilityMatch`, `ConsultationMatch` — match results
+- `ScoreResult`, `RouteScoreResult` — scoring outputs
+- `PriorityScore` — queue priority computation
+- `MatchOptions`, `RoutingOptions` — configuration records
 
-## Dependencies (Modulith)
+## Module Dependencies
 
-Allowed: `core`, `medicalcase`, `clinicalexperience`, `doctor`, `embedding`, `evidence`, `facility`, `graph`, `medicalcoding` — treat as **read/analytics** dependencies for scoring pipelines unless a design explicitly says otherwise.
+`@ApplicationModule(allowedDependencies = {"core", "medicalcase", "clinicalexperience", "doctor", "embedding", "evidence", "facility", "graph", "medicalcoding"})`
 
-## Boundaries
+## Conventions
 
-- Do not fold LLM **agent orchestration** here; that stays in `llm`.
-- Do not call AGE Cypher except through **`GraphService`** from `graph` (or the project’s single graph abstraction as documented in skills).
+- All retrieval flows follow: vector search → graph traversal → keyword → rerank (if enabled)
+- `MatchingService` computes composite scores; individual scoring services handle single dimensions
+- Repository queries stored in `src/main/resources/sql/` with `retrieval/` prefix
+- SGR terminology: "Semantic Graph Retrieval" = `SgrService`; "Schema-Guided Reasoning" = LLM output pattern (distinct concepts)
 
-## Skills
+## Constraints
 
-- `.agents/skills/core-architecture/SKILL.md` — graph access patterns.
-- `.agents/skills/domain-modeling/SKILL.md` — match result semantics.
+- Do NOT introduce direct database access outside repository interfaces
+- Do NOT expose raw embeddings outside this module + `embedding` module
+- Reranking is optional (toggled via config); never hard-bypass it
+
+## Related Skills
+
+- `core-architecture` — orchestration patterns and module boundaries
+- `graph-db` — Cypher query patterns used in graph traversal
+- `testing` — integration test patterns with real PostgreSQL/AGE

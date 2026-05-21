@@ -6,5 +6,5 @@
  * - Repository interfaces and implementations
  * - REST controllers for doctor management
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *"})
 package com.berdachuk.medexpertmatch.doctor;

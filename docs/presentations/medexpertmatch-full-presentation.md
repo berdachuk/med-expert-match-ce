@@ -419,8 +419,10 @@ Note: `web` composes UI; core domain logic stays in domain modules.
 <div class="reveal-slide-text-col">
 
 - **`MedicalAgentService`** + workflow services  
-- **`MedicalAgentTools`** — Spring AI `@Tool` calls into domain services (no raw LLM → DB)  
-- **Prompts** — external `.st` templates, `PromptTemplate` beans  
+- **`MedicalAgentTools`** — Spring AI `@Tool` calls into domain services (no raw LLM -> DB)  
+- **`AutoMemoryTools`** — cross-session durable memory (LLM self-curates facts across sessions)
+- **Session memory** — `SessionMemoryAdvisor` compacts history after 15 turns (JDBC-backed)
+- **Prompts** — external `.st` templates, `PromptTemplate` beans (17 templates, StringTemplate4)  
 
 </div>
 
@@ -582,145 +584,6 @@ Note: USE_CASES §1 has the full sequence diagram.
 </div>
 
 Note: If live fails, fall back to screenshots or recorded video.
-
----
-
-## Demo: dashboard
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-- **URL:** `/`  
-- Show live counts after data generation  
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-dashboard.png" alt="Application dashboard" />
-
-</div>
-
-</div>
-
-Note: Sets context before match and analyze.
-
----
-
-## Demo: specialist match
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-- **URL:** `/match` — select case → **Match Doctors**  
-- Call out **scores + rationale** and tie to **SGR** (vector + graph + history)  
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-match.png" alt="Specialist match UI" />
-
-</div>
-
-</div>
-
-Note: Core proof of the stack.
-
----
-
-## Demo: case analysis
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-- **URL:** `/analyze/{caseId}`  
-- ICD-10 / analysis text / recommendations / links to evidence  
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-analyze.png" alt="Case analysis screen" />
-
-</div>
-
-</div>
-
-Note: Shows agent + clinical path beyond pure ranking.
-
----
-
-## Demo: queue or analytics
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-- **Queue:** `/queue` — **Prioritize Queue** (urgency, complexity)  
-- **or Analytics:** `/analytics` — e.g. expertise by ICD-10 code  
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-queue.png" alt="Queue prioritization or analytics" />
-
-</div>
-
-</div>
-
-Note: Pick one if short on time.
-
----
-
-## Demo: routing
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-- **URL:** `/routing` — case → **Route Case**  
-- Mention facility factors (capacity, geography, performance)  
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-routing.png" alt="Regional facility routing" />
-
-</div>
-
-</div>
-
-Note: Same data stack; different UI entry point.
-
----
-
-## Demo: API reminder
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-Example: **`POST /api/v1/agent/match/{caseId}`**
-
-Same stack whether called from EMR integration or the bundled UI.
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-api.png" alt="REST API integration" />
-
-</div>
-
-</div>
-
-Note: Point to OpenAPI / Medical Agent docs if asked.
 
 ---
 

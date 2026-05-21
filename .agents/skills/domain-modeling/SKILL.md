@@ -1,25 +1,57 @@
-# Domain modeling (medical match)
+# Domain Modeling
 
 ## Description
-
-Covers **clinical domain entities** and value objects owned by each module: cases, doctors, facilities, coding, retrieval results, and LLM job status types. Includes **HIPAA-oriented** rules for synthetic data and logs.
+Creating and maintaining domain entities, value objects, DTOs, enums, and filter/wrapper types across all 17 modules. Covers entity ownership rules and record-vs-class decisions.
 
 ## When to use
-
-- Adding or changing entities under `*/domain/` (e.g. `MedicalCase`, `Doctor`, `Facility`, `ConsultationMatch`, `ICD10Code`, `Procedure`).
-- Mapping database columns to Java fields or designing new filters/DTOs.
-- Any feature touching **patient-like** narrative data in tests or logs.
+- Creating a new domain entity or value object
+- Adding fields, validation, or constructors to existing entities
+- Deciding whether a type belongs as a record, class, or enum
+- Understanding which module owns which domain models
+- Answering: "Where should this entity live?"
 
 ## Instructions
 
-- **Ownership**: keep entity definitions in the module that owns the aggregate (`medicalcase` owns `MedicalCase`, `doctor` owns `Doctor`, `retrieval` owns match/score types, etc.).
-- **Naming**: DB snake_case; API JSON camelCase; follow existing Lombok usage (`@Data`, records for DTOs where appropriate).
-- **PHI**: never log real patient identifiers; tests use anonymized synthetic IDs only.
-- **ICD-10**: validate format and hierarchy per project rules when exposing codes in APIs.
-- **Ubiquitous language**: align REST and UI wording with domain terms already used in modules (e.g. urgency, specialty, match).
+### Entity Ownership
+
+| Module | Owned Entities |
+|--------|---------------|
+| doctor | Doctor, MedicalSpecialty |
+| medicalcase | MedicalCase, CaseType, UrgencyLevel |
+| medicalcoding | ICD10Code, Procedure |
+| facility | Facility |
+| clinicalexperience | ClinicalExperience |
+| caseanalysis | CaseAnalysisResult |
+| retrieval | DoctorMatch, FacilityMatch, ConsultationMatch, ScoreResult, RouteScoreResult, PriorityScore, MatchOptions, RoutingOptions |
+| llm | AnalyzeJobStatus, MatchJobStatus, PrioritizeJobStatus, RouteJobStatus |
+| evidence | PubMedArticle |
+| chunking | DocumentChunk |
+| documents | SourceDocumentEntity |
+
+`core` and `system` modules own NO domain entities.
+
+### Records vs Classes
+
+- **Java records** for domain entities (immutable data carriers) — all current entities are records
+- **Regular classes** when behavior or mutability is needed (service implementations, builders)
+- **Lombok** on service/impl classes only (`@Slf4j`, `@RequiredArgsConstructor`); NOT on domain records
+
+### Naming and Structure
+
+- Entity file: `{EntityName}.java` in `domain/` directory
+- If a module owns multiple entities, one file per entity
+- Nested records (e.g., `PotentialDiagnosis` inside `CaseAnalysisResult`) for tightly-coupled value types
+- DTOs go in `domain/dto/` subdirectory
+- Query filters go in `domain/filters/` subdirectory
+- Response wrappers go in `domain/wrappers/` subdirectory
+
+### Database Mapping
+
+- DB columns: `snake_case` (e.g., `doctor_id`, `created_at`)
+- JSON/API fields: `camelCase` (e.g., `doctorId`, `messageType`)
+- Entity field names: `camelCase` (e.g., `private String doctorId`)
 
 ## Boundaries
-
-- Do not put domain logic in REST controllers; use services.
-- Do not duplicate the same aggregate root in two modules; use references by ID and orchestration where needed.
-- Do not use real patient data in fixtures or examples.
+- Do NOT create domain entities in `core` — it owns no domain
+- Do NOT create cross-module entity references — use IDs, not object references
+- Do NOT add Lombok annotations to domain records

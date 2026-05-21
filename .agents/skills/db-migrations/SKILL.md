@@ -1,23 +1,57 @@
-# Database and Flyway migrations
+# Database Migrations
 
 ## Description
-
-PostgreSQL schema evolution for this project: **Flyway** on the **primary** datasource only, consolidated **V1** rule for MVP, and coexistence with **Apache AGE** / **pgvector** in test containers.
+Flyway migration strategy, V1 consolidation pattern, and SQL conventions. Covers `core` and any module with DB tables.
 
 ## When to use
-
-- Adding tables, columns, indexes, or constraints.
-- Writing or reviewing Flyway scripts under `src/main/resources/db/migration`.
-- Explaining why Flyway must not run against a secondary read-only datasource.
+- Adding or modifying database tables, columns, or constraints
+- Updating `V1__initial_schema.sql`
+- Planning post-MVP migration strategy
+- Answering: "How do I change the schema?"
 
 ## Instructions
 
-- **Primary DB only**: Flyway is wired to the main application `DataSource`; never point Flyway at external read-only sources.
-- **MVP consolidation**: production/dev schema changes belong in **`V1__initial_schema.sql`** (single consolidated migration) per project policy; avoid V2+ until post-MVP unless policy changes.
-- **Testcontainers**: integration tests use the custom image documented in `scripts/` and README; rebuild image when Dockerfile for tests changes.
-- **AGE / graph**: schema must support graph usage expected by `GraphService` and repositories.
+### V1 Consolidation Rule (MVP)
+
+- **Current phase (MVP)**: ALL schema changes must go into `V1__initial_schema.sql`
+- **No incremental migrations**: Do NOT create V2, V3, V4, etc. during MVP
+- **Post-MVP**: Switch to incremental migrations (V2, V3, etc.) for new features
+- To add a new table/column, edit V1 directly and consolidate
+
+### Migration File Location
+
+- `src/main/resources/db/migration/V1__initial_schema.sql`
+
+### SQL Conventions
+
+- Table names: `snake_case`, plural where appropriate
+- Column names: `snake_case` (e.g., `doctor_id`, `created_at`)
+- Foreign key constraints: use `REFERENCES` with `ON DELETE` behavior
+- Include `IF EXISTS` / `IF NOT EXISTS` for idempotent re-runs
+- Indexes: add for foreign key columns and frequently-queried columns
+- PostgreSQL-specific types: `UUID` for primary keys, `VECTOR(1536)` for embeddings
+
+### Flyway Configuration
+
+- Flyway MUST use ONLY the primary application `DataSource`
+- External/read-only `DataSource` must NEVER be used by Flyway
+- Flyway auto-migrates on application startup
+
+### Adding a Table to V1
+
+1. Add `CREATE TABLE IF NOT EXISTS {table_name} (...)` to V1
+2. Add matching `INSERT`/`UPDATE` queries to `src/main/resources/sql/`
+3. Create domain entity, repository interface + impl in the owning module
+4. Update Testcontainers-based integration tests
+
+### Repository SQL Files
+
+- Store repository SQL in `src/main/resources/sql/` directory
+- One file per repository or per entity
+- Use named parameters (`:paramName`) matching Java-side parameter names
 
 ## Boundaries
-
-- Do not add Flyway to a secondary datasource.
-- Do not scatter one logical change across many versioned files while MVP single-file policy is in force.
+- Do NOT create V2/V3 migrations during MVP phase
+- Do NOT use Flyway on secondary/external DataSources
+- Do NOT drop tables without human approval
+- Do NOT modify production migration strategy without human approval
