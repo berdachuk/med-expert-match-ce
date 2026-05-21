@@ -375,6 +375,10 @@ CREATE TABLE IF NOT EXISTS evaluation_result (
     semantic_pass BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+CREATE INDEX IF NOT EXISTS idx_evaluation_case_dataset_id ON evaluation_case (dataset_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_result_run_id ON evaluation_result (run_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_run_dataset_id ON evaluation_run (dataset_id);
+
 -- ============================================
 -- Document Ingestion Tables
 -- ============================================
@@ -406,6 +410,8 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.document_chunk (
 );
 
 CREATE INDEX IF NOT EXISTS idx_document_chunk_document_id ON medexpertmatch.document_chunk (document_id);
+CREATE INDEX IF NOT EXISTS idx_document_chunk_embedding ON medexpertmatch.document_chunk
+    USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 CREATE TABLE IF NOT EXISTS medexpertmatch.ingestion_job (
     id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),

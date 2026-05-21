@@ -6,15 +6,24 @@ import com.berdachuk.medexpertmatch.llm.evaluation.EvaluationCaseEntity;
 import com.berdachuk.medexpertmatch.llm.evaluation.EvaluationDatasetEntity;
 import com.berdachuk.medexpertmatch.llm.evaluation.EvaluationResultEntity;
 import com.berdachuk.medexpertmatch.llm.evaluation.EvaluationRunEntity;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Evaluation", description = "LLM evaluation metrics API")
 @Slf4j
 @RestController
+@Validated
 @RequestMapping("/api/v1/evaluation")
 public class EvaluationController {
 
@@ -28,7 +37,7 @@ public class EvaluationController {
 
     @PostMapping("/run")
     public ResponseEntity<Map<String, Object>> runEvaluation(
-            @RequestParam String datasetName,
+            @RequestParam @Pattern(regexp = "^[a-zA-Z0-9_-]+$") @Size(max = 50) String datasetName,
             @RequestParam(defaultValue = "0.80") double semanticThreshold) {
         try {
             String result = evaluationService.run(datasetName, semanticThreshold);
@@ -46,9 +55,9 @@ public class EvaluationController {
 
     @GetMapping("/runs")
     public ResponseEntity<List<EvaluationRunSummary>> listRuns(
-            @RequestParam String datasetName,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam @Pattern(regexp = "^[a-zA-Z0-9_-]+$") @Size(max = 50) String datasetName,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         List<EvaluationRunEntity> runs = jdbcRepository.findRunsByDatasetName(datasetName);
         List<EvaluationRunSummary> summaries = runs.stream()
                 .skip((long) page * size)

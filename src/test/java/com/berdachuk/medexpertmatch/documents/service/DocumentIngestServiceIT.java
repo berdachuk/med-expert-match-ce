@@ -2,6 +2,11 @@ package com.berdachuk.medexpertmatch.documents.service;
 
 import com.berdachuk.medexpertmatch.documents.DocumentIngestApi;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -179,5 +184,81 @@ class DocumentIngestServiceIT extends BaseIntegrationTest {
         List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
                 .queryForList("SELECT * FROM medexpertmatch.source_document");
         assertEquals(1, docs.size());
+    }
+
+    private Path createTestPdf(Path dir, String name, String content) throws Exception {
+        Path pdfFile = dir.resolve(name);
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage();
+            document.addPage(page);
+            try (PDPageContentStream stream = new PDPageContentStream(document, page)) {
+                stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
+                stream.beginText();
+                stream.newLineAtOffset(25, 700);
+                String[] words = content.split(" ");
+                StringBuilder line = new StringBuilder();
+                for (String word : words) {
+                    if (line.length() + word.length() > 80) {
+                        stream.showText(line.toString().trim());
+                        stream.newLineAtOffset(0, -15);
+                        line = new StringBuilder();
+                    }
+                    line.append(word).append(" ");
+                }
+                if (!line.isEmpty()) {
+                    stream.showText(line.toString().trim());
+                }
+                stream.endText();
+            }
+            document.save(pdfFile.toFile());
+        }
+        return pdfFile;
+    }
+
+    @Test
+    void shouldIngestPdfFileAndPersistDocument() throws Exception {
+        String pdfContent = "Clinical Guidelines for Hypertension Management. "
+                + "These evidence-based guidelines cover pharmacological and lifestyle interventions "
+                + "for managing hypertension. First-line therapy includes ACE inhibitors, ARBs, "
+                + "calcium channel blockers, and thiazide diuretics. Treatment targets should be "
+                + "individualized based on patient age, comorbidities, and cardiovascular risk. "
+                + "Lifestyle modifications include sodium reduction, regular exercise, weight "
+                + "management, and limiting alcohol intake. Regular monitoring and follow-up are "
+                + "essential for optimizing blood pressure control and minimizing complications.";
+        Path pdfFile = createTestPdf(tempDir, "hypertension-guidelines.pdf", pdfContent);
+
+        int count = documentIngestApi.ingestPaths(List.of(pdfFile.toString()));
+
+        assertEquals(1, count);
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document WHERE source_format = 'pdf'");
+        assertEquals(1, docs.size());
+        assertEquals("hypertension-guidelines", docs.get(0).get("title"));
+        assertNotNull(docs.get(0).get("content_hash"));
+
+        List<Map<String, Object>> chunks = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.document_chunk WHERE document_id = ?",
+                        docs.get(0).get("id"));
+        assertFalse(chunks.isEmpty(), "Expected at least one chunk for PDF document");
+    }
+
+    @Test
+    void shouldDeduplicatePdfByContentHash() throws Exception {
+        String pdfContent = "Clinical Guidelines for Diabetes Management. "
+                + "These guidelines cover type 2 diabetes pharmacological management "
+                + "with metformin as first-line therapy, followed by SGLT2 inhibitors "
+                + "or GLP-1 receptor agonists as add-on therapy. Regular A1C monitoring "
+                + "is recommended every 3-6 months with target A1C below 7.0 percent.";
+        Path pdfFile = createTestPdf(tempDir, "diabetes-guidelines.pdf", pdfContent);
+
+        int firstCount = documentIngestApi.ingestPaths(List.of(pdfFile.toString()));
+        assertEquals(1, firstCount);
+
+        int secondCount = documentIngestApi.ingestPaths(List.of(pdfFile.toString()));
+        assertEquals(0, secondCount, "Deduplication should skip second ingest");
+
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document WHERE source_format = 'pdf'");
+        assertEquals(1, docs.size(), "Only one PDF document should exist");
     }
 }
