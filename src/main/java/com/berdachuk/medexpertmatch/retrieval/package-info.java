@@ -7,5 +7,5 @@
  * - Priority scoring for consultation queues
  * - Route scoring for facility routing
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "medicalcase", "clinicalexperience", "doctor", "embedding", "evidence", "facility", "graph", "medicalcoding"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *", "medicalcase :: *", "clinicalexperience :: *", "doctor :: *", "embedding :: *", "evidence :: *", "facility :: *", "graph :: *", "medicalcoding :: *"})
 package com.berdachuk.medexpertmatch.retrieval;

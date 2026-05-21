@@ -4,7 +4,8 @@ import com.berdachuk.medexpertmatch.core.config.TestAIConfig;
 import com.berdachuk.medexpertmatch.core.config.TestAIConfigListener;
 import com.berdachuk.medexpertmatch.core.config.TestProfileExclusions;
 import com.berdachuk.medexpertmatch.core.config.TestSecurityConfig;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -50,8 +51,10 @@ import java.time.Duration;
 )
 @ActiveProfiles("test")
 @Import({TestSecurityConfig.class, TestAIConfig.class, TestProfileExclusions.class, TestAIConfigListener.class})
-@Slf4j
 public abstract class BaseIntegrationTest {
+
+    @SuppressWarnings("unused")
+    private static final Logger log = LoggerFactory.getLogger(BaseIntegrationTest.class);
 
     /**
      * Singleton PostgreSQL container shared across all test classes.

@@ -374,3 +374,43 @@ CREATE TABLE IF NOT EXISTS evaluation_result (
     semantic_similarity DOUBLE PRECISION,
     semantic_pass BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+-- ============================================
+-- Document Ingestion Tables
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.source_document (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    external_id VARCHAR(255),
+    title VARCHAR(500),
+    category VARCHAR(100),
+    source_name VARCHAR(255),
+    source_url VARCHAR(1000),
+    content TEXT NOT NULL,
+    content_hash VARCHAR(64) NOT NULL,
+    source_format VARCHAR(20),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_source_document_content_hash UNIQUE (content_hash)
+);
+
+CREATE INDEX IF NOT EXISTS idx_source_document_category ON medexpertmatch.source_document (category);
+CREATE INDEX IF NOT EXISTS idx_source_document_created_at ON medexpertmatch.source_document (created_at);
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.document_chunk (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    document_id CHAR(24) NOT NULL REFERENCES medexpertmatch.source_document(id) ON DELETE CASCADE,
+    chunk_index INT NOT NULL,
+    chunk_text TEXT NOT NULL,
+    embedding vector(768),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_chunk_document_id ON medexpertmatch.document_chunk (document_id);
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.ingestion_job (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    status VARCHAR(20) NOT NULL DEFAULT 'RUNNING' CHECK (status IN ('RUNNING', 'COMPLETED', 'FAILED')),
+    documents_loaded INT DEFAULT 0,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+);

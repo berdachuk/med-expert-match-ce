@@ -1,6 +1,6 @@
 package com.berdachuk.medexpertmatch.documents.service.impl;
 
-import com.berdachuk.medexpertmatch.documents.api.DocumentCatalogApi;
+import com.berdachuk.medexpertmatch.documents.DocumentCatalogApi;
 import com.berdachuk.medexpertmatch.documents.domain.SourceDocumentEntity;
 import com.berdachuk.medexpertmatch.documents.repository.SourceDocumentRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

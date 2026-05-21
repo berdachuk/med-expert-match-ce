@@ -1,13 +1,15 @@
 package com.berdachuk.medexpertmatch.documents.service.impl;
 
-import com.berdachuk.medexpertmatch.chunking.api.Chunker;
+import com.berdachuk.medexpertmatch.chunking.service.impl.ChunkerFactory;
 import com.berdachuk.medexpertmatch.chunking.domain.DocumentChunk;
 import com.berdachuk.medexpertmatch.chunking.repository.ChunkRepository;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
-import com.berdachuk.medexpertmatch.documents.api.DocumentIngestApi;
+import com.berdachuk.medexpertmatch.documents.DocumentIngestApi;
 import com.berdachuk.medexpertmatch.documents.domain.SourceDocumentEntity;
 import com.berdachuk.medexpertmatch.documents.repository.SourceDocumentRepository;
+import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,19 +29,28 @@ public class DocumentIngestServiceImpl implements DocumentIngestApi {
     private final ChunkRepository chunkRepository;
     private final PdfTextExtractor pdfTextExtractor;
     private final StructuredFileParser structuredFileParser;
-    private final Chunker chunker;
+    private final ChunkerFactory chunkerFactory;
+    private final DocumentEmbeddingPipeline embeddingPipeline;
+    private final int chunkSize;
+    private final int chunkOverlap;
 
     public DocumentIngestServiceImpl(
             SourceDocumentRepository sourceDocumentRepository,
             ChunkRepository chunkRepository,
             PdfTextExtractor pdfTextExtractor,
             StructuredFileParser structuredFileParser,
-            Chunker chunker) {
+            ChunkerFactory chunkerFactory,
+            DocumentEmbeddingPipeline embeddingPipeline,
+            @Value("${medexpertmatch.documents.chunking.chunk-size:512}") int chunkSize,
+            @Value("${medexpertmatch.documents.chunking.chunk-overlap:64}") int chunkOverlap) {
         this.sourceDocumentRepository = sourceDocumentRepository;
         this.chunkRepository = chunkRepository;
         this.pdfTextExtractor = pdfTextExtractor;
         this.structuredFileParser = structuredFileParser;
-        this.chunker = chunker;
+        this.chunkerFactory = chunkerFactory;
+        this.embeddingPipeline = embeddingPipeline;
+        this.chunkSize = chunkSize;
+        this.chunkOverlap = chunkOverlap;
     }
 
     @Override
@@ -143,15 +154,17 @@ public class DocumentIngestServiceImpl implements DocumentIngestApi {
     }
 
     private void chunkDocument(SourceDocumentEntity doc) {
-        List<String> chunks = chunker.chunk(doc.content(), 512, 64, 100);
+        var chunker = chunkerFactory.getChunker("adaptive");
+        List<String> chunks = chunker.chunk(doc.content(), chunkSize, chunkOverlap, 100);
         List<DocumentChunk> chunkEntities = new ArrayList<>();
         for (int i = 0; i < chunks.size(); i++) {
-            DocumentChunk chunk = new DocumentChunk(IdGenerator.generateId(), doc.id(), i, chunks.get(i));
+            DocumentChunk chunk = new DocumentChunk(IdGenerator.generateId(), doc.id(), i, chunks.get(i), null);
             chunkEntities.add(chunk);
         }
         if (!chunkEntities.isEmpty()) {
             chunkRepository.insertBatch(chunkEntities);
             log.debug("Created {} chunks for document {}", chunkEntities.size(), doc.id());
+            embeddingPipeline.embedChunks(chunkEntities);
         }
     }
 }

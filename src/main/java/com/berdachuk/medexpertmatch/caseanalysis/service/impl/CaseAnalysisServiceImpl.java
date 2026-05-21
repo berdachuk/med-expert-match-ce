@@ -5,7 +5,7 @@ import com.berdachuk.medexpertmatch.caseanalysis.exception.CaseAnalysisException
 import com.berdachuk.medexpertmatch.caseanalysis.service.CaseAnalysisService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
-import com.berdachuk.medexpertmatch.llm.service.impl.LlmResponseSanitizer;
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.fasterxml.jackson.core.type.TypeReference;

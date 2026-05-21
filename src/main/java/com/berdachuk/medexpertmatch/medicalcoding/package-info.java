@@ -6,5 +6,5 @@
  * - Repository interfaces and implementations
  * - Medical coding utilities
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *"})
 package com.berdachuk.medexpertmatch.medicalcoding;

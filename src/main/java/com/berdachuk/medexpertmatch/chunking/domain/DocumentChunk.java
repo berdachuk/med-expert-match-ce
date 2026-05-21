@@ -4,5 +4,6 @@ public record DocumentChunk(
         String id,
         String documentId,
         int chunkIndex,
-        String chunkText
+        String chunkText,
+        float[] embedding
 ) {}

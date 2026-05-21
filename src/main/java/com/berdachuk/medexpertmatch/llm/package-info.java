@@ -8,5 +8,5 @@
  * <p>
  * Orchestration services legitimately depend on multiple domain modules to coordinate complex workflows.
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core", "evidence", "doctor", "facility", "medicalcase", "clinicalexperience", "graph", "retrieval", "caseanalysis", "medicalcoding", "embedding", "web"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *", "evidence :: *", "doctor :: *", "facility :: *", "medicalcase :: *", "clinicalexperience :: *", "graph :: *", "retrieval :: *", "caseanalysis :: *", "medicalcoding :: *", "embedding :: *"})
 package com.berdachuk.medexpertmatch.llm;

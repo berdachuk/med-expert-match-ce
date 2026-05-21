@@ -90,6 +90,29 @@ public class EvaluationJdbcRepository {
                 new ResultRowMapper());
     }
 
+    public List<EvaluationRunEntity> findRunsByDatasetName(String datasetName) {
+        return jdbc.query(
+                "SELECT er.id, er.dataset_id, er.normalized_accuracy, er.mean_semantic_similarity, er.semantic_accuracy_at_threshold, er.config FROM evaluation_run er JOIN evaluation_dataset ed ON er.dataset_id = ed.id WHERE ed.name = :datasetName ORDER BY er.id DESC",
+                Map.of("datasetName", datasetName),
+                new RunRowMapper());
+    }
+
+    public EvaluationRunEntity findRunById(String runId) {
+        List<EvaluationRunEntity> results = jdbc.query(
+                "SELECT id, dataset_id, normalized_accuracy, mean_semantic_similarity, semantic_accuracy_at_threshold, config FROM evaluation_run WHERE id = :id",
+                Map.of("id", runId),
+                new RunRowMapper());
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    public EvaluationDatasetEntity findDatasetById(String datasetId) {
+        List<EvaluationDatasetEntity> results = jdbc.query(
+                "SELECT id, name, version, description FROM evaluation_dataset WHERE id = :id",
+                Map.of("id", datasetId),
+                new DatasetRowMapper());
+        return results.isEmpty() ? null : results.get(0);
+    }
+
     private static class DatasetRowMapper implements RowMapper<EvaluationDatasetEntity> {
         @Override
         public EvaluationDatasetEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -125,6 +148,19 @@ public class EvaluationJdbcRepository {
                     rs.getBoolean("normalized_match"),
                     rs.getDouble("semantic_similarity"),
                     rs.getBoolean("semantic_pass"));
+        }
+    }
+
+    private static class RunRowMapper implements RowMapper<EvaluationRunEntity> {
+        @Override
+        public EvaluationRunEntity mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new EvaluationRunEntity(
+                    rs.getString("id"),
+                    rs.getString("dataset_id"),
+                    (Double) rs.getObject("normalized_accuracy"),
+                    (Double) rs.getObject("mean_semantic_similarity"),
+                    (Double) rs.getObject("semantic_accuracy_at_threshold"),
+                    rs.getString("config"));
         }
     }
 }

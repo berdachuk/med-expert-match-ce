@@ -1,4 +1,4 @@
-package com.berdachuk.medexpertmatch.llm.service.impl;
+package com.berdachuk.medexpertmatch.core.util;
 
 public final class LlmResponseSanitizer {
 
@@ -35,7 +35,7 @@ public final class LlmResponseSanitizer {
         return result;
     }
 
-    static String stripLlmReasoning(String response) {
+    public static String stripLlmReasoning(String response) {
         if (response == null || response.isBlank()) {
             return response;
         }
@@ -118,7 +118,7 @@ public final class LlmResponseSanitizer {
         return cleaned;
     }
 
-    static String toHumanReadable(String response) {
+    public static String toHumanReadable(String response) {
         if (response == null || response.isBlank()) {
             return response;
         }

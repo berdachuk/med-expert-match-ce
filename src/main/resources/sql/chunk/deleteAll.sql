@@ -1,0 +1,1 @@
+DELETE FROM medexpertmatch.document_chunk

@@ -15,4 +15,8 @@ public interface ChunkRepository {
     int deleteByDocumentId(String documentId);
 
     int deleteAll();
+
+    void updateEmbedding(String chunkId, float[] embedding);
+
+    void updateEmbeddings(List<DocumentChunk> chunks);
 }

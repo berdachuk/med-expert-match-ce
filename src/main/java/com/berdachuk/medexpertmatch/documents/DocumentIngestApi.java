@@ -1,4 +1,4 @@
-package com.berdachuk.medexpertmatch.documents.api;
+package com.berdachuk.medexpertmatch.documents;
 
 import java.util.List;
 

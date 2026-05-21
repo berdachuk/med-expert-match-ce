@@ -1,18 +1,17 @@
 package com.berdachuk.medexpertmatch.core.config;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ContextRefreshedEvent;
 
-/**
- * Test configuration listener to verify test AI mocks are loaded.
- */
-@Slf4j
 @TestConfiguration
 @Profile("test")
 public class TestAIConfigListener implements ApplicationListener<ContextRefreshedEvent> {
+
+    private static final Logger log = LoggerFactory.getLogger(TestAIConfigListener.class);
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {

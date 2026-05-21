@@ -164,7 +164,7 @@ medexpertmatch:
         complexity-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_COMPLEXITY_WEIGHT:0.3}
         availability-weight: ${MEDEXPERTMATCH_RETRIEVAL_PRIORITY_AVAILABILITY_WEIGHT:0.2}
     reranking:
-      enabled: ${MEDEXPERTMATCH_RETRIEVAL_RERANKING_ENABLED:false}
+      enabled: ${MEDEXPERTMATCH_RETRIEVAL_RERANKING_ENABLED:true}
       top-k: ${MEDEXPERTMATCH_RETRIEVAL_RERANKING_TOP_K:20}
   llm: # Concurrency per component; 1 = sequential (safe for local Ollama), increase for remote APIs
     max-tokens: 4096
@@ -208,7 +208,7 @@ medexpertmatch:
     dataset: ${MEDEXPERTMATCH_EVALUATION_DATASET:medical-eval-v1}
     semantic-threshold: ${MEDEXPERTMATCH_EVALUATION_SEMANTIC_THRESHOLD:0.80}
   documents:
-    enabled: ${MEDEXPERTMATCH_DOCUMENTS_ENABLED:false}
+    enabled: ${MEDEXPERTMATCH_DOCUMENTS_ENABLED:true}
     ingestion:
       directory: ${MEDEXPERTMATCH_DOCUMENTS_INGESTION_DIRECTORY:}
     chunking:
