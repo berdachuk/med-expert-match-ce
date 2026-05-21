@@ -2,42 +2,207 @@
 <opml version="2.0">
   <head>
     <title>MedExpertMatch — Полная презентация (45 мин)</title>
-    <expansionState>0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25</expansionState>
+    <expansionState>0,1,2,3</expansionState>
   </head>
   <body>
     <outline text="Вступление и рамка">
-      <outline text="1. Why this project" _note="Зачем проект: сквозная проверка стека PostgreSQL + PgVector + Apache AGE + AI + агенты. Не бенчмарк, а полноценное приложение в требовательном медицинском домене. Вопрос: можно ли честно использовать один стек данных и один контур оркестрации для сложных сценариев? Ссылка на репозиторий."/>
-      <outline text="2. PostgreSQL as a unified data platform" _note="PostgreSQL как единая платформа: реляция, PgVector, Apache AGE для Cypher-графа. Медицина даёт реалистичную нагрузку: связи врач–кейс–код–специальность–площадка, гибридный поиск, объяснимость. Это POC поддержки принятия решений на основе данных, а не интуиции."/>
-      <outline text="3. Agenda (~45 минут)" _note="Структура доклада: 1) Проблемы и ценность, 2) Архитектура, 3) Живое демо, 4) Q&amp;A. Архитектуру привязываем к тем же сценариям, что покажем вживую. Блок вопросов — отдельно после слайдов."/>
-      <outline text="4. Siarhei Berdachuk" _note="О себе: 30+ лет в IT, фокус на Java, данные, качество, облако, архитектуру. Сайт: berdachuk.com. Лидер, ментор, опыт в TDD, микросервисах, рефакторинге."/>
-      <outline text="5. Prototype and privacy" _note="Уровень прототипа: исследовательский POC, не сертифицированная клиника. PHI минимизированы; демо-данные — синтетика; выводы LLM — с дисклеймерами; человек в контуре. Стек: Spring Boot, PostgreSQL 17, PgVector, Apache AGE, Thymeleaf, OpenAI-совместимые API."/>
+      <outline text="1. Why this project">
+        <outline text="Сквозная проверка стека PostgreSQL + PgVector + Apache AGE + AI + агенты"/>
+        <outline text="Не бенчмарк, а полноценное приложение в требовательном домене — здравоохранение"/>
+        <outline text="Главный вопрос: держатся ли вместе реляция, векторы, граф, LLM и агенты в одном стеке?"/>
+        <outline text="Код: github.com/berdachuk/med-expert-match-ce"/>
+      </outline>
+      <outline text="2. PostgreSQL as a unified data platform">
+        <outline text="PostgreSQL — не «просто база», а единая платформа"/>
+        <outline text="Реляция + PgVector + Apache AGE (Cypher-граф)"/>
+        <outline text="Медицина даёт реалистичную нагрузку: связи врач–кейс–код–специальность–площадка"/>
+        <outline text="Гибридный поиск, объяснимость результатов"/>
+        <outline text="Инструмент поддержки решений на данных, а не на интуиции"/>
+      </outline>
+      <outline text="3. Agenda (~45 минут)">
+        <outline text="1) Проблемы и ценность"/>
+        <outline text="2) Архитектура"/>
+        <outline text="3) Живое демо"/>
+        <outline text="4) Q&amp;A — отдельно после слайдов"/>
+        <outline text="Архитектуру привязываю к тем же сценариям, что покажу вживую"/>
+      </outline>
+      <outline text="4. Siarhei Berdachuk">
+        <outline text="30+ лет в IT"/>
+        <outline text="Фокус: Java, данные, качество, облачные решения, архитектура"/>
+        <outline text="Сайт: berdachuk.com"/>
+        <outline text="Опыт: TDD, микросервисы, рефакторинг, управление командами"/>
+      </outline>
+      <outline text="5. Prototype and privacy">
+        <outline text="Исследовательский POC, не претендует на статус сертифицированной клиники"/>
+        <outline text="PHI (персональные медицинские данные) минимизированы"/>
+        <outline text="Демо-данные — синтетика, без реальных пациентов"/>
+        <outline text="Выводы LLM — с обязательными медицинскими дисклеймерами"/>
+        <outline text="Человек остаётся в контуре принятия решений"/>
+        <outline text="Стек: Spring Boot, PostgreSQL 17, PgVector, Apache AGE, Thymeleaf, OpenAI-совместимые API"/>
+      </outline>
     </outline>
     <outline text="Проблемы и ценность">
-      <outline text="6. Problem 1: Consultation delays" _note="Задержки консультаций — не только «мало врачей», а хаос приоритетов и слабая видимость очереди. Продуктовый ответ: очередь + приоритизация на данных, а не на ощущениях. Подбор специалиста за минуты."/>
-      <outline text="7. Problem 2: Invisible expertise" _note="Кто реально лечил похожие случаи и где накоплена экспертиза — часто не формализовано. Граф врач–кейс–контекст и аналитика сети дают явную картину вместо разрозненных резюме."/>
-      <outline text="8. Problem 3: Fragmented decision support" _note="Разбор кейса, доказательства (PubMed/руководства) и рекомендации разъеханы по разным системам. Врач прыгает между окнами, контекст теряется. Ответ: один агентно-управляемый сценарий — case-analyzer, evidence-retriever, recommendation-engine, doctor-matcher как связанные шаги."/>
-      <outline text="9. Problem 4: Suboptimal use of resources" _note="Не всегда «ближайшая площадка» = правильная площадка. Нужны семантика + сигналы (граф/история) для маршрута. routing-planner skill + семантические и графовые сигналы для направлений."/>
-      <outline text="10. Problems to product (summary)" _note="Сводная таблица: Проблема → Ответ MedExpertMatch. Задержки → матчинг + очередь; Скрытая экспертиза → граф + аналитика; Раздробленная поддержка → агентный путь; Ресурсы → маршрутизация с учётом возможностей."/>
-      <outline text="11. Six core scenarios" _note="Шесть сценариев: 1) Стационарный матчинг специалиста, 2) Второе мнение/телемедицина, 3) Приоритизация очереди консультаций, 4) Аналитика сети экспертизы, 5) Региональная маршрутизация, 6) Поддержка решений (анализ + доказательства). Вход: FHIR bundle или текст."/>
+      <outline text="6. Problem 1: Consultation delays">
+        <outline text="Симптом: дни и недели ожидания нужного специалиста"/>
+        <outline text="Причина: хаос приоритетов, слабая видимость очереди"/>
+        <outline text="Последствия: рост рисков, длительность госпитализации, нагрузка на отделения"/>
+        <outline text="Ответ продукта: очередь с приоритизацией на данных, а не на ощущениях"/>
+        <outline text="Результат: подбор специалиста за минуты, а не за дни"/>
+      </outline>
+      <outline text="7. Problem 2: Invisible expertise">
+        <outline text="Симптом: «Кто лучший в X?» — знание живёт в головах, а не в системе"/>
+        <outline text="Реальная экспертиза не формализована, не видна в сети"/>
+        <outline text="Ответ: граф врач–кейс–контекст + сетевая аналитика"/>
+        <outline text="Явная картина компетенций вместо разрозненных резюме"/>
+        <outline text="Последствия без решения: неверная маршрутизация, неравномерная нагрузка"/>
+      </outline>
+      <outline text="8. Problem 3: Fragmented decision support">
+        <outline text="Симптом: врач мечется между окнами — кейс, статьи, рекомендации, подбор коллеги"/>
+        <outline text="Контекст теряется, время уходит на ручную «склейку»"/>
+        <outline text="Риск: противоречивые выводы, дублирование запросов, размытая ответственность"/>
+        <outline text="Ответ: единый агентно-управляемый сценарий"/>
+        <outline text="case-analyzer → evidence-retriever → recommendation-engine → doctor-matcher"/>
+        <outline text="Четыре связанных шага вместо четырёх несвязанных порталов"/>
+      </outline>
+      <outline text="9. Problem 4: Suboptimal use of resources">
+        <outline text="Симптом: «Ближайшее учреждение» — не всегда правильное"/>
+        <outline text="Факторы: загрузка, география, профиль кейса, реальные возможности"/>
+        <outline text="Ответ: routing-planner + семантические и графовые сигналы"/>
+        <outline text="Маршрутизация с учётом специализации и оснащённости"/>
+      </outline>
+      <outline text="10. Problems to product (summary)">
+        <outline text="Задержки консультаций → Матчинг + приоритизация очереди"/>
+        <outline text="Скрытая экспертиза → Граф + сетевая аналитика"/>
+        <outline text="Раздробленная поддержка → Единый агентный путь"/>
+        <outline text="Неоптимальные ресурсы → Маршрутизация по возможностям"/>
+      </outline>
+      <outline text="11. Six core scenarios">
+        <outline text="1) Стационарный матчинг специалиста — лечащий врач, кейс-менеджер"/>
+        <outline text="2) Второе мнение / телемедицина — направляющий врач, портал"/>
+        <outline text="3) Приоритизация очереди консультаций — координатор"/>
+        <outline text="4) Сетевая аналитика экспертизы — CMO, аналитика"/>
+        <outline text="5) Региональная маршрутизация — операционный отдел"/>
+        <outline text="6) Поддержка решений (анализ + доказательная база) — клиницист"/>
+        <outline text="Вход: FHIR-пакет или произвольный текст (match-from-text)"/>
+      </outline>
     </outline>
     <outline text="Архитектура">
-      <outline text="12. Request path (Find Specialist)" _note="Один поток: MedicalCase сохраняется и эмбеддится (PgVector) → Agent API → case-analyzer → doctor-matcher → SemanticGraphRetrievalService считает кандидатов → ранжированный список + обоснование в UI/API. Это якорь всей архитектуры."/>
-      <outline text="13. Hybrid retrieval (GraphRAG)" _note="Три канала: вектор, граф, ключевые слова → RRF (Reciprocal Rank Fusion) — склейка рангов без калибровки сырых скаляров → семантический rerank. Почему не только эмбеддинги: похожий текст не гарантирует похожую реальную нагрузку и исходы."/>
-      <outline text="14. Graph structure diagram" _note="Граф medexpertmatch_graph в AGE. Вершины: Doctor, MedicalCase, ICD10Code, MedicalSpecialty, Facility. Рёбра: TREATED, CONSULTED_ON, SPECIALIZES_IN, TREATS_CONDITION, AFFILIATED_WITH, HAS_CONDITION, REQUIRES_SPECIALTY. Сборка — MedicalGraphBuilderService, доступ — через GraphService."/>
-      <outline text="15. Semantic Graph Retrieval (SGR)" _note="SGR = Semantic Graph Retrieval, сервис SemanticGraphRetrievalService. Типичные веса для матчинга: 40% вектор, 30% граф, 30% историческая эффективность (исходы, рейтинги). Граф — отдельный сигнал. Те же идеи работают для network-analyzer и маршрутизации."/>
-      <outline text="16. Spring Modulith and domains" _note="Модули с границами: core, doctor, medicalcase, caseanalysis, embedding, retrieval, llm, graph, ingestion, web, и другие. llm намеренно оркестрирует сквозные медицинские потоки. web собирает UI; доменная логика не утекает в контроллеры."/>
-      <outline text="17. LLM orchestration and tools" _note="MedicalAgentService + workflow-сервисы. MedicalAgentTools — Spring AI @Tool вызывает доменные сервисы (не LLM напрямую в JDBC). AutoMemoryTools — кросс-сессионная память. SessionMemoryAdvisor сжимает историю после 15 шагов (JDBC). Промпты — внешние .st шаблоны (17 шт., StringTemplate4)."/>
-      <outline text="18. Seven agent skills" _note="Семь навыков (SKILL.md + тулзы): 1) case-analyzer — сущности, ICD-10, срочность; 2) doctor-matcher — SGR-матчинг; 3) evidence-retriever — руководства, PubMed; 4) recommendation-engine — рекомендации; 5) clinical-advisor — дифференциальная диагностика, риск; 6) network-analyzer — графовая аналитика; 7) routing-planner — маршрутизация. Включение через конфиг."/>
-      <outline text="19. Data access: graph and SQL" _note="Граф: весь Cypher через GraphService (параметризация, единая политика). SQL: JDBC репозитории, запросы в .sql файлах, выделенные мапперы. Репозитории — одна сущность. Единая дверь для графа упрощает аудит и безопасность."/>
-      <outline text="20. Ingestion and FHIR" _note="Модуль ingestion: FHIR-адаптеры (Patient, Condition, Encounter, Observation…). Синтетические данные: эмбеддинги + построение графа после загрузки. FHIR как реалистичный вход; синтетика для стенда."/>
-      <outline text="21. Privacy and deployment" _note="Минимум PHI; анонимизированные тестовые и демо-данные. Медицинские дисклеймеры в выводах LLM. OpenAI-совместимые chat/embedding эндпоинты. Профили: local, demo и др. Не путать готовность архитектуры с юридической сертификацией."/>
+      <outline text="12. Request path (Find Specialist)">
+        <outline text="MedicalCase → сохранение и эмбеддинг в PgVector"/>
+        <outline text="Agent API → case-analyzer → doctor-matcher"/>
+        <outline text="SemanticGraphRetrievalService (SGR) вычисляет кандидатов"/>
+        <outline text="Ранжированный список с баллами и обоснованием → UI / API"/>
+        <outline text="Это якорный сценарий всей архитектуры"/>
+      </outline>
+      <outline text="13. Hybrid retrieval (GraphRAG)">
+        <outline text="Три поисковых канала: векторный, графовый, ключевые слова"/>
+        <outline text="RRF (Reciprocal Rank Fusion) — слияние рангов без калибровки сырых оценок"/>
+        <outline text="Каждый канал отдаёт ранжированный список, RRF объединяет по позициям"/>
+        <outline text="Финальный семантический rerank — осмысленный порядок для домена"/>
+        <outline text="Почему не только эмбеддинги: похожий текст ≠ похожие исходы и реальная нагрузка"/>
+      </outline>
+      <outline text="14. Graph structure diagram">
+        <outline text="Граф medexpertmatch_graph в Apache AGE — не «картинка для красоты»"/>
+        <outline text="Вершины: Doctor, MedicalCase, ICD10Code, MedicalSpecialty, Facility"/>
+        <outline text="Рёбра: TREATED, CONSULTED_ON, SPECIALIZES_IN"/>
+        <outline text="Рёбра: TREATS_CONDITION, AFFILIATED_WITH, HAS_CONDITION, REQUIRES_SPECIALTY"/>
+        <outline text="Сборка графа: MedicalGraphBuilderService"/>
+        <outline text="Доступ: единая точка входа — GraphService"/>
+      </outline>
+      <outline text="15. Semantic Graph Retrieval (SGR)">
+        <outline text="SGR = SemanticGraphRetrievalService (не путать с schema-guided reasoning)"/>
+        <outline text="Составной вес для пары врач–кейс: 40% вектор, 30% граф, 30% история"/>
+        <outline text="Граф — самостоятельный сигнал, не «довесок» к эмбеддингам"/>
+        <outline text="История: рейтинги (1–5) и исходы (SUCCESS/IMPROVED → успех)"/>
+        <outline text="Нормализованный рейтинг + доля успехов, смесь 60/40"/>
+        <outline text="Те же принципы для network-analyzer и маршрутизации"/>
+      </outline>
+      <outline text="16. Spring Modulith and domains">
+        <outline text="Модули с чёткими границами: core, doctor, medicalcase, caseanalysis, embedding"/>
+        <outline text="retrieval, llm, graph, ingestion, web и другие"/>
+        <outline text="llm осознанно оркестрирует сквозные медицинские потоки"/>
+        <outline text="web собирает UI; доменная логика не протекает в контроллеры"/>
+        <outline text="Не «ком монолита», а модули с enforced границами"/>
+      </outline>
+      <outline text="17. LLM orchestration and tools">
+        <outline text="MedicalAgentService + workflow-сервисы"/>
+        <outline text="MedicalAgentTools: Spring AI @Tool → вызовы доменных сервисов"/>
+        <outline text="LLM никогда не ходит напрямую в базу данных"/>
+        <outline text="AutoMemoryTools: кросс-сессионная долговременная память"/>
+        <outline text="SessionMemoryAdvisor: сжатие истории диалога после 15 шагов (JDBC)"/>
+        <outline text="Промпты: внешние .st шаблоны (17 шт., StringTemplate4) — воспроизводимость и ревью"/>
+      </outline>
+      <outline text="18. Seven agent skills">
+        <outline text="1) case-analyzer — сущности, ICD-10, уровень срочности"/>
+        <outline text="2) doctor-matcher — SGR-матчинг специалистов"/>
+        <outline text="3) evidence-retriever — клинические руководства, PubMed"/>
+        <outline text="4) recommendation-engine — формирование рекомендаций"/>
+        <outline text="5) clinical-advisor — дифференциальная диагностика, оценка рисков"/>
+        <outline text="6) network-analyzer — графовая аналитика сети экспертизы"/>
+        <outline text="7) routing-planner — маршрутизация в учреждения"/>
+        <outline text="Навык = SKILL.md + зарегистрированные инструменты, включение через конфиг"/>
+      </outline>
+      <outline text="19. Data access: graph and SQL">
+        <outline text="Граф: все Cypher-запросы — только через GraphService"/>
+        <outline text="Параметризация, единая политика доступа, проще аудит"/>
+        <outline text="SQL: JDBC репозитории, запросы вынесены в .sql файлы"/>
+        <outline text="Выделенные мапперы строк, одна сущность — один репозиторий"/>
+        <outline text="Граф и SQL не конкурируют, а разделены по ролям"/>
+      </outline>
+      <outline text="20. Ingestion and FHIR">
+        <outline text="Модуль ingestion: FHIR-адаптеры для загрузки данных"/>
+        <outline text="Поддерживаемые ресурсы: Patient, Condition, Encounter, Observation"/>
+        <outline text="Синтетическая генерация данных для стенда"/>
+        <outline text="После загрузки: эмбеддинги + автоматическое построение графа"/>
+        <outline text="FHIR как реалистичный входной формат"/>
+      </outline>
+      <outline text="21. Privacy and deployment">
+        <outline text="Минимум персональных данных, демо — только синтетика"/>
+        <outline text="Медицинские дисклеймеры во всех выводах LLM"/>
+        <outline text="Только OpenAI-совместимые chat/embedding эндпоинты"/>
+        <outline text="Профили развёртывания: local, demo и другие"/>
+        <outline text="Важно: готовность архитектуры ≠ юридическая сертификация"/>
+      </outline>
     </outline>
     <outline text="Демо и заключение">
-      <outline text="22. Find Specialist flow (steps)" _note="Шесть шагов: 1) Создать/загрузить кейс (FHIR или UI) → MedicalCase; 2) Сгенерировать embedding → PgVector; 3) Вызвать агента — POST /api/v1/agent/match/{caseId}; 4) case-analyzer уточняет кейс; 5) doctor-matcher + score(case, doctor) через SGR; 6) Вернуть ранжированных врачей с баллами и обоснованием."/>
-      <outline text="23. Demo: preparation" _note="Окружение: PostgreSQL 17 + PgVector + AGE, профиль demo, Docker-контейнер по Demo Guide, датасет medium (сотни врачей/кейсов). Если live упал — скриншоты или запись."/>
-      <outline text="24. Conclusion" _note="Эксперимент со стеком: PostgreSQL + PgVector + AGE + AI + агенты на жёстких медицинских workflow. Решённые проблемы: задержки, скрытая экспертиза, раздробленная поддержка, ресурсы. Опоры дизайна: GraphRAG + SGR, Modulith, агент + инструменты, политика данных и графа. Следующий шаг — один честный приоритет релиза."/>
-      <outline text="25. Thank you" _note="Вопросы? Ссылки: Use Cases, Architecture, сайт berdachuk.com, код github.com/berdachuk/med-expert-match-ce. Q&amp;A — по правилам модерации; короткие вопросы на сцене, глубокие — офлайн."/>
-      <outline text="26. Below the deck (references)" _note="Справочный слайд: Architecture overview, Use cases, Demo guide, Harness and agent usage, Presentation plan (RU). Не зачитывать вслух; детали — в ARCHITECTURE и репозитории."/>
+      <outline text="22. Find Specialist flow (steps)">
+        <outline text="1) Создать / загрузить кейс (FHIR или UI) → MedicalCase"/>
+        <outline text="2) Сгенерировать embedding → сохранить в PgVector"/>
+        <outline text="3) Вызвать агента: POST /api/v1/agent/match/{caseId}"/>
+        <outline text="4) case-analyzer уточняет и структурирует кейс"/>
+        <outline text="5) doctor-matcher + score(case, doctor) через SGR"/>
+        <outline text="6) Ранжированный список врачей с баллами и обоснованием"/>
+        <outline text="Полная диаграмма — в USE_CASES"/>
+      </outline>
+      <outline text="23. Demo: preparation">
+        <outline text="PostgreSQL 17 + PgVector + Apache AGE"/>
+        <outline text="Профиль demo, Docker-контейнер по Demo Guide"/>
+        <outline text="Датасет medium (сотни врачей и кейсов)"/>
+        <outline text="План Б: если live упал — скриншоты или видеозапись"/>
+      </outline>
+      <outline text="24. Conclusion">
+        <outline text="Эксперимент со стеком: PostgreSQL + PgVector + AGE + AI + агенты"/>
+        <outline text="На жёстких, реалистичных медицинских workflow"/>
+        <outline text="Решённые проблемы: задержки, скрытая экспертиза, раздробленная поддержка, ресурсы"/>
+        <outline text="Опоры дизайна: GraphRAG + SGR, Modulith, агент + инструменты"/>
+        <outline text="Политика доступа к данным и графу"/>
+        <outline text="Следующий шаг — один честный приоритет ближайшего релиза"/>
+      </outline>
+      <outline text="25. Thank you">
+        <outline text="Спасибо за внимание. Вопросы?"/>
+        <outline text="Ссылки: Use Cases, Architecture, Demo Guide"/>
+        <outline text="Сайт: berdachuk.com"/>
+        <outline text="Код: github.com/berdachuk/med-expert-match-ce"/>
+        <outline text="Q&amp;A: короткие вопросы на сцене, глубокие обсуждения — офлайн"/>
+      </outline>
+      <outline text="26. Below the deck (references)">
+        <outline text="Architecture overview"/>
+        <outline text="Use cases"/>
+        <outline text="Demo guide"/>
+        <outline text="Harness and agent usage"/>
+        <outline text="Presentation plan (RU)"/>
+        <outline text="Не зачитывать вслух; при необходимости: «детали в ARCHITECTURE и репозитории»"/>
+      </outline>
     </outline>
   </body>
 </opml>
