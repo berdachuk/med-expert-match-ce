@@ -60,6 +60,22 @@
       "targets": [
         {"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{uri=~\"/api/v1/agent/.*\"}[5m])) * 1000"}
       ]
+    },
+    {
+      "title": "API Usage — Top Endpoints by Requests",
+      "type": "barchart",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(medexpertmatch_api_usage_requests_total[5m])"}
+      ]
+    },
+    {
+      "title": "API Latency p95 by Endpoint (ms)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(medexpertmatch_api_usage_latency_seconds_sum[5m]) / rate(medexpertmatch_api_usage_latency_seconds_count[5m]) * 1000"}
+      ]
     }
   ],
   "refresh": "30s"

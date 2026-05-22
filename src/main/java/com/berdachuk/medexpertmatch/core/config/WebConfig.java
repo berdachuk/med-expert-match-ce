@@ -17,14 +17,18 @@ import java.io.IOException;
 public class WebConfig implements WebMvcConfigurer {
 
     private final ResponseTimeInterceptor responseTimeInterceptor;
+    private final ApiUsageInterceptor apiUsageInterceptor;
 
-    public WebConfig(ResponseTimeInterceptor responseTimeInterceptor) {
+    public WebConfig(ResponseTimeInterceptor responseTimeInterceptor, ApiUsageInterceptor apiUsageInterceptor) {
         this.responseTimeInterceptor = responseTimeInterceptor;
+        this.apiUsageInterceptor = apiUsageInterceptor;
     }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(responseTimeInterceptor)
+                .addPathPatterns("/api/**");
+        registry.addInterceptor(apiUsageInterceptor)
                 .addPathPatterns("/api/**");
     }
 
