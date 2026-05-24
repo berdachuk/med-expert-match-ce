@@ -10,6 +10,7 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public class EmbeddingServiceImpl implements EmbeddingService {
      * @return List of embedding values (as Double for compatibility)
      */
     @Override
+    @Cacheable(value = "embeddingResults", key = "#text")
     public List<Double> generateEmbedding(String text) {
         if (embeddingModel == null) {
             throw new IllegalStateException("EmbeddingModel is not configured");

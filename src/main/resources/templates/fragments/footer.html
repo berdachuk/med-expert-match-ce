@@ -2,8 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <th:block th:fragment="footer">
-    <footer class="mt-auto py-3 text-muted text-center small">
-        <span>Copyright &#169; 2026 Siarhei Berdachuk</span>
+    <footer class="container-fluid py-3 text-center text-muted small" role="contentinfo">
+        <span th:text="#{footer.copyright}">Copyright &#169; 2026 Siarhei Berdachuk</span>
     </footer>
 </th:block>
 </body>

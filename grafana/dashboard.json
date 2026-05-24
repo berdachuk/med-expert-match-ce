@@ -1,0 +1,82 @@
+{
+  "title": "MedExpertMatch Dashboard",
+  "uid": "medexpertmatch",
+  "panels": [
+    {
+      "title": "HTTP Request Rate (req/sec)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(http_server_requests_seconds_count[1m])"}
+      ]
+    },
+    {
+      "title": "Error Rate (5xx)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])"}
+      ]
+    },
+    {
+      "title": "Rate Limit Hits",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(http_server_requests_seconds_count{status=\"429\"}[5m])"}
+      ]
+    },
+    {
+      "title": "JVM Heap Memory",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "sum(jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "Used"},
+        {"expr": "sum(jvm_memory_max_bytes{area=\"heap\"})", "legendFormat": "Max"}
+      ]
+    },
+    {
+      "title": "GC Pause Time (ms)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(jvm_gc_pause_seconds_sum[1m]) / rate(jvm_gc_pause_seconds_count[1m]) * 1000"}
+      ]
+    },
+    {
+      "title": "DB Connection Pool Usage",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "hikaricp_connections_active", "legendFormat": "Active"},
+        {"expr": "hikaricp_connections_idle", "legendFormat": "Idle"},
+        {"expr": "hikaricp_connections_pending", "legendFormat": "Pending"}
+      ]
+    },
+    {
+      "title": "LLM Call Duration p95 (ms)",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{uri=~\"/api/v1/agent/.*\"}[5m])) * 1000"}
+      ]
+    },
+    {
+      "title": "API Usage — Top Endpoints by Requests",
+      "type": "barchart",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(medexpertmatch_api_usage_requests_total[5m])"}
+      ]
+    },
+    {
+      "title": "API Latency p95 by Endpoint (ms)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(medexpertmatch_api_usage_latency_seconds_sum[5m]) / rate(medexpertmatch_api_usage_latency_seconds_count[5m]) * 1000"}
+      ]
+    }
+  ],
+  "refresh": "30s"
+}

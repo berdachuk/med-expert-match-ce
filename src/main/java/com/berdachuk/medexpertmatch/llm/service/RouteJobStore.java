@@ -36,6 +36,38 @@ public class RouteJobStore {
         return jobs.get(jobId);
     }
 
+    public int purgeExpired(int completedFailedTtlMinutes, int pendingTtlMinutes) {
+        long now = System.currentTimeMillis();
+        long completedFailedCutoff = now - (long) completedFailedTtlMinutes * 60 * 1000;
+        long pendingCutoff = now - (long) pendingTtlMinutes * 60 * 1000;
+
+        int purged = jobs.size();
+        jobs.entrySet().removeIf(entry -> {
+            long jobTimestamp = extractTimestamp(entry.getKey());
+            if (jobTimestamp < 0) return false;
+            String status = entry.getValue().status();
+            if (RouteJobStatus.COMPLETED.equals(status) || RouteJobStatus.FAILED.equals(status)) {
+                return jobTimestamp < completedFailedCutoff;
+            }
+            if (RouteJobStatus.PENDING.equals(status)) {
+                return jobTimestamp < pendingCutoff;
+            }
+            return false;
+        });
+        return purged - jobs.size();
+    }
+
+    private long extractTimestamp(String jobId) {
+        int firstDash = jobId.indexOf('-');
+        int secondDash = jobId.indexOf('-', firstDash + 1);
+        if (secondDash < 0) return -1;
+        try {
+            return Long.parseLong(jobId.substring(firstDash + 1, secondDash));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
     private void evictOldJobs() {
         if (jobs.size() > MAX_JOBS) {
             jobs.keySet().stream()

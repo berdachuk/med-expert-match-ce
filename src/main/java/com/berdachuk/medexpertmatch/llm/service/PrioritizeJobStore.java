@@ -16,7 +16,6 @@ public class PrioritizeJobStore {
 
     private final Map<String, PrioritizeJobStatus> jobs = new ConcurrentHashMap<>();
     private static final int MAX_JOBS = 100;
-    private static final long JOB_TTL_MS = 30 * 60 * 1000;
 
     public String createJob() {
         String jobId = "prioritize-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
@@ -35,6 +34,38 @@ public class PrioritizeJobStore {
 
     public PrioritizeJobStatus getStatus(String jobId) {
         return jobs.get(jobId);
+    }
+
+    public int purgeExpired(int completedFailedTtlMinutes, int pendingTtlMinutes) {
+        long now = System.currentTimeMillis();
+        long completedFailedCutoff = now - (long) completedFailedTtlMinutes * 60 * 1000;
+        long pendingCutoff = now - (long) pendingTtlMinutes * 60 * 1000;
+
+        int purged = jobs.size();
+        jobs.entrySet().removeIf(entry -> {
+            long jobTimestamp = extractTimestamp(entry.getKey());
+            if (jobTimestamp < 0) return false;
+            String status = entry.getValue().status();
+            if (PrioritizeJobStatus.COMPLETED.equals(status) || PrioritizeJobStatus.FAILED.equals(status)) {
+                return jobTimestamp < completedFailedCutoff;
+            }
+            if (PrioritizeJobStatus.PENDING.equals(status)) {
+                return jobTimestamp < pendingCutoff;
+            }
+            return false;
+        });
+        return purged - jobs.size();
+    }
+
+    private long extractTimestamp(String jobId) {
+        int firstDash = jobId.indexOf('-');
+        int secondDash = jobId.indexOf('-', firstDash + 1);
+        if (secondDash < 0) return -1;
+        try {
+            return Long.parseLong(jobId.substring(firstDash + 1, secondDash));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private void evictOldJobs() {
