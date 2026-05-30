@@ -6,6 +6,15 @@
 
 This document describes coding rules and conventions for MedExpertMatch, with a focus on medical-specific adaptations.
 
+## TDD Workflow (mandatory)
+
+Always use TDD. Before implementing any functionality:
+
+1. **Write the test first** — before any implementation code.
+2. **Verify the test against the requirements** — use an internal review tool/skill (e.g. a code-review or testing skill, or a review subagent) to confirm the test truly encodes the requirement.
+3. **Implement** the functionality — only after the test is written and verified.
+4. **Re-run the test** (`mvn verify`) — fix problems and iterate until it passes.
+
 ## General Principles
 
 - **Test-Driven Development**: Always follow TDD approach

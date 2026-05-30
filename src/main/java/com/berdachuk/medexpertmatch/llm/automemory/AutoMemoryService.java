@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.automemory;
 
+import com.berdachuk.medexpertmatch.llm.config.AgentMemoryProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -21,26 +21,20 @@ public class AutoMemoryService {
 
     private final Path rootDir;
 
-    public AutoMemoryService(
-            @Value("${medexpertmatch.automemory.root:${user.home}/.medexpertmatch/automemory}") String rootPath) {
-        this.rootDir = Path.of(rootPath);
-        ensureDirectoryExists();
-    }
-
-    private void ensureDirectoryExists() {
-        try {
-            if (!Files.exists(rootDir)) {
-                Files.createDirectories(rootDir);
-                log.info("Created AutoMemory directory: {}", rootDir);
-            }
-        } catch (IOException e) {
-            log.error("Failed to create AutoMemory directory: {}", rootDir, e);
-        }
+    public AutoMemoryService(AgentMemoryProperties properties) {
+        this.rootDir = Path.of(properties.dir());
+        properties.ensureDirectoryExists();
     }
 
     public void appendEntry(String type, String markdownLine) {
         if (!VALID_TYPES.contains(type)) {
             log.warn("Invalid AutoMemory type: {}, skipping", type);
+            return;
+        }
+        // HIPAA guard: durable memory holds ONLY non-PHI. Reject PHI-shaped content outright so
+        // patient data never reaches disk. No PHI in logs — log only the type.
+        if (PhiGuard.containsPhi(markdownLine)) {
+            log.warn("Rejected AutoMemory entry of type {} - PHI-shaped content not persisted", type);
             return;
         }
         try {

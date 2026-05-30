@@ -8,13 +8,24 @@ import org.springaicommunity.agent.tools.SkillsTool;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.session.DefaultSessionService;
+import org.springframework.ai.session.SessionRepository;
 import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
-import org.springframework.ai.session.compaction.SlidingWindowCompactionStrategy;
+import org.springframework.ai.session.compaction.CompactionStrategy;
+import org.springframework.ai.session.compaction.CompactionTrigger;
+import org.springframework.ai.session.compaction.CompositeCompactionTrigger;
+import org.springframework.ai.session.compaction.TokenCountTrigger;
 import org.springframework.ai.session.compaction.TurnCountTrigger;
+import org.springframework.ai.session.compaction.TurnWindowCompactionStrategy;
+import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
+import org.springframework.ai.tokenizer.TokenCountEstimator;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -32,12 +43,28 @@ import org.springframework.core.io.ResourceLoader;
  */
 @Slf4j
 @Configuration
+@EnableConfigurationProperties({AgentSessionProperties.class, AgentMemoryProperties.class, AgentSkillsProperties.class})
 @ConditionalOnProperty(
         name = "medexpertmatch.skills.enabled",
         havingValue = "true",
         matchIfMissing = true
 )
 public class MedicalAgentConfiguration {
+
+    /**
+     * System guidance that turns the AutoMemory tools into a usable long-term memory layer
+     * (Option B: explicit tools + prompt, since this spring-ai-agent-utils version exposes no
+     * {@code AutoMemoryToolsAdvisor}). It instructs the agent to curate durable cross-session
+     * facts and — critically — to store ONLY non-PHI (preferences, routing policies, model config),
+     * never patient data. A defense-in-depth complement to the {@code PhiGuard} hard reject.
+     */
+    public static final String MEMORY_SYSTEM_PROMPT = """
+            You have a durable long-term memory across sessions via the AutoMemory tools \
+            (automemory_append, automemory_read, automemory_index). Use automemory_read at the \
+            start of relevant tasks to recall clinician preferences, routing policies, and model \
+            configuration, and automemory_append to persist new durable, non-patient facts. \
+            CRITICAL HIPAA RULE: never write PHI (patient names, SSN, MRN, DOB, contact details, \
+            or any patient-identifying data) to memory. Store ONLY non-PHI operational knowledge.""";
 
     private final ResourceLoader resourceLoader;
 
@@ -46,21 +73,25 @@ public class MedicalAgentConfiguration {
     }
 
     /**
-     * Creates SkillsTool bean for discovering and loading skills on demand.
-     * Loads from classpath resources, then optional extra directory (e.g. mounted volume).
+     * Creates the {@link SkillsTool} {@link ToolCallback} for discovering and loading Agent Skills on
+     * demand with progressive disclosure. Skills are loaded JAR-safely from the classpath
+     * ({@code agent.skills.dir}, default {@code skills}); an optional filesystem
+     * {@code agent.skills.extra-directory} (e.g. a mounted volume) is layered on top when present.
      */
     @Bean
     @org.springframework.beans.factory.annotation.Qualifier("skillsTool")
-    public ToolCallback skillsTool(
-            @org.springframework.beans.factory.annotation.Value("${medexpertmatch.skills.directory:skills}") String skillsDirectory,
-            @org.springframework.beans.factory.annotation.Value("${medexpertmatch.skills.extra-directory:}") String extraDirectory) {
-        log.info("Creating SkillsTool bean - directory: {}, extra-directory: {}", skillsDirectory, extraDirectory.isEmpty() ? "(none)" : extraDirectory);
+    public ToolCallback skillsTool(AgentSkillsProperties skillsProperties) {
+        String skillsDirectory = skillsProperties.dir();
+        String extraDirectory = skillsProperties.extraDirectory();
+        log.info("Creating SkillsTool bean - directory: {}, extra-directory: {}",
+                skillsDirectory, extraDirectory.isEmpty() ? "(none)" : extraDirectory);
         SkillsTool.Builder builder = SkillsTool.builder();
         boolean skillsAdded = false;
 
-        // Main directory: load directly from classpath
+        // Main directory: load directly from the classpath (JAR-safe)
         try {
-            org.springframework.core.io.Resource skillsResource = resourceLoader.getResource("classpath:" + skillsDirectory);
+            org.springframework.core.io.Resource skillsResource =
+                    resourceLoader.getResource("classpath:" + skillsDirectory);
             if (skillsResource.exists()) {
                 builder.addSkillsResource(skillsResource);
                 log.info("Added classpath skills: classpath:{}", skillsDirectory);
@@ -90,28 +121,97 @@ public class MedicalAgentConfiguration {
 
         if (!skillsAdded) {
             throw new IllegalStateException("At least one skill must be configured. " +
-                    "Ensure skills exist in " + skillsDirectory + " (filesystem or classpath) or set medexpertmatch.skills.extra-directory.");
+                    "Ensure skills exist in " + skillsDirectory + " (filesystem or classpath) or set agent.skills.extra-directory.");
         }
 
         return builder.build();
     }
 
     /**
-     * Creates FileSystemTools bean for reading reference files and assets.
-     * Used by skills to load additional documentation and templates.
+     * Creates the {@link FileSystemTools} bean (Read) so skills can pull in reference files and
+     * assets on demand.
+     * <p>
+     * NOTE: {@code ShellTools} from spring-ai-agent-utils is intentionally NOT registered. Under
+     * HIPAA and the project's AGENTS.md constraints, the agent must not execute unsandboxed shell
+     * scripts; exposing {@code bash}/{@code killShell} tools would create an arbitrary
+     * code-execution surface and a PHI-exfiltration risk. File access is limited to the read-only
+     * {@link FileSystemTools} surface.
      */
     @Bean
     public FileSystemTools fileSystemTools() {
-        log.info("Creating FileSystemTools bean for reading skill references");
+        log.info("Creating FileSystemTools bean for reading skill references (ShellTools intentionally disabled per HIPAA)");
         return FileSystemTools.builder()
                 .build();
     }
 
+    /**
+     * Non-LLM token estimator shared by the token-count trigger and the window strategy. Keeps
+     * compaction cheap (no extra model call) and avoids sending PHI to any external tokenizer.
+     */
     @Bean
-    SessionMemoryAdvisor sessionMemoryAdvisor(SessionService sessionService) {
+    @ConditionalOnMissingBean(TokenCountEstimator.class)
+    TokenCountEstimator sessionTokenCountEstimator() {
+        return new JTokkitTokenCountEstimator();
+    }
+
+    /**
+     * Turn-safe compaction trigger: fires when EITHER the turn count OR the estimated token
+     * count crosses its configured threshold. Both legs are non-LLM, so the trigger itself
+     * never makes an extra model call.
+     */
+    @Bean
+    CompactionTrigger sessionCompactionTrigger(AgentSessionProperties properties,
+                                               TokenCountEstimator tokenCountEstimator) {
+        return CompositeCompactionTrigger.anyOf(
+                new TurnCountTrigger(properties.maxTurns()),
+                TokenCountTrigger.builder()
+                        .threshold(properties.maxTokens())
+                        .tokenCountEstimator(tokenCountEstimator)
+                        .build());
+    }
+
+    /**
+     * Non-LLM compaction strategy. {@link TurnWindowCompactionStrategy} keeps the most recent
+     * turns and always starts the retained window on a USER message, so a partial turn is never
+     * left dangling. Chosen over summarization strategies to avoid extra model calls and to keep
+     * PHI out of any LLM-generated summary.
+     */
+    @Bean
+    CompactionStrategy sessionCompactionStrategy(AgentSessionProperties properties,
+                                                 TokenCountEstimator tokenCountEstimator) {
+        return TurnWindowCompactionStrategy.builder()
+                .maxTurns(properties.maxWindowTurns())
+                .tokenCountEstimator(tokenCountEstimator)
+                .build();
+    }
+
+    /**
+     * Explicit {@link SessionService} bean backed by the JDBC {@link SessionRepository}.
+     * Declared with {@link ConditionalOnMissingBean} so it coexists with the session
+     * auto-configuration; if a repository is unavailable the auto-config's bean (or none) is used.
+     */
+    @Bean
+    @ConditionalOnMissingBean(SessionService.class)
+    @ConditionalOnBean(SessionRepository.class)
+    SessionService sessionService(SessionRepository sessionRepository) {
+        log.info("Creating DefaultSessionService for turn-safe short-term memory");
+        return DefaultSessionService.builder()
+                .sessionRepository(sessionRepository)
+                .build();
+    }
+
+    /**
+     * Wires turn-safe short-term memory into the medical agent's advisor chain. Both a trigger
+     * and a strategy MUST be supplied together — {@link SessionMemoryAdvisor.Builder#build()}
+     * throws {@link IllegalArgumentException} otherwise (the turn-safety guard).
+     */
+    @Bean
+    SessionMemoryAdvisor sessionMemoryAdvisor(SessionService sessionService,
+                                              CompactionTrigger sessionCompactionTrigger,
+                                              CompactionStrategy sessionCompactionStrategy) {
         return SessionMemoryAdvisor.builder(sessionService)
-                .compactionTrigger(new TurnCountTrigger(15))
-                .compactionStrategy(SlidingWindowCompactionStrategy.builder().maxEvents(30).build())
+                .compactionTrigger(sessionCompactionTrigger)
+                .compactionStrategy(sessionCompactionStrategy)
                 .build();
     }
 
@@ -134,12 +234,16 @@ public class MedicalAgentConfiguration {
             FileSystemTools fileSystemTools,
             MedicalAgentTools medicalAgentTools,
             AutoMemoryTools autoMemoryTools,
-            SessionMemoryAdvisor sessionMemoryAdvisor
+            SessionMemoryAdvisor sessionMemoryAdvisor,
+            AgentMemoryProperties agentMemoryProperties
     ) {
         log.info("Creating medicalAgentChatClient with Agent Skills and Medical Tools enabled");
         log.info("Using toolCallingChatModel: {} for tool invocations", toolCallingChatModel.getClass().getSimpleName());
+        agentMemoryProperties.ensureDirectoryExists();
+        log.info("AutoMemory long-term memory directory: {}", agentMemoryProperties.dir());
 
         ChatClient.Builder builder = ChatClient.builder(toolCallingChatModel)
+                .defaultSystem(MEMORY_SYSTEM_PROMPT)
                 .defaultTools(fileSystemTools)
                 .defaultTools(medicalAgentTools)
                 .defaultTools(autoMemoryTools)
