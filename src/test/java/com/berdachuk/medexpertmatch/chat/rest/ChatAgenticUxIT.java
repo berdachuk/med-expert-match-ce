@@ -15,9 +15,11 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -31,6 +33,21 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
     private ChatService chatService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private String streamChatMessage(String userId, String chatId, String content) throws Exception {
+        MvcResult asyncStarted = mockMvc.perform(post("/api/v1/chats/" + chatId + "/messages/stream")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"" + content + "\",\"agentId\":\"auto\"}"))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        MvcResult completed = mockMvc.perform(asyncDispatch(asyncStarted))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return completed.getResponse().getContentAsString();
+    }
 
     @Test
     void agentTodoAndQuestionEndpointsRespondForChatSession() throws Exception {
@@ -108,6 +125,26 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
     }
 
     @Test
+    @DisplayName("Chat SSE stream JSON-wraps tokens and includes full content on done")
+    void streamWrapsTokensAndIncludesDoneContent() throws Exception {
+        String userId = "agentic-sse-format-user";
+        var createResult = mockMvc.perform(post("/api/v1/chats")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"SSE format\",\"agentId\":\"auto\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String chatId = objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
+
+        String body = streamChatMessage(userId, chatId, "Summarize triage steps");
+        assertTrue(body.contains("event:token") && body.contains("\"t\""),
+                "token events must JSON-wrap chunks to preserve whitespace");
+        assertTrue(body.contains("event:done") && body.contains("\"content\""),
+                "done event must include saved assistant content for client rendering");
+    }
+
+    @Test
     @DisplayName("Chat SSE stream emits agent and activity events")
     void streamIncludesAgentAndActivityEvents() throws Exception {
         String userId = "agentic-sse-user";
@@ -120,14 +157,7 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
 
         String chatId = objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
 
-        MvcResult streamResult = mockMvc.perform(post("/api/v1/chats/" + chatId + "/messages/stream")
-                        .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"content\":\"Summarize triage steps\",\"agentId\":\"auto\"}"))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String body = streamResult.getResponse().getContentAsString();
+        String body = streamChatMessage(userId, chatId, "Summarize triage steps");
         assertTrue(body.contains("event:agent") || body.contains("event:token"),
                 "stream must include agent lifecycle or token events");
         assertTrue(body.contains("event:activity") || body.contains("Planning response"),

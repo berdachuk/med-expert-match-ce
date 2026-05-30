@@ -103,7 +103,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                 tokenFlux.doOnNext(chunk -> {
                             full.append(chunk);
                             try {
-                                emitter.send(SseEmitter.event().name("token").data(chunk));
+                                emitter.send(SseEmitter.event().name("token").data(Map.of("t", chunk)));
                             } catch (IOException e) {
                                 throw new IllegalStateException(e);
                             }
@@ -115,7 +115,9 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                         : full.toString().trim();
                                 ChatMessage assistant = chatService.appendAssistantMessage(chatId, userId, reply);
                                 sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", ctx.profile().agentId()));
-                                emitter.send(SseEmitter.event().name("done").data(assistant.id()));
+                                emitter.send(SseEmitter.event().name("done").data(Map.of(
+                                        "id", assistant.id(),
+                                        "content", reply)));
                                 emitter.complete();
                             } catch (IOException e) {
                                 emitter.completeWithError(e);

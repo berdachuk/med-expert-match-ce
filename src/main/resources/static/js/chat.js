@@ -100,7 +100,7 @@
         if (!block.trim()) return;
         var evt = parseSseBlock(block);
         if (evt.event === 'token') {
-            currentMarkdownBuffer += evt.data;
+            currentMarkdownBuffer += parseTokenChunk(evt.data);
             updateAssistantBubble(true);
         } else if (evt.event === 'agent') {
             try {
@@ -124,6 +124,7 @@
                 }
             } catch (ignore) { /* non-json activity payload */ }
         } else if (evt.event === 'done') {
+            applyDonePayload(evt.data);
             return 'done';
         }
         return null;
@@ -223,15 +224,53 @@
         renderActivityPanel();
     }
 
+    function parseSseDataLine(line) {
+        if (line.indexOf('data:') !== 0) return null;
+        var value = line.slice(5);
+        if (value.charAt(0) === ' ') {
+            value = value.slice(1);
+        }
+        return value;
+    }
+
     function parseSseBlock(block) {
         var lines = block.split('\n');
         var eventName = 'message';
         var dataLines = [];
         lines.forEach(function (line) {
-            if (line.indexOf('event:') === 0) eventName = line.substring(6).trim();
-            if (line.indexOf('data:') === 0) dataLines.push(line.substring(5).trim());
+            if (line.indexOf('event:') === 0) {
+                eventName = line.substring(6).trim();
+            }
+            var dataValue = parseSseDataLine(line);
+            if (dataValue !== null) {
+                dataLines.push(dataValue);
+            }
         });
         return { event: eventName, data: dataLines.join('\n') };
+    }
+
+    function parseTokenChunk(rawData) {
+        if (!rawData) return '';
+        try {
+            var parsed = JSON.parse(rawData);
+            if (typeof parsed === 'string') {
+                return parsed;
+            }
+            if (parsed && typeof parsed.t === 'string') {
+                return parsed.t;
+            }
+        } catch (ignore) { /* legacy plain-text token */ }
+        return rawData;
+    }
+
+    function applyDonePayload(rawData) {
+        if (!rawData) return;
+        try {
+            var parsed = JSON.parse(rawData);
+            if (parsed && typeof parsed.content === 'string') {
+                currentMarkdownBuffer = parsed.content;
+            }
+        } catch (ignore) { /* legacy done event carried message id only */ }
     }
 
     function startLogStream(sid) {
