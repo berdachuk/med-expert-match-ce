@@ -11,6 +11,11 @@ agent:
     max-turns: ${AGENT_SESSION_MAX_TURNS:20}        # turn-count compaction trigger
     max-tokens: ${AGENT_SESSION_MAX_TOKENS:4000}    # estimated-token compaction trigger
     max-window-turns: ${AGENT_SESSION_MAX_WINDOW_TURNS:30}  # turns kept by the non-LLM window strategy
+  memory: # Long-term (cross-session) AutoMemory. NON-PHI ONLY (PhiGuard rejects PHI-shaped content).
+    dir: ${AGENT_MEMORY_DIR:${user.home}/.spring-ai-agent/medexpertmatch/memory}
+    consolidation:
+      gap-seconds: ${AGENT_MEMORY_CONSOLIDATION_GAP_SECONDS:60}  # idle gap that triggers consolidation
+      # max-turns / probability are optional nice-to-have triggers (unset = disabled)
 
 spring:
   application:
@@ -129,8 +134,6 @@ medexpertmatch:
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
     directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
     extra-directory: ${MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY:}
-  automemory:
-    root: ${MEDEXPERTMATCH_AUTOMEMORY_ROOT:${user.home}/.medexpertmatch/automemory}
   embedding:
     # Multi-endpoint pool (optional): same pattern as aist-expertmatch ingestion embeddings multi-endpoint.
     # Activates when endpoints[0].url is set. All nodes use spring.ai.custom.embedding api-key and dimensions.
