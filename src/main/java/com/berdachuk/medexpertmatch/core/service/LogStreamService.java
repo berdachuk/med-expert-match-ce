@@ -120,6 +120,9 @@ public class LogStreamService {
      * @param details   Additional details (optional)
      */
     public void sendLog(String sessionId, String level, String message, String details) {
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
         SseEmitter emitter = emitters.get(sessionId);
         if (emitter == null) {
             log.warn("No emitter found for session: {} (available sessions: {})", sessionId, emitters.keySet());

@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.llm.automemory;
 
 import com.berdachuk.medexpertmatch.llm.config.AgentMemoryProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -19,6 +20,7 @@ import java.util.function.Supplier;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "medexpertmatch.skills.enabled", havingValue = "true", matchIfMissing = true)
 public class TimeGapConsolidationTrigger implements MemoryConsolidationTrigger {
 
     private final Duration gap;

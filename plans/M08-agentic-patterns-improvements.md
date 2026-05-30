@@ -13,12 +13,12 @@ Each pattern is delivered on its **own feature branch** (TDD: write test → rev
 | 1 | Session — turn-safe short-term memory (P7) | `feat/session-turn-safe-compaction` | ✅ Done | 2h |
 | 2 | AutoMemory — long-term, PHI-safe memory (P6) | `feat/auto-memory-consolidation` | ✅ Done | 2h |
 | 3 | Agent Skills — formal `SkillsTool` registry (P1) | `feat/agent-skills-registry` | ✅ Done | 2h |
-| 4 | TodoWrite — multi-step plan tracking (P3) | `feat/todowrite-plan-tracking` | ⬜ Planned | 2h |
+| 4 | TodoWrite — multi-step plan tracking (P3) | `feat/todowrite-plan-tracking` | ✅ Done | 2h |
 | 5 | AskUserQuestion — interactive intake (P2) | `feat/ask-user-question-intake` | ⬜ Planned | 3h |
 | 6 | Subagent orchestration — `TaskTool` (P4) | `feat/task-subagent-orchestration` | ⬜ Planned | 4h |
 | 7 | A2A integration — interoperable agents (P5) | `feat/a2a-interop-servers` | ⬜ Planned | 4h |
 
-**Completed: ~7.5h · Remaining: ~13h · Total: ~20.5h**
+**Completed: ~9.5h · Remaining: ~11h · Total: ~20.5h**
 
 ---
 
@@ -60,22 +60,16 @@ Mandatory four-step TDD loop added to `AGENTS.md` (Key Rules + dedicated section
 
 **Test baseline after Step 3: 173 unit tests passing, 0 failures.**
 
+### Step 4: TodoWrite — multi-step plan tracking (P3) — ✅ `feat/todowrite-plan-tracking`
+
+- `TodoWriteTool` registered on `medicalAgentChatClient` with `AgentTodoTrackingService` event handler.
+- `ToolCallAdvisor` with `conversationHistoryEnabled=false` paired with session advisor (Part 3 guidance).
+- `AgentTodoUpdateEvent` published on each todo update; REST `GET /api/v1/agent/todos/latest` for UI polling.
+- Unit tests: `RecommendationTodoTrackingTest`, `MedicalAgentTodoWiringTest`.
+
 ---
 
 ## Planned Work
-
-### Step 4: TodoWrite — multi-step plan tracking (P3)
-
-**Goal:** Make the recommendation pipeline (analyze → retrieve evidence → match → rank → route) explicit and observable; stream live progress to the web UI.
-
-**Changes**
-- Register `TodoWriteTool.builder().todoEventHandler(...)` on the recommendation `ChatClient`.
-- Per Part 3 guidance, pair with `ToolCallAdvisor(conversationHistoryEnabled=false)` so todo updates persist in chat memory (coexist with the Session advisor).
-- Publish `TodoUpdateEvent` → `@EventListener` → SSE → progress bar in `web/`.
-
-**Test first:** `RecommendationTodoTrackingTest` — prompt with ≥3 steps; assert a todo list is created, exactly one task `in_progress` at a time, completion event per step.
-
-**Verification:** `mvn test -Dtest="*TodoTracking*"`
 
 ### Step 5: AskUserQuestion — interactive intake (P2)
 

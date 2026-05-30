@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.documents.rest;
 
 import com.berdachuk.medexpertmatch.documents.DocumentSearchApi;
+import com.berdachuk.medexpertmatch.documents.domain.DocumentSearchFilters;
 import com.berdachuk.medexpertmatch.documents.domain.DocumentSearchResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,8 +14,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Tag(name = "Document Search v2", description = "Faceted semantic document search API v2")
 @RestController
@@ -38,26 +41,25 @@ public class DocumentSearchV2Controller {
             @RequestParam(required = false) String from,
             @RequestParam(required = false) String to,
             @RequestParam(defaultValue = "0.0") double minScore) {
-        List<DocumentSearchResult> results = documentSearchApi.searchChunks(query, limit);
+        DocumentSearchFilters filters = new DocumentSearchFilters(
+                category,
+                source,
+                parseDate(from),
+                parseDate(to));
+        List<DocumentSearchResult> results = documentSearchApi.searchChunksFaceted(query, limit, filters);
 
-        if (category != null && !category.isBlank()) {
-            results = results.stream().filter(r -> category.equals(r.category())).toList();
-        }
-        if (source != null && !source.isBlank()) {
-            results = results.stream().filter(r -> source.equals(r.sourceName())).toList();
-        }
         if (minScore > 0.0) {
             results = results.stream().filter(r -> r.similarity() >= minScore).toList();
         }
 
         Map<String, Long> categoryFacet = results.stream()
-                .collect(java.util.stream.Collectors.groupingBy(
+                .collect(Collectors.groupingBy(
                         r -> r.category() != null ? r.category() : "unknown",
-                        java.util.stream.Collectors.counting()));
+                        Collectors.counting()));
         Map<String, Long> sourceFacet = results.stream()
-                .collect(java.util.stream.Collectors.groupingBy(
+                .collect(Collectors.groupingBy(
                         r -> r.sourceName() != null ? r.sourceName() : "unknown",
-                        java.util.stream.Collectors.counting()));
+                        Collectors.counting()));
 
         return ResponseEntity.ok(Map.of(
                 "data", results,
@@ -67,5 +69,16 @@ public class DocumentSearchV2Controller {
                 "meta", Map.of(
                         "version", "2.0",
                         "totalResults", results.size())));
+    }
+
+    private static LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException ex) {
+            return null;
+        }
     }
 }

@@ -1,13 +1,17 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
+import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springaicommunity.agent.tools.SkillsTool;
+import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.session.DefaultSessionService;
 import org.springframework.ai.session.SessionRepository;
 import org.springframework.ai.session.SessionService;
@@ -215,6 +219,26 @@ public class MedicalAgentConfiguration {
                 .build();
     }
 
+    @Bean
+    TodoWriteTool todoWriteTool(AgentTodoTrackingService todoTrackingService) {
+        log.info("Creating TodoWriteTool for multi-step plan tracking (Part 3 agentic pattern)");
+        return TodoWriteTool.builder()
+                .todoEventHandler(todoTrackingService::handleTodos)
+                .build();
+    }
+
+    /**
+     * Tool-call advisor with conversation history disabled so todo updates from {@link TodoWriteTool}
+     * persist via the session advisor without duplicate internal history (Part 3 guidance).
+     */
+    @Bean
+    ToolCallAdvisor agentToolCallAdvisor(ToolCallingManager toolCallingManager) {
+        return ToolCallAdvisor.builder()
+                .toolCallingManager(toolCallingManager)
+                .conversationHistoryEnabled(false)
+                .build();
+    }
+
     /**
      * Creates a ChatClient with Agent Skills and Medical Tools enabled.
      * This ChatClient includes SkillsTool for skill discovery, FileSystemTools
@@ -234,6 +258,8 @@ public class MedicalAgentConfiguration {
             FileSystemTools fileSystemTools,
             MedicalAgentTools medicalAgentTools,
             AutoMemoryTools autoMemoryTools,
+            TodoWriteTool todoWriteTool,
+            ToolCallAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
             AgentMemoryProperties agentMemoryProperties
     ) {
@@ -247,7 +273,8 @@ public class MedicalAgentConfiguration {
                 .defaultTools(fileSystemTools)
                 .defaultTools(medicalAgentTools)
                 .defaultTools(autoMemoryTools)
-                .defaultAdvisors(sessionMemoryAdvisor, new SimpleLoggerAdvisor());
+                .defaultTools(todoWriteTool)
+                .defaultAdvisors(agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
         // Only add SkillsTool if it's properly configured
         try {

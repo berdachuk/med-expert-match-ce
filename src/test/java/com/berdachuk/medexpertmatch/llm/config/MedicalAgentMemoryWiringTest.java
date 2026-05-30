@@ -13,8 +13,12 @@ import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.ai.session.compaction.CompactionStrategy;
 import org.springframework.ai.session.compaction.CompactionTrigger;
+import org.springaicommunity.agent.tools.TodoWriteTool;
+import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
+import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.core.io.DefaultResourceLoader;
+import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 
 import java.nio.file.Path;
 
@@ -45,6 +49,8 @@ class MedicalAgentMemoryWiringTest {
                 .compactionTrigger(mock(CompactionTrigger.class))
                 .compactionStrategy(mock(CompactionStrategy.class))
                 .build();
+        TodoWriteTool todoWriteTool = config.todoWriteTool(mock(AgentTodoTrackingService.class));
+        ToolCallAdvisor toolCallAdvisor = config.agentToolCallAdvisor(mock(ToolCallingManager.class));
 
         ChatClient client = config.medicalAgentChatClient(
                 mock(ChatModel.class),
@@ -52,6 +58,8 @@ class MedicalAgentMemoryWiringTest {
                 FileSystemTools.builder().build(),
                 mock(MedicalAgentTools.class),
                 autoMemoryTools,
+                todoWriteTool,
+                toolCallAdvisor,
                 sessionMemoryAdvisor,
                 memProps);
 

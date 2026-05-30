@@ -243,6 +243,19 @@ class DocumentIngestServiceIT extends BaseIntegrationTest {
     }
 
     @Test
+    void shouldSkipCorruptedPdf() throws Exception {
+        Path corruptedPdf = tempDir.resolve("corrupted.pdf");
+        Files.writeString(corruptedPdf, "not-a-valid-pdf-binary-content");
+
+        int count = documentIngestApi.ingestPaths(List.of(corruptedPdf.toString()));
+
+        assertEquals(0, count);
+        List<Map<String, Object>> docs = namedJdbcTemplate.getJdbcTemplate()
+                .queryForList("SELECT * FROM medexpertmatch.source_document");
+        assertTrue(docs.isEmpty(), "Corrupted PDF should not persist any document");
+    }
+
+    @Test
     void shouldDeduplicatePdfByContentHash() throws Exception {
         String pdfContent = "Clinical Guidelines for Diabetes Management. "
                 + "These guidelines cover type 2 diabetes pharmacological management "

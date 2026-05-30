@@ -4,10 +4,12 @@ import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "medexpertmatch.skills.enabled", havingValue = "true", matchIfMissing = true)
 public class AutoMemoryTools {
 
     private final AutoMemoryService autoMemoryService;

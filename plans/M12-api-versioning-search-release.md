@@ -33,14 +33,14 @@ M12 focuses on API maturity, search refinement, and release preparation for 1.0.
 
 ---
 
-## Step 2: Faceted Document Search
+## Step 2: Faceted Document Search — ✅ Done
 
 **Goal:** Filter document search results by metadata dimensions.
 
-**DocumentSearchController v2 additions:**
-- `GET /api/v2/documents/search?q=...&category=clinical&source=PubMed&from=2024-01-01&to=2025-12-31`
-- New SQL file `searchChunksFaceted.sql` with WHERE clauses for category, source_name, created_at range
-- Response includes facet counts: `{ "results": [...], "facets": { "categories": {"clinical": 5, "research": 3}, "sources": {"PubMed": 4, "WHO": 2} } }`
+**Implemented:**
+- `searchChunksFaceted.sql` wired via `DocumentSearchApi.searchChunksFaceted()`
+- `DocumentSearchV2Controller` uses SQL-level filters (category, source, date range)
+- `DocumentSearchFacetedIT` verifies category and source filtering
 
 **Verification:** `mvn test -Dtest="DocumentSearchFacetedIT"`
 
