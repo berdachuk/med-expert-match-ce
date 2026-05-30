@@ -16,10 +16,10 @@ Each pattern is delivered on its **own feature branch** (TDD: write test → rev
 | 4 | TodoWrite — multi-step plan tracking (P3) | `feat/todowrite-plan-tracking` | ✅ Done | 2h |
 | 5 | AskUserQuestion — interactive intake (P2) | `feat/ask-user-question-intake` | ✅ Done | 3h |
 | 6 | Subagent orchestration — `TaskTool` (P4) | `feat/task-subagent-orchestration` | ✅ Done | 4h |
-| 7 | A2A integration — interoperable agents (P5) | `feat/a2a-interop-servers` | ⬜ M15 | 4h |
+| 7 | A2A integration — interoperable agents (P5) | `feat/a2a-interop-servers` | ✅ Stub (M15) · full JSON-RPC M16 | 4h |
 | 8 | AI Chat tab + per-user sessions + agent picker | `feat/ai-chat-tab` | ✅ Done | 25h — see **`plans/archive/M14-ai-chat-agent-routing.md`** |
 
-**Completed: ~41.5h · Remaining: ~4h (A2A in M15) · Total: ~45.5h**
+**Completed: ~45.5h · Remaining: full A2A JSON-RPC in M16 (~4h)**
 
 ---
 
@@ -87,19 +87,14 @@ Mandatory four-step TDD loop added to `AGENTS.md` (Key Rules + dedicated section
 - `ChatAssistantService` wires chat turns to LLM with agent picker routing
 - Tests: `MedicalSubagentRoutingTest`, `SpecialistAgentScopeTest`, `ChatAssistantServiceImplTest`
 
-### Step 7: A2A Integration — interoperable agents (P5) — ⬜ see **`plans/M15-a2a-streaming-hardening.md`**
+### Step 7: A2A Integration — interoperable agents (P5) — ✅ stub (M15) · full executor M16
 
-**Goal:** Expose match/evidence capabilities as A2A servers so external hospital systems / partner agents can discover and call them over an open standard (HTTP + JSON-RPC).
+M15 delivered:
+- `/.well-known/agent-card.json` with `doctor_match` and `evidence_search` skills
+- PHI-safe stub `POST /a2a/v1/sendMessage`
+- Tests: `A2AAgentCardTest`, `A2ASendMessageTest`
 
-**Changes**
-- Add `spring-ai-a2a-server-autoconfigure` (test scope first; promote with approval — pom version rule).
-- Publish `AgentCard` at `/.well-known/agent-card.json` with skills `doctor_match`, `evidence_search`.
-- `DefaultAgentExecutor` bridging A2A requests to the matching `ChatClient` + `MedicalAgentTools`.
-- (Future) Host/router agent via `RemoteAgentConnections.sendMessage` for cross-institution delegation.
-
-**Test first:** `A2AAgentCardTest` + `A2ASendMessageTest` — card served with correct skills; JSON-RPC `sendMessage` returns a structured match; **PHI never in A2A payloads** (assert anonymization).
-
-**Verification:** `mvn test -Dtest="A2A*"`
+Full `spring-ai-a2a-server-autoconfigure` + JSON-RPC: **`plans/M16-a2a-full-integration-and-m08-closeout.md`** (pom approval required).
 
 ### Step 8: AI Chat tab (M13/M14) — ✅ see **`plans/archive/M14-ai-chat-agent-routing.md`**
 

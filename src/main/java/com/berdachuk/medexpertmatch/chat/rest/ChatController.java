@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.security.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 import java.util.Map;
@@ -80,5 +82,18 @@ public class ChatController {
         String agentId = body.get("agentId");
         return Map.copyOf(chatAssistantService.processMessage(
                 chatId, userContext.currentUserId(), content.trim(), agentId));
+    }
+
+    @Operation(summary = "Stream assistant reply tokens over SSE")
+    @PostMapping(value = "/{chatId}/messages/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamMessage(
+            @PathVariable String chatId,
+            @RequestBody Map<String, String> body) {
+        String content = body.get("content");
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("content is required");
+        }
+        return chatAssistantService.streamMessage(
+                chatId, userContext.currentUserId(), content.trim(), body.get("agentId"));
     }
 }

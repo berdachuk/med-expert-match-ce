@@ -19,6 +19,34 @@
         window.location.href = url.toString();
     }
 
+    function appendTrace(line) {
+        var panel = document.getElementById('executionTracePanel');
+        if (!panel) return;
+        panel.classList.remove('d-none');
+        panel.textContent += line + '\n';
+        panel.scrollTop = panel.scrollHeight;
+    }
+
+    function startLogStream(sid) {
+        if (!sid || typeof EventSource === 'undefined') return null;
+        var panel = document.getElementById('executionTracePanel');
+        if (panel) {
+            panel.classList.remove('d-none');
+            panel.textContent = '';
+        }
+        var source = new EventSource('/api/v1/logs/stream?sessionId=' + encodeURIComponent(sid));
+        source.onmessage = function (e) {
+            try {
+                var data = JSON.parse(e.data);
+                appendTrace((data.level || 'INFO') + ' ' + (data.message || e.data));
+            } catch (err) {
+                appendTrace(e.data);
+            }
+        };
+        source.onerror = function () { source.close(); };
+        return source;
+    }
+
     function renderTodos(todos) {
         var panel = document.getElementById('agentTodoPanel');
         if (!panel) return;
@@ -76,6 +104,46 @@
             .catch(function () { });
     }
 
+    function sendMessageStream(chatId, text, agentId, btn) {
+        var sid = sessionId();
+        var logSource = startLogStream(sid);
+        fetch('/api/v1/chats/' + encodeURIComponent(chatId) + '/messages/stream', {
+            method: 'POST',
+            headers: apiHeaders(),
+            body: JSON.stringify({ content: text, agentId: agentId || 'auto' })
+        }).then(function (response) {
+            if (!response.ok || !response.body) {
+                throw new Error('Stream failed');
+            }
+            var reader = response.body.getReader();
+            var decoder = new TextDecoder();
+            var buffer = '';
+            function pump() {
+                return reader.read().then(function (result) {
+                    if (result.done) {
+                        reloadWithChat(chatId);
+                        return;
+                    }
+                    buffer += decoder.decode(result.value, { stream: true });
+                    var parts = buffer.split('\n\n');
+                    buffer = parts.pop() || '';
+                    parts.forEach(function (block) {
+                        if (block.indexOf('event:done') >= 0) {
+                            if (logSource) logSource.close();
+                            reloadWithChat(chatId);
+                        }
+                    });
+                    return pump();
+                });
+            }
+            return pump();
+        }).catch(function (err) {
+            console.error(err);
+            if (logSource) logSource.close();
+            if (btn) btn.disabled = false;
+        });
+    }
+
     document.getElementById('newChatBtn')?.addEventListener('click', function () {
         fetch('/api/v1/chats', {
             method: 'POST',
@@ -112,16 +180,8 @@
         if (!chatId || !text) return;
         var btn = document.getElementById('sendBtn');
         if (btn) btn.disabled = true;
-        fetch('/api/v1/chats/' + encodeURIComponent(chatId) + '/messages', {
-            method: 'POST',
-            headers: apiHeaders(),
-            body: JSON.stringify({ content: text, agentId: document.getElementById('agentPicker')?.value || 'auto' })
-        }).then(function () {
-            reloadWithChat(chatId);
-        }).catch(function (err) {
-            console.error(err);
-            if (btn) btn.disabled = false;
-        });
+        input.value = '';
+        sendMessageStream(chatId, text, document.getElementById('agentPicker')?.value || 'auto', btn);
     });
 
     document.getElementById('messageInput')?.addEventListener('keydown', function (e) {
