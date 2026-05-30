@@ -43,13 +43,28 @@ import org.springframework.core.io.ResourceLoader;
  */
 @Slf4j
 @Configuration
-@EnableConfigurationProperties(AgentSessionProperties.class)
+@EnableConfigurationProperties({AgentSessionProperties.class, AgentMemoryProperties.class})
 @ConditionalOnProperty(
         name = "medexpertmatch.skills.enabled",
         havingValue = "true",
         matchIfMissing = true
 )
 public class MedicalAgentConfiguration {
+
+    /**
+     * System guidance that turns the AutoMemory tools into a usable long-term memory layer
+     * (Option B: explicit tools + prompt, since this spring-ai-agent-utils version exposes no
+     * {@code AutoMemoryToolsAdvisor}). It instructs the agent to curate durable cross-session
+     * facts and — critically — to store ONLY non-PHI (preferences, routing policies, model config),
+     * never patient data. A defense-in-depth complement to the {@code PhiGuard} hard reject.
+     */
+    public static final String MEMORY_SYSTEM_PROMPT = """
+            You have a durable long-term memory across sessions via the AutoMemory tools \
+            (automemory_append, automemory_read, automemory_index). Use automemory_read at the \
+            start of relevant tasks to recall clinician preferences, routing policies, and model \
+            configuration, and automemory_append to persist new durable, non-patient facts. \
+            CRITICAL HIPAA RULE: never write PHI (patient names, SSN, MRN, DOB, contact details, \
+            or any patient-identifying data) to memory. Store ONLY non-PHI operational knowledge.""";
 
     private final ResourceLoader resourceLoader;
 
@@ -209,12 +224,16 @@ public class MedicalAgentConfiguration {
             FileSystemTools fileSystemTools,
             MedicalAgentTools medicalAgentTools,
             AutoMemoryTools autoMemoryTools,
-            SessionMemoryAdvisor sessionMemoryAdvisor
+            SessionMemoryAdvisor sessionMemoryAdvisor,
+            AgentMemoryProperties agentMemoryProperties
     ) {
         log.info("Creating medicalAgentChatClient with Agent Skills and Medical Tools enabled");
         log.info("Using toolCallingChatModel: {} for tool invocations", toolCallingChatModel.getClass().getSimpleName());
+        agentMemoryProperties.ensureDirectoryExists();
+        log.info("AutoMemory long-term memory directory: {}", agentMemoryProperties.dir());
 
         ChatClient.Builder builder = ChatClient.builder(toolCallingChatModel)
+                .defaultSystem(MEMORY_SYSTEM_PROMPT)
                 .defaultTools(fileSystemTools)
                 .defaultTools(medicalAgentTools)
                 .defaultTools(autoMemoryTools)
