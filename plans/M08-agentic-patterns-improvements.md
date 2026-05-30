@@ -14,11 +14,12 @@ Each pattern is delivered on its **own feature branch** (TDD: write test → rev
 | 2 | AutoMemory — long-term, PHI-safe memory (P6) | `feat/auto-memory-consolidation` | ✅ Done | 2h |
 | 3 | Agent Skills — formal `SkillsTool` registry (P1) | `feat/agent-skills-registry` | ✅ Done | 2h |
 | 4 | TodoWrite — multi-step plan tracking (P3) | `feat/todowrite-plan-tracking` | ✅ Done | 2h |
-| 5 | AskUserQuestion — interactive intake (P2) | `feat/ask-user-question-intake` | ⬜ Planned | 3h |
+| 5 | AskUserQuestion — interactive intake (P2) | `feat/ask-user-question-intake` | ✅ Done | 3h |
 | 6 | Subagent orchestration — `TaskTool` (P4) | `feat/task-subagent-orchestration` | ⬜ Planned | 4h |
 | 7 | A2A integration — interoperable agents (P5) | `feat/a2a-interop-servers` | ⬜ Planned | 4h |
+| 8 | AI Chat tab + per-user sessions + agent picker | `feat/ai-chat-tab` | ⬜ Planned | 25h — see **`plans/M13-ai-chat-tab-and-specialized-agents.md`** |
 
-**Completed: ~9.5h · Remaining: ~11h · Total: ~20.5h**
+**Completed: ~12.5h · Remaining: ~33h · Total: ~45.5h** (M08 Steps 6–7 + M13)
 
 ---
 
@@ -67,21 +68,17 @@ Mandatory four-step TDD loop added to `AGENTS.md` (Key Rules + dedicated section
 - `AgentTodoUpdateEvent` published on each todo update; REST `GET /api/v1/agent/todos/latest` for UI polling.
 - Unit tests: `RecommendationTodoTrackingTest`, `MedicalAgentTodoWiringTest`.
 
+### Step 5: AskUserQuestion — interactive intake (P2) — ✅ `feat/ask-user-question-intake`
+
+- `AskUserQuestionTool` bean wired with `AgentQuestionService` (session-scoped `CompletableFuture` bridge).
+- `CaseIntakeClarificationService` builds structured questions for missing urgency/caseType/age; merges answers before defaults.
+- Interactive mode gated by `interactiveIntake=true` on match-from-text requests (non-blocking for sync API).
+- REST: `GET /api/v1/agent/questions/pending`, `POST /api/v1/agent/questions/answer`.
+- Unit test: `CaseIntakeClarificationTest`.
+
 ---
 
 ## Planned Work
-
-### Step 5: AskUserQuestion — interactive intake (P2)
-
-**Goal:** Convert case intake from assumption-based to clarifying — ask structured questions (urgency, specialty hint, prior history) before matching.
-
-**Changes**
-- Add `AskUserQuestionTool.builder().questionHandler(...)` to `MedicalAgentCaseIntakeWorkflowServiceImpl`.
-- Web handler: bridge async UI via `CompletableFuture` — push `Question`/`Option` over SSE, block on `future.get()`, complete from a REST endpoint when answered. Optionally expose via `@McpElicitation`.
-
-**Test first:** `CaseIntakeClarificationTest` — stub `QuestionHandler` returns canned answers; assert workflow uses answers (no assumption defaults); free-text/unanswered paths handled.
-
-**Verification:** `mvn test -Dtest="*CaseIntakeClarification*"`
 
 ### Step 6: Subagent Orchestration — `TaskTool` (P4)
 
@@ -111,6 +108,17 @@ Mandatory four-step TDD loop added to `AGENTS.md` (Key Rules + dedicated section
 
 **Verification:** `mvn test -Dtest="A2A*"`
 
+### Step 8: AI Chat tab (M13) — ⬜ see dedicated plan
+
+Full specification: **`plans/M13-ai-chat-tab-and-specialized-agents.md`**
+
+Summary:
+- New navbar tab **AI Chat** with sidebar session list (select / delete).
+- PostgreSQL-backed per-conversation history; **per-user isolation** (other users cannot see chats).
+- **Agent picker** left of message input; default **Auto** orchestrator (plan + delegate via TaskTool/TodoWrite).
+- Six narrow specialist agents mapped from existing skills/modules.
+- Reference UX/data model: `aist-expertmatch` chat sidebar + `ConversationHistoryManager`; gaps (agent picker, Auto router) filled by M13.
+
 ---
 
 ## Follow-ups / Open Decisions
@@ -131,4 +139,6 @@ Mandatory four-step TDD loop added to `AGENTS.md` (Key Rules + dedicated section
 ## References
 
 - Series Parts 1–7 and SDK links: see `docs/AGENTIC_PATTERNS_IMPROVEMENTS.md`.
+- AI Chat tab (sessions, agent picker, specialists): see `plans/M13-ai-chat-tab-and-specialized-agents.md`.
+- Reference chat implementation: `aist-expertmatch` (`chat/` module, `chat-sidebar.html`, `ConversationHistoryManager`).
 - Spring AI Reference: https://docs.spring.io/spring-ai/reference/

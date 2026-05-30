@@ -6,5 +6,5 @@
  * - Log streaming service
  * - Web UI for all use cases
  */
-@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *", "llm :: *", "medicalcase :: *", "doctor :: *", "clinicalexperience :: *", "graph :: *", "ingestion :: *", "retrieval :: *", "documents"})
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *", "llm :: *", "medicalcase :: *", "doctor :: *", "clinicalexperience :: *", "graph :: *", "ingestion :: *", "retrieval :: *", "documents", "chat :: *"})
 package com.berdachuk.medexpertmatch.web;

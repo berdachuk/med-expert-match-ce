@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service;
 
+import com.berdachuk.medexpertmatch.core.service.JobStatusWebSocketPublisher;
 import com.berdachuk.medexpertmatch.llm.domain.PrioritizeJobStatus;
 
 import org.springframework.stereotype.Service;
@@ -15,7 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PrioritizeJobStore {
 
     private final Map<String, PrioritizeJobStatus> jobs = new ConcurrentHashMap<>();
+    private final JobStatusWebSocketPublisher jobStatusWebSocketPublisher;
     private static final int MAX_JOBS = 100;
+
+    public PrioritizeJobStore(JobStatusWebSocketPublisher jobStatusWebSocketPublisher) {
+        this.jobStatusWebSocketPublisher = jobStatusWebSocketPublisher;
+    }
 
     public String createJob() {
         String jobId = "prioritize-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
@@ -25,11 +31,15 @@ public class PrioritizeJobStore {
     }
 
     public void completeJob(String jobId, com.berdachuk.medexpertmatch.llm.service.MedicalAgentService.AgentResponse result) {
-        jobs.put(jobId, PrioritizeJobStatus.completed(jobId, result));
+        PrioritizeJobStatus status = PrioritizeJobStatus.completed(jobId, result);
+        jobs.put(jobId, status);
+        jobStatusWebSocketPublisher.publish(jobId, status);
     }
 
     public void failJob(String jobId, String errorMessage) {
-        jobs.put(jobId, PrioritizeJobStatus.failed(jobId, errorMessage));
+        PrioritizeJobStatus status = PrioritizeJobStatus.failed(jobId, errorMessage);
+        jobs.put(jobId, status);
+        jobStatusWebSocketPublisher.publish(jobId, status);
     }
 
     public PrioritizeJobStatus getStatus(String jobId) {

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="chat-sidebar">
+    <div class="p-3 border-end bg-light h-100">
+        <h5 class="mb-3" th:text="#{chat.sidebar.title}">Chats</h5>
+        <button class="btn btn-primary btn-sm mb-3 w-100" id="newChatBtn" type="button" th:text="#{chat.new}">New Chat</button>
+        <ul class="list-group list-group-flush" id="chatList">
+            <li class="list-group-item list-group-item-action chat-item d-flex justify-content-between align-items-start"
+                th:classappend="${currentChat != null and currentChat.id() == chat.id()} ? 'active' : ''"
+                th:data-chat-id="${chat.id}"
+                th:each="chat : ${chats}">
+                <div class="flex-grow-1 chat-select-area" style="cursor: pointer;">
+                    <div class="fw-bold">
+                        <span th:if="${chat.name() != null and !#strings.isEmpty(chat.name())}" th:text="${chat.name()}"></span>
+                        <span th:unless="${chat.name() != null and !#strings.isEmpty(chat.name())}" th:text="#{chat.untitled}">Untitled</span>
+                    </div>
+                    <small class="text-muted" th:text="${#temporals.format(chat.lastActivityAt(), 'yyyy-MM-dd HH:mm')}"></small>
+                </div>
+                <button class="btn btn-sm btn-outline-danger ms-2 chat-delete-btn"
+                        th:data-chat-id="${chat.id}"
+                        th:if="${!chat.isDefault()}"
+                        th:title="#{chat.delete}"
+                        type="button">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </li>
+        </ul>
+    </div>
+</th:block>
+</body>
+</html>

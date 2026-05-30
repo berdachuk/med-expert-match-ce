@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service;
 
+import com.berdachuk.medexpertmatch.core.service.JobStatusWebSocketPublisher;
 import com.berdachuk.medexpertmatch.llm.domain.MatchJobStatus;
 
 import org.springframework.stereotype.Service;
@@ -15,7 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MatchJobStore {
 
     private final Map<String, MatchJobStatus> jobs = new ConcurrentHashMap<>();
+    private final JobStatusWebSocketPublisher jobStatusWebSocketPublisher;
     private static final int MAX_JOBS = 100;
+
+    public MatchJobStore(JobStatusWebSocketPublisher jobStatusWebSocketPublisher) {
+        this.jobStatusWebSocketPublisher = jobStatusWebSocketPublisher;
+    }
 
     public String createJob() {
         String jobId = "match-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
@@ -25,11 +31,15 @@ public class MatchJobStore {
     }
 
     public void completeJob(String jobId, MedicalAgentService.AgentResponse result) {
-        jobs.put(jobId, MatchJobStatus.completed(jobId, result));
+        MatchJobStatus status = MatchJobStatus.completed(jobId, result);
+        jobs.put(jobId, status);
+        jobStatusWebSocketPublisher.publish(jobId, status);
     }
 
     public void failJob(String jobId, String errorMessage) {
-        jobs.put(jobId, MatchJobStatus.failed(jobId, errorMessage));
+        MatchJobStatus status = MatchJobStatus.failed(jobId, errorMessage);
+        jobs.put(jobId, status);
+        jobStatusWebSocketPublisher.publish(jobId, status);
     }
 
     public MatchJobStatus getStatus(String jobId) {

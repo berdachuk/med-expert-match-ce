@@ -405,12 +405,12 @@ class SyntheticDataGeneratorIT extends BaseIntegrationTest {
 
         assertNotNull(embeddingService, "EmbeddingService should be available");
 
-        // Test mocked EmbeddingModel (returns 1536-dimensional vectors)
+        // Test mocked EmbeddingModel (returns 768-dimensional vectors per EMBEDDING_DIMENSIONS default)
         String testText = "Test medical case: chest pain, shortness of breath, ICD-10: I21.9";
         List<Double> testEmbedding = embeddingService.generateEmbedding(testText);
         assertNotNull(testEmbedding, "EmbeddingService should generate embeddings");
         assertFalse(testEmbedding.isEmpty(), "Embedding should not be empty");
-        assertEquals(1536, testEmbedding.size(), "Embedding should have 1536 dimensions");
+        assertEquals(768, testEmbedding.size(), "Embedding should have 768 dimensions");
 
         assertTrue(testEmbedding.stream().anyMatch(d -> d != 0.0),
                 "Embedding should have non-zero values from mock");
@@ -498,7 +498,7 @@ class SyntheticDataGeneratorIT extends BaseIntegrationTest {
         batchEmbeddings.forEach(embedding -> {
             assertNotNull(embedding, "Each embedding should not be null");
             assertFalse(embedding.isEmpty(), "Each embedding should not be empty");
-            assertEquals(1536, embedding.size(), "Each embedding should have 1536 dimensions");
+            assertEquals(768, embedding.size(), "Each embedding should have 768 dimensions");
         });
 
         // Test via SyntheticDataGenerator to verify batch processing
@@ -584,7 +584,7 @@ class SyntheticDataGeneratorIT extends BaseIntegrationTest {
         embeddings.forEach(embedding -> {
             assertNotNull(embedding);
             assertFalse(embedding.isEmpty());
-            assertEquals(1536, embedding.size(), "Each embedding should have 1536 dimensions");
+            assertEquals(768, embedding.size(), "Each embedding should have 768 dimensions");
         });
     }
 

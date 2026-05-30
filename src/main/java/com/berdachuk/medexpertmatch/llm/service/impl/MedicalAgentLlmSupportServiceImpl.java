@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
+import com.berdachuk.medexpertmatch.core.config.CacheConfig;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
@@ -14,6 +15,7 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -66,6 +68,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     }
 
     @Override
+    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE, key = "'analyze:' + #caseId")
     public String analyzeCaseWithMedGemma(String caseId) {
         log.info("Analyzing case {} with LLM", caseId);
         String sessionId = logStreamService.getCurrentSessionId();
@@ -112,6 +115,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     }
 
     @Override
+    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
+            key = "'interpret:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase)")
     public String interpretResultsWithMedGemma(String toolResults, String caseAnalysis, Integer patientAgeFromCase) {
         log.info("Interpreting tool results with LLM");
         String sessionId = logStreamService.getCurrentSessionId();
@@ -221,6 +226,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     }
 
     @Override
+    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
+            key = "'routing:' + T(java.util.Objects).hash(#rawToolResults, #caseAnalysis)")
     public String summarizeRoutingResults(String rawToolResults, String caseAnalysis) {
         String prompt = routingSummarizationPromptTemplate.render(Map.of(
                 "caseAnalysis", caseAnalysis != null ? caseAnalysis : "",
@@ -236,6 +243,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     }
 
     @Override
+    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE, key = "'network:' + T(java.util.Objects).hash(#rawResults)")
     public String summarizeNetworkAnalyticsResults(String rawResults) {
         String prompt = networkAnalyticsSummarizationPromptTemplate.render(Map.of(
                 "rawResults", rawResults != null ? rawResults : ""));

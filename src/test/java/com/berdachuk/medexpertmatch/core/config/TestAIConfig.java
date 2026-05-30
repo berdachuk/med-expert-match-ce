@@ -1013,7 +1013,7 @@ public class TestAIConfig {
     /**
      * Mock primaryEmbeddingModel for tests.
      * This replaces any auto-configured EmbeddingModel beans.
-     * Returns 1536-dimensional embeddings (typical embedding dimensions).
+     * Returns 768-dimensional embeddings (matches {@code EMBEDDING_DIMENSIONS} default).
      */
     @Bean("primaryEmbeddingModel")
     @Primary
@@ -1024,7 +1024,7 @@ public class TestAIConfig {
     /**
      * Mock EmbeddingModel for tests.
      * This replaces any auto-configured EmbeddingModel beans.
-     * Returns 1536-dimensional embeddings (typical embedding dimensions).
+     * Returns 768-dimensional embeddings (matches {@code EMBEDDING_DIMENSIONS} default).
      */
     @Bean
     public EmbeddingModel testEmbeddingModel() {

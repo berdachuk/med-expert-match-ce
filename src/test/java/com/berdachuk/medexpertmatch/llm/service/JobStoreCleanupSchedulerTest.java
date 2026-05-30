@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service;
 
+import com.berdachuk.medexpertmatch.core.service.JobStatusWebSocketPublisher;
 import com.berdachuk.medexpertmatch.llm.domain.MatchJobStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.Mockito.mock;
 
 class JobStoreCleanupSchedulerTest {
 
@@ -15,13 +17,15 @@ class JobStoreCleanupSchedulerTest {
     private PrioritizeJobStore prioritizeJobStore;
     private RouteJobStore routeJobStore;
     private JobStoreCleanupScheduler scheduler;
+    private JobStatusWebSocketPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        matchJobStore = new MatchJobStore();
-        analyzeJobStore = new AnalyzeJobStore();
-        prioritizeJobStore = new PrioritizeJobStore();
-        routeJobStore = new RouteJobStore();
+        publisher = mock(JobStatusWebSocketPublisher.class);
+        matchJobStore = new MatchJobStore(publisher);
+        analyzeJobStore = new AnalyzeJobStore(publisher);
+        prioritizeJobStore = new PrioritizeJobStore(publisher);
+        routeJobStore = new RouteJobStore(publisher);
         scheduler = new JobStoreCleanupScheduler(matchJobStore, analyzeJobStore, prioritizeJobStore, routeJobStore);
     }
 

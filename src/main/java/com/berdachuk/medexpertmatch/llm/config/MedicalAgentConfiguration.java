@@ -1,9 +1,12 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
 import lombok.extern.slf4j.Slf4j;
+import org.springaicommunity.agent.tools.AskUserQuestionTool;
 import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springaicommunity.agent.tools.SkillsTool;
 import org.springaicommunity.agent.tools.TodoWriteTool;
@@ -224,6 +227,20 @@ public class MedicalAgentConfiguration {
         log.info("Creating TodoWriteTool for multi-step plan tracking (Part 3 agentic pattern)");
         return TodoWriteTool.builder()
                 .todoEventHandler(todoTrackingService::handleTodos)
+                .build();
+    }
+
+    @Bean
+    AskUserQuestionTool askUserQuestionTool(AgentQuestionService agentQuestionService) {
+        log.info("Creating AskUserQuestionTool for interactive intake clarification (Part 2 agentic pattern)");
+        return AskUserQuestionTool.builder()
+                .questionHandler(questions -> {
+                    String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+                    if (sessionId == null || sessionId.isBlank()) {
+                        sessionId = "default";
+                    }
+                    return agentQuestionService.resolveQuestions(sessionId, questions);
+                })
                 .build();
     }
 

@@ -19,6 +19,26 @@ const MEDEXPERTMATCH_DEFAULT_USER = MEDEXPERTMATCH_TEST_USERS[0];
 
 const STORAGE_KEY = 'medexpertmatch-selected-user';
 
+function syncUserIdCookie() {
+    if (typeof document === 'undefined') {
+        return;
+    }
+    try {
+        var user = getCurrentUser();
+        document.cookie = 'medexpertmatch-user-id=' + encodeURIComponent(user.id) + ';path=/;SameSite=Lax';
+    } catch (e) {
+        console.error('Failed to sync user id cookie:', e);
+    }
+}
+
+function getApiUserHeaders() {
+    var user = getCurrentUser();
+    return {
+        'X-User-Id': user.id,
+        'Content-Type': 'application/json'
+    };
+}
+
 function getCurrentUser() {
     if (typeof window === 'undefined') {
         return MEDEXPERTMATCH_DEFAULT_USER;
@@ -47,6 +67,7 @@ function setCurrentUser(user) {
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
         updateUserDisplay();
+        syncUserIdCookie();
     } catch (e) {
         console.error('Failed to save user to localStorage:', e);
     }
@@ -114,6 +135,7 @@ function initializeUserSelector() {
     });
 
     updateUserDisplay();
+    syncUserIdCookie();
 }
 
 function initUserSelector() {
