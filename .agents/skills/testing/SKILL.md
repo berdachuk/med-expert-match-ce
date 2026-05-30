@@ -12,6 +12,15 @@ Test conventions, Testcontainers setup, integration vs. unit test patterns, and 
 
 ## Instructions
 
+### TDD Workflow (mandatory)
+
+Always use TDD. Before implementing any functionality, follow this four-step loop:
+
+1. **Write the test first** — author the test before any implementation code.
+2. **Verify the test against the requirements** — use an internal review tool/skill (e.g. a code-review or testing skill, or a review subagent) to confirm the test truly encodes the requirement.
+3. **Implement** the functionality — only after the test is written and verified.
+4. **Re-run the test** (`mvn verify`) — fix problems and iterate until it passes.
+
 ### Test Types
 
 - **Integration tests**: `*IT.java` suffix, extend `BaseIntegrationTest`, run via `mvn verify`
