@@ -8,13 +8,24 @@ import org.springaicommunity.agent.tools.SkillsTool;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.session.DefaultSessionService;
+import org.springframework.ai.session.SessionRepository;
 import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
-import org.springframework.ai.session.compaction.SlidingWindowCompactionStrategy;
+import org.springframework.ai.session.compaction.CompactionStrategy;
+import org.springframework.ai.session.compaction.CompactionTrigger;
+import org.springframework.ai.session.compaction.CompositeCompactionTrigger;
+import org.springframework.ai.session.compaction.TokenCountTrigger;
 import org.springframework.ai.session.compaction.TurnCountTrigger;
+import org.springframework.ai.session.compaction.TurnWindowCompactionStrategy;
+import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
+import org.springframework.ai.tokenizer.TokenCountEstimator;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -32,6 +43,7 @@ import org.springframework.core.io.ResourceLoader;
  */
 @Slf4j
 @Configuration
+@EnableConfigurationProperties(AgentSessionProperties.class)
 @ConditionalOnProperty(
         name = "medexpertmatch.skills.enabled",
         havingValue = "true",
@@ -107,11 +119,74 @@ public class MedicalAgentConfiguration {
                 .build();
     }
 
+    /**
+     * Non-LLM token estimator shared by the token-count trigger and the window strategy. Keeps
+     * compaction cheap (no extra model call) and avoids sending PHI to any external tokenizer.
+     */
     @Bean
-    SessionMemoryAdvisor sessionMemoryAdvisor(SessionService sessionService) {
+    @ConditionalOnMissingBean(TokenCountEstimator.class)
+    TokenCountEstimator sessionTokenCountEstimator() {
+        return new JTokkitTokenCountEstimator();
+    }
+
+    /**
+     * Turn-safe compaction trigger: fires when EITHER the turn count OR the estimated token
+     * count crosses its configured threshold. Both legs are non-LLM, so the trigger itself
+     * never makes an extra model call.
+     */
+    @Bean
+    CompactionTrigger sessionCompactionTrigger(AgentSessionProperties properties,
+                                               TokenCountEstimator tokenCountEstimator) {
+        return CompositeCompactionTrigger.anyOf(
+                new TurnCountTrigger(properties.maxTurns()),
+                TokenCountTrigger.builder()
+                        .threshold(properties.maxTokens())
+                        .tokenCountEstimator(tokenCountEstimator)
+                        .build());
+    }
+
+    /**
+     * Non-LLM compaction strategy. {@link TurnWindowCompactionStrategy} keeps the most recent
+     * turns and always starts the retained window on a USER message, so a partial turn is never
+     * left dangling. Chosen over summarization strategies to avoid extra model calls and to keep
+     * PHI out of any LLM-generated summary.
+     */
+    @Bean
+    CompactionStrategy sessionCompactionStrategy(AgentSessionProperties properties,
+                                                 TokenCountEstimator tokenCountEstimator) {
+        return TurnWindowCompactionStrategy.builder()
+                .maxTurns(properties.maxWindowTurns())
+                .tokenCountEstimator(tokenCountEstimator)
+                .build();
+    }
+
+    /**
+     * Explicit {@link SessionService} bean backed by the JDBC {@link SessionRepository}.
+     * Declared with {@link ConditionalOnMissingBean} so it coexists with the session
+     * auto-configuration; if a repository is unavailable the auto-config's bean (or none) is used.
+     */
+    @Bean
+    @ConditionalOnMissingBean(SessionService.class)
+    @ConditionalOnBean(SessionRepository.class)
+    SessionService sessionService(SessionRepository sessionRepository) {
+        log.info("Creating DefaultSessionService for turn-safe short-term memory");
+        return DefaultSessionService.builder()
+                .sessionRepository(sessionRepository)
+                .build();
+    }
+
+    /**
+     * Wires turn-safe short-term memory into the medical agent's advisor chain. Both a trigger
+     * and a strategy MUST be supplied together — {@link SessionMemoryAdvisor.Builder#build()}
+     * throws {@link IllegalArgumentException} otherwise (the turn-safety guard).
+     */
+    @Bean
+    SessionMemoryAdvisor sessionMemoryAdvisor(SessionService sessionService,
+                                              CompactionTrigger sessionCompactionTrigger,
+                                              CompactionStrategy sessionCompactionStrategy) {
         return SessionMemoryAdvisor.builder(sessionService)
-                .compactionTrigger(new TurnCountTrigger(15))
-                .compactionStrategy(SlidingWindowCompactionStrategy.builder().maxEvents(30).build())
+                .compactionTrigger(sessionCompactionTrigger)
+                .compactionStrategy(sessionCompactionStrategy)
                 .build();
     }
 

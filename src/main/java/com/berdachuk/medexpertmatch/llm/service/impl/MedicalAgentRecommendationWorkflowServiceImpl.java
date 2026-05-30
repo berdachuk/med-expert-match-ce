@@ -81,8 +81,7 @@ public class MedicalAgentRecommendationWorkflowServiceImpl implements MedicalAge
                         String.format("Calling model: %s for recommendation generation", functionGemmaModelName));
                 String toolResults = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
                         .user(prompt)
-                        .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY,
-                                OrchestrationContextHolder.sessionIdOrNull()))
+                        .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId))
                         .call()
                         .content());
                 log.info("LLM model: {} completed recommendation generation (matchId: {}), response length: {}",
@@ -122,8 +121,7 @@ public class MedicalAgentRecommendationWorkflowServiceImpl implements MedicalAge
             log.info("Calling LLM model: {} for recommendation generation (fallback, matchId: {})", functionGemmaModelName, matchId);
             String response = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
                     .user(prompt)
-                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY,
-                            OrchestrationContextHolder.sessionIdOrNull()))
+                    .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId))
                     .call()
                     .content());
             log.info("LLM model: {} completed recommendation generation (fallback, matchId: {}), response length: {}",

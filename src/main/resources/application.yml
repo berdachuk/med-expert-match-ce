@@ -5,6 +5,13 @@
 # Optional embedding pool: medexpertmatch.embedding.multi-endpoint (see that section).
 # Override datasource with MEDEXPERTMATCH_DB_* or SPRING_DATASOURCE_*.
 
+# Turn-safe short-term memory (Spring AI Session). Compaction fires when EITHER threshold is crossed.
+agent:
+  session:
+    max-turns: ${AGENT_SESSION_MAX_TURNS:20}        # turn-count compaction trigger
+    max-tokens: ${AGENT_SESSION_MAX_TOKENS:4000}    # estimated-token compaction trigger
+    max-window-turns: ${AGENT_SESSION_MAX_WINDOW_TURNS:30}  # turns kept by the non-LLM window strategy
+
 spring:
   application:
     name: med-expert-match
