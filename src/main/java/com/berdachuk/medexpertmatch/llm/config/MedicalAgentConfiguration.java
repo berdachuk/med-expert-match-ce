@@ -43,7 +43,7 @@ import org.springframework.core.io.ResourceLoader;
  */
 @Slf4j
 @Configuration
-@EnableConfigurationProperties({AgentSessionProperties.class, AgentMemoryProperties.class})
+@EnableConfigurationProperties({AgentSessionProperties.class, AgentMemoryProperties.class, AgentSkillsProperties.class})
 @ConditionalOnProperty(
         name = "medexpertmatch.skills.enabled",
         havingValue = "true",
@@ -73,21 +73,25 @@ public class MedicalAgentConfiguration {
     }
 
     /**
-     * Creates SkillsTool bean for discovering and loading skills on demand.
-     * Loads from classpath resources, then optional extra directory (e.g. mounted volume).
+     * Creates the {@link SkillsTool} {@link ToolCallback} for discovering and loading Agent Skills on
+     * demand with progressive disclosure. Skills are loaded JAR-safely from the classpath
+     * ({@code agent.skills.dir}, default {@code skills}); an optional filesystem
+     * {@code agent.skills.extra-directory} (e.g. a mounted volume) is layered on top when present.
      */
     @Bean
     @org.springframework.beans.factory.annotation.Qualifier("skillsTool")
-    public ToolCallback skillsTool(
-            @org.springframework.beans.factory.annotation.Value("${medexpertmatch.skills.directory:skills}") String skillsDirectory,
-            @org.springframework.beans.factory.annotation.Value("${medexpertmatch.skills.extra-directory:}") String extraDirectory) {
-        log.info("Creating SkillsTool bean - directory: {}, extra-directory: {}", skillsDirectory, extraDirectory.isEmpty() ? "(none)" : extraDirectory);
+    public ToolCallback skillsTool(AgentSkillsProperties skillsProperties) {
+        String skillsDirectory = skillsProperties.dir();
+        String extraDirectory = skillsProperties.extraDirectory();
+        log.info("Creating SkillsTool bean - directory: {}, extra-directory: {}",
+                skillsDirectory, extraDirectory.isEmpty() ? "(none)" : extraDirectory);
         SkillsTool.Builder builder = SkillsTool.builder();
         boolean skillsAdded = false;
 
-        // Main directory: load directly from classpath
+        // Main directory: load directly from the classpath (JAR-safe)
         try {
-            org.springframework.core.io.Resource skillsResource = resourceLoader.getResource("classpath:" + skillsDirectory);
+            org.springframework.core.io.Resource skillsResource =
+                    resourceLoader.getResource("classpath:" + skillsDirectory);
             if (skillsResource.exists()) {
                 builder.addSkillsResource(skillsResource);
                 log.info("Added classpath skills: classpath:{}", skillsDirectory);
@@ -117,19 +121,25 @@ public class MedicalAgentConfiguration {
 
         if (!skillsAdded) {
             throw new IllegalStateException("At least one skill must be configured. " +
-                    "Ensure skills exist in " + skillsDirectory + " (filesystem or classpath) or set medexpertmatch.skills.extra-directory.");
+                    "Ensure skills exist in " + skillsDirectory + " (filesystem or classpath) or set agent.skills.extra-directory.");
         }
 
         return builder.build();
     }
 
     /**
-     * Creates FileSystemTools bean for reading reference files and assets.
-     * Used by skills to load additional documentation and templates.
+     * Creates the {@link FileSystemTools} bean (Read) so skills can pull in reference files and
+     * assets on demand.
+     * <p>
+     * NOTE: {@code ShellTools} from spring-ai-agent-utils is intentionally NOT registered. Under
+     * HIPAA and the project's AGENTS.md constraints, the agent must not execute unsandboxed shell
+     * scripts; exposing {@code bash}/{@code killShell} tools would create an arbitrary
+     * code-execution surface and a PHI-exfiltration risk. File access is limited to the read-only
+     * {@link FileSystemTools} surface.
      */
     @Bean
     public FileSystemTools fileSystemTools() {
-        log.info("Creating FileSystemTools bean for reading skill references");
+        log.info("Creating FileSystemTools bean for reading skill references (ShellTools intentionally disabled per HIPAA)");
         return FileSystemTools.builder()
                 .build();
     }
