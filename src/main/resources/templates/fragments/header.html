@@ -53,11 +53,6 @@
                        th:href="@{/}" th:if="${!isAdmin}" th:text="#{nav.home}">Home</a>
                     <a class="text-white text-decoration-none" th:classappend="${currentPage == 'index'} ? 'fw-bold'"
                        th:href="@{/(user=admin)}" th:if="${isAdmin}" th:text="#{nav.home}">Home</a>
-                    <a class="text-white text-decoration-none" th:aria-label="#{nav.chat}" th:href="@{/chat}" th:if="${currentPage == 'index'}" th:text="#{nav.chat}">AI Chat</a>
-                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
-                          th:if="${currentPage == 'chat'}" th:text="#{nav.chat}">AI Chat</span>
-                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
-                          th:if="${currentPage != 'index' and currentPage != 'chat'}" th:text="#{nav.chat}">AI Chat</span>
                     <a class="text-white text-decoration-none" th:aria-label="#{nav.find_specialist}" th:href="@{/match}" th:if="${currentPage == 'index'}" th:text="#{nav.find_specialist}">Find Specialist</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"
                           th:if="${currentPage == 'match'}" th:text="#{nav.find_specialist}">Find Specialist</span>
@@ -84,6 +79,11 @@
                           th:if="${currentPage == 'routing'}" th:text="#{nav.routing}">Routing</span>
                     <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
                           th:if="${currentPage != 'index' and currentPage != 'routing'}" th:text="#{nav.routing}">Routing</span>
+                    <a class="text-white text-decoration-none" th:aria-label="#{nav.chat}" th:href="@{/chat}" th:if="${currentPage == 'index'}" th:text="#{nav.chat}">AI Chat</a>
+                    <span aria-current="page" class="text-white text-decoration-none fw-bold"
+                          th:if="${currentPage == 'chat'}" th:text="#{nav.chat}">AI Chat</span>
+                    <span aria-disabled="true" class="text-white-50 text-decoration-none pe-none"
+                          th:if="${currentPage != 'index' and currentPage != 'chat'}" th:text="#{nav.chat}">AI Chat</span>
                     <a class="text-white text-decoration-none" th:aria-label="#{nav.synthetic_data}" th:href="@{/admin/synthetic-data(user=admin)}"
                        th:if="${isAdmin and currentPage != 'synthetic-data'}" th:text="#{nav.synthetic_data}">Synthetic Data</a>
                     <span aria-current="page" class="text-white text-decoration-none fw-bold"

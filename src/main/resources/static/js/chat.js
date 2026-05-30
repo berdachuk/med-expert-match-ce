@@ -74,19 +74,71 @@
         panel.scrollTop = panel.scrollHeight;
     }
 
-    function updateAssistantBubble() {
+    function updateAssistantBubble(live) {
         if (!currentAssistantBubble) return;
-        currentAssistantBubble.innerHTML = renderMarkdown(currentMarkdownBuffer);
+        if (live) {
+            currentAssistantBubble.textContent = currentMarkdownBuffer;
+        } else {
+            currentAssistantBubble.innerHTML = renderMarkdown(currentMarkdownBuffer);
+        }
         var panel = document.getElementById('messagePanel');
         panel.scrollTop = panel.scrollHeight;
     }
 
     function finalizeAssistantBubble() {
-        if (currentAssistantBubble && currentAssistantBubble.closest('.chat-streaming')) {
-            currentAssistantBubble.closest('.chat-streaming').classList.remove('chat-streaming');
+        if (currentAssistantBubble) {
+            updateAssistantBubble(false);
+            if (currentAssistantBubble.closest('.chat-streaming')) {
+                currentAssistantBubble.closest('.chat-streaming').classList.remove('chat-streaming');
+            }
         }
         currentAssistantBubble = null;
         currentMarkdownBuffer = '';
+    }
+
+    function handleSseBlock(block) {
+        if (!block.trim()) return;
+        var evt = parseSseBlock(block);
+        if (evt.event === 'token') {
+            currentMarkdownBuffer += evt.data;
+            updateAssistantBubble(true);
+        } else if (evt.event === 'agent') {
+            try {
+                var agentPayload = JSON.parse(evt.data);
+                if (agentPayload.type === 'agent_start') {
+                    addActivityEntry('agent', 'Active: ' + agentPayload.agentId, agentPayload.agentId);
+                } else if (agentPayload.type === 'agent_done') {
+                    addActivityEntry('done', 'Completed', agentPayload.agentId);
+                }
+            } catch (ignore) { /* non-json agent payload */ }
+        } else if (evt.event === 'activity') {
+            try {
+                var act = JSON.parse(evt.data);
+                if (act.type === 'tool_call') {
+                    addActivityEntry('tool', act.message || act.toolName, 'orchestrator');
+                } else if (act.type === 'reasoning') {
+                    addActivityEntry('reasoning', act.message || 'Thinking…', 'orchestrator');
+                } else if (act.type === 'todo_update' && act.todos) {
+                    renderTodosFromActivity(act.todos);
+                    addActivityEntry('plan', 'Plan updated (' + act.todos.length + ' items)', 'orchestrator');
+                }
+            } catch (ignore) { /* non-json activity payload */ }
+        } else if (evt.event === 'done') {
+            return 'done';
+        }
+        return null;
+    }
+
+    function processSseBuffer(bufferRef) {
+        var parts = bufferRef.value.split('\n\n');
+        bufferRef.value = parts.pop() || '';
+        var streamDone = false;
+        parts.forEach(function (block) {
+            if (handleSseBlock(block) === 'done') {
+                streamDone = true;
+            }
+        });
+        return streamDone;
     }
 
     function activityPanels() {
@@ -274,52 +326,32 @@
             }
             var reader = response.body.getReader();
             var decoder = new TextDecoder();
-            var buffer = '';
+            var buffer = { value: '' };
+            function finishStream() {
+                if (logSource) logSource.close();
+                finalizeAssistantBubble();
+                collapseActivityPanel();
+                pollAgenticState();
+                if (btn) btn.disabled = false;
+            }
             function pump() {
                 return reader.read().then(function (result) {
-                    if (result.done) {
-                        finalizeAssistantBubble();
-                        collapseActivityPanel();
-                        if (btn) btn.disabled = false;
+                    if (result.value) {
+                        buffer.value += decoder.decode(result.value, { stream: true });
+                    }
+                    var streamDone = processSseBuffer(buffer);
+                    if (streamDone) {
+                        finishStream();
                         return;
                     }
-                    buffer += decoder.decode(result.value, { stream: true });
-                    var parts = buffer.split('\n\n');
-                    buffer = parts.pop() || '';
-                    parts.forEach(function (block) {
-                        if (!block.trim()) return;
-                        var evt = parseSseBlock(block);
-                        if (evt.event === 'token') {
-                            currentMarkdownBuffer += evt.data;
-                            updateAssistantBubble();
-                        } else if (evt.event === 'agent') {
-                            try {
-                                var agentPayload = JSON.parse(evt.data);
-                                if (agentPayload.type === 'agent_start') {
-                                    addActivityEntry('agent', 'Active: ' + agentPayload.agentId, agentPayload.agentId);
-                                } else if (agentPayload.type === 'agent_done') {
-                                    addActivityEntry('done', 'Completed', agentPayload.agentId);
-                                }
-                            } catch (ignore) { /* non-json agent payload */ }
-                        } else if (evt.event === 'activity') {
-                            try {
-                                var act = JSON.parse(evt.data);
-                                if (act.type === 'tool_call') {
-                                    addActivityEntry('tool', act.message || act.toolName, 'orchestrator');
-                                } else if (act.type === 'reasoning') {
-                                    addActivityEntry('reasoning', act.message || 'Thinking…', 'orchestrator');
-                                } else if (act.type === 'todo_update' && act.todos) {
-                                    renderTodosFromActivity(act.todos);
-                                    addActivityEntry('plan', 'Plan updated (' + act.todos.length + ' items)', 'orchestrator');
-                                }
-                            } catch (ignore) { /* non-json activity payload */ }
-                        } else if (evt.event === 'done') {
-                            if (logSource) logSource.close();
-                            finalizeAssistantBubble();
-                            collapseActivityPanel();
-                            pollAgenticState();
+                    if (result.done) {
+                        if (buffer.value.trim()) {
+                            handleSseBlock(buffer.value);
+                            buffer.value = '';
                         }
-                    });
+                        finishStream();
+                        return;
+                    }
                     return pump();
                 });
             }
