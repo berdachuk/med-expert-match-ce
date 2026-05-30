@@ -15,11 +15,11 @@ Each pattern is delivered on its **own feature branch** (TDD: write test → rev
 | 3 | Agent Skills — formal `SkillsTool` registry (P1) | `feat/agent-skills-registry` | ✅ Done | 2h |
 | 4 | TodoWrite — multi-step plan tracking (P3) | `feat/todowrite-plan-tracking` | ✅ Done | 2h |
 | 5 | AskUserQuestion — interactive intake (P2) | `feat/ask-user-question-intake` | ✅ Done | 3h |
-| 6 | Subagent orchestration — `TaskTool` (P4) | `feat/task-subagent-orchestration` | ⬜ Planned | 4h |
-| 7 | A2A integration — interoperable agents (P5) | `feat/a2a-interop-servers` | ⬜ Planned | 4h |
-| 8 | AI Chat tab + per-user sessions + agent picker | `feat/ai-chat-tab` | ⬜ Planned | 25h — see **`plans/M13-ai-chat-tab-and-specialized-agents.md`** |
+| 6 | Subagent orchestration — `TaskTool` (P4) | `feat/task-subagent-orchestration` | ✅ Done | 4h |
+| 7 | A2A integration — interoperable agents (P5) | `feat/a2a-interop-servers` | ⬜ M15 | 4h |
+| 8 | AI Chat tab + per-user sessions + agent picker | `feat/ai-chat-tab` | ✅ Done | 25h — see **`plans/archive/M14-ai-chat-agent-routing.md`** |
 
-**Completed: ~12.5h · Remaining: ~33h · Total: ~45.5h** (M08 Steps 6–7 + M13)
+**Completed: ~41.5h · Remaining: ~4h (A2A in M15) · Total: ~45.5h**
 
 ---
 
@@ -80,21 +80,14 @@ Mandatory four-step TDD loop added to `AGENTS.md` (Key Rules + dedicated section
 
 ## Planned Work
 
-### Step 6: Subagent Orchestration — `TaskTool` (P4)
+### Step 6: Subagent Orchestration — `TaskTool` (P4) — ✅ `feat/task-subagent-orchestration`
 
-**Goal:** Replace ad-hoc workflow-service chaining with a formal Task-tool orchestrator + registered specialized subagents in isolated context windows, with multi-model routing.
+- Seven subagent definitions under `src/main/resources/agents/` (Auto + six specialists)
+- `TaskTool` registered on `medicalAgentChatClient` with `ClaudeSubagentType` + classpath URI references (Windows-safe)
+- `ChatAssistantService` wires chat turns to LLM with agent picker routing
+- Tests: `MedicalSubagentRoutingTest`, `SpecialistAgentScopeTest`, `ChatAssistantServiceImplTest`
 
-**Changes**
-- Define subagents as Markdown + YAML frontmatter under `src/main/resources/agents/`: `case-analyzer`, `evidence-retriever`, `doctor-matcher`, `network-analyzer`, `routing-planner`.
-- Configure `TaskToolCallbackProvider` with `ClaudeSubagentReferences.fromRootDirectory("classpath:agents")`.
-- Multi-model routing: fast/cheap model for triage; strong model (MedGemma) for clinical reasoning via per-subagent `model:`.
-- Constraint: no `Task` in subagent `tools` (no nested subagents). Pair with Session **branch isolation** (`EventFilter.forBranch`).
-
-**Test first:** `MedicalSubagentRoutingTest` — assert "explore evidence" delegates to `evidence-retriever` only; context isolation (no cross-leak of patient data).
-
-**Verification:** `mvn test -Dtest="*SubagentRouting*"`
-
-### Step 7: A2A Integration — interoperable agents (P5)
+### Step 7: A2A Integration — interoperable agents (P5) — ⬜ see **`plans/M15-a2a-streaming-hardening.md`**
 
 **Goal:** Expose match/evidence capabilities as A2A servers so external hospital systems / partner agents can discover and call them over an open standard (HTTP + JSON-RPC).
 
@@ -108,16 +101,7 @@ Mandatory four-step TDD loop added to `AGENTS.md` (Key Rules + dedicated section
 
 **Verification:** `mvn test -Dtest="A2A*"`
 
-### Step 8: AI Chat tab (M13) — ⬜ see dedicated plan
-
-Full specification: **`plans/M13-ai-chat-tab-and-specialized-agents.md`**
-
-Summary:
-- New navbar tab **AI Chat** with sidebar session list (select / delete).
-- PostgreSQL-backed per-conversation history; **per-user isolation** (other users cannot see chats).
-- **Agent picker** left of message input; default **Auto** orchestrator (plan + delegate via TaskTool/TodoWrite).
-- Six narrow specialist agents mapped from existing skills/modules.
-- Reference UX/data model: `aist-expertmatch` chat sidebar + `ConversationHistoryManager`; gaps (agent picker, Auto router) filled by M13.
+### Step 8: AI Chat tab (M13/M14) — ✅ see **`plans/archive/M14-ai-chat-agent-routing.md`**
 
 ---
 

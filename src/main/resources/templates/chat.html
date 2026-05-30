@@ -26,6 +26,9 @@
                 </div>
             </div>
             <div class="border-top p-3 bg-white">
+                <input id="currentUserId" th:value="${currentUserId}" type="hidden"/>
+                <div class="d-none small border rounded p-2 mb-2 bg-light" id="agentTodoPanel"></div>
+                <div class="d-none small border rounded p-2 mb-2 bg-warning-subtle" id="agentQuestionPanel"></div>
                 <form id="chatMessageForm" class="d-flex gap-2 align-items-end">
                     <input id="currentChatId" th:value="${currentChat.id()}" type="hidden"/>
                     <select aria-label="Agent" class="form-select form-select-sm" id="agentPicker" style="max-width: 11rem;">

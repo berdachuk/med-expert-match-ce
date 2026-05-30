@@ -37,6 +37,9 @@ public class ChatRepositoryImpl implements ChatRepository {
     @InjectSql("/sql/chat/updateChatName.sql")
     private String updateChatNameSql;
 
+    @InjectSql("/sql/chat/updateAgentId.sql")
+    private String updateAgentIdSql;
+
     @InjectSql("/sql/chat/deleteChat.sql")
     private String deleteChatSql;
 
@@ -93,6 +96,17 @@ public class ChatRepositoryImpl implements ChatRepository {
                 updateChatNameSql,
                 new MapSqlParameterSource("id", chatId)
                         .addValue("name", name)
+                        .addValue("updatedAt", Timestamp.from(Instant.now())));
+        return updated > 0;
+    }
+
+    @Override
+    public boolean updateAgentId(String chatId, String agentId) {
+        String resolved = agentId != null && !agentId.isBlank() ? agentId : DEFAULT_AGENT;
+        int updated = namedJdbcTemplate.update(
+                updateAgentIdSql,
+                new MapSqlParameterSource("id", chatId)
+                        .addValue("agentId", resolved)
                         .addValue("updatedAt", Timestamp.from(Instant.now())));
         return updated > 0;
     }

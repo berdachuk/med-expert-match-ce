@@ -17,6 +17,8 @@ public interface ChatRepository {
 
     boolean updateChatName(String chatId, String name);
 
+    boolean updateAgentId(String chatId, String agentId);
+
     boolean deleteChat(String chatId);
 
     void updateLastActivity(String chatId);

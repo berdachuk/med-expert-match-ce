@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.chat.rest;
 
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
+import com.berdachuk.medexpertmatch.chat.service.ChatAssistantService;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.security.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,10 +26,12 @@ import java.util.Map;
 public class ChatController {
 
     private final ChatService chatService;
+    private final ChatAssistantService chatAssistantService;
     private final UserContext userContext;
 
-    public ChatController(ChatService chatService, UserContext userContext) {
+    public ChatController(ChatService chatService, ChatAssistantService chatAssistantService, UserContext userContext) {
         this.chatService = chatService;
+        this.chatAssistantService = chatAssistantService;
         this.userContext = userContext;
     }
 
@@ -65,7 +68,7 @@ public class ChatController {
         return ResponseEntity.ok(Map.of("status", "deleted"));
     }
 
-    @Operation(summary = "Post a user message (returns user + placeholder assistant reply)")
+    @Operation(summary = "Post a user message and receive an LLM assistant reply")
     @PostMapping("/{chatId}/messages")
     public Map<String, Object> postMessage(
             @PathVariable String chatId,
@@ -74,11 +77,8 @@ public class ChatController {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("content is required");
         }
-        ChatMessage userMsg = chatService.appendUserMessage(chatId, userContext.currentUserId(), content.trim());
-        ChatMessage assistantMsg = chatService.appendAssistantMessage(
-                chatId,
-                userContext.currentUserId(),
-                "Agent routing and LLM responses will be wired in the next phase (M14). Your message was saved.");
-        return Map.of("userMessage", userMsg, "assistantMessage", assistantMsg);
+        String agentId = body.get("agentId");
+        return Map.copyOf(chatAssistantService.processMessage(
+                chatId, userContext.currentUserId(), content.trim(), agentId));
     }
 }

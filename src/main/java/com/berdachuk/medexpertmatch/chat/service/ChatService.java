@@ -24,4 +24,6 @@ public interface ChatService {
     ChatMessage appendUserMessage(String chatId, String userId, String content);
 
     ChatMessage appendAssistantMessage(String chatId, String userId, String content);
+
+    boolean updateAgentId(String chatId, String userId, String agentId);
 }

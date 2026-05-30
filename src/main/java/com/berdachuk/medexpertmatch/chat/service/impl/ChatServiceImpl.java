@@ -94,4 +94,11 @@ public class ChatServiceImpl implements ChatService {
         chatRepository.updateLastActivity(chatId);
         return message;
     }
+
+    @Override
+    @Transactional
+    public boolean updateAgentId(String chatId, String userId, String agentId) {
+        requireOwnedChat(chatId, userId);
+        return chatRepository.updateAgentId(chatId, agentId);
+    }
 }

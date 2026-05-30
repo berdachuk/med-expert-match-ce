@@ -10,6 +10,10 @@ import org.springaicommunity.agent.tools.AskUserQuestionTool;
 import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springaicommunity.agent.tools.SkillsTool;
 import org.springaicommunity.agent.tools.TodoWriteTool;
+import org.springaicommunity.agent.tools.task.TaskTool;
+import org.springaicommunity.agent.common.task.subagent.SubagentReference;
+import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentType;
+import org.springaicommunity.agent.tools.task.repository.DefaultTaskRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
@@ -36,7 +40,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
  * Configuration for Medical Agent with Spring AI Agent Skills integration.
@@ -245,6 +251,51 @@ public class MedicalAgentConfiguration {
     }
 
     /**
+     * Task tool for Auto orchestrator subagent delegation (M08 Step 6 / M14).
+     */
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("taskTool")
+    ToolCallback taskTool(
+            @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
+            ResourceLoader resourceLoader) {
+        log.info("Creating TaskTool with specialist subagents from classpath:agents");
+        try {
+            var subagentReferences = loadSubagentReferences(resourceLoader);
+            ChatClient.Builder subagentChatClientBuilder = ChatClient.builder(toolCallingChatModel);
+            return TaskTool.builder()
+                    .subagentReferences(subagentReferences)
+                    .subagentTypes(ClaudeSubagentType.builder()
+                            .chatClientBuilder("default", subagentChatClientBuilder)
+                            .build())
+                    .taskRepository(new DefaultTaskRepository())
+                    .build();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load TaskTool subagents from classpath:agents", e);
+        }
+    }
+
+    private static java.util.List<SubagentReference> loadSubagentReferences(
+            ResourceLoader resourceLoader) throws Exception {
+        Resource[] agentResources = new PathMatchingResourcePatternResolver(resourceLoader)
+                .getResources("classpath:agents/*.md");
+        if (agentResources.length == 0) {
+            throw new IllegalStateException("No subagent definitions found under classpath:agents/");
+        }
+        java.util.List<SubagentReference> references = new java.util.ArrayList<>();
+        for (Resource resource : agentResources) {
+            String fileName = resource.getFilename();
+            if (fileName == null || fileName.isBlank()) {
+                continue;
+            }
+            references.add(new SubagentReference("classpath:/agents/" + fileName, "CLAUDE"));
+        }
+        if (references.isEmpty()) {
+            throw new IllegalStateException("No subagent definitions found under classpath:agents/");
+        }
+        return references;
+    }
+
+    /**
      * Tool-call advisor with conversation history disabled so todo updates from {@link TodoWriteTool}
      * persist via the session advisor without duplicate internal history (Part 3 guidance).
      */
@@ -272,10 +323,12 @@ public class MedicalAgentConfiguration {
     public ChatClient medicalAgentChatClient(
             @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
             @org.springframework.beans.factory.annotation.Qualifier("skillsTool") ToolCallback skillsTool,
+            @org.springframework.beans.factory.annotation.Qualifier("taskTool") ToolCallback taskTool,
             FileSystemTools fileSystemTools,
             MedicalAgentTools medicalAgentTools,
             AutoMemoryTools autoMemoryTools,
             TodoWriteTool todoWriteTool,
+            AskUserQuestionTool askUserQuestionTool,
             ToolCallAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
             AgentMemoryProperties agentMemoryProperties
@@ -291,14 +344,15 @@ public class MedicalAgentConfiguration {
                 .defaultTools(medicalAgentTools)
                 .defaultTools(autoMemoryTools)
                 .defaultTools(todoWriteTool)
+                .defaultTools(askUserQuestionTool)
                 .defaultAdvisors(agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
         // Only add SkillsTool if it's properly configured
         try {
-            builder.defaultToolCallbacks(skillsTool);  // Agent Skills discovery (ToolCallback)
-            log.info("SkillsTool registered successfully");
+            builder.defaultToolCallbacks(skillsTool, taskTool);
+            log.info("SkillsTool and TaskTool registered successfully");
         } catch (Exception e) {
-            log.warn("Failed to register SkillsTool, continuing without it: {}", e.getMessage());
+            log.warn("Failed to register SkillsTool/TaskTool, continuing without them: {}", e.getMessage());
         }
 
         return builder.build();

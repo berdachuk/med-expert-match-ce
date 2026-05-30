@@ -14,14 +14,14 @@ M13 adds a dedicated **AI Chat** navbar tab with multi-session history, per-user
 | 2 | Per-user session isolation | `feat/chat-user-isolation` | ✅ Done | 2h |
 | 3 | AI Chat tab (Thymeleaf + sidebar UX) | `feat/chat-ui-tab` | ✅ Done | 4h |
 | 4 | Agent picker in message input | `feat/chat-agent-picker` | ✅ Done | 2h |
-| 5 | Auto orchestrator agent | `feat/chat-auto-orchestrator` | ⬜ M14 | 4h |
-| 6 | Narrow specialist agents (6) | `feat/chat-specialist-agents` | ⬜ M14 | 4h |
-| 7 | Wire AskUserQuestion + TodoWrite + SSE trace | `feat/chat-agentic-ux` | ⬜ M14 | 3h |
-| 8 | Integration tests + i18n (EN/RU) | `feat/chat-it-i18n` | ⬜ Partial | 2h |
+| 5 | Auto orchestrator agent | `feat/chat-auto-orchestrator` | ✅ Done | 4h |
+| 6 | Narrow specialist agents (6) | `feat/chat-specialist-agents` | ✅ Done | 4h |
+| 7 | Wire AskUserQuestion + TodoWrite + SSE trace | `feat/chat-agentic-ux` | ✅ Done | 3h |
+| 8 | Integration tests + i18n (EN/RU) | `feat/chat-it-i18n` | ✅ Done | 2h |
 
-**Phase A complete: ~12h · Remaining in M14: ~13h · Total: ~25h**
+**Phase A + M14 complete: ~25h**
 
-> **Next milestone:** `plans/M14-ai-chat-agent-routing.md`
+> **Next milestone:** `plans/M15-a2a-streaming-hardening.md`
 
 ---
 

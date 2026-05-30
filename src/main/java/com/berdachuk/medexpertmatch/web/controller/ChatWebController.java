@@ -37,6 +37,7 @@ public class ChatWebController {
         List<ChatMessage> messages = chatService.getHistory(current.id(), userId, 200, 0);
 
         model.addAttribute("currentPage", "chat");
+        model.addAttribute("currentUserId", userId);
         model.addAttribute("chats", chats);
         model.addAttribute("currentChat", current);
         model.addAttribute("messages", messages);
