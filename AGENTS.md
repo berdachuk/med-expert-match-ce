@@ -105,7 +105,7 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 
 ## Key Rules at a Glance
 
-- TDD: test first, prefer integration tests (`*IT.java` suffix)
+- TDD (mandatory): (1) write the test FIRST; (2) verify the test against the requirements with an internal review tool/skill (e.g. a code-review or testing skill, or a review subagent) to confirm it truly encodes the requirement; (3) only then implement the functionality; (4) re-run the test (`mvn verify`) and fix problems until it passes. Prefer integration tests (`*IT.java` suffix).
 - Interface-based design: every service/repo has interface + impl
 - Java records for domain entities (immutable), Lombok for services/impls only
 - External `.st` files for LLM prompts (never hardcode prompt strings)
@@ -117,6 +117,15 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 - Flyway V1 consolidation (no V2/V3 until post-MVP)
 - OpenAI-compatible providers only (no Ollama)
 - All patient data must be anonymized; no PHI in logs/errors/tests
+
+## TDD Workflow (mandatory)
+
+Always use TDD. Before implementing any functionality:
+
+1. **Write the test first** — before any implementation code.
+2. **Verify the test against the requirements** — use an internal review tool/skill (e.g. a code-review or testing skill, or a review subagent) to confirm the test truly encodes the requirement.
+3. **Implement** the functionality — only after the test is written and verified.
+4. **Re-run the test** (`mvn verify`) — fix problems and iterate until it passes.
 
 ## Layer Model
 
