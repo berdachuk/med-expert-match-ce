@@ -15,6 +15,7 @@ public class ChatTurnMetrics {
     private final Counter streamErrors;
     private final Counter toolCalls;
     private final Counter rateLimited;
+    private final Counter exportCount;
 
     public ChatTurnMetrics(MeterRegistry meterRegistry) {
         this.turnDuration = Timer.builder("chat.turn.duration")
@@ -28,6 +29,9 @@ public class ChatTurnMetrics {
                 .register(meterRegistry);
         this.rateLimited = Counter.builder("chat.rate.limited")
                 .description("Chat SSE turns rejected by per-user rate limiter")
+                .register(meterRegistry);
+        this.exportCount = Counter.builder("chat.export.count")
+                .description("Chat transcript exports recorded")
                 .register(meterRegistry);
     }
 
@@ -51,5 +55,9 @@ public class ChatTurnMetrics {
 
     public void recordRateLimited() {
         rateLimited.increment();
+    }
+
+    public void recordExport() {
+        exportCount.increment();
     }
 }

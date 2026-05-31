@@ -36,6 +36,7 @@
         <commons-io.version>2.18.0</commons-io.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <datafaker.version>2.5.3</datafaker.version>
+        <playwright.version>1.49.0</playwright.version>
     </properties>
 
     <dependencyManagement>
@@ -272,6 +273,12 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
             <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>${playwright.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

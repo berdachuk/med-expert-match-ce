@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.chat.service.impl;
 
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
+import com.berdachuk.medexpertmatch.chat.service.ChatExportAuditor;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportService;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
@@ -15,9 +16,11 @@ import java.util.Map;
 public class ChatExportServiceImpl implements ChatExportService {
 
     private final ChatService chatService;
+    private final ChatExportAuditor chatExportAuditor;
 
-    public ChatExportServiceImpl(ChatService chatService) {
+    public ChatExportServiceImpl(ChatService chatService, ChatExportAuditor chatExportAuditor) {
         this.chatService = chatService;
+        this.chatExportAuditor = chatExportAuditor;
     }
 
     @Override
@@ -32,6 +35,8 @@ public class ChatExportServiceImpl implements ChatExportService {
         export.put("exportedAt", java.time.Instant.now().toString());
         export.put("phiRedacted", true);
         export.put("messages", history.stream().map(this::toExportMessage).toList());
+
+        chatExportAuditor.recordExport(userId, chatId, history.size());
         return export;
     }
 

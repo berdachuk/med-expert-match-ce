@@ -1,10 +1,13 @@
 package com.berdachuk.medexpertmatch.core.config;
 
 import com.berdachuk.medexpertmatch.core.exception.MedExpertMatchException;
+import com.berdachuk.medexpertmatch.core.exception.RateLimitExceededException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -71,6 +74,21 @@ public class GlobalExceptionHandler {
         problem.setInstance(URI.create(path));
         problem.setProperty("errorCode", "NOT_FOUND");
         return problem;
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ProblemDetail> handleRateLimitExceeded(RateLimitExceededException ex, WebRequest request) {
+        log.warn("Rate limit exceeded: {}", ex.getReason());
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS,
+                ex.getReason() != null ? ex.getReason() : "Too Many Requests");
+        problem.setTitle("Too Many Requests");
+        problem.setType(URI.create("about:blank"));
+        problem.setInstance(URI.create(((ServletWebRequest) request).getRequest().getRequestURI()));
+        problem.setProperty("errorCode", "HTTP_429");
+        problem.setProperty("retryAfterSeconds", ex.retryAfterSeconds());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.retryAfterSeconds()))
+                .body(problem);
     }
 
     @ExceptionHandler(ResponseStatusException.class)

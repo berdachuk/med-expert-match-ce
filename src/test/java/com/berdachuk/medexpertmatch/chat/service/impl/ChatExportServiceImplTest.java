@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.chat.service.impl;
 
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
+import com.berdachuk.medexpertmatch.chat.service.ChatExportAuditor;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,15 +26,18 @@ class ChatExportServiceImplTest {
     @Mock
     private ChatService chatService;
 
+    @Mock
+    private ChatExportAuditor chatExportAuditor;
+
     private ChatExportServiceImpl exportService;
 
     @BeforeEach
     void setUp() {
-        exportService = new ChatExportServiceImpl(chatService);
+        exportService = new ChatExportServiceImpl(chatService, chatExportAuditor);
     }
 
     @Test
-    @DisplayName("Export redacts PHI from message content")
+    @DisplayName("Export redacts PHI from message content and records audit")
     void redactsPhi() {
         Chat chat = new Chat("c1", "u1", "Test", "auto", false,
                 Instant.now(), Instant.now(), Instant.now(), 1);
@@ -45,5 +50,6 @@ class ChatExportServiceImplTest {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> messages = (List<Map<String, Object>>) export.get("messages");
         assertTrue(messages.getFirst().get("content").toString().contains("[REDACTED]"));
+        verify(chatExportAuditor).recordExport("u1", "c1", 1);
     }
 }

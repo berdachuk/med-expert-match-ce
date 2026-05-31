@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.core.config;
 
 import com.berdachuk.medexpertmatch.core.exception.MedExpertMatchException;
+import com.berdachuk.medexpertmatch.core.exception.RateLimitExceededException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -96,6 +97,20 @@ class GlobalExceptionHandlerTest {
 
         assertEquals("DATABASE_CONNECTION_FAILED", problem.getProperties().get("errorCode"));
         assertTrue(problem.getDetail().contains("internal application error"));
+    }
+
+    @Test
+    @DisplayName("RateLimitExceededException includes Retry-After header")
+    void rateLimitIncludesRetryAfter() {
+        var request = new ServletWebRequest(
+                new MockHttpServletRequest("POST", "/api/v1/chats/x/messages/stream"));
+        var response = handler.handleRateLimitExceeded(
+                new RateLimitExceededException("Chat rate limit exceeded", 60),
+                request);
+
+        assertEquals(429, response.getStatusCode().value());
+        assertEquals("60", response.getHeaders().getFirst("Retry-After"));
+        assertEquals("Chat rate limit exceeded", response.getBody().getDetail());
     }
 
     @Test

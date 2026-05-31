@@ -6,13 +6,12 @@ import com.berdachuk.medexpertmatch.chat.service.ChatAssistantService;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportService;
 import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
+import com.berdachuk.medexpertmatch.core.exception.RateLimitExceededException;
 import com.berdachuk.medexpertmatch.core.security.UserContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -109,10 +108,10 @@ public class ChatController {
             @PathVariable String chatId,
             @RequestBody Map<String, String> body) {
         String userId = userContext.currentUserId();
-        if (!chatRateLimitService.tryAcquire(userId)) {
-            throw new ResponseStatusException(
-                    HttpStatus.TOO_MANY_REQUESTS,
-                    "Chat rate limit exceeded");
+        if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier())) {
+            throw new RateLimitExceededException(
+                    "Chat rate limit exceeded",
+                    chatRateLimitService.windowSeconds());
         }
         String content = body.get("content");
         if (content == null || content.isBlank()) {
