@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.chat.service;
 
+import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -18,5 +19,5 @@ public interface ChatAssistantService {
     /**
      * Streams assistant tokens over SSE, then persists the full assistant reply (M15).
      */
-    SseEmitter streamMessage(String chatId, String userId, String content, String agentId);
+    SseEmitter streamMessage(String chatId, String userId, String content, String agentId, RateLimitTier tier);
 }

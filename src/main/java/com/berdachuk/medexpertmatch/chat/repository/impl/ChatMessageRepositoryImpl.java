@@ -27,6 +27,9 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
     @InjectSql("/sql/chat/getHistory.sql")
     private String getHistorySql;
 
+    @InjectSql("/sql/chat/softDeleteMessagesByChatId.sql")
+    private String softDeleteMessagesByChatIdSql;
+
     public ChatMessageRepositoryImpl(
             NamedParameterJdbcTemplate namedJdbcTemplate,
             ChatMessageMapper chatMessageMapper) {
@@ -61,5 +64,12 @@ public class ChatMessageRepositoryImpl implements ChatMessageRepository {
                 getHistorySql,
                 new MapSqlParameterSource("chatId", chatId).addValue("limit", limit).addValue("offset", offset),
                 chatMessageMapper);
+    }
+
+    @Override
+    public int softDeleteByChatId(String chatId) {
+        return namedJdbcTemplate.update(
+                softDeleteMessagesByChatIdSql,
+                new MapSqlParameterSource("chatId", chatId));
     }
 }

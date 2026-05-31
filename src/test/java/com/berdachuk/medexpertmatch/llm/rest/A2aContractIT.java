@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,6 +31,13 @@ class A2aContractIT extends BaseIntegrationTest {
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    @DisplayName("GET /a2a/v1/skills is listed in A2A contract surface")
+    void skillsEndpointListed() throws Exception {
+        mockMvc.perform(get("/a2a/v1/skills"))
+                .andExpect(status().isOk());
+    }
 
     @Test
     @DisplayName("JSON-RPC returns -32601 for unknown methods")

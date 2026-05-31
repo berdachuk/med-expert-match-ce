@@ -393,6 +393,7 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.chat_message (
     tokens_used INT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     metadata JSONB,
+    deleted_at TIMESTAMP,
     CONSTRAINT chat_message_chat_sequence_unique UNIQUE (chat_id, sequence_number)
 );
 

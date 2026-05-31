@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.chat.rest;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatAssistantService;
+import com.berdachuk.medexpertmatch.chat.service.ChatDataLifecycleService;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportService;
 import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
@@ -33,6 +34,7 @@ public class ChatController {
     private final ChatService chatService;
     private final ChatAssistantService chatAssistantService;
     private final ChatExportService chatExportService;
+    private final ChatDataLifecycleService chatDataLifecycleService;
     private final ChatRateLimitService chatRateLimitService;
     private final UserContext userContext;
 
@@ -40,11 +42,13 @@ public class ChatController {
             ChatService chatService,
             ChatAssistantService chatAssistantService,
             ChatExportService chatExportService,
+            ChatDataLifecycleService chatDataLifecycleService,
             ChatRateLimitService chatRateLimitService,
             UserContext userContext) {
         this.chatService = chatService;
         this.chatAssistantService = chatAssistantService;
         this.chatExportService = chatExportService;
+        this.chatDataLifecycleService = chatDataLifecycleService;
         this.chatRateLimitService = chatRateLimitService;
         this.userContext = userContext;
     }
@@ -96,6 +100,18 @@ public class ChatController {
                 chatId, userContext.currentUserId(), content.trim(), agentId));
     }
 
+    @Operation(summary = "Export anonymized bundle of all user chats")
+    @GetMapping("/export-bundle")
+    public Map<String, Object> exportUserBundle() {
+        return chatDataLifecycleService.exportUserBundle(userContext.currentUserId());
+    }
+
+    @Operation(summary = "Delete all user chat data (soft-delete messages, remove non-default chats)")
+    @DeleteMapping("/data")
+    public Map<String, Object> deleteAllUserData() {
+        return chatDataLifecycleService.deleteAllUserData(userContext.currentUserId());
+    }
+
     @Operation(summary = "Export anonymized chat transcript as JSON")
     @GetMapping("/{chatId}/export")
     public Map<String, Object> exportChat(@PathVariable String chatId) {
@@ -118,6 +134,6 @@ public class ChatController {
             throw new IllegalArgumentException("content is required");
         }
         return chatAssistantService.streamMessage(
-                chatId, userId, content.trim(), body.get("agentId"));
+                chatId, userId, content.trim(), body.get("agentId"), userContext.currentRateLimitTier());
     }
 }

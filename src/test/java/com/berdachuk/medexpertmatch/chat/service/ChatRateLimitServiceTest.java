@@ -38,7 +38,7 @@ class ChatRateLimitServiceTest {
             assertTrue(service.tryAcquire("user-b"));
         }
         assertFalse(service.tryAcquire("user-b"));
-        assertEquals(1.0, registry.get("chat.rate.limited").counter().count());
+        assertEquals(1.0, registry.get("chat.rate.limited").tag("tier", "DEFAULT").counter().count());
     }
 
     @Test
@@ -47,6 +47,8 @@ class ChatRateLimitServiceTest {
         for (int i = 0; i < 20; i++) {
             assertTrue(service.tryAcquire("power-user", RateLimitTier.UNLIMITED));
         }
-        assertEquals(0.0, registry.get("chat.rate.limited").counter().count());
+        assertEquals(0.0, registry.find("chat.rate.limited").counters().stream()
+                .mapToDouble(c -> c.count())
+                .sum());
     }
 }

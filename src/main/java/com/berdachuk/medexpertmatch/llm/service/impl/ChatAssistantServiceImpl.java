@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatAssistantService;
 import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
+import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
@@ -83,12 +84,14 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     }
 
     @Override
-    public SseEmitter streamMessage(String chatId, String userId, String content, String agentIdOverride) {
+    public SseEmitter streamMessage(String chatId, String userId, String content, String agentIdOverride,
+                                      RateLimitTier tier) {
         TurnContext ctx = prepareTurn(chatId, userId, content, agentIdOverride);
         SseEmitter emitter = new SseEmitter(120_000L);
+        RateLimitTier metricsTier = tier != null ? tier : RateLimitTier.DEFAULT;
         CompletableFuture.runAsync(() -> {
             StringBuilder full = new StringBuilder();
-            Timer.Sample turnSample = chatTurnMetrics.startTurn();
+            Timer.Sample turnSample = chatTurnMetrics.startTurn(metricsTier);
             chatStreamActivityPublisher.register(ctx.sessionId(), emitter);
             try {
                 sendAgentEvent(emitter, Map.of(
@@ -124,7 +127,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                 emitter.send(SseEmitter.event().name("done").data(Map.of(
                                         "id", assistant.id(),
                                         "content", reply)));
-                                chatTurnMetrics.recordTurnSuccess(turnSample);
+                                chatTurnMetrics.recordTurnSuccess(turnSample, metricsTier);
                                 emitter.complete();
                             } catch (IOException e) {
                                 emitter.completeWithError(e);

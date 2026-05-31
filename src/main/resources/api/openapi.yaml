@@ -78,6 +78,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/VerifyPubMedResponse'
 
+  /a2a/v1/skills:
+    get:
+      tags:
+        - A2A Bridge
+      summary: List supported A2A bridge skills
+      description: |
+        Returns skill ids (`doctor_match`, `evidence_search`) with descriptions and
+        JSON Schema hints for anonymized `message` input (no PHI).
+      operationId: a2aListSkills
+      responses:
+        '200':
+          description: Supported skills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2aSkillDescriptor'
+
   /a2a/v1/jsonrpc:
     post:
       tags:
@@ -762,6 +781,23 @@ components:
           format: date-time
           description: Error timestamp
           example: "2024-01-18T23:30:00Z"
+
+    A2aSkillDescriptor:
+      type: object
+      required:
+        - id
+        - description
+        - inputSchema
+      properties:
+        id:
+          type: string
+          example: evidence_search
+        description:
+          type: string
+          example: Retrieve clinical guidelines and PubMed literature for anonymized queries.
+        inputSchema:
+          type: object
+          description: JSON Schema hints for skill params
 
     A2aJsonRpcRequest:
       type: object

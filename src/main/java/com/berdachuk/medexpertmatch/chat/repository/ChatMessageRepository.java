@@ -9,4 +9,6 @@ public interface ChatMessageRepository {
     ChatMessage saveMessage(String chatId, String role, String content);
 
     List<ChatMessage> getHistory(String chatId, int limit, int offset);
+
+    int softDeleteByChatId(String chatId);
 }
