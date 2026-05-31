@@ -7,328 +7,149 @@ AI-Powered Medical Expert Recommendation System for MedGemma Impact Challenge
 **MedExpertMatch** is an AI-powered medical expert recommendation system that matches medical cases with appropriate
 doctors based on case analysis, doctor expertise, clinical guidelines, and similar case outcomes.
 
-This project is being developed for the MedGemma Impact Challenge - a hackathon organized by Google Research on Kaggle.
+## Quick Start
 
-## Build and Start
-
-**Prerequisites:** Java 21, Maven 3.9+, Docker and Docker Compose.
-
-### Windows 11, WSL, and integration tests
-
-- **Integration tests** (`mvn verify`) use Testcontainers and **Docker**. On Windows, Maven activates a profile that runs
-  `scripts/ensure-test-container.ps1` in the **pre-integration-test** phase (no Git Bash required). The test image
-  `medexpertmatch-postgres-test:latest` is built automatically if missing.
-- **Using Docker only in WSL** (Docker Engine in Ubuntu, no Docker Desktop): either run the build **inside WSL** (paths
-  use `/mnt/c/...` for the Windows project on `C:`), or run Maven on Windows and point Docker at the WSL daemon:
-  1. In WSL, configure the Docker daemon to listen on TCP (e.g. `/etc/docker/daemon.json` with `hosts` including
-     `tcp://0.0.0.0:2375`) and restart Docker; **secure this host** if it is not localhost-only.
-  2. On Windows: `$env:DOCKER_HOST = "tcp://localhost:2375"` (WSL2 forwards `localhost` to WSL). Testcontainers,
-     `docker build`, and **`docker compose`** (full stack, image rebuilds) all honor `DOCKER_HOST`.
-- **Docker Compose on Windows when Docker lives in WSL2 only:** PowerShell may not see the daemon (`docker compose`
-  fails or shows no containers). Run compose from **WSL** (`cd /mnt/c/.../med-expert-match-ce && docker compose up -d
-  --build`) or use **Docker Desktop** with WSL2 integration so the Windows `docker` CLI talks to the same engine.
-- **One-liner from PowerShell** (replace the `cd` path with your clone location on the `C:` drive; under WSL it is
-  usually `/mnt/c/Users/<YourWindowsUser>/<path>/med-expert-match-ce`):
-
-  ```powershell
-  wsl -e bash -c "cd /mnt/c/path/to/med-expert-match-ce && (docker info >/dev/null 2>&1 || sudo service docker start) && mvn verify"
-  ```
-
-- **Shell scripts** under `scripts/*.sh` are Bash. On Windows you can use **Git Bash**, **WSL**, or the PowerShell
-  equivalents (`build-test-container.ps1`, `ensure-test-container.ps1`).
-
-### Runtime modes
-
-MedExpertMatch uses **OpenAI-compatible APIs only**. There are two supported ways to run the app locally:
-
-- **Default `local` profile**: uses the checked-in [application-local.yml](src/main/resources/application-local.yml)
-  (aist-style layout: top-level `CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, `TOOL_CALLING_*` keys bound like environment
-  variables). Typical values:
-  - PostgreSQL on `localhost:5434`
-  - Optional **embedding multi-endpoint pool** under `medexpertmatch.embedding.multi-endpoint` (set `endpoints: []` to
-    disable the pool and use a single embedding backend only)
-  - Override any value with the same `*_` environment variables or edit the YAML
-- **Self-hosted local AI**: keep the same profile and point `CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, and
-  `TOOL_CALLING_*` to your OpenAI-compatible server (LM Studio, LiteLLM, vLLM, or a compatible Ollama OpenAI API).
-
-### Environment matrix
-
-| Mode | App URL | DB | AI endpoint source |
-|------|---------|----|--------------------|
-| `local` profile | `http://localhost:8080` | `localhost:5434` | `application-local.yml` defaults |
-| Full Docker Compose stack | `http://localhost:8094` | `localhost:5433` | `docker-compose.yml` environment |
-| Tests | none | Testcontainers | mocked/test beans |
-
-### 1. Build and start the local development database
-
-PostgreSQL 17 with Apache AGE and PgVector runs in Docker. Build the dev image, then start the container:
+**Prerequisites:** Java 21, Maven 3.9+, Docker.
 
 ```bash
-# Build the dev image (required before first run or after Dockerfile changes)
-docker compose -f docker-compose.dev.yml build
+# Start dev database (PostgreSQL 17 + PgVector + Apache AGE)
+docker compose -f docker-compose.dev.yml up -d --build
 
-# Start PostgreSQL
-docker compose -f docker-compose.dev.yml up -d
+# Build and run
+mvn clean install -DskipTests
+mvn spring-boot:run -Plocal
 ```
 
-Database: `localhost:5434`, database `medexpertmatch`, user/password `medexpertmatch`.
+App: `http://localhost:8080` | Swagger: `http://localhost:8080/swagger-ui.html` | Prometheus: `http://localhost:8080/actuator/prometheus`
 
-### 2. Build the application
+### Docker Compose Stack
 
 ```bash
-mvn clean install
+docker compose up -d --build          # App + DB + Docs
+docker compose -f docker-compose.prod.yml up -d  # Production with health checks + resource limits
 ```
 
-To skip tests: `mvn clean install -DskipTests`.
+| Service | URL |
+|---------|-----|
+| App | `http://localhost:8094` |
+| Swagger | `http://localhost:8094/swagger-ui.html` |
+| Prometheus metrics | `http://localhost:8094/actuator/prometheus` |
+| DB | `localhost:5433` |
 
-### 3. Run the application
+## Features
 
-```bash
-mvn spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=local
-```
-
-Or with an environment variable:
-
-```bash
-export SPRING_PROFILES_ACTIVE=local
-mvn spring-boot:run
-```
-
-The app uses `application-local.yml` and expects the database at `localhost:5434`.
-
-### 3b. Run with security hardening (secure-demo)
-
-To demonstrate that the application passes security checks (protected actuator and health, no error leakage, Swagger
-disabled), run with the **secure-demo** profile. Actuator and `/health` require HTTP Basic (default user `demo`,
-password `demo`).
-
-```bash
-mvn spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local,secure-demo"
-```
-
-Verify: `curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/actuator/health` returns 401;
-`curl -s -u demo:demo http://localhost:8080/actuator/health` returns 200 with details. Use `http://localhost:8094`
-when running the full Docker Compose stack. See [Security configuration review](docs/SECURITY_CONFIG_REVIEW.md) for
-full checklist.
-
-### 4. Deploy full stack with Docker Compose (app + docs + database)
-
-Run the application and PostgreSQL in containers with one command:
-
-```bash
-# Build and start all services
-docker compose up -d --build
-
-# Or build images first, then start
-docker compose build
-docker compose up -d
-```
-
-| Service       | URL                   | Description                          |
-|---------------|-----------------------|--------------------------------------|
-| Application   | http://localhost:8094 | MedExpertMatch API and UI            |
-| Documentation | http://localhost:8094/docs | Docs served by the app          |
-| PostgreSQL    | localhost:5433        | Database (user/pass: medexpertmatch) |
-
-Stop and remove containers (data volume is preserved):
-
-```bash
-docker compose down
-```
-
-**Docker stack details:**
-
-- **App image**: BellSoft Liberica OpenJDK 21 (Debian). Same PostgreSQL image (Apache AGE + PgVector) as local dev.
-- **Default env**: DB points to the `postgres` service via host port `5433`; AI endpoints point to a host-local
-  OpenAI-compatible server at `http://127.0.0.1:11434`.
-- **Override AI**: To use a remote API instead of the host-local server, set `CHAT_BASE_URL`, `CHAT_API_KEY`,
-  `EMBEDDING_BASE_URL`, `RERANKING_BASE_URL`, and `TOOL_CALLING_BASE_URL` in `docker-compose.yml` or a `.env` file in
-  the project root.
-
-### AI setup
-
-The application supports independent model configuration per component (`CHAT_MODEL`, `EMBEDDING_MODEL`, etc.).
-Defaults for **no profile** are in [application.yml](src/main/resources/application.yml); the **local** profile uses
-[application-local.yml](src/main/resources/application-local.yml) (see also
-[application-local.yml.sample](src/main/resources/application-local.yml.sample)).
-
-| Role             | Purpose                                                  | Config keys |
-|------------------|----------------------------------------------------------|-------------|
-| **Chat**         | Case analysis, clinical reasoning                        | `CHAT_*`    |
-| **Embedding**    | Vector embeddings for semantic search                  | `EMBEDDING_*`; optional pool in `medexpertmatch.embedding.multi-endpoint` |
-| **Reranking**    | Semantic reranking of matches                            | `RERANKING_*` |
-| **Tool calling** | Agent tool invocations (find specialist, evidence, etc.) | `TOOL_CALLING_*` |
-
-For self-hosted local AI, override the component-specific environment variables:
-
-```bash
-export CHAT_PROVIDER=openai
-export CHAT_BASE_URL=http://127.0.0.1:1234
-export CHAT_API_KEY=local-key
-export CHAT_MODEL=medgemma1.5:4b
-
-export EMBEDDING_PROVIDER=openai
-export EMBEDDING_BASE_URL=http://127.0.0.1:1234
-export EMBEDDING_API_KEY=local-key
-export EMBEDDING_MODEL=text-embedding-nomic-embed-text-v1.5
-export EMBEDDING_DIMENSIONS=768
-
-export RERANKING_PROVIDER=openai
-export RERANKING_BASE_URL=http://127.0.0.1:1234
-export RERANKING_API_KEY=local-key
-export RERANKING_MODEL=medgemma1.5:4b
-
-export TOOL_CALLING_PROVIDER=openai
-export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
-export TOOL_CALLING_API_KEY=local-key
-export TOOL_CALLING_MODEL=functiongemma:270m
-```
-
-See [AI Provider Configuration](docs/AI_PROVIDER_CONFIGURATION.md) for the configuration matrix and
-[MedGemma Setup Guide](docs/MEDGEMMA_SETUP.md) for a self-hosted OpenAI-compatible MedGemma setup.
-
-## Key Features
-
-- **Case Analysis**: Analyze medical cases using MedGemma to extract ICD-10 codes, urgency, and required specialty
-- **Doctor Matching**: Match doctors to cases based on specialty, experience, and similar case outcomes
-- **Evidence Retrieval**: Search clinical guidelines and PubMed for evidence-based recommendations
-- **Clinical Recommendations**: Generate evidence-based clinical recommendations using MedGemma
-- **Agent Skills**: 7 medical-specific Agent Skills for modular knowledge management (see [Agent Skills](#agent-skills))
-- **Hybrid GraphRAG**: Combines vector, graph, and keyword search for optimal matching
-- **Reciprocal Rank Fusion**: Configurable rank-based fusion (k=60, default weighted average)
-- **Semantic Re-ranking**: Configurable re-ranking via `RerankingService` (disabled by default)
-- **Document Ingestion**: PDF, JSONL, JSON, CSV parsing with SHA-256 dedup and adaptive chunking
-- **Evaluation Framework**: 4-metric LLM output evaluation with JDBC persistence, dataset seeding, CLI mode
-- **Structured Output Parsing**: LLM JSON extraction with markdown fence handling
-- **Privacy-First**: Local deployment capability, HIPAA-compliant data handling
-
-## Unique Selling Propositions (USP)
-
-What distinguishes MedExpertMatch from manual processes, simple directories, or generic matching tools:
-
-| USP | One-line claim                                               |
-|-----|--------------------------------------------------------------|
-| 1   | Match in minutes, not days                                   |
-| 2   | "Who is good at what" made visible (graph + analytics)       |
-| 3   | One copilot: analysis + evidence + recommendations + experts |
-| 4   | Three-signal scoring: vector + graph + history               |
-| 5   | Urgent first, not FIFO queue                                 |
-| 6   | Right sub-specialist, not just specialty                     |
-| 7   | Facility matches case complexity (regional routing)          |
-| 8   | Medical-domain AI and agent skills                           |
-| 9   | Privacy-first, local deployment, HIPAA-aware                 |
-| 10  | FHIR and EMR-ready                                           |
-
-Full rationale for each USP: [Unique Selling Propositions](docs/UNIQUE_SELLING_PROPOSITIONS.md).
-
-## Agent Skills
-
-MedExpertMatch provides **Agent Skills** (Claude skills) in `src/main/resources/skills/`. Each skill is a `SKILL.md` file that
-guides AI assistants on when and how to use the application's tools for medical workflows.
-
-| Skill                     | Description                                                                                                 |
-|---------------------------|-------------------------------------------------------------------------------------------------------------|
-| **case-analyzer**         | Analyze medical cases, extract entities, ICD-10 codes, classify urgency and complexity                      |
-| **clinical-advisor**      | Provide differential diagnosis, risk assessment, and clinical advisory services                             |
-| **doctor-matcher**        | Match doctors to cases using vector similarity, graph relationships, and historical performance             |
-| **evidence-retriever**    | Search clinical guidelines, PubMed, and GRADE evidence summaries for evidence-based medicine                |
-| **network-analyzer**      | Network expertise analytics, graph-based expert discovery, and aggregate metrics                            |
-| **recommendation-engine** | Generate clinical recommendations, diagnostic workup, and treatment options from case analysis and evidence |
-| **routing-planner**       | Facility routing optimization, multi-facility scoring, and geographic routing for medical cases             |
-
-**Configuration** (application): Skills are optional. Enable or disable and set the directory in `application.yml` under
-`medexpertmatch.skills` (`enabled`, `directory`). Default directory is `skills` (classpath). Override with
-`MEDEXPERTMATCH_SKILLS_ENABLED` and `MEDEXPERTMATCH_SKILLS_DIRECTORY`.
-
-## Technology Stack
-
-| Component         | Version        |
-|-------------------|----------------|
-| Java              | 21             |
-| Spring Boot       | 4.0.2          |
-| Spring AI         | 2.0.0-M2       |
-| Spring Modulith   | 2.0.2          |
-| PostgreSQL        | 17             |
-| PgVector          | 0.1.4 (client) |
-| Apache AGE        | 1.6.0          |
-| Spring Retry      | 2.0.12         |
-| springdoc-openapi | 2.8.4          |
-| Testcontainers    | 2.0.3          |
-| HAPI FHIR         | 7.0.0          |
-| Maven             | 3.9+           |
+| Feature | Description |
+|---------|-------------|
+| **Case Analysis** | LLM-based medical case analysis with ICD-10 extraction, urgency classification |
+| **Doctor Matching** | Hybrid GraphRAG: vector + graph + historical scoring |
+| **Queue Prioritization** | Urgency-weighted consult queue ordering |
+| **Facility Routing** | Geographic facility routing by case complexity |
+| **Document Search** | Semantic search over ingested medical documents (PDF/JSONL/JSON/CSV) with adaptive chunking |
+| **Network Analytics** | Graph-based expert discovery and aggregate metrics |
+| **Evidence Retrieval** | PubMed clinical evidence search |
+| **Evaluation Framework** | 4-metric LLM output evaluation with JDBC persistence + CLI mode |
+| **Agent Skills** | 7 medical-domain Agent Skills for modular AI workflows |
+| **Observability** | JSON structured logging, trace IDs, Prometheus metrics, Grafana dashboard, health checks |
+| **API Security** | Rate limiting (token bucket, 30 req/min), RFC 7807 error responses, input validation |
 
 ## Architecture
 
-MedExpertMatch uses a modern, scalable architecture:
+```
+src/main/java/.../medexpertmatch/
+├── core/           # Shared infrastructure (config, exception, health, util)
+├── doctor/         # Doctor/MedicalSpecialty entities
+├── medicalcase/    # MedicalCase/CaseType/UrgencyLevel
+├── medicalcoding/  # ICD10Code/Procedure
+├── facility/       # Facility entity
+├── clinicalexperience/  # Doctor-case history
+├── caseanalysis/   # LLM-based case analysis
+├── evidence/       # PubMed clinical evidence
+├── embedding/      # PgVector embeddings + multi-endpoint pool
+├── graph/          # Apache AGE Cypher graph ops
+├── retrieval/      # Hybrid GraphRAG matching/scoring
+├── ingestion/      # FHIR adapters + synthetic data
+├── llm/            # LLM orchestration + Agent Skills
+├── chunking/       # Document chunking strategies
+├── documents/      # Document management + PDF/JSONL parsing
+├── web/            # Thymeleaf SSR web UI
+└── system/         # System health indicators
+```
 
-- **Hybrid GraphRAG**: Vector search + Graph traversal + Keyword search + RRF fusion + Semantic re-ranking
-- **Spring AI Integration**: MedGemma models via Spring AI
-- **Agent Skills**: Medical-specific skills for modular knowledge
-- **PostgreSQL + PgVector + Apache AGE**: Unified database architecture
-- **Document Ingestion**: `documents/` module for PDF/JSONL/JSON/CSV + `chunking/` module for adaptive chunking
+## Technology Stack
+
+| Component | Version |
+|-----------|---------|
+| Java | 21 |
+| Spring Boot | 4.0.2 |
+| Spring AI | 2.0.0-M6 |
+| Spring Modulith | 2.0.2 |
+| PostgreSQL | 17 |
+| PgVector | 0.1.4 |
+| Apache AGE | 1.6.0 |
+| PDFBox | 3.0.3 |
+| Spring Retry | 2.0.12 |
+| springdoc-openapi | 2.8.4 |
+| Testcontainers | 2.0.3 |
+| HAPI FHIR | 7.0.0 |
+
+## Testing
+
+```bash
+mvn test                              # Unit tests (*Test.java)
+mvn verify                            # Integration tests (*IT.java) + package
+mvn test -Dtest=DoctorRepositoryIT    # Single test class
+mvn test jacoco:report                # Coverage report
+```
+
+149 tests pass at HEAD.
+
+## Environment
+
+| Profile | App URL | DB |
+|---------|---------|----|
+| `local` | `http://localhost:8080` | `localhost:5434` |
+| `docker` | `http://localhost:8094` | `localhost:5433` |
+| `test` | Testcontainers | ephemeral |
+
+## API Quick Reference
+
+- Swagger UI: `/swagger-ui.html`
+- OpenAPI spec: `/api/v1/openapi.json`
+- Health: `/actuator/health`
+- Prometheus: `/actuator/prometheus`
+
+Key REST endpoints:
+- `POST /api/v1/agent/match/{caseId}` — Match doctors
+- `POST /api/v1/agent/analyze-case/{caseId}` — Analyze case
+- `POST /api/v1/agent/prioritize-consults` — Prioritize queue
+- `POST /api/v1/agent/route-case/{caseId}` — Route to facility
+- `GET /api/v1/documents/search?q=...&limit=10` — Document search
+- `POST /api/v1/evaluation/run?datasetName=...` — Run evaluation
+
+## Security
+
+- Token-bucket rate limiting on `/api/*` (30 req/min, excluding health endpoints)
+- RFC 7807 Problem Detail error responses (no stack traces exposed)
+- Trace IDs on all requests (`X-Trace-Id` header)
+- PHI sanitization in LLM outputs
+- Input validation on REST controllers
 
 ## Documentation
 
-All technical documentation in this repository is written in **English** (README, `docs/`, OpenAPI descriptions, and
-inline technical comments in code).
+- [Architecture](docs/ARCHITECTURE.md)
+- [Unique Selling Propositions](docs/UNIQUE_SELLING_PROPOSITIONS.md)
+- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
+- [Development Guide](docs/DEVELOPMENT_GUIDE.md)
+- [AI Provider Configuration](docs/AI_PROVIDER_CONFIGURATION.md)
 
-Full documentation is available at: [docs/index.md](docs/index.md)
+## Disclaimers
 
-- **With Docker Compose**: Documentation is served at http://localhost:8094/docs (see "Deploy full stack with Docker Compose"
-  above).
-- **Local MkDocs**: `pip install -r requirements-docs.txt` then `mkdocs serve` (default http://localhost:8000).
-
-## Project Status
-
-**Current Phase**: Feature-rich MVP under refinement (DocuRAG improvements implemented 2026-05-19)
-
-- Challenge analysis completed
-- Architecture and core domain implementation in place
-- Six primary use cases implemented
-- Seven built-in agent skills documented and packaged
-- Hybrid retrieval, graph, and synthetic data capabilities present
-- RRF fusion and semantic re-ranking integrated
-- Document ingestion with adaptive chunking added (PDF, JSONL, JSON, CSV)
-- 4-metric evaluation framework with JDBC persistence and CLI mode
-- Browser auto-launch on local profile
-
-## Important Disclaimers
-
-**Warning: MedGemma is not a medical device**
-
-- Models are not certified for clinical use
-- Additional validation required for real-world deployment
-- Not intended for diagnostic decisions without human-in-the-loop
-- All applications are for research and educational purposes
-
-**HIPAA compliance**
-
-- All patient data must be anonymized
-- Local deployment option for privacy
-- No transmission of PHI without proper safeguards
-
-## Implementation Metrics
-
-- **Source Files**: 197 Java files
-- **Test Files**: 40 Java test files
-- **Agent Tools**: 61 `@Tool` methods
-- **Modules**: 13 top-level domain/application modules
-- **Current Verification**: project compiles successfully with `mvn -q -DskipTests compile`
-
-## Related Links
-
-- [Architecture](docs/ARCHITECTURE.md) - System architecture and design patterns
-- [Unique Selling Propositions](docs/UNIQUE_SELLING_PROPOSITIONS.md) - USPs and rationale
-- [Project Status](#project-status) - Current implementation status and headline metrics
-- [Implementation Plan](docs/IMPLEMENTATION_PLAN.md) - Phase-by-phase implementation guide
-- [DEVELOPMENT GUIDE](docs/DEVELOPMENT_GUIDE.md)
+**Not a medical device.** All applications are for research and educational purposes. Not intended for diagnostic decisions without human-in-the-loop verification. All patient data must be anonymized.
 
 ## License
 
-[MIT License](LICENSE.md)
-
-Copyright (c) 2025 Siarhei Berdachuk
+[MIT License](LICENSE.md) — Copyright (c) 2025 Siarhei Berdachuk
 
 ---
 
-*Last updated: 2026-03-27*
+*Last updated: 2026-05-21*

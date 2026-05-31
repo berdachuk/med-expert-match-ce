@@ -1,0 +1,52 @@
+.chat-markdown pre {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+    overflow-x: auto;
+}
+
+.chat-markdown code {
+    font-size: 0.875em;
+}
+
+.chat-markdown table {
+    font-size: 0.875rem;
+}
+
+#agentActivityPanel {
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+}
+
+#agentActivitySummary {
+    cursor: pointer;
+}
+
+.agent-activity-entry {
+    border-left: 3px solid #0d6efd;
+    padding-left: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.agent-activity-entry.tool,
+.agent-activity-entry.tool_call {
+    border-left-color: #6f42c1;
+}
+
+.agent-activity-entry.reasoning {
+    border-left-color: #fd7e14;
+}
+
+.agent-activity-entry.todo,
+.agent-activity-entry.plan {
+    border-left-color: #0dcaf0;
+}
+
+.agent-activity-entry.done {
+    border-left-color: #198754;
+}
+
+.chat-streaming .chat-markdown {
+    min-height: 1.5rem;
+    white-space: pre-wrap;
+}

@@ -163,6 +163,12 @@ public class EmbeddingGeneratorServiceImpl implements EmbeddingGeneratorService 
             return;
         }
 
+        if (progress != null && totalRecords > 0) {
+            int starting = processedCount.get();
+            progress.updateProgress(70 + (starting * 20 / totalRecords), "Embeddings",
+                    String.format("Generating embeddings: %d/%d started...", starting, totalRecords));
+        }
+
         try {
             long embeddingStartTime = System.currentTimeMillis();
             List<List<Double>> embeddings = embeddingService.generateEmbeddingsForMedicalCases(batch);
@@ -187,7 +193,10 @@ public class EmbeddingGeneratorServiceImpl implements EmbeddingGeneratorService 
                 failedCount.addAndGet(batchFailed);
             }
 
-            if (currentProcessed % progressUpdateInterval == 0 || currentProcessed == totalRecords) {
+            if (progressUpdateInterval <= 0
+                    || currentProcessed % progressUpdateInterval == 0
+                    || currentProcessed == totalRecords
+                    || totalRecords <= progressUpdateInterval) {
                 long currentTime = System.currentTimeMillis();
                 long elapsedTime = currentTime - startTime;
                 double itemsPerSecond = (currentProcessed * 1000.0) / elapsedTime;
@@ -211,6 +220,10 @@ public class EmbeddingGeneratorServiceImpl implements EmbeddingGeneratorService 
         } catch (Exception e) {
             failedCount.addAndGet(batch.size());
             log.error("Error during batch embedding generation for {} cases", batch.size(), e);
+            if (progress != null) {
+                progress.updateProgress(70, "Embeddings",
+                        "Embedding generation failed: " + e.getMessage());
+            }
         }
     }
 }

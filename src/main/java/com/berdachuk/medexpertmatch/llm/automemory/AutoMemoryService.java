@@ -1,7 +1,9 @@
 package com.berdachuk.medexpertmatch.llm.automemory;
 
+import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
 import com.berdachuk.medexpertmatch.llm.config.AgentMemoryProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.Set;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "medexpertmatch.skills.enabled", havingValue = "true", matchIfMissing = true)
 public class AutoMemoryService {
 
     private static final Set<String> VALID_TYPES = Set.of("user", "feedback", "project", "reference");

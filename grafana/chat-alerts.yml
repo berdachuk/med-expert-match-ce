@@ -1,0 +1,82 @@
+# Prometheus alert rules for chat operations (M22)
+# Mirrors docs/grafana-chat-alerts.md — import into Grafana or Prometheus rule files.
+
+groups:
+  - name: medexpertmatch-chat
+    rules:
+      - alert: ChatRateLimitSpike
+        expr: sum(rate(chat_rate_limited_total[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Elevated chat SSE rate limiting
+          description: More than 0.5 chat turns/sec are being rejected (429). Check abuse or lower tier limits.
+
+      - alert: ChatRateLimitSpikeDefault
+        expr: rate(chat_rate_limited_total{tier="DEFAULT"}[5m]) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Elevated DEFAULT tier chat/A2A rate limiting
+
+      - alert: ChatRateLimitSpikeHigh
+        expr: rate(chat_rate_limited_total{tier="HIGH"}[5m]) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Elevated HIGH tier chat/A2A rate limiting
+
+      - alert: ChatStreamErrors
+        expr: rate(chat_stream_errors_total[5m]) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Chat SSE stream errors elevated
+
+      - alert: ChatExportBurst
+        expr: rate(chat_export_count_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: Unusual chat export volume
+          description: Review audit_log CHAT_EXPORT entries (hashed ids only).
+
+      - alert: ChatRetentionPurgeFailure
+        expr: increase(chat_retention_failures_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: Chat retention purge failed
+          description: Inspect application logs and chat.retention.failures metric; purge may need manual intervention.
+
+      - alert: ChatRateLimitScopeImbalance
+        expr: |
+          rate(chat_rate_limited_total{scope="A2A"}[5m]) > 3
+          and rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m]) > 0.05
+          and rate(chat_rate_limited_total{scope="A2A"}[5m])
+            > 3 * rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m])
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: A2A rate limiting dominates chat SSE
+          description: Federation clients may be misconfigured or abusing A2A endpoints; compare scoped buckets in runbook.
+
+      - alert: ChatRateLimitScopeImbalanceSse
+        expr: |
+          rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m]) > 3
+          and rate(chat_rate_limited_total{scope="A2A"}[5m]) > 0.05
+          and rate(chat_rate_limited_total{scope="CHAT_SSE"}[5m])
+            > 3 * rate(chat_rate_limited_total{scope="A2A"}[5m])
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: Chat SSE rate limiting dominates A2A
+          description: UI chat traffic may be starved or mis-tiered; review session token tiers and scoped limits.

@@ -43,8 +43,10 @@ public class EmbeddingEndpointPoolConfig {
                 continue;
             }
 
+            String baseUrl = normalizeOpenAiBaseUrl(ep.getUrl());
+
             OpenAiEmbeddingOptions.Builder optionsBuilder = OpenAiEmbeddingOptions.builder()
-                    .baseUrl(ep.getUrl())
+                    .baseUrl(baseUrl)
                     .apiKey(embeddingApiKey != null ? embeddingApiKey : "");
             if (ep.getModel() != null && !ep.getModel().isBlank()) {
                 optionsBuilder.model(ep.getModel());
@@ -59,12 +61,12 @@ public class EmbeddingEndpointPoolConfig {
 
             OpenAiEmbeddingModel model = new OpenAiEmbeddingModel(MetadataMode.EMBED, optionsBuilder.build());
 
-            EndpointState state = new EndpointState(ep.getUrl(), ep.getModel(), model);
+            EndpointState state = new EndpointState(baseUrl, ep.getModel(), model);
             endpointStates.add(state);
             int workers = ep.getWorkers() != null ? ep.getWorkers() : properties.getWorkerPerEndpoint();
             workersPerEndpoint.add(Math.max(1, workers));
             log.info("Multi-endpoint: added embedding endpoint {} with model {} (priority={}, workers={})",
-                    ep.getUrl(), ep.getModel(), ep.getPriority(), workers);
+                    baseUrl, ep.getModel(), ep.getPriority(), workers);
         }
 
         if (endpointStates.isEmpty()) {
@@ -78,5 +80,20 @@ public class EmbeddingEndpointPoolConfig {
                 workersPerEndpoint,
                 properties.getSkipDurationMin(),
                 properties.getApiBatchSize());
+    }
+
+    /** OpenAI-compatible APIs (Ollama, LM Studio) require a /v1 base path. */
+    static String normalizeOpenAiBaseUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return url;
+        }
+        String normalized = url.trim();
+        while (normalized.endsWith("/")) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        if (!normalized.endsWith("/v1")) {
+            normalized = normalized + "/v1";
+        }
+        return normalized;
     }
 }

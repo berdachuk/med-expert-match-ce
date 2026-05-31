@@ -42,7 +42,7 @@ logging:
     com.berdachuk.medexpertmatch.embedding.multiendpoint: INFO
     com.berdachuk.medexpertmatch.embedding.config: INFO
     org.springframework.web.client.RestClient: DEBUG
-    org.springframework.ai.openai.api.OpenAiApi: DEBUG
+    org.springframework.ai.openai: DEBUG
     org.springframework.http.client: DEBUG
     org.springframework.ai.chat.client: DEBUG
     org.springframework.ai.chat.client.advisor: DEBUG

@@ -342,9 +342,10 @@ public class SyntheticDataGenerationServiceImpl implements SyntheticDataGenerati
                         .distinct()
                         .limit(targetCount)
                         .collect(Collectors.toList());
+                int neededFromDb = Math.max(0, targetCount - catalogState.getLoadedProcedures().size());
                 List<String> additionalProcedures = procedureNames.stream()
                         .filter(proc -> !catalogState.getLoadedProcedures().contains(proc))
-                        .limit(targetCount - catalogState.getLoadedProcedures().size())
+                        .limit(neededFromDb)
                         .collect(Collectors.toList());
                 catalogState.getCachedProcedures().put(size, new ArrayList<>(additionalProcedures));
                 Set<String> extendedProceduresSet = new LinkedHashSet<>(catalogState.getLoadedProcedures());

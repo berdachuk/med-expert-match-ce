@@ -2,7 +2,6 @@ package com.berdachuk.medexpertmatch.llm.automemory;
 
 import com.berdachuk.medexpertmatch.llm.config.AgentMemoryProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -18,7 +17,6 @@ import java.util.function.Supplier;
  * clock is injected so the predicate is deterministically unit-testable without real sleeping.
  */
 @Slf4j
-@Component
 public class TimeGapConsolidationTrigger implements MemoryConsolidationTrigger {
 
     private final Duration gap;
@@ -29,10 +27,14 @@ public class TimeGapConsolidationTrigger implements MemoryConsolidationTrigger {
         this(properties, Instant::now);
     }
 
-    TimeGapConsolidationTrigger(AgentMemoryProperties properties, Supplier<Instant> clock) {
+    private TimeGapConsolidationTrigger(AgentMemoryProperties properties, Supplier<Instant> clock) {
         this.gap = Duration.ofSeconds(properties.consolidation().gapSeconds());
         this.clock = clock;
         this.lastActivity.set(clock.get());
+    }
+
+    static TimeGapConsolidationTrigger withClock(AgentMemoryProperties properties, Supplier<Instant> clock) {
+        return new TimeGapConsolidationTrigger(properties, clock);
     }
 
     @Override

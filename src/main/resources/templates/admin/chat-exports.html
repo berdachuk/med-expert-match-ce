@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Chat Export Audit</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Chat Export Audit</h1>
+
+            <div class="alert alert-danger d-none" id="errorAlert" role="alert"></div>
+
+            <div class="card mb-3">
+                <div class="card-body row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label" for="actionFilter">Action</label>
+                        <select class="form-select" id="actionFilter">
+                            <option value="">All export actions</option>
+                            <option value="CHAT_EXPORT">CHAT_EXPORT</option>
+                            <option value="CHAT_EXPORT_BUNDLE">CHAT_EXPORT_BUNDLE</option>
+                            <option value="CHAT_DATA_DELETE">CHAT_DATA_DELETE</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" id="refreshButton" type="button">Refresh</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Resource Hash</th>
+                            <th>Actor Hash</th>
+                            <th>Details</th>
+                        </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                        <tr>
+                            <td class="text-muted" colspan="5">Loading…</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+<script>
+    (function () {
+        function loadAudits() {
+            const action = document.getElementById('actionFilter').value;
+            let url = '/api/v1/admin/audit/chat-exports?limit=100';
+            if (action) {
+                url += '&action=' + encodeURIComponent(action);
+            }
+            fetch(url, {headers: {'Content-Type': 'application/json'}})
+                .then(function (response) {
+                    if (!response.ok) throw new Error('Failed to load audit entries');
+                    return response.json();
+                })
+                .then(function (rows) {
+                    const tbody = document.getElementById('auditTableBody');
+                    tbody.innerHTML = '';
+                    if (!rows.length) {
+                        tbody.innerHTML = '<tr><td class="text-muted" colspan="5">No audit entries</td></tr>';
+                        return;
+                    }
+                    rows.forEach(function (row) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = '<td>' + (row.createdAt || '') + '</td>'
+                            + '<td><code>' + row.action + '</code></td>'
+                            + '<td><code class="small">' + row.resourceIdHash + '</code></td>'
+                            + '<td><code class="small">' + row.actorHash + '</code></td>'
+                            + '<td class="small"><pre class="mb-0">' + JSON.stringify(row.details || {}, null, 0) + '</pre></td>';
+                        tbody.appendChild(tr);
+                    });
+                })
+                .catch(function (err) {
+                    document.getElementById('errorAlert').textContent = err.message;
+                    document.getElementById('errorAlert').classList.remove('d-none');
+                });
+        }
+
+        document.getElementById('refreshButton').addEventListener('click', loadAudits);
+        document.getElementById('actionFilter').addEventListener('change', loadAudits);
+        loadAudits();
+    })();
+</script>
+</body>
+</html>

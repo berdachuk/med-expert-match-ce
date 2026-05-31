@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Session Tokens</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">API Session Tokens</h1>
+
+            <div class="alert alert-success d-none" id="successAlert" role="alert"></div>
+            <div class="alert alert-danger d-none" id="errorAlert" role="alert"></div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Create Token</h5>
+                </div>
+                <div class="card-body">
+                    <form id="createTokenForm" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="description">Description</label>
+                            <input class="form-control" id="description" name="description" type="text"
+                                   placeholder="Integration partner key">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="rateLimitTier">Rate Limit Tier</label>
+                            <select class="form-select" id="rateLimitTier" name="rateLimitTier">
+                                <option value="DEFAULT">DEFAULT</option>
+                                <option value="HIGH">HIGH</option>
+                                <option value="UNLIMITED">UNLIMITED</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button class="btn btn-primary" type="submit">Create Token</button>
+                        </div>
+                    </form>
+                    <div class="alert alert-warning mt-3 d-none" id="createdKeyAlert" role="alert">
+                        <strong>New API key (shown once):</strong>
+                        <code id="createdKeyValue"></code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Active Tokens</h5>
+                    <button class="btn btn-sm btn-outline-secondary" id="refreshButton" type="button">Refresh</button>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Description</th>
+                            <th>Masked Key</th>
+                            <th>Tier</th>
+                            <th>Expires</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+                        <tbody id="tokenTableBody">
+                        <tr th:each="token : ${tokens}"
+                            th:classappend="${token.expiresAt() != null and token.expiresAt().isBefore(T(java.time.Instant).now().plusSeconds(expiryWarningDays * 86400L))} ? 'table-warning' : ''">
+                            <td th:text="${token.id()}">id</td>
+                            <td th:text="${token.description()}">desc</td>
+                            <td><code th:text="${token.apiKeyPrefix()}">key</code></td>
+                            <td th:text="${token.rateLimitTier()}">DEFAULT</td>
+                            <td>
+                                <span th:text="${token.expiresAt() != null ? token.expiresAt() : '—'}">—</span>
+                                <span class="badge text-bg-warning ms-1"
+                                      th:if="${token.expiresAt() != null and token.expiresAt().isBefore(T(java.time.Instant).now().plusSeconds(expiryWarningDays * 86400L))}">Expires soon</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger revoke-btn" th:data-token-id="${token.id()}"
+                                        type="button">Revoke</button>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(tokens)}">
+                            <td class="text-muted" colspan="6">No session tokens</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+<script>
+    (function () {
+        const adminHeaders = {'Content-Type': 'application/json'};
+        const expiryWarningDays = 7;
+
+        function isExpiringSoon(expiresAt) {
+            if (!expiresAt) return false;
+            var exp = new Date(expiresAt);
+            var warn = new Date();
+            warn.setDate(warn.getDate() + expiryWarningDays);
+            return exp <= warn;
+        }
+
+        function showAlert(id, message) {
+            const el = document.getElementById(id);
+            el.textContent = message;
+            el.classList.remove('d-none');
+        }
+
+        function hideAlerts() {
+            ['successAlert', 'errorAlert'].forEach(function (id) {
+                document.getElementById(id).classList.add('d-none');
+            });
+        }
+
+        function reloadTokens() {
+            fetch('/api/v1/admin/session-tokens', {headers: adminHeaders})
+                .then(function (response) {
+                    if (!response.ok) throw new Error('Failed to load tokens');
+                    return response.json();
+                })
+                .then(function (tokens) {
+                    const tbody = document.getElementById('tokenTableBody');
+                    tbody.innerHTML = '';
+                    if (!tokens.length) {
+                        tbody.innerHTML = '<tr><td class="text-muted" colspan="6">No session tokens</td></tr>';
+                        return;
+                    }
+                    tokens.forEach(function (token) {
+                        const row = document.createElement('tr');
+                        if (isExpiringSoon(token.expiresAt)) {
+                            row.className = 'table-warning';
+                        }
+                        var expiryCell = (token.expiresAt || '—');
+                        if (isExpiringSoon(token.expiresAt)) {
+                            expiryCell += ' <span class="badge text-bg-warning ms-1">Expires soon</span>';
+                        }
+                        row.innerHTML = '<td>' + token.id + '</td>'
+                            + '<td>' + (token.description || '') + '</td>'
+                            + '<td><code>' + token.apiKeyPrefix + '</code></td>'
+                            + '<td>' + token.rateLimitTier + '</td>'
+                            + '<td>' + expiryCell + '</td>'
+                            + '<td><button class="btn btn-sm btn-outline-danger revoke-btn" data-token-id="'
+                            + token.id + '" type="button">Revoke</button></td>';
+                        tbody.appendChild(row);
+                    });
+                    bindRevokeButtons();
+                })
+                .catch(function (err) {
+                    showAlert('errorAlert', err.message);
+                });
+        }
+
+        function bindRevokeButtons() {
+            document.querySelectorAll('.revoke-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    const tokenId = btn.getAttribute('data-token-id');
+                    fetch('/api/v1/admin/session-tokens/' + encodeURIComponent(tokenId), {
+                        method: 'DELETE',
+                        headers: adminHeaders
+                    }).then(function (response) {
+                        if (!response.ok) throw new Error('Revoke failed');
+                        hideAlerts();
+                        showAlert('successAlert', 'Token revoked');
+                        reloadTokens();
+                    }).catch(function (err) {
+                        showAlert('errorAlert', err.message);
+                    });
+                };
+            });
+        }
+
+        document.getElementById('createTokenForm').addEventListener('submit', function (event) {
+            event.preventDefault();
+            hideAlerts();
+            document.getElementById('createdKeyAlert').classList.add('d-none');
+            const body = {
+                description: document.getElementById('description').value,
+                rateLimitTier: document.getElementById('rateLimitTier').value
+            };
+            fetch('/api/v1/admin/session-tokens', {
+                method: 'POST',
+                headers: adminHeaders,
+                body: JSON.stringify(body)
+            }).then(function (response) {
+                if (!response.ok) throw new Error('Create failed');
+                return response.json();
+            }).then(function (created) {
+                showAlert('successAlert', 'Token created');
+                document.getElementById('createdKeyValue').textContent = created.apiKey;
+                document.getElementById('createdKeyAlert').classList.remove('d-none');
+                reloadTokens();
+            }).catch(function (err) {
+                showAlert('errorAlert', err.message);
+            });
+        });
+
+        document.getElementById('refreshButton').addEventListener('click', reloadTokens);
+        bindRevokeButtons();
+    })();
+</script>
+</body>
+</html>

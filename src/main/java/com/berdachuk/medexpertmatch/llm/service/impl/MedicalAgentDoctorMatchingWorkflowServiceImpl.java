@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentDoctorMatchingWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -11,7 +12,6 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,7 +55,6 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
         logStreamService.setCurrentSessionId(sessionId);
         OrchestrationContextHolder.setSessionId(sessionId);
 
-        String response;
         try {
             logStreamService.logMatchDoctorsStep(sessionId, "Starting match doctors operation", "Case ID: " + caseId);
             logStreamService.sendProgress(sessionId, 5);
@@ -68,40 +67,42 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
 
             logStreamService.sendProgress(sessionId, 45);
             Integer maxResults = (Integer) request.getOrDefault("maxResults", 10);
-            List<DoctorMatch> matches = medicalAgentTools.match_doctors_to_case(caseId, maxResults, null, null, null);
+            List<DoctorMatch> matches =
+                    medicalAgentTools.match_doctors_to_case(caseId, maxResults, null, null, null);
             String jsonResponse = objectMapper.writeValueAsString(matches);
             logStreamService.sendProgress(sessionId, 55);
 
             Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
             logStreamService.sendLog(sessionId, "INFO", "Step 3: LLM result interpretation", "Interpreting tool results with LLM");
             logStreamService.sendProgress(sessionId, 65);
-            response = medicalAgentLlmSupportService.interpretResultsWithMedGemma(jsonResponse, caseAnalysisJson, patientAge);
+            String response = medicalAgentLlmSupportService.interpretResultsWithMedGemma(jsonResponse, caseAnalysisJson, patientAge);
             logStreamService.sendLog(sessionId, "INFO", "LLM interpretation complete", "Final response generated");
             logStreamService.sendProgress(sessionId, 85);
+
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("caseId", caseId);
+            metadata.put("skills", List.of("case-analyzer", "doctor-matcher"));
+            metadata.put("hybridApproach", true);
+            metadata.put("llmUsed", true);
+            metadata.put("toolLlmUsed", false);
+            metadata.put("matchCount", matches.size());
+
+            logStreamService.sendProgress(sessionId, 100);
+            logStreamService.logCompletion(sessionId, "Match doctors operation",
+                    "Successfully matched doctors for case: " + caseId + " (" + matches.size() + " matches)");
+
+            return new MedicalAgentService.AgentResponse(response, metadata);
+        } catch (AgentExecutionException e) {
+            log.error("LLM error in matchDoctors for case {}", caseId, e);
+            logStreamService.logError(sessionId, "Match doctors operation failed", e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("Error in matchDoctors", e);
-            logStreamService.logError(sessionId, "Unexpected error", e.getMessage() + "\n" + ExceptionUtils.getStackTrace(e));
-            try {
-                String caseAnalysis = medicalAgentLlmSupportService.analyzeCaseWithMedGemma(caseId);
-                response = "Error during tool execution, but case analysis completed:\n\n" + caseAnalysis;
-            } catch (Exception analysisError) {
-                log.error("Could not get case analysis on error", analysisError);
-                response = "Error during match operation. Please check logs for details.";
-            }
+            logStreamService.logError(sessionId, "Match doctors operation failed", e.getMessage());
+            throw new AgentExecutionException("Match doctors operation failed: " + e.getMessage(), e);
+        } finally {
+            OrchestrationContextHolder.clear();
+            logStreamService.clearCurrentSessionId();
         }
-
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("caseId", caseId);
-        metadata.put("skills", List.of("case-analyzer", "doctor-matcher"));
-        metadata.put("hybridApproach", true);
-        metadata.put("llmUsed", true);
-        metadata.put("toolLlmUsed", false);
-
-        logStreamService.sendProgress(sessionId, 100);
-        logStreamService.logCompletion(sessionId, "Match doctors operation", "Successfully matched doctors for case: " + caseId);
-        OrchestrationContextHolder.clear();
-        logStreamService.clearCurrentSessionId();
-
-        return new MedicalAgentService.AgentResponse(response, metadata);
     }
 }

@@ -1,0 +1,113 @@
+# Production Docker Compose — full stack with resource limits and health checks.
+# The app runs in bridge mode (not host) so LLM endpoints must be network-reachable.
+# Usage: docker compose -f docker-compose.prod.yml up -d
+# App: http://<server>:8094  Docs: http://<server>:8094/docs  DB: internal (not exposed)
+
+services:
+  postgres:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dev
+    image: medexpertmatch-postgres:latest
+    container_name: medexpertmatch-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-medexpertmatch}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-medexpertmatch}
+      POSTGRES_DB: ${POSTGRES_DB:-medexpertmatch}
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - medexpertmatch-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medexpertmatch} -d ${POSTGRES_DB:-medexpertmatch}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: "2g"
+        reservations:
+          cpus: "0.5"
+          memory: "512m"
+    networks:
+      - medexpertmatch-prod-network
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    image: medexpertmatch-app:latest
+    container_name: medexpertmatch-app
+    ports:
+      - "${APP_PORT:-8094}:${APP_PORT:-8094}"
+    volumes:
+      - ${APP_LOG_DIR:-./logs}:/app/logs
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-medexpertmatch}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-medexpertmatch}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-medexpertmatch}
+      SERVER_PORT: "${APP_PORT:-8094}"
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-openai}
+      CHAT_BASE_URL: ${CHAT_BASE_URL}
+      CHAT_API_KEY: ${CHAT_API_KEY}
+      CHAT_MODEL: ${CHAT_MODEL:-medgemma1.5:4b}
+      CHAT_TEMPERATURE: "${CHAT_TEMPERATURE:-0.7}"
+      CHAT_MAX_TOKENS: "${CHAT_MAX_TOKENS:-6000}"
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text:v1.5}
+      EMBEDDING_DIMENSIONS: "${EMBEDDING_DIMENSIONS:-768}"
+      RERANKING_PROVIDER: ${RERANKING_PROVIDER:-openai}
+      RERANKING_BASE_URL: ${RERANKING_BASE_URL:-${CHAT_BASE_URL}}
+      RERANKING_API_KEY: ${RERANKING_API_KEY:-${CHAT_API_KEY}}
+      RERANKING_MODEL: ${RERANKING_MODEL:-medgemma1.5:4b}
+      RERANKING_TEMPERATURE: "${RERANKING_TEMPERATURE:-0.1}"
+      TOOL_CALLING_PROVIDER: ${TOOL_CALLING_PROVIDER:-openai}
+      TOOL_CALLING_BASE_URL: ${TOOL_CALLING_BASE_URL:-${CHAT_BASE_URL}}
+      TOOL_CALLING_API_KEY: ${TOOL_CALLING_API_KEY:-${CHAT_API_KEY}}
+      TOOL_CALLING_MODEL: ${TOOL_CALLING_MODEL:-functiongemma:270m}
+      TOOL_CALLING_TEMPERATURE: "${TOOL_CALLING_TEMPERATURE:-0.7}"
+      TOOL_CALLING_MAX_TOKENS: "${TOOL_CALLING_MAX_TOKENS:-4096}"
+      MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS: "${LLM_CONCURRENT_CALLS:-1}"
+      MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS: "${LLM_CONCURRENT_CALLS:-1}"
+      MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS: "${LLM_CONCURRENT_CALLS:-1}"
+      MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS: "${LLM_CONCURRENT_CALLS:-1}"
+      MEDEXPERTMATCH_SKILLS_ENABLED: "${SKILLS_ENABLED:-true}"
+      MEDEXPERTMATCH_SKILLS_DIRECTORY: "${SKILLS_DIRECTORY:-skills}"
+      MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY: "/app/skills"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${APP_PORT:-8094}/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: "4g"
+        reservations:
+          cpus: "1.0"
+          memory: "1g"
+    networks:
+      - medexpertmatch-prod-network
+
+volumes:
+  medexpertmatch-postgres-data:
+
+networks:
+  medexpertmatch-prod-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24

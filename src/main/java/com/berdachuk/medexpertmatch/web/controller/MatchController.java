@@ -4,6 +4,7 @@ import com.berdachuk.medexpertmatch.llm.rest.MedicalAgentController;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -73,6 +74,12 @@ public class MatchController {
         return "match";
     }
 
+    @PostMapping({"", "/"})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<Void> matchDoctorsMissingCaseId() {
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping("/{caseId}")
     public String matchDoctors(
             @PathVariable String caseId,
@@ -122,7 +129,7 @@ public class MatchController {
                 errorMessage = errorMessage.substring(0, 500) + "...";
             }
             model.addAttribute("error", "Failed to match doctors: " + (errorMessage != null ? errorMessage : e.getClass().getSimpleName()));
-            model.addAttribute("matchResult", null);
+            model.addAttribute("matchResult", "No match results available for this case.");
         }
 
         // Get available cases for selection (needed for the form)

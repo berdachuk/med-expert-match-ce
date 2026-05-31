@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service;
 
+import com.berdachuk.medexpertmatch.core.service.JobStatusWebSocketPublisher;
 import com.berdachuk.medexpertmatch.llm.domain.RouteJobStatus;
 
 import org.springframework.stereotype.Service;
@@ -15,7 +16,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RouteJobStore {
 
     private final Map<String, RouteJobStatus> jobs = new ConcurrentHashMap<>();
+    private final JobStatusWebSocketPublisher jobStatusWebSocketPublisher;
     private static final int MAX_JOBS = 100;
+
+    public RouteJobStore(JobStatusWebSocketPublisher jobStatusWebSocketPublisher) {
+        this.jobStatusWebSocketPublisher = jobStatusWebSocketPublisher;
+    }
 
     public String createJob() {
         String jobId = "route-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
@@ -25,15 +31,51 @@ public class RouteJobStore {
     }
 
     public void completeJob(String jobId, MedicalAgentService.AgentResponse result) {
-        jobs.put(jobId, RouteJobStatus.completed(jobId, result));
+        RouteJobStatus status = RouteJobStatus.completed(jobId, result);
+        jobs.put(jobId, status);
+        jobStatusWebSocketPublisher.publish(jobId, status);
     }
 
     public void failJob(String jobId, String errorMessage) {
-        jobs.put(jobId, RouteJobStatus.failed(jobId, errorMessage));
+        RouteJobStatus status = RouteJobStatus.failed(jobId, errorMessage);
+        jobs.put(jobId, status);
+        jobStatusWebSocketPublisher.publish(jobId, status);
     }
 
     public RouteJobStatus getStatus(String jobId) {
         return jobs.get(jobId);
+    }
+
+    public int purgeExpired(int completedFailedTtlMinutes, int pendingTtlMinutes) {
+        long now = System.currentTimeMillis();
+        long completedFailedCutoff = now - (long) completedFailedTtlMinutes * 60 * 1000;
+        long pendingCutoff = now - (long) pendingTtlMinutes * 60 * 1000;
+
+        int purged = jobs.size();
+        jobs.entrySet().removeIf(entry -> {
+            long jobTimestamp = extractTimestamp(entry.getKey());
+            if (jobTimestamp < 0) return false;
+            String status = entry.getValue().status();
+            if (RouteJobStatus.COMPLETED.equals(status) || RouteJobStatus.FAILED.equals(status)) {
+                return jobTimestamp < completedFailedCutoff;
+            }
+            if (RouteJobStatus.PENDING.equals(status)) {
+                return jobTimestamp < pendingCutoff;
+            }
+            return false;
+        });
+        return purged - jobs.size();
+    }
+
+    private long extractTimestamp(String jobId) {
+        int firstDash = jobId.indexOf('-');
+        int secondDash = jobId.indexOf('-', firstDash + 1);
+        if (secondDash < 0) return -1;
+        try {
+            return Long.parseLong(jobId.substring(firstDash + 1, secondDash));
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
     private void evictOldJobs() {

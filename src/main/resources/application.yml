@@ -39,15 +39,21 @@ spring:
     password: ${MEDEXPERTMATCH_DB_PASSWORD:medexpertmatch}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
+      maximum-pool-size: 20
+      minimum-idle: 10
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      leak-detection-threshold: ${HIKARI_LEAK_DETECTION_MS:10000}
       connection-init-sql: SET search_path = public, medexpertmatch;
   jdbc:
     template:
       fetch-size: 100
   jackson:
     time-zone: UTC
+  messages:
+    basename: i18n/messages
+    encoding: UTF-8
   flyway:
     baseline-on-migrate: true
     baseline-version: 0
@@ -93,9 +99,21 @@ spring:
       pgvector:
         index-type: HNSW
         distance-type: COSINE_DISTANCE
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 server:
   port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  max-http-request-header-size: 8KB
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,application/json,application/problem+json
+    min-response-size: 1024
   error:
     include-message: always
     include-binding-errors: always
@@ -110,11 +128,15 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
   endpoint:
     health:
       show-details: always
       show-components: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
 
 springdoc:
   api-docs:
@@ -130,6 +152,12 @@ springdoc:
 
 # Application-specific settings
 medexpertmatch:
+  features:
+    document-ingestion: ${MEDEXPERTMATCH_FEATURES_DOCUMENT_INGESTION:true}
+    graph-rag: ${MEDEXPERTMATCH_FEATURES_GRAPH_RAG:true}
+    agent-skills: ${MEDEXPERTMATCH_FEATURES_AGENT_SKILLS:true}
+    evaluation: ${MEDEXPERTMATCH_FEATURES_EVALUATION:true}
+    semantic-reranking: ${MEDEXPERTMATCH_FEATURES_SEMANTIC_RERANKING:true}
   skills: # Agent skills (SKILL.md); set enabled: false to use plain ChatClient
     enabled: ${MEDEXPERTMATCH_SKILLS_ENABLED:true}
     directory: ${MEDEXPERTMATCH_SKILLS_DIRECTORY:skills}
@@ -225,6 +253,17 @@ medexpertmatch:
       default-strategy: ${MEDEXPERTMATCH_DOCUMENTS_CHUNKING_STRATEGY:adaptive}
       chunk-size: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_SIZE:512}
       chunk-overlap: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_OVERLAP:64}
+  auth:
+    enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:false}
+    api-keys: ${MEDEXPERTMATCH_AUTH_API_KEYS:}
+    session-tokens:
+      enabled: ${MEDEXPERTMATCH_SESSION_TOKEN_AUTH:false}
+
+chat:
+  retention:
+    idle-days: ${CHAT_RETENTION_IDLE_DAYS:0}
+    batch-size: ${CHAT_RETENTION_BATCH_SIZE:100}
+    cron: ${CHAT_RETENTION_CRON:0 0 3 * * *}
 
 logging:
   level:
@@ -233,7 +272,7 @@ logging:
     com.berdachuk.medexpertmatch.embedding.multiendpoint: INFO
     com.berdachuk.medexpertmatch.embedding.config: INFO
     org.springframework.web.client.RestClient: INFO
-    org.springframework.ai.openai.api.OpenAiApi: INFO
+    org.springframework.ai.openai: INFO
     org.springframework.http.client: INFO
     org.springframework.ai.chat.client: INFO
     org.springframework.ai.chat.client.advisor: INFO
@@ -244,9 +283,4 @@ logging:
     org.springframework.security: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-  file:
-    name: logs/med-expert-match.log
-    max-size: 10MB
-    max-history: 30
-
 

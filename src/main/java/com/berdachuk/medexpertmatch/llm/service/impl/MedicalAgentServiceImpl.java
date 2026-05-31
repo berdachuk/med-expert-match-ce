@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.service.MedicalAgentRecommendationWorkfl
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentRoutingWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -62,6 +63,7 @@ public class MedicalAgentServiceImpl implements MedicalAgentService {
     }
 
     @Override
+    @Cacheable(value = "caseAnalysis", key = "#caseId")
     public AgentResponse analyzeCase(String caseId, Map<String, Object> request) {
         return caseAnalysisWorkflowService.analyzeCase(caseId, request);
     }

@@ -44,7 +44,7 @@ public class EvalCliRunner implements ApplicationRunner {
 
         log.info("Starting evaluation: dataset={}, semanticThreshold={}", dataset, threshold);
         String report = evaluationService.run(dataset, threshold);
-        System.out.println(report);
+        log.info("Evaluation report:\n{}", report);
         log.info("Evaluation complete");
 
         int exitCode = SpringApplication.exit(context, () -> 0);

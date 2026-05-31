@@ -18,7 +18,10 @@ logs/
 __pycache__/
 *.pyc
 
-# Local config (not for image)
+# Local config (not for image — use .env + docker-compose env for containers)
+**/application-local.yml
+**/application-local*.yml
+**/application-local *.yml
 *.local.yml
 
 # OS and misc

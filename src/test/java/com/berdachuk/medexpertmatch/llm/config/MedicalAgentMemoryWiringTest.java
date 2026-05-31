@@ -13,8 +13,14 @@ import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.ai.session.compaction.CompactionStrategy;
 import org.springframework.ai.session.compaction.CompactionTrigger;
+import org.springaicommunity.agent.tools.TodoWriteTool;
+import org.springaicommunity.agent.tools.AskUserQuestionTool;
+import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
+import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.core.io.DefaultResourceLoader;
+import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
+import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 
 import java.nio.file.Path;
 
@@ -45,13 +51,21 @@ class MedicalAgentMemoryWiringTest {
                 .compactionTrigger(mock(CompactionTrigger.class))
                 .compactionStrategy(mock(CompactionStrategy.class))
                 .build();
+        TodoWriteTool todoWriteTool = config.todoWriteTool(mock(AgentTodoTrackingService.class));
+        AskUserQuestionTool askUserQuestionTool = config.askUserQuestionTool(mock(AgentQuestionService.class));
+        ToolCallAdvisor toolCallAdvisor = config.agentToolCallAdvisor(mock(ToolCallingManager.class));
+        ToolCallback taskTool = config.taskTool(mock(ChatModel.class), new DefaultResourceLoader());
 
         ChatClient client = config.medicalAgentChatClient(
                 mock(ChatModel.class),
                 mock(ToolCallback.class),
+                taskTool,
                 FileSystemTools.builder().build(),
                 mock(MedicalAgentTools.class),
                 autoMemoryTools,
+                todoWriteTool,
+                askUserQuestionTool,
+                toolCallAdvisor,
                 sessionMemoryAdvisor,
                 memProps);
 

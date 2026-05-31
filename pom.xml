@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.0.2</version>
+        <version>4.0.6</version>
         <relativePath/>
     </parent>
 
@@ -36,6 +36,8 @@
         <commons-io.version>2.18.0</commons-io.version>
         <commons-lang3.version>3.14.0</commons-lang3.version>
         <datafaker.version>2.5.3</datafaker.version>
+        <playwright.version>1.49.0</playwright.version>
+        <json-schema-validator.version>1.5.6</json-schema-validator.version>
     </properties>
 
     <dependencyManagement>
@@ -210,6 +212,28 @@
             <version>${datafaker.version}</version>
         </dependency>
 
+        <!-- Micrometer Prometheus registry for observability -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
+        <!-- Caffeine caching for LLM responses and embeddings -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+        </dependency>
+
+        <!-- WebSocket support for async job status push -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
         <!-- OpenAPI/Swagger -->
         <dependency>
             <groupId>org.springdoc</groupId>
@@ -250,6 +274,18 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers-junit-jupiter</artifactId>
             <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.playwright</groupId>
+            <artifactId>playwright</artifactId>
+            <version>${playwright.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.networknt</groupId>
+            <artifactId>json-schema-validator</artifactId>
+            <version>${json-schema-validator.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -480,6 +516,26 @@
         </profile>
 
         <!-- Windows: use PowerShell for pre-integration-test (Docker CLI; no Git Bash required) -->
+        <profile>
+            <id>playwright</id>
+            <properties>
+                <playwright.enabled>true</playwright.enabled>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <playwright.enabled>true</playwright.enabled>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>windows-docker-preintegration</id>
             <activation>

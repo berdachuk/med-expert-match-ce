@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Admin</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 col-lg-8">
+            <h1 class="h3 mb-4">Admin Operations</h1>
+            <p class="text-muted mb-4">Governance, observability, and platform tools (simulated admin access).</p>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Session Tokens</h5>
+                            <p class="card-text small text-muted">Create, revoke, and monitor API session tokens with rate-limit tiers.</p>
+                            <a class="btn btn-outline-primary" th:href="@{/admin/session-tokens(user=admin)}">Open</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Chat Export Audit</h5>
+                            <p class="card-text small text-muted">Review export and data-deletion audit events (hashed ids only).</p>
+                            <a class="btn btn-outline-primary" th:href="@{/admin/chat-exports(user=admin)}">Open</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Synthetic Data</h5>
+                            <p class="card-text small text-muted">Generate or clear anonymized test datasets.</p>
+                            <a class="btn btn-outline-primary" th:href="@{/admin/synthetic-data(user=admin)}">Open</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Graph Visualization</h5>
+                            <p class="card-text small text-muted">Explore GraphRAG entity relationships.</p>
+                            <a class="btn btn-outline-primary" th:href="@{/admin/graph-visualization(user=admin)}">Open</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Chat Retention</h5>
+                            <p class="card-text small text-muted">
+                                <span th:if="${retentionEnabled}">Idle purge after <span th:text="${retentionIdleDays}">0</span> days.</span>
+                                <span th:unless="${retentionEnabled}">Retention disabled (<code>chat.retention.idle-days=0</code>).</span>
+                            </p>
+                            <ul class="small mb-3" th:if="${retentionLastRunAt != null}">
+                                <li>Last run: <span th:text="${retentionLastRunAt}">—</span></li>
+                                <li>Chats purged: <span th:text="${retentionChatsPurged}">0</span></li>
+                                <li>Messages purged: <span th:text="${retentionMessagesPurged}">0</span></li>
+                            </ul>
+                            <p class="small text-muted mb-0" th:unless="${retentionLastRunAt != null}">No retention run recorded yet.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Operator Runbook</h5>
+                            <p class="card-text small text-muted">Chat SSE, A2A federation, exports, retention, and audit procedures.</p>
+                            <a class="btn btn-outline-secondary" th:href="${runbookUrl}" target="_blank" rel="noopener">Open Runbook</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,62 @@
+package com.berdachuk.medexpertmatch.chat.rest;
+
+import com.berdachuk.medexpertmatch.core.security.HeaderBasedUserContext;
+import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureMockMvc
+@Import(com.berdachuk.medexpertmatch.chat.service.ChatRateLimitLowLimitTestConfig.class)
+class ChatRateLimitIT extends BaseIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    @DisplayName("Chat stream returns 429 when per-user bucket exhausted")
+    void rateLimitsStreamEndpoint() throws Exception {
+        String userId = "rate-limit-user";
+        var createResult = mockMvc.perform(post("/api/v1/chats")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Rate\",\"agentId\":\"auto\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String chatId = objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText();
+        String payload = "{\"content\":\"Hello\",\"agentId\":\"auto\"}";
+
+        mockMvc.perform(post("/api/v1/chats/" + chatId + "/messages/stream")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/chats/" + chatId + "/messages/stream")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/chats/" + chatId + "/messages/stream")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(header().string("Retry-After", "60"));
+    }
+}

@@ -1,0 +1,166 @@
+{
+  "title": "MedExpertMatch Dashboard",
+  "uid": "medexpertmatch",
+  "panels": [
+    {
+      "title": "HTTP Request Rate (req/sec)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(http_server_requests_seconds_count[1m])"}
+      ]
+    },
+    {
+      "title": "Error Rate (5xx)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])"}
+      ]
+    },
+    {
+      "title": "Rate Limit Hits",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(http_server_requests_seconds_count{status=\"429\"}[5m])"}
+      ]
+    },
+    {
+      "title": "JVM Heap Memory",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "sum(jvm_memory_used_bytes{area=\"heap\"})", "legendFormat": "Used"},
+        {"expr": "sum(jvm_memory_max_bytes{area=\"heap\"})", "legendFormat": "Max"}
+      ]
+    },
+    {
+      "title": "GC Pause Time (ms)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(jvm_gc_pause_seconds_sum[1m]) / rate(jvm_gc_pause_seconds_count[1m]) * 1000"}
+      ]
+    },
+    {
+      "title": "DB Connection Pool Usage",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "hikaricp_connections_active", "legendFormat": "Active"},
+        {"expr": "hikaricp_connections_idle", "legendFormat": "Idle"},
+        {"expr": "hikaricp_connections_pending", "legendFormat": "Pending"}
+      ]
+    },
+    {
+      "title": "LLM Call Duration p95 (ms)",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{uri=~\"/api/v1/agent/.*\"}[5m])) * 1000"}
+      ]
+    },
+    {
+      "title": "API Usage — Top Endpoints by Requests",
+      "type": "barchart",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(medexpertmatch_api_usage_requests_total[5m])"}
+      ]
+    },
+    {
+      "title": "API Latency p95 by Endpoint (ms)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(medexpertmatch_api_usage_latency_seconds_sum[5m]) / rate(medexpertmatch_api_usage_latency_seconds_count[5m]) * 1000"}
+      ]
+    },
+    {
+      "title": "Chat Turn Duration p95 (ms)",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, rate(chat_turn_duration_seconds_bucket[5m])) * 1000"}
+      ]
+    },
+    {
+      "title": "Chat Stream Errors",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_stream_errors_total[5m])"}
+      ]
+    },
+    {
+      "title": "Chat Tool Calls",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_turn_tool_calls_total[5m])"}
+      ]
+    },
+    {
+      "title": "Chat Rate Limited",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_rate_limited_total[5m])"}
+      ]
+    },
+    {
+      "title": "Chat Rate Limited by Tier",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_rate_limited_total{tier=\"DEFAULT\"}[5m])", "legendFormat": "DEFAULT"},
+        {"expr": "rate(chat_rate_limited_total{tier=\"HIGH\"}[5m])", "legendFormat": "HIGH"},
+        {"expr": "rate(chat_rate_limited_total{tier=\"UNLIMITED\"}[5m])", "legendFormat": "UNLIMITED"}
+      ]
+    },
+    {
+      "title": "Chat Turn Duration p95 by Tier (ms)",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "histogram_quantile(0.95, sum by (le, tier) (rate(chat_turn_duration_seconds_bucket[5m]))) * 1000", "legendFormat": "{{tier}}"}
+      ]
+    },
+    {
+      "title": "Chat Exports",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_export_count_total[5m])"}
+      ]
+    },
+    {
+      "title": "Chat Retention Purges",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_retention_chats_purged_total[5m])", "legendFormat": "chats"},
+        {"expr": "rate(chat_retention_messages_purged_total[5m])", "legendFormat": "messages"}
+      ]
+    },
+    {
+      "title": "Chat Rate Limited by Scope",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_rate_limited_total{scope=\"CHAT_SSE\"}[5m])", "legendFormat": "CHAT_SSE"},
+        {"expr": "rate(chat_rate_limited_total{scope=\"A2A\"}[5m])", "legendFormat": "A2A"}
+      ]
+    },
+    {
+      "title": "Operator Runbook",
+      "type": "text",
+      "options": {
+        "mode": "markdown",
+        "content": "## Chat & A2A Ops\\n\\nSee [docs/chat-ops-runbook.md](https://github.com/berdachuk/med-expert-match-ce/blob/develop/docs/chat-ops-runbook.md) for rate limits, retention, exports, audit, and Grafana alert triage."
+      }
+    }
+  ],
+  "refresh": "30s"
+}

@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
+import com.berdachuk.medexpertmatch.llm.service.CaseIntakeClarificationService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentCaseIntakeWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentDoctorMatchingWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -33,18 +34,21 @@ public class MedicalAgentCaseIntakeWorkflowServiceImpl implements MedicalAgentCa
     private final MedicalCaseDescriptionService descriptionService;
     private final MedicalAgentDoctorMatchingWorkflowService doctorMatchingWorkflowService;
     private final LogStreamService logStreamService;
+    private final CaseIntakeClarificationService caseIntakeClarificationService;
 
     public MedicalAgentCaseIntakeWorkflowServiceImpl(
             MedicalCaseRepository medicalCaseRepository,
             EmbeddingService embeddingService,
             MedicalCaseDescriptionService descriptionService,
             MedicalAgentDoctorMatchingWorkflowService doctorMatchingWorkflowService,
-            LogStreamService logStreamService) {
+            LogStreamService logStreamService,
+            CaseIntakeClarificationService caseIntakeClarificationService) {
         this.medicalCaseRepository = medicalCaseRepository;
         this.embeddingService = embeddingService;
         this.descriptionService = descriptionService;
         this.doctorMatchingWorkflowService = doctorMatchingWorkflowService;
         this.logStreamService = logStreamService;
+        this.caseIntakeClarificationService = caseIntakeClarificationService;
     }
 
     @Override
@@ -61,11 +65,21 @@ public class MedicalAgentCaseIntakeWorkflowServiceImpl implements MedicalAgentCa
         logStreamService.sendLog(sessionId, "INFO", "matchFromText started", "Creating case from text input");
 
         try {
-            Integer patientAge = extractInteger(request, "patientAge");
-            String caseTypeText = extractString(request, "caseType");
-            String urgencyLevelText = extractString(request, "urgencyLevel");
-            String symptoms = extractString(request, "symptoms");
-            String additionalNotes = extractString(request, "additionalNotes");
+            Map<String, Object> effectiveRequest = new HashMap<>(request);
+            boolean interactiveIntake = Boolean.TRUE.equals(request.get("interactiveIntake"));
+            if (interactiveIntake && caseIntakeClarificationService.needsClarification(effectiveRequest)) {
+                logStreamService.sendLog(sessionId, "INFO", "Intake clarification",
+                        "Collecting missing case details before matching");
+                Map<String, String> answers = caseIntakeClarificationService.resolveMissingFields(
+                        sessionId, effectiveRequest, null);
+                effectiveRequest = caseIntakeClarificationService.mergeAnswers(effectiveRequest, answers);
+            }
+
+            Integer patientAge = extractInteger(effectiveRequest, "patientAge");
+            String caseTypeText = extractString(effectiveRequest, "caseType");
+            String urgencyLevelText = extractString(effectiveRequest, "urgencyLevel");
+            String symptoms = extractString(effectiveRequest, "symptoms");
+            String additionalNotes = extractString(effectiveRequest, "additionalNotes");
 
             CaseType caseType = CaseType.INPATIENT;
             if (caseTypeText != null && !caseTypeText.isBlank()) {
@@ -136,7 +150,7 @@ public class MedicalAgentCaseIntakeWorkflowServiceImpl implements MedicalAgentCa
 
             logStreamService.sendLog(sessionId, "INFO", "Matching doctors", "Starting doctor matching process");
             try {
-                return doctorMatchingWorkflowService.matchDoctors(caseId, request);
+                return doctorMatchingWorkflowService.matchDoctors(caseId, effectiveRequest);
             } catch (Exception e) {
                 log.error("Error during doctor matching for case {}: {}", caseId, e.getMessage(), e);
                 logStreamService.sendLog(sessionId, "ERROR", "Matching failed",

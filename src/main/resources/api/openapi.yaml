@@ -31,8 +31,78 @@ tags:
     description: Evidence retrieval and tool verification (PubMed, guidelines)
   - name: Synthetic Data
     description: Synthetic data generation endpoints
+  - name: A2A Bridge
+    description: JSON-RPC 2.0 and SSE streaming bridge for agent interoperability
+  - name: AI Chat
+    description: Per-user chat sessions, exports, and data lifecycle
+  - name: Admin
+    description: Simulated admin APIs (requires X-User-Id admin)
 
 paths:
+  /.well-known/agent.json:
+    get:
+      tags:
+        - A2A Bridge
+      summary: A2A agent discovery card
+      description: |
+        Well-known agent metadata for federation: skills, JSON-RPC/stream/skills endpoints,
+        and rate-limit hints. Alias path `/.well-known/agent-card.json` returns the same payload.
+      operationId: getAgentCard
+      responses:
+        '200':
+          description: Agent card
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentCardResponse'
+
+  /api/v1/admin/chat-retention:
+    get:
+      tags:
+        - Admin
+      summary: Chat retention configuration and last purge snapshot
+      description: Requires `X-User-Id: admin`. Returns hashed-safe retention stats only.
+      operationId: adminChatRetentionStats
+      responses:
+        '200':
+          description: Retention stats
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatRetentionStatsResponse'
+        '403':
+          description: Non-admin access denied
+
+  /api/v1/chats/export-bundle:
+    get:
+      tags:
+        - AI Chat
+      summary: Export anonymized bundle of all user chats
+      description: PHI-redacted export of every chat owned by the authenticated user (via X-User-Id).
+      operationId: exportUserChatBundle
+      responses:
+        '200':
+          description: Export bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatExportBundleResponse'
+
+  /api/v1/chats/data:
+    delete:
+      tags:
+        - AI Chat
+      summary: Delete all user chat data
+      description: Soft-deletes messages and removes non-default chats for the authenticated user.
+      operationId: deleteAllUserChatData
+      responses:
+        '200':
+          description: Deletion summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatDataDeleteResponse'
+
   /api/v1/evidence/verify-pubmed:
     get:
       tags:
@@ -75,6 +145,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VerifyPubMedResponse'
+
+  /a2a/v1/skills:
+    get:
+      tags:
+        - A2A Bridge
+      summary: List supported A2A bridge skills
+      description: |
+        Returns skill ids (`doctor_match`, `evidence_search`) with descriptions and
+        JSON Schema hints for anonymized `message` input (no PHI).
+      operationId: a2aListSkills
+      responses:
+        '200':
+          description: Supported skills
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2aSkillDescriptor'
+
+  /a2a/v1/jsonrpc:
+    post:
+      tags:
+        - A2A Bridge
+      summary: JSON-RPC 2.0 sendMessage
+      description: |
+        PHI-safe A2A bridge. Supports `sendMessage` with `skill` and anonymized `message` params.
+        Returns JSON-RPC 2.0 envelopes with `result` or `error` (`code`, `message`).
+      operationId: a2aJsonRpc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/A2aJsonRpcRequest'
+      responses:
+        '200':
+          description: JSON-RPC response envelope
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2aJsonRpcResponse'
+        '429':
+          description: Rate limit exceeded (Retry-After header in seconds)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+
+  /a2a/v1/stream:
+    post:
+      tags:
+        - A2A Bridge
+      summary: Stream skill result over SSE
+      description: |
+        Streams anonymized skill output using chat-compatible SSE events:
+        `event:token` with JSON `{"t":"..."}` chunks and `event:done` on completion.
+      operationId: a2aStream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/A2aStreamRequest'
+      responses:
+        '200':
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE stream with token and done events
+        '429':
+          description: Rate limit exceeded (Retry-After header in seconds)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
 
   /api/v1/agent/match/{caseId}:
     post:
@@ -713,6 +863,214 @@ components:
           format: date-time
           description: Error timestamp
           example: "2024-01-18T23:30:00Z"
+
+    A2aSkillDescriptor:
+      type: object
+      required:
+        - id
+        - description
+        - inputSchema
+      properties:
+        id:
+          type: string
+          example: evidence_search
+        description:
+          type: string
+          example: Retrieve clinical guidelines and PubMed literature for anonymized queries.
+        inputSchema:
+          type: object
+          description: JSON Schema hints for skill params
+
+    AgentCardResponse:
+      type: object
+      required:
+        - name
+        - description
+        - url
+        - version
+        - protocolVersion
+        - skills
+        - capabilities
+        - endpoints
+        - rateLimits
+      properties:
+        name:
+          type: string
+          example: MedExpertMatch
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        version:
+          type: string
+          example: "1.0.0"
+        protocolVersion:
+          type: string
+          example: "0.2.0"
+        skills:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - name
+              - description
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              description:
+                type: string
+        capabilities:
+          type: object
+          properties:
+            streaming:
+              type: boolean
+            pushNotifications:
+              type: boolean
+        endpoints:
+          type: object
+          required:
+            - jsonrpc
+            - stream
+            - skills
+          properties:
+            jsonrpc:
+              type: string
+            stream:
+              type: string
+            skills:
+              type: string
+        rateLimits:
+          type: object
+          properties:
+            windowSeconds:
+              type: integer
+            defaultPerMinute:
+              type: integer
+            highPerMinute:
+              type: integer
+            scopes:
+              type: array
+              items:
+                type: string
+                enum: [CHAT_SSE, A2A]
+
+    ChatRetentionStatsResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        idleDays:
+          type: integer
+        lastRunAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastChatsPurged:
+          type: integer
+        lastMessagesPurged:
+          type: integer
+
+    ChatExportBundleResponse:
+      type: object
+      properties:
+        userIdHash:
+          type: string
+          description: SHA-256 hash of user id (non-reversible)
+        exportedAt:
+          type: string
+          format: date-time
+        phiRedacted:
+          type: boolean
+          example: true
+        chatCount:
+          type: integer
+        messageCount:
+          type: integer
+        auditReferenceHash:
+          type: string
+          description: SHA-256 hash of audit log id for operator correlation
+        chats:
+          type: array
+          items:
+            type: object
+
+    ChatDataDeleteResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: deleted
+        chatsRemoved:
+          type: integer
+        messagesSoftDeleted:
+          type: integer
+
+    A2aJsonRpcRequest:
+      type: object
+      required:
+        - jsonrpc
+        - method
+      properties:
+        jsonrpc:
+          type: string
+          example: "2.0"
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+          example: "req-1"
+        method:
+          type: string
+          example: sendMessage
+        params:
+          type: object
+          properties:
+            skill:
+              type: string
+              example: evidence_search
+            message:
+              type: string
+              description: Anonymized clinical query (no PHI)
+              example: Anonymized COPD exacerbation management literature
+
+    A2aJsonRpcResponse:
+      type: object
+      properties:
+        jsonrpc:
+          type: string
+          example: "2.0"
+        id:
+          oneOf:
+            - type: string
+            - type: integer
+        result:
+          type: object
+          description: Skill execution result when successful
+        error:
+          type: object
+          properties:
+            code:
+              type: integer
+              example: -32602
+            message:
+              type: string
+              example: PHI detected in message payload — anonymize before sending
+
+    A2aStreamRequest:
+      type: object
+      required:
+        - message
+      properties:
+        skill:
+          type: string
+          example: evidence_search
+        message:
+          type: string
+          description: Anonymized clinical query (no PHI)
 
   securitySchemes:
     ApiKeyAuth:

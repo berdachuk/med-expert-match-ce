@@ -6,7 +6,6 @@ import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.ai.session.compaction.CompactionTrigger;
 import org.springframework.ai.session.compaction.CompositeCompactionTrigger;
-import org.springframework.ai.session.compaction.TurnWindowCompactionStrategy;
 import org.springframework.boot.context.properties.bind.Bindable;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
@@ -83,11 +82,12 @@ class SessionCompactionConfigTest {
         AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(mock(org.springframework.core.io.ResourceLoader.class));
 
-        var strategy = config.sessionCompactionStrategy(props, config.sessionTokenCountEstimator());
+        var strategy = config.sessionCompactionStrategy(props, config.sessionTokenCountEstimator(),
+                new SessionCompactionObservability());
 
         assertNotNull(strategy);
-        assertInstanceOf(TurnWindowCompactionStrategy.class, strategy,
-                "default strategy must be non-LLM (no extra model call) to keep compaction cheap and PHI-safe");
+        assertInstanceOf(ObservingCompactionStrategy.class, strategy,
+                "strategy must observe compaction while delegating to turn-window compaction");
     }
 
     @Test
@@ -96,11 +96,12 @@ class SessionCompactionConfigTest {
         AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(mock(org.springframework.core.io.ResourceLoader.class));
         SessionService sessionService = mock(SessionService.class);
+        SessionCompactionObservability observability = new SessionCompactionObservability();
 
         SessionMemoryAdvisor advisor = config.sessionMemoryAdvisor(
                 sessionService,
                 config.sessionCompactionTrigger(props, config.sessionTokenCountEstimator()),
-                config.sessionCompactionStrategy(props, config.sessionTokenCountEstimator()));
+                config.sessionCompactionStrategy(props, config.sessionTokenCountEstimator(), observability));
 
         assertNotNull(advisor);
     }

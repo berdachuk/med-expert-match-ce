@@ -1,0 +1,7 @@
+# Docker Compose stack overrides (profile: docker-stack).
+# Disables dev-only multi-endpoint pool baked from local YAML; use OLLAMA_BASE_URL / EMBEDDING_* env instead.
+
+medexpertmatch:
+  embedding:
+    multi-endpoint:
+      endpoints: []

@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.core.service;
 
+import com.berdachuk.medexpertmatch.core.event.ToolCallLoggedEvent;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -42,6 +44,11 @@ public class LogStreamService {
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
     private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
     private final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(2);
+    private final ApplicationEventPublisher eventPublisher;
+
+    public LogStreamService(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
 
     /**
      * Creates a new SSE emitter for a client session.
@@ -120,6 +127,9 @@ public class LogStreamService {
      * @param details   Additional details (optional)
      */
     public void sendLog(String sessionId, String level, String message, String details) {
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
         SseEmitter emitter = emitters.get(sessionId);
         if (emitter == null) {
             log.warn("No emitter found for session: {} (available sessions: {})", sessionId, emitters.keySet());
@@ -162,6 +172,7 @@ public class LogStreamService {
      */
     public void logToolCall(String sessionId, String toolName, String parameters) {
         sendLog(sessionId, "DEBUG", "Tool called: " + toolName, parameters);
+        eventPublisher.publishEvent(new ToolCallLoggedEvent(sessionId, toolName, parameters));
     }
 
     /**

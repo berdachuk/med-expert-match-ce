@@ -3,8 +3,8 @@ package com.berdachuk.medexpertmatch.ingestion.service;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Tracks progress of synthetic data generation.
@@ -20,14 +20,18 @@ public class SyntheticDataGenerationProgress {
     private LocalDateTime endTime;
     private String errorMessage;
     private volatile boolean cancelled = false;
-    private List<TraceEntry> traceEntries = new ArrayList<>();
+    private List<TraceEntry> traceEntries = new CopyOnWriteArrayList<>();
 
     public SyntheticDataGenerationProgress(String jobId) {
         this.jobId = jobId;
         this.status = "running";
         this.progress = 0;
         this.startTime = LocalDateTime.now();
-        this.traceEntries = new ArrayList<>();
+        this.traceEntries = new CopyOnWriteArrayList<>();
+    }
+
+    public List<TraceEntry> getTraceEntriesSnapshot() {
+        return List.copyOf(traceEntries);
     }
 
     public void updateProgress(int progress, String currentStep, String message) {

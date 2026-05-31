@@ -25,7 +25,9 @@ src/main/java/.../medexpertmatch/
 ├── documents/      # Document management + PDF/JSONL parsing (→core, embedding)
 ├── web/            # Thymeleaf SSR web UI (→core, llm + 6 modules)
 └── system/         # System health indicators
-plans/              # Implementation plans: M{NN}-{goal-slug}.md
+.agents/
+├── skills/         # Domain skills (canonical; see Skills Index below)
+└── plans/          # Implementation plans: M{NN}-{goal-slug}.md (+ archive/)
 src/main/resources/
 ├── prompts/        # Spring AI StringTemplate (.st) prompt files
 ├── skills/         # Spring AI Agent Skills (runtime; distinct from .agents/skills/)
@@ -97,11 +99,11 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 
 ## Plan Files
 
-- Location: `plans/` directory at project root
+- Location: `.agents/plans/` directory
 - Naming: `M{NN}-{goal-slug}.md` (e.g., `M01-upgrade-spring-ai-to-m6.md`)
 - `{NN}` is a zero-padded milestone number; `{goal-slug}` is a kebab-case short goal
 - Do NOT create auto-generated IDs (timestamps or random strings) for plan filenames
-- When a plan is fully implemented and verified, move it to `plans/archive/`
+- When a plan is fully implemented and verified, move it to `.agents/plans/archive/`
 
 ## Key Rules at a Glance
 
@@ -130,7 +132,9 @@ Always use TDD. Before implementing any functionality:
 ## Layer Model
 
 ```
-.agents/skills/       ← Single source of truth for domain skills
+.agents/
+├── skills/         ← Single source of truth for domain skills
+└── plans/          ← Implementation plans (M{NN}-*.md; archive/ for completed)
 AGENTS.md             ← Root index (this file)
 {module}/AGENTS.md    ← Module-specific conventions (2-5 files only)
 .cursor/              ← Optional IDE adapter (generated from skills)

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://medexpertmatch.com/schemas/chat-export-bundle.schema.json",
+  "title": "ChatExportBundleResponse",
+  "type": "object",
+  "required": [
+    "userIdHash",
+    "exportedAt",
+    "phiRedacted",
+    "chatCount",
+    "messageCount",
+    "auditReferenceHash",
+    "chats"
+  ],
+  "properties": {
+    "userIdHash": { "type": "string", "minLength": 1 },
+    "exportedAt": { "type": "string", "minLength": 1 },
+    "phiRedacted": { "type": "boolean" },
+    "chatCount": { "type": "integer", "minimum": 0 },
+    "messageCount": { "type": "integer", "minimum": 0 },
+    "auditReferenceHash": { "type": "string", "minLength": 1 },
+    "chats": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["chatId", "name", "agentId", "isDefault", "messages"],
+        "properties": {
+          "chatId": { "type": "string" },
+          "name": { "type": "string" },
+          "agentId": { "type": "string" },
+          "isDefault": { "type": "boolean" },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "role", "content", "sequenceNumber", "createdAt"],
+              "properties": {
+                "id": { "type": "string" },
+                "role": { "type": "string" },
+                "content": { "type": "string" },
+                "sequenceNumber": { "type": "integer" },
+                "createdAt": { "type": ["string", "null"] }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -43,7 +43,7 @@ public class SyntheticDataController {
     /**
      * Generates synthetic data based on size parameter.
      *
-     * @param size  Data size: "tiny", "small", "medium", "large", "huge" (default: "medium")
+     * @param size  Data size: tiny, micro, mini, compact, small, standard, large (default: tiny)
      * @param clear Whether to clear existing data first (default: false)
      * @return Response with generation status
      */
@@ -63,8 +63,8 @@ public class SyntheticDataController {
     })
     @PostMapping("/generate")
     public ResponseEntity<Map<String, Object>> generateSyntheticData(
-            @Parameter(description = "Data size (tiny, small, medium, large, huge)", example = "medium")
-            @RequestParam(defaultValue = "medium") String size,
+            @Parameter(description = "Data size (tiny, micro, mini, compact, small, standard, large)", example = "tiny")
+            @RequestParam(defaultValue = "tiny") String size,
             @Parameter(description = "Whether to clear existing data first", example = "false")
             @RequestParam(defaultValue = "false") boolean clear
     ) {
@@ -124,7 +124,7 @@ public class SyntheticDataController {
         response.put("startTime", progress.getStartTime() != null ? progress.getStartTime().toString() : "");
         response.put("endTime", progress.getEndTime() != null ? progress.getEndTime().toString() : "");
         response.put("errorMessage", progress.getErrorMessage() != null ? progress.getErrorMessage() : "");
-        response.put("traceEntries", progress.getTraceEntries() != null ? progress.getTraceEntries() : java.util.Collections.emptyList());
+        response.put("traceEntries", progress.getTraceEntriesSnapshot());
 
         return ResponseEntity.ok(response);
     }

@@ -4,7 +4,7 @@
 -- External system IDs: supports UUID strings, 19-digit numeric strings, or other formats (VARCHAR(74))
 -- Examples: "550e8400-e29b-41d4-a716-446655440000" (UUID), "8760000000000420950" (19-digit numeric)
 -- Internal IDs (medical cases, clinical experiences) use MongoDB-compatible 24-character hex strings (CHAR(24))
--- Includes: core tables, graph schema, functions, and triggers
+-- Includes: core tables, graph schema, AI session/chat tables, functions, and triggers
 
 -- Enable required extensions
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -302,7 +302,7 @@ CREATE TRIGGER update_consultation_matches_updated_at BEFORE UPDATE ON medexpert
 -- AI Session Tables (Spring AI Session JDBC)
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS AI_SESSION (
+CREATE TABLE IF NOT EXISTS medexpertmatch.ai_session (
     id            VARCHAR(255)  NOT NULL PRIMARY KEY,
     user_id       VARCHAR(255)  NOT NULL,
     created_at    TIMESTAMP     NOT NULL,
@@ -312,12 +312,12 @@ CREATE TABLE IF NOT EXISTS AI_SESSION (
 );
 
 CREATE INDEX IF NOT EXISTS idx_ai_session_user_id
-    ON AI_SESSION (user_id);
+    ON medexpertmatch.ai_session (user_id);
 
 CREATE INDEX IF NOT EXISTS idx_ai_session_expires_at
-    ON AI_SESSION (expires_at);
+    ON medexpertmatch.ai_session (expires_at);
 
-CREATE TABLE IF NOT EXISTS AI_SESSION_EVENT (
+CREATE TABLE IF NOT EXISTS medexpertmatch.ai_session_event (
     id              VARCHAR(255)  NOT NULL PRIMARY KEY,
     session_id      VARCHAR(255)  NOT NULL,
     "timestamp"     TIMESTAMP     NOT NULL,
@@ -328,11 +328,77 @@ CREATE TABLE IF NOT EXISTS AI_SESSION_EVENT (
     branch          VARCHAR(500),
     metadata        TEXT,
     CONSTRAINT fk_ai_session_event_session
-        FOREIGN KEY (session_id) REFERENCES AI_SESSION (id) ON DELETE CASCADE
+        FOREIGN KEY (session_id) REFERENCES medexpertmatch.ai_session (id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_ai_session_event_session_ts
-    ON AI_SESSION_EVENT (session_id, "timestamp");
+    ON medexpertmatch.ai_session_event (session_id, "timestamp");
+
+-- ============================================
+-- API Session Tokens and Audit Log
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.api_session_token (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    api_key VARCHAR(64) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    rate_limit_tier VARCHAR(20) NOT NULL DEFAULT 'default' CHECK (rate_limit_tier IN ('default', 'high', 'unlimited')),
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_used_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.audit_log (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    action VARCHAR(50) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL,
+    resource_id VARCHAR(255),
+    actor VARCHAR(255),
+    details JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_log_action ON medexpertmatch.audit_log (action);
+CREATE INDEX IF NOT EXISTS idx_audit_log_resource_type ON medexpertmatch.audit_log (resource_type);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON medexpertmatch.audit_log (created_at);
+
+-- ============================================
+-- AI Chat Sessions and Message History (M13)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.chat (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    user_id VARCHAR(255) NOT NULL,
+    name VARCHAR(255),
+    agent_id VARCHAR(50) NOT NULL DEFAULT 'auto',
+    is_default BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_activity_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    message_count INT DEFAULT 0,
+    metadata JSONB
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS chat_user_default_unique
+    ON medexpertmatch.chat (user_id, is_default) WHERE is_default = TRUE;
+CREATE INDEX IF NOT EXISTS chat_user_id_idx ON medexpertmatch.chat (user_id);
+CREATE INDEX IF NOT EXISTS chat_last_activity_at_idx ON medexpertmatch.chat (last_activity_at DESC);
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.chat_message (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    chat_id CHAR(24) NOT NULL REFERENCES medexpertmatch.chat (id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    sequence_number INT NOT NULL,
+    tokens_used INT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    metadata JSONB,
+    deleted_at TIMESTAMP,
+    CONSTRAINT chat_message_chat_sequence_unique UNIQUE (chat_id, sequence_number)
+);
+
+CREATE INDEX IF NOT EXISTS chat_message_chat_id_idx ON medexpertmatch.chat_message (chat_id);
+CREATE INDEX IF NOT EXISTS chat_message_chat_id_sequence_idx ON medexpertmatch.chat_message (chat_id, sequence_number);
 
 -- ============================================
 -- Evaluation Tables
@@ -375,6 +441,10 @@ CREATE TABLE IF NOT EXISTS evaluation_result (
     semantic_pass BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+CREATE INDEX IF NOT EXISTS idx_evaluation_case_dataset_id ON evaluation_case (dataset_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_result_run_id ON evaluation_result (run_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_run_dataset_id ON evaluation_run (dataset_id);
+
 -- ============================================
 -- Document Ingestion Tables
 -- ============================================
@@ -406,6 +476,8 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.document_chunk (
 );
 
 CREATE INDEX IF NOT EXISTS idx_document_chunk_document_id ON medexpertmatch.document_chunk (document_id);
+CREATE INDEX IF NOT EXISTS idx_document_chunk_embedding ON medexpertmatch.document_chunk
+    USING hnsw (embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 CREATE TABLE IF NOT EXISTS medexpertmatch.ingestion_job (
     id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),

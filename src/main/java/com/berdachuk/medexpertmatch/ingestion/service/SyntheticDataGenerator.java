@@ -90,10 +90,12 @@ public class SyntheticDataGenerator {
         String normalizedSize = size == null ? "" : size.toLowerCase(Locale.ROOT);
         SyntheticDataGenerationService.DataSizeConfig config = configs.get(normalizedSize);
         if (config == null) {
-            log.warn("Unknown size: {}, using medium", size);
-            config = configs.get("medium");
+            log.warn("Unknown size: {}, using standard", size);
+            config = configs.get("standard");
             if (config == null) {
-                throw new IllegalArgumentException("No data size configuration found for size: " + size + " and default 'medium' is not available");
+                config = configs.values().stream().findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "No data size configuration found for size: " + size));
             }
         }
 

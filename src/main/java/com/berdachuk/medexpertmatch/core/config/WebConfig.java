@@ -8,11 +8,29 @@ import jakarta.servlet.http.HttpServletRequestWrapper;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.IOException;
 
 @Configuration
-public class WebConfig {
+public class WebConfig implements WebMvcConfigurer {
+
+    private final ResponseTimeInterceptor responseTimeInterceptor;
+    private final ApiUsageInterceptor apiUsageInterceptor;
+
+    public WebConfig(ResponseTimeInterceptor responseTimeInterceptor, ApiUsageInterceptor apiUsageInterceptor) {
+        this.responseTimeInterceptor = responseTimeInterceptor;
+        this.apiUsageInterceptor = apiUsageInterceptor;
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(responseTimeInterceptor)
+                .addPathPatterns("/api/**");
+        registry.addInterceptor(apiUsageInterceptor)
+                .addPathPatterns("/api/**");
+    }
 
     /**
      * Rewrites directory URLs ending with / under /docs/ to index.html,

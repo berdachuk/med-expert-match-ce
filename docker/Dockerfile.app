@@ -30,6 +30,8 @@ WORKDIR /app
 
 RUN groupadd -r appuser -g 1000 && useradd -r -u 1000 -g appuser appuser
 
+RUN mkdir -p /app/logs && chown -R appuser:appuser /app/logs
+
 COPY --from=builder /build/target/app.jar ./app.jar
 COPY --from=builder /build/src/main/resources/skills ./skills
 # Skills on filesystem for reliable loading (classpath dir lookup can fail in JAR)

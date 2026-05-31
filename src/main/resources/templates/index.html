@@ -59,11 +59,20 @@
                             <a class="btn btn-secondary mb-2 d-block" th:href="@{/analytics}">Network Analytics</a>
                             <a class="btn btn-secondary mb-2 d-block" th:href="@{/routing}">Regional Routing</a>
                             <a class="btn btn-outline-secondary mb-2 d-block"
+                               th:href="@{/admin(user=admin)}"
+                               th:if="${isAdmin}">Admin Dashboard</a>
+                            <a class="btn btn-outline-secondary mb-2 d-block"
                                th:href="@{/admin/synthetic-data(user=admin)}"
                                th:if="${isAdmin}">Synthetic Data</a>
                             <a class="btn btn-outline-secondary mb-2 d-block"
                                th:href="@{/admin/graph-visualization(user=admin)}"
                                th:if="${isAdmin}">Graph</a>
+                            <a class="btn btn-outline-secondary mb-2 d-block"
+                               th:href="@{/admin/session-tokens(user=admin)}"
+                               th:if="${isAdmin}">Session Tokens</a>
+                            <a class="btn btn-outline-secondary mb-2 d-block"
+                               th:href="@{/admin/chat-exports(user=admin)}"
+                               th:if="${isAdmin}">Chat Export Audit</a>
                         </div>
                     </div>
                 </div>

@@ -3,7 +3,9 @@
 ## Layer Model
 
 ```
-.agents/skills/          ← Single source of truth (canonical skill definitions)
+.agents/
+├── skills/          ← Single source of truth (canonical skill definitions)
+└── plans/           ← Milestone implementation plans (M{NN}-*.md)
 AGENTS.md                ← Root index: repo overview, commands, boundaries, skill triggers
 {module}/AGENTS.md       ← Module-specific conventions (5 files: core, retrieval, llm, ingestion, web)
 .cursor/                 ← Optional IDE adapter (generated from skills, not canonical)
@@ -45,6 +47,8 @@ AGENTS.md                ← Root index: repo overview, commands, boundaries, sk
 | New Cypher pattern | `graph-db/SKILL.md` |
 | Code style change | `code-style/SKILL.md`, all nested AGENTS.md that reference it |
 | New prompt template | `llm-prompts/SKILL.md` |
+| New milestone plan | `.agents/plans/M{NN}-{goal-slug}.md`; register in root `AGENTS.md` Plan Files section |
+| Plan completed | Move to `.agents/plans/archive/` |
 
 ## IDE Adapter Design (future)
 

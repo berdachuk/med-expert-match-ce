@@ -1,13 +1,26 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
+import com.berdachuk.medexpertmatch.llm.automemory.MemoryConsolidationTrigger;
+import com.berdachuk.medexpertmatch.llm.automemory.TimeGapConsolidationTrigger;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
+import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
 import lombok.extern.slf4j.Slf4j;
+import org.springaicommunity.agent.tools.AskUserQuestionTool;
 import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springaicommunity.agent.tools.SkillsTool;
+import org.springaicommunity.agent.tools.TodoWriteTool;
+import org.springaicommunity.agent.tools.task.TaskTool;
+import org.springaicommunity.agent.common.task.subagent.SubagentReference;
+import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentType;
+import org.springaicommunity.agent.tools.task.repository.DefaultTaskRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.session.DefaultSessionService;
 import org.springframework.ai.session.SessionRepository;
 import org.springframework.ai.session.SessionService;
@@ -29,7 +42,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 /**
  * Configuration for Medical Agent with Spring AI Agent Skills integration.
@@ -178,11 +193,18 @@ public class MedicalAgentConfiguration {
      */
     @Bean
     CompactionStrategy sessionCompactionStrategy(AgentSessionProperties properties,
-                                                 TokenCountEstimator tokenCountEstimator) {
-        return TurnWindowCompactionStrategy.builder()
+                                                 TokenCountEstimator tokenCountEstimator,
+                                                 SessionCompactionObservability observability) {
+        CompactionStrategy delegate = TurnWindowCompactionStrategy.builder()
                 .maxTurns(properties.maxWindowTurns())
                 .tokenCountEstimator(tokenCountEstimator)
                 .build();
+        return new ObservingCompactionStrategy(delegate, observability);
+    }
+
+    @Bean
+    MemoryConsolidationTrigger timeGapConsolidationTrigger(AgentMemoryProperties agentMemoryProperties) {
+        return new TimeGapConsolidationTrigger(agentMemoryProperties);
     }
 
     /**
@@ -215,6 +237,85 @@ public class MedicalAgentConfiguration {
                 .build();
     }
 
+    @Bean
+    TodoWriteTool todoWriteTool(AgentTodoTrackingService todoTrackingService) {
+        log.info("Creating TodoWriteTool for multi-step plan tracking (Part 3 agentic pattern)");
+        return TodoWriteTool.builder()
+                .todoEventHandler(todoTrackingService::handleTodos)
+                .build();
+    }
+
+    @Bean
+    AskUserQuestionTool askUserQuestionTool(AgentQuestionService agentQuestionService) {
+        log.info("Creating AskUserQuestionTool for interactive intake clarification (Part 2 agentic pattern)");
+        return AskUserQuestionTool.builder()
+                .questionHandler(questions -> {
+                    String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+                    if (sessionId == null || sessionId.isBlank()) {
+                        sessionId = "default";
+                    }
+                    return agentQuestionService.resolveQuestions(sessionId, questions);
+                })
+                .build();
+    }
+
+    /**
+     * Task tool for Auto orchestrator subagent delegation (M08 Step 6 / M14).
+     */
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("taskTool")
+    ToolCallback taskTool(
+            @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
+            ResourceLoader resourceLoader) {
+        log.info("Creating TaskTool with specialist subagents from classpath:agents");
+        try {
+            var subagentReferences = loadSubagentReferences(resourceLoader);
+            ChatClient.Builder subagentChatClientBuilder = ChatClient.builder(toolCallingChatModel);
+            return TaskTool.builder()
+                    .subagentReferences(subagentReferences)
+                    .subagentTypes(ClaudeSubagentType.builder()
+                            .chatClientBuilder("default", subagentChatClientBuilder)
+                            .build())
+                    .taskRepository(new DefaultTaskRepository())
+                    .build();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load TaskTool subagents from classpath:agents", e);
+        }
+    }
+
+    private static java.util.List<SubagentReference> loadSubagentReferences(
+            ResourceLoader resourceLoader) throws Exception {
+        Resource[] agentResources = new PathMatchingResourcePatternResolver(resourceLoader)
+                .getResources("classpath:agents/*.md");
+        if (agentResources.length == 0) {
+            throw new IllegalStateException("No subagent definitions found under classpath:agents/");
+        }
+        java.util.List<SubagentReference> references = new java.util.ArrayList<>();
+        for (Resource resource : agentResources) {
+            String fileName = resource.getFilename();
+            if (fileName == null || fileName.isBlank()) {
+                continue;
+            }
+            references.add(new SubagentReference("classpath:/agents/" + fileName, "CLAUDE"));
+        }
+        if (references.isEmpty()) {
+            throw new IllegalStateException("No subagent definitions found under classpath:agents/");
+        }
+        return references;
+    }
+
+    /**
+     * Tool-call advisor with conversation history disabled so todo updates from {@link TodoWriteTool}
+     * persist via the session advisor without duplicate internal history (Part 3 guidance).
+     */
+    @Bean
+    ToolCallAdvisor agentToolCallAdvisor(ToolCallingManager toolCallingManager) {
+        return ToolCallAdvisor.builder()
+                .toolCallingManager(toolCallingManager)
+                .conversationHistoryEnabled(false)
+                .build();
+    }
+
     /**
      * Creates a ChatClient with Agent Skills and Medical Tools enabled.
      * This ChatClient includes SkillsTool for skill discovery, FileSystemTools
@@ -231,9 +332,13 @@ public class MedicalAgentConfiguration {
     public ChatClient medicalAgentChatClient(
             @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
             @org.springframework.beans.factory.annotation.Qualifier("skillsTool") ToolCallback skillsTool,
+            @org.springframework.beans.factory.annotation.Qualifier("taskTool") ToolCallback taskTool,
             FileSystemTools fileSystemTools,
             MedicalAgentTools medicalAgentTools,
             AutoMemoryTools autoMemoryTools,
+            TodoWriteTool todoWriteTool,
+            AskUserQuestionTool askUserQuestionTool,
+            ToolCallAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
             AgentMemoryProperties agentMemoryProperties
     ) {
@@ -247,14 +352,16 @@ public class MedicalAgentConfiguration {
                 .defaultTools(fileSystemTools)
                 .defaultTools(medicalAgentTools)
                 .defaultTools(autoMemoryTools)
-                .defaultAdvisors(sessionMemoryAdvisor, new SimpleLoggerAdvisor());
+                .defaultTools(todoWriteTool)
+                .defaultTools(askUserQuestionTool)
+                .defaultAdvisors(agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
         // Only add SkillsTool if it's properly configured
         try {
-            builder.defaultToolCallbacks(skillsTool);  // Agent Skills discovery (ToolCallback)
-            log.info("SkillsTool registered successfully");
+            builder.defaultToolCallbacks(skillsTool, taskTool);
+            log.info("SkillsTool and TaskTool registered successfully");
         } catch (Exception e) {
-            log.warn("Failed to register SkillsTool, continuing without it: {}", e.getMessage());
+            log.warn("Failed to register SkillsTool/TaskTool, continuing without them: {}", e.getMessage());
         }
 
         return builder.build();

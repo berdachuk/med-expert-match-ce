@@ -36,7 +36,7 @@ public class SyntheticDataWebController {
     @PostMapping("/generate")
     public String generateSyntheticData(
             WebRequest request,
-            @RequestParam(defaultValue = "medium") String size,
+            @RequestParam(defaultValue = "tiny") String size,
             @RequestParam(defaultValue = "false") boolean clear,
             Model model) {
         if (!"admin".equals(request.getParameter("user"))) {

@@ -28,7 +28,7 @@ class TimeGapConsolidationTriggerTest {
     @DisplayName("Returns false within the configured gap, true once the gap elapses")
     void firesAfterGap() {
         AtomicReference<Instant> now = new AtomicReference<>(Instant.parse("2026-05-30T10:00:00Z"));
-        TimeGapConsolidationTrigger trigger = new TimeGapConsolidationTrigger(props(60L), now::get);
+        TimeGapConsolidationTrigger trigger = TimeGapConsolidationTrigger.withClock(props(60L), now::get);
 
         // record activity at t0
         trigger.recordActivity();
@@ -46,7 +46,7 @@ class TimeGapConsolidationTriggerTest {
     @DisplayName("Exactly at the gap boundary it has not yet fired")
     void boundaryIsExclusive() {
         AtomicReference<Instant> now = new AtomicReference<>(Instant.parse("2026-05-30T10:00:00Z"));
-        TimeGapConsolidationTrigger trigger = new TimeGapConsolidationTrigger(props(60L), now::get);
+        TimeGapConsolidationTrigger trigger = TimeGapConsolidationTrigger.withClock(props(60L), now::get);
         trigger.recordActivity();
 
         now.set(now.get().plus(Duration.ofSeconds(60)));
@@ -60,7 +60,7 @@ class TimeGapConsolidationTriggerTest {
     @DisplayName("recordActivity resets the gap window")
     void recordActivityResets() {
         AtomicReference<Instant> now = new AtomicReference<>(Instant.parse("2026-05-30T10:00:00Z"));
-        TimeGapConsolidationTrigger trigger = new TimeGapConsolidationTrigger(props(60L), now::get);
+        TimeGapConsolidationTrigger trigger = TimeGapConsolidationTrigger.withClock(props(60L), now::get);
         trigger.recordActivity();
 
         now.set(Instant.parse("2026-05-30T10:02:00Z"));

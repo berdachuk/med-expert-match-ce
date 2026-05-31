@@ -271,11 +271,15 @@
                         return response.json();
                     })
                     .then(data => {
-                        // Start polling for real progress
                         const jobId = data.jobId;
+                        if (!jobId) {
+                            throw new Error('Server did not return a job ID');
+                        }
                         currentJobId = jobId;
 
-                        // Function to poll for progress updates
+                        let pollFailures = 0;
+                        const maxPollFailures = 5;
+
                         pollInterval = setInterval(function () {
                             fetch('/api/v1/synthetic-data/progress/' + jobId, {
                                 method: 'GET',
@@ -284,15 +288,23 @@
                                 }
                             })
                                 .then(response => {
+                                    if (response.status === 429) {
+                                        pollFailures = 0;
+                                        return null;
+                                    }
                                     if (response.status === 404) {
                                         throw new Error('Job not found');
                                     }
                                     if (!response.ok) {
-                                        throw new Error('Failed to get progress');
+                                        throw new Error('Progress request failed (HTTP ' + response.status + ')');
                                     }
+                                    pollFailures = 0;
                                     return response.json();
                                 })
                                 .then(data => {
+                                    if (!data) {
+                                        return;
+                                    }
                                     // Update progress bar
                                     generateProgressBar.style.width = data.progress + '%';
                                     generateProgressBar.setAttribute('aria-valuenow', data.progress);
@@ -377,11 +389,15 @@
                                     }
                                 })
                                 .catch(error => {
+                                    pollFailures++;
+                                    console.warn('Progress poll failed (' + pollFailures + '/' + maxPollFailures + '):', error);
+                                    if (pollFailures < maxPollFailures) {
+                                        return;
+                                    }
                                     if (pollInterval) {
                                         clearInterval(pollInterval);
                                         pollInterval = null;
                                     }
-                                    console.error('Error polling progress:', error);
                                     generateErrorAlert.textContent = 'Failed to get progress: ' + error.message;
                                     generateErrorAlert.classList.remove('d-none');
                                     generateProgress.classList.add('d-none');
@@ -392,7 +408,7 @@
                                     stopButton.classList.add('d-none');
                                     currentJobId = null;
                                 });
-                        }, 500); // Poll every 500ms
+                        }, 2000);
                     })
                     .catch(error => {
                         if (pollInterval) {

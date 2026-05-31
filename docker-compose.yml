@@ -36,42 +36,46 @@ services:
     container_name: medexpertmatch-app
     # Host network so the app can reach LM Studio on 127.0.0.1:1234 without LM Studio binding to 0.0.0.0
     network_mode: host
+    env_file:
+      - path: .env
+        required: false
     # Optional: mount custom skills to extend built-in ones (set MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY=/app/custom-skills)
     # volumes:
     #   - ./custom-skills:/app/custom-skills
     environment:
-      SPRING_PROFILES_ACTIVE: local,debug
+      SPRING_PROFILES_ACTIVE: local,debug,docker-stack
       # Database: postgres container exposes 5433 on host
       SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/medexpertmatch
       SPRING_DATASOURCE_USERNAME: medexpertmatch
       SPRING_DATASOURCE_PASSWORD: medexpertmatch
       SERVER_PORT: "8094"
-      # Chat/LLM (Ollama on host at 127.0.0.1:11434)
-      CHAT_PROVIDER: openai
-      CHAT_BASE_URL: http://127.0.0.1:11434/v1
-      CHAT_API_KEY: any
-      CHAT_MODEL: medgemma1.5:4b
-      CHAT_TEMPERATURE: "0.7"
-      CHAT_MAX_TOKENS: "6000"
+      # LLM: set OLLAMA_BASE_URL or per-service *_BASE_URL in .env (copy from .env.example).
+      # Use the LAN IP of the machine running Ollama when it is not on this host (e.g. http://192.168.0.73:11434/v1).
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-openai}
+      CHAT_BASE_URL: ${CHAT_BASE_URL:-${OLLAMA_BASE_URL:-http://127.0.0.1:11434/v1}}
+      CHAT_API_KEY: ${CHAT_API_KEY:-any}
+      CHAT_MODEL: ${CHAT_MODEL:-medgemma1.5:4b}
+      CHAT_TEMPERATURE: ${CHAT_TEMPERATURE:-0.7}
+      CHAT_MAX_TOKENS: ${CHAT_MAX_TOKENS:-6000}
       # Embedding
-      EMBEDDING_PROVIDER: openai
-      EMBEDDING_BASE_URL: http://127.0.0.1:11434/v1
-      EMBEDDING_API_KEY: any
-      EMBEDDING_MODEL: nomic-embed-text:v1.5
-      EMBEDDING_DIMENSIONS: "768"
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-openai}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-${OLLAMA_BASE_URL:-http://127.0.0.1:11434/v1}}
+      EMBEDDING_API_KEY: ${EMBEDDING_API_KEY:-any}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text:v1.5}
+      EMBEDDING_DIMENSIONS: ${EMBEDDING_DIMENSIONS:-768}
       # Reranking
-      RERANKING_PROVIDER: openai
-      RERANKING_BASE_URL: http://127.0.0.1:11434/v1
-      RERANKING_API_KEY: any
-      RERANKING_MODEL: medgemma1.5:4b
-      RERANKING_TEMPERATURE: "0.1"
+      RERANKING_PROVIDER: ${RERANKING_PROVIDER:-openai}
+      RERANKING_BASE_URL: ${RERANKING_BASE_URL:-${OLLAMA_BASE_URL:-http://127.0.0.1:11434/v1}}
+      RERANKING_API_KEY: ${RERANKING_API_KEY:-any}
+      RERANKING_MODEL: ${RERANKING_MODEL:-medgemma1.5:4b}
+      RERANKING_TEMPERATURE: ${RERANKING_TEMPERATURE:-0.1}
       # Tool calling
-      TOOL_CALLING_PROVIDER: openai
-      TOOL_CALLING_BASE_URL: http://127.0.0.1:11434/v1
-      TOOL_CALLING_API_KEY: any
-      TOOL_CALLING_MODEL: functiongemma:270m
-      TOOL_CALLING_TEMPERATURE: "0.7"
-      TOOL_CALLING_MAX_TOKENS: "4096"
+      TOOL_CALLING_PROVIDER: ${TOOL_CALLING_PROVIDER:-openai}
+      TOOL_CALLING_BASE_URL: ${TOOL_CALLING_BASE_URL:-${OLLAMA_BASE_URL:-http://127.0.0.1:11434/v1}}
+      TOOL_CALLING_API_KEY: ${TOOL_CALLING_API_KEY:-any}
+      TOOL_CALLING_MODEL: ${TOOL_CALLING_MODEL:-functiongemma:270m}
+      TOOL_CALLING_TEMPERATURE: ${TOOL_CALLING_TEMPERATURE:-0.7}
+      TOOL_CALLING_MAX_TOKENS: ${TOOL_CALLING_MAX_TOKENS:-4096}
       # LLM concurrency (sequential for local LLM)
       MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS: "1"
       MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS: "1"
@@ -81,6 +85,8 @@ services:
       MEDEXPERTMATCH_SKILLS_ENABLED: "true"
       MEDEXPERTMATCH_SKILLS_DIRECTORY: "skills"
       MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY: "/app/skills"
+      # Writable path in container (default user.home may be missing or read-only under host network)
+      AGENT_MEMORY_DIR: /tmp/medexpertmatch/memory
     depends_on:
       postgres:
         condition: service_healthy
