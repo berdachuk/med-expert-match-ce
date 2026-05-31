@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.rest;
 
 import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
+import com.berdachuk.medexpertmatch.chat.service.RateLimitScope;
 import com.berdachuk.medexpertmatch.core.exception.RateLimitExceededException;
 import com.berdachuk.medexpertmatch.core.security.UserContext;
 import com.berdachuk.medexpertmatch.llm.service.A2AMessageService;
@@ -61,7 +62,7 @@ public class A2aJsonRpcController {
 
     private void enforceRateLimit() {
         String userId = userContext.currentUserId();
-        if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier())) {
+        if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier(), RateLimitScope.A2A)) {
             throw new RateLimitExceededException(
                     "A2A rate limit exceeded",
                     chatRateLimitService.windowSeconds());

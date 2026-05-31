@@ -51,10 +51,13 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
             }
         }
 
+        String auditReferenceHash = chatExportAuditor.recordDataDeletion(userId, chatsRemoved, messagesSoftDeleted);
+
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("status", "deleted");
         result.put("chatsRemoved", chatsRemoved);
         result.put("messagesSoftDeleted", messagesSoftDeleted);
+        result.put("auditReferenceHash", auditReferenceHash);
         return result;
     }
 
@@ -70,7 +73,7 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
             chatExports.add(toChatExport(chat, history));
         }
 
-        chatExportAuditor.recordExportBundle(userId, chatExports.size(), totalMessages);
+        String auditReferenceHash = chatExportAuditor.recordExportBundle(userId, chatExports.size(), totalMessages);
 
         Map<String, Object> bundle = new LinkedHashMap<>();
         bundle.put("userIdHash", IdentifierHasher.sha256Hex(userId));
@@ -78,6 +81,7 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
         bundle.put("phiRedacted", true);
         bundle.put("chatCount", chatExports.size());
         bundle.put("messageCount", totalMessages);
+        bundle.put("auditReferenceHash", auditReferenceHash);
         bundle.put("chats", chatExports);
         return bundle;
     }

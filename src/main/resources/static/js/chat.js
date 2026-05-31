@@ -459,6 +459,17 @@
         }
     });
 
+    function showLifecycleToast(message) {
+        var toast = document.getElementById('lifecycleToast');
+        var msg = document.getElementById('lifecycleToastMessage');
+        if (!toast || !msg) return;
+        msg.textContent = message;
+        toast.classList.remove('d-none');
+        setTimeout(function () {
+            toast.classList.add('d-none');
+        }, 8000);
+    }
+
     document.getElementById('exportBundleBtn')?.addEventListener('click', function () {
         fetch('/api/v1/chats/export-bundle', { headers: apiHeaders() })
             .then(function (r) {
@@ -473,6 +484,8 @@
                 a.download = 'chat-export-bundle.json';
                 a.click();
                 URL.revokeObjectURL(url);
+                var ref = bundle.auditReferenceHash ? (' Audit ref: ' + bundle.auditReferenceHash.substring(0, 12) + '…') : '';
+                showLifecycleToast('Export complete.' + ref);
             })
             .catch(function (e) { console.error('Export bundle failed', e); alert('Export failed'); });
     });
@@ -481,7 +494,12 @@
         fetch('/api/v1/chats/data', { method: 'DELETE', headers: apiHeaders() })
             .then(function (r) {
                 if (!r.ok) throw new Error('Delete failed');
-                window.location.href = '/chat';
+                return r.json();
+            })
+            .then(function (result) {
+                var ref = result.auditReferenceHash ? (' Audit ref: ' + result.auditReferenceHash.substring(0, 12) + '…') : '';
+                showLifecycleToast('All chat data deleted.' + ref);
+                setTimeout(function () { window.location.href = '/chat'; }, 1500);
             })
             .catch(function (e) { console.error('Delete all data failed', e); alert('Delete failed'); });
     });

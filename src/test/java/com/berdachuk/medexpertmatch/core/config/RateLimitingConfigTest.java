@@ -99,6 +99,18 @@ class RateLimitingConfigTest {
     }
 
     @Test
+    void shouldExcludeAdminEndpointsFromRateLimiting() throws Exception {
+        var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, registry);
+
+        for (int i = 0; i < 5; i++) {
+            var request = new MockHttpServletRequest("GET", "/api/v1/admin/session-tokens");
+            var response = new MockHttpServletResponse();
+            filter.doFilter(request, response, new MockFilterChain());
+            assertEquals(200, response.getStatus());
+        }
+    }
+
+    @Test
     void shouldRespectXForwardedForHeader() throws Exception {
         var filter = new RateLimitingConfig.TokenBucketFilter(new ConcurrentHashMap<>(), 1, 60, new SimpleMeterRegistry());
 

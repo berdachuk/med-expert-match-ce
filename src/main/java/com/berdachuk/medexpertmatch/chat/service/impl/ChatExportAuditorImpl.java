@@ -16,6 +16,7 @@ public class ChatExportAuditorImpl implements ChatExportAuditor {
 
     public static final String ACTION = "CHAT_EXPORT";
     public static final String BUNDLE_ACTION = "CHAT_EXPORT_BUNDLE";
+    public static final String DATA_DELETE_ACTION = "CHAT_DATA_DELETE";
 
     private final AuditLogRepository auditLogRepository;
     private final ChatTurnMetrics chatTurnMetrics;
@@ -27,31 +28,32 @@ public class ChatExportAuditorImpl implements ChatExportAuditor {
 
     @Override
     public void recordExport(String userId, String chatId, int messageCount) {
-        String userHash = IdentifierHasher.sha256Hex(userId);
-        String chatHash = IdentifierHasher.sha256Hex(chatId);
-        AuditLog auditLog = new AuditLog(
-                IdGenerator.generateId(),
-                ACTION,
-                "chat",
-                chatHash,
-                userHash,
-                Map.of("messageCount", messageCount),
-                Instant.now());
-        auditLogRepository.insert(auditLog);
-        chatTurnMetrics.recordExport();
+        insertAudit(IdGenerator.generateId(), ACTION, "chat",
+                IdentifierHasher.sha256Hex(chatId), IdentifierHasher.sha256Hex(userId),
+                Map.of("messageCount", messageCount));
     }
 
     @Override
-    public void recordExportBundle(String userId, int chatCount, int messageCount) {
+    public String recordExportBundle(String userId, int chatCount, int messageCount) {
+        String auditId = IdGenerator.generateId();
         String userHash = IdentifierHasher.sha256Hex(userId);
-        AuditLog auditLog = new AuditLog(
-                IdGenerator.generateId(),
-                BUNDLE_ACTION,
-                "chat_bundle",
-                userHash,
-                userHash,
-                Map.of("chatCount", chatCount, "messageCount", messageCount),
-                Instant.now());
+        insertAudit(auditId, BUNDLE_ACTION, "chat_bundle", userHash, userHash,
+                Map.of("chatCount", chatCount, "messageCount", messageCount));
+        return IdentifierHasher.sha256Hex(auditId);
+    }
+
+    @Override
+    public String recordDataDeletion(String userId, int chatsRemoved, int messagesSoftDeleted) {
+        String auditId = IdGenerator.generateId();
+        String userHash = IdentifierHasher.sha256Hex(userId);
+        insertAudit(auditId, DATA_DELETE_ACTION, "chat_data", userHash, userHash,
+                Map.of("chatsRemoved", chatsRemoved, "messagesSoftDeleted", messagesSoftDeleted));
+        return IdentifierHasher.sha256Hex(auditId);
+    }
+
+    private void insertAudit(String id, String action, String resourceType, String resourceId,
+                             String actor, Map<String, Object> details) {
+        AuditLog auditLog = new AuditLog(id, action, resourceType, resourceId, actor, details, Instant.now());
         auditLogRepository.insert(auditLog);
         chatTurnMetrics.recordExport();
     }

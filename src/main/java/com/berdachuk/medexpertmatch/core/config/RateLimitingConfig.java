@@ -88,7 +88,8 @@ public class RateLimitingConfig {
         static boolean isExcludedFromRateLimit(String path) {
             return path.contains("/health")
                     || path.contains("/actuator")
-                    || path.contains("/synthetic-data/progress/");
+                    || path.contains("/synthetic-data/progress/")
+                    || path.contains("/api/v1/admin/");
         }
 
         private String getClientIp(HttpServletRequest request) {

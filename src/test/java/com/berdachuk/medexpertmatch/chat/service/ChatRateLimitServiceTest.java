@@ -51,4 +51,14 @@ class ChatRateLimitServiceTest {
                 .mapToDouble(c -> c.count())
                 .sum());
     }
+
+    @Test
+    @DisplayName("Separate A2A and chat SSE buckets do not share quota")
+    void separateBuckets() {
+        for (int i = 0; i < 3; i++) {
+            assertTrue(service.tryAcquire("user-c", RateLimitTier.DEFAULT, RateLimitScope.A2A));
+        }
+        assertFalse(service.tryAcquire("user-c", RateLimitTier.DEFAULT, RateLimitScope.A2A));
+        assertTrue(service.tryAcquire("user-c", RateLimitTier.DEFAULT, RateLimitScope.CHAT_SSE));
+    }
 }

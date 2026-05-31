@@ -29,6 +29,10 @@
                 </div>
             </div>
             <div class="border-top p-3 bg-white">
+                <div class="alert alert-info alert-dismissible fade show d-none mb-2 py-2 small" id="lifecycleToast" role="alert">
+                    <span id="lifecycleToastMessage"></span>
+                    <button class="btn-close btn-close-sm" data-bs-dismiss="alert" type="button"></button>
+                </div>
                 <input id="currentUserId" th:value="${currentUserId}" type="hidden"/>
                 <div class="d-none small border rounded p-2 mb-2 bg-light" id="agentTodoPanel"></div>
                 <div class="d-none small border rounded p-2 mb-2 bg-warning-subtle" id="agentQuestionPanel"></div>

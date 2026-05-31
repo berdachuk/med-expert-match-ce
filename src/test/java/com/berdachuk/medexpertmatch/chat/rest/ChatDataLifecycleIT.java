@@ -40,7 +40,8 @@ class ChatDataLifecycleIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.chatCount").isNumber())
                 .andExpect(jsonPath("$.userIdHash").isNotEmpty())
                 .andExpect(jsonPath("$.exportedAt").isNotEmpty())
-                .andExpect(jsonPath("$.messageCount").value(org.hamcrest.Matchers.greaterThan(0)));
+                .andExpect(jsonPath("$.messageCount").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.auditReferenceHash").isNotEmpty());
     }
 
     @Test
@@ -54,7 +55,8 @@ class ChatDataLifecycleIT extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("deleted"))
                 .andExpect(jsonPath("$.chatsRemoved").value(1))
-                .andExpect(jsonPath("$.messagesSoftDeleted").value(org.hamcrest.Matchers.greaterThan(0)));
+                .andExpect(jsonPath("$.messagesSoftDeleted").value(org.hamcrest.Matchers.greaterThan(0)))
+                .andExpect(jsonPath("$.auditReferenceHash").isNotEmpty());
 
         mockMvc.perform(get("/api/v1/chats/" + chatId + "/history")
                         .header(HeaderBasedUserContext.USER_ID_HEADER, userId))

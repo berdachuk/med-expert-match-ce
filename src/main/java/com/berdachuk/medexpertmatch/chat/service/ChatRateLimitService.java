@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Per-user token bucket for chat SSE turns (M19).
+ * Per-user token bucket for chat SSE and A2A turns (M19, M25 scoped buckets).
  */
 @Service
 public class ChatRateLimitService {
@@ -36,20 +36,23 @@ public class ChatRateLimitService {
         return new ChatRateLimitService(chatTurnMetrics, defaultLimit, highLimit);
     }
 
-    /**
-     * @return {@code true} when the user may start a chat stream turn.
-     */
     public boolean tryAcquire(String userId) {
-        return tryAcquire(userId, RateLimitTier.DEFAULT);
+        return tryAcquire(userId, RateLimitTier.DEFAULT, RateLimitScope.CHAT_SSE);
     }
 
     public boolean tryAcquire(String userId, RateLimitTier tier) {
+        return tryAcquire(userId, tier, RateLimitScope.CHAT_SSE);
+    }
+
+    public boolean tryAcquire(String userId, RateLimitTier tier, RateLimitScope scope) {
         if (tier == RateLimitTier.UNLIMITED) {
             return true;
         }
         int limit = tier == RateLimitTier.HIGH ? highLimit : defaultLimit;
+        RateLimitScope bucketScope = scope != null ? scope : RateLimitScope.CHAT_SSE;
+        String bucketKey = userId + ":" + tier.name() + ":" + bucketScope.name();
         TokenBucket bucket = buckets.computeIfAbsent(
-                userId + ":" + tier.name(),
+                bucketKey,
                 k -> new TokenBucket(limit, DEFAULT_WINDOW_SECONDS));
         if (bucket.tryConsume()) {
             return true;

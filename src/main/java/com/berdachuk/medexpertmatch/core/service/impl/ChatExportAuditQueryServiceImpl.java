@@ -15,10 +15,12 @@ public class ChatExportAuditQueryServiceImpl implements ChatExportAuditQueryServ
 
     static final String CHAT_EXPORT_ACTION = "CHAT_EXPORT";
     static final String CHAT_EXPORT_BUNDLE_ACTION = "CHAT_EXPORT_BUNDLE";
+    static final String CHAT_DATA_DELETE_ACTION = "CHAT_DATA_DELETE";
 
     private static final List<String> DEFAULT_EXPORT_ACTIONS = List.of(
             CHAT_EXPORT_ACTION,
-            CHAT_EXPORT_BUNDLE_ACTION);
+            CHAT_EXPORT_BUNDLE_ACTION,
+            CHAT_DATA_DELETE_ACTION);
 
     private final AuditLogRepository auditLogRepository;
 

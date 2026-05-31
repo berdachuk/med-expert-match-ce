@@ -6,6 +6,7 @@ import com.berdachuk.medexpertmatch.chat.service.ChatAssistantService;
 import com.berdachuk.medexpertmatch.chat.service.ChatDataLifecycleService;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportService;
 import com.berdachuk.medexpertmatch.chat.service.ChatRateLimitService;
+import com.berdachuk.medexpertmatch.chat.service.RateLimitScope;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.exception.RateLimitExceededException;
 import com.berdachuk.medexpertmatch.core.security.UserContext;
@@ -124,7 +125,7 @@ public class ChatController {
             @PathVariable String chatId,
             @RequestBody Map<String, String> body) {
         String userId = userContext.currentUserId();
-        if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier())) {
+        if (!chatRateLimitService.tryAcquire(userId, userContext.currentRateLimitTier(), RateLimitScope.CHAT_SSE)) {
             throw new RateLimitExceededException(
                     "Chat rate limit exceeded",
                     chatRateLimitService.windowSeconds());

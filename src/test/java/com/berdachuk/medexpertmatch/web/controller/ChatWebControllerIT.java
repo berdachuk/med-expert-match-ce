@@ -40,6 +40,7 @@ class ChatWebControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"exportBundleBtn\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"deleteAllDataBtn\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"deleteAllDataModal\"")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"deleteAllDataModal\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"lifecycleToast\"")));
     }
 }
