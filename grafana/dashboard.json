@@ -108,6 +108,14 @@
       "targets": [
         {"expr": "rate(chat_rate_limited_total[5m])"}
       ]
+    },
+    {
+      "title": "Chat Exports",
+      "type": "stat",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(chat_export_count_total[5m])"}
+      ]
     }
   ],
   "refresh": "30s"

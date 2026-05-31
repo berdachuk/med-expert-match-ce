@@ -75,16 +75,19 @@ class DoctorRepositoryIT extends BaseIntegrationTest {
 - Each test must be independent (no shared state between tests)
 - Use `DataAccessUtils.uniqueResult()` for single-result query validation
 
-### Playwright (optional, M19)
+### Playwright (optional, M19/M20)
 
 Browser-level chat smoke tests are optional and **not** run in default CI:
 
 ```bash
-# Enable placeholder/profile gate (see ChatPlaywrightSmokeTest)
+# Install browsers once (local)
+mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install chromium"
+
+# Run full navigation smoke
 mvn test -Pplaywright -Dplaywright.enabled=true
 ```
 
-Default CI uses `ChatE2ESmokeIT` (MockMvc) for chat page assets and SSE lifecycle. Install Playwright browsers locally only if extending `ChatPlaywrightSmokeTest` with real navigation assertions.
+Default CI uses `ChatE2ESmokeIT` (MockMvc) for chat page assets and SSE lifecycle. `ChatPlaywrightSmokeTest` loads `/chat`, sends a message, and asserts an assistant reply when enabled.
 
 ## Boundaries
 - Do NOT disable medical data anonymization checks in tests
