@@ -6,7 +6,7 @@ import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentDoctorMatchingWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
@@ -30,19 +30,19 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
     private final MedicalAgentLlmSupportService medicalAgentLlmSupportService;
     private final MedicalCaseRepository medicalCaseRepository;
     private final LogStreamService logStreamService;
-    private final MedicalAgentTools medicalAgentTools;
+    private final DoctorMatchingAgentTools doctorMatchingAgentTools;
     private final ObjectMapper objectMapper;
 
     public MedicalAgentDoctorMatchingWorkflowServiceImpl(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
             MedicalCaseRepository medicalCaseRepository,
             LogStreamService logStreamService,
-            MedicalAgentTools medicalAgentTools,
+            DoctorMatchingAgentTools doctorMatchingAgentTools,
             ObjectMapper objectMapper) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.medicalCaseRepository = medicalCaseRepository;
         this.logStreamService = logStreamService;
-        this.medicalAgentTools = medicalAgentTools;
+        this.doctorMatchingAgentTools = doctorMatchingAgentTools;
         this.objectMapper = objectMapper;
     }
 
@@ -68,7 +68,7 @@ public class MedicalAgentDoctorMatchingWorkflowServiceImpl implements MedicalAge
             logStreamService.sendProgress(sessionId, 45);
             Integer maxResults = (Integer) request.getOrDefault("maxResults", 10);
             List<DoctorMatch> matches =
-                    medicalAgentTools.match_doctors_to_case(caseId, maxResults, null, null, null);
+                    doctorMatchingAgentTools.match_doctors_to_case(caseId, maxResults, null, null, null);
             String jsonResponse = objectMapper.writeValueAsString(matches);
             logStreamService.sendProgress(sessionId, 55);
 

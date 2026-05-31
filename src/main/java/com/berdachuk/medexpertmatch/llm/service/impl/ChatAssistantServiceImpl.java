@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
@@ -19,7 +20,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import reactor.core.publisher.Flux;
@@ -27,6 +27,7 @@ import reactor.core.publisher.Flux;
 import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +45,9 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final LlmCallLimiter llmCallLimiter;
     private final ChatTurnMetrics chatTurnMetrics;
     private final PromptTemplate chatAgentSystemTemplate;
+    private final PromptTemplate chatAgentOrchestratorInstructionsTemplate;
+    private final PromptTemplate chatUserMessageTemplate;
+    private final ChatCasePromptSupport chatCasePromptSupport;
     private final String functionGemmaModelName;
 
     public ChatAssistantServiceImpl(
@@ -54,6 +58,10 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             ChatStreamActivityPublisher chatStreamActivityPublisher,
             LlmCallLimiter llmCallLimiter,
             ChatTurnMetrics chatTurnMetrics,
+            @Qualifier("chatAgentSystemPromptTemplate") PromptTemplate chatAgentSystemTemplate,
+            @Qualifier("chatAgentOrchestratorInstructionsPromptTemplate") PromptTemplate chatAgentOrchestratorInstructionsTemplate,
+            @Qualifier("chatUserMessagePromptTemplate") PromptTemplate chatUserMessageTemplate,
+            ChatCasePromptSupport chatCasePromptSupport,
             @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName) {
         this.chatService = chatService;
         this.chatClient = chatClient;
@@ -62,8 +70,11 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.chatStreamActivityPublisher = chatStreamActivityPublisher;
         this.llmCallLimiter = llmCallLimiter;
         this.chatTurnMetrics = chatTurnMetrics;
+        this.chatAgentSystemTemplate = chatAgentSystemTemplate;
+        this.chatAgentOrchestratorInstructionsTemplate = chatAgentOrchestratorInstructionsTemplate;
+        this.chatUserMessageTemplate = chatUserMessageTemplate;
+        this.chatCasePromptSupport = chatCasePromptSupport;
         this.functionGemmaModelName = functionGemmaModelName;
-        this.chatAgentSystemTemplate = new PromptTemplate(new ClassPathResource("prompts/chat-agent-system.st"));
     }
 
     @Override
@@ -119,9 +130,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                         })
                         .doOnComplete(() -> {
                             try {
-                                String reply = full.toString().isBlank()
-                                        ? "I could not generate a response. Please try again."
-                                        : full.toString().trim();
+                                String reply = resolveReplyAfterStream(ctx, full.toString());
+                                streamReplyTokens(emitter, full.toString(), reply);
                                 ChatMessage assistant = chatService.appendAssistantMessage(chatId, userId, reply);
                                 sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", ctx.profile().agentId()));
                                 emitter.send(SseEmitter.event().name("done").data(Map.of(
@@ -179,6 +189,28 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         return reply.trim();
     }
 
+    /**
+     * Tool-calling models often finish with no streamable text tokens; fall back to a sync call
+     * so tool results still reach the user.
+     */
+    private String resolveReplyAfterStream(TurnContext ctx, String streamedText) {
+        if (streamedText != null && !streamedText.isBlank()) {
+            return streamedText.trim();
+        }
+        log.warn("Chat stream returned no text for session {}; retrying sync tool-calling turn",
+                ctx.sessionId());
+        logStreamService.sendLog(ctx.sessionId(), "WARN", "Chat Agent",
+                "Stream empty — retrying sync " + functionGemmaModelName + " turn");
+        return invokeSync(ctx);
+    }
+
+    private void streamReplyTokens(SseEmitter emitter, String streamedText, String reply) throws IOException {
+        if (streamedText != null && !streamedText.isBlank()) {
+            return;
+        }
+        emitter.send(SseEmitter.event().name("token").data(Map.of("t", reply)));
+    }
+
     private TurnContext prepareTurn(String chatId, String userId, String content, String agentIdOverride) {
         Chat chat = chatService.requireOwnedChat(chatId, userId);
         ChatAgentProfile profile = resolveProfile(chat, agentIdOverride);
@@ -219,11 +251,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
 
     private String buildAgentInstructions(ChatAgentProfile profile) {
         if (profile.orchestrator()) {
-            return """
-                    You are in Auto orchestrator mode. Answer directly when possible.
-                    For specialized domains, use TodoWrite to plan and Task to delegate to subagents:
-                    triage-intake, case-analyzer, evidence-scout, specialist-matcher, routing-planner, network-analyst.
-                    Merge subagent results into one cohesive reply.""";
+            return chatAgentOrchestratorInstructionsTemplate.render(Collections.emptyMap());
         }
         List<String> skillBodies = new ArrayList<>();
         for (String skill : profile.skills()) {
@@ -233,12 +261,16 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     }
 
     private String buildUserPrompt(ChatAgentProfile profile, String content) {
+        String routingHint = "";
         if (profile.orchestrator()) {
-            return ChatAgentProfile.classifyIntent(content)
-                    .map(hint -> "Routing hint — consider specialist: " + hint.agentId() + "\n\nUser message:\n" + content)
-                    .orElse(content);
+            routingHint = ChatAgentProfile.classifyIntent(content)
+                    .map(hint -> "Routing hint — consider specialist: " + hint.agentId() + "\n\n")
+                    .orElse("");
         }
-        return "User message:\n" + content;
+        return chatUserMessageTemplate.render(Map.of(
+                "caseToolHints", chatCasePromptSupport.buildCaseToolHints(content),
+                "routingHint", routingHint,
+                "userMessage", content));
     }
 
     private static void sendAgentEvent(SseEmitter emitter, Map<String, Object> payload) {

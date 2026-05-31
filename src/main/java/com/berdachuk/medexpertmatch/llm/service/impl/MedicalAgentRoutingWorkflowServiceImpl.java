@@ -5,7 +5,7 @@ import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentRoutingWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
 import com.berdachuk.medexpertmatch.retrieval.domain.FacilityMatch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,15 +23,15 @@ public class MedicalAgentRoutingWorkflowServiceImpl implements MedicalAgentRouti
 
     private final MedicalAgentLlmSupportService medicalAgentLlmSupportService;
     private final LogStreamService logStreamService;
-    private final MedicalAgentTools medicalAgentTools;
+    private final RoutingAgentTools routingAgentTools;
 
     public MedicalAgentRoutingWorkflowServiceImpl(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
             LogStreamService logStreamService,
-            MedicalAgentTools medicalAgentTools) {
+            RoutingAgentTools routingAgentTools) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.logStreamService = logStreamService;
-        this.medicalAgentTools = medicalAgentTools;
+        this.routingAgentTools = routingAgentTools;
     }
 
     @Override
@@ -46,7 +46,7 @@ public class MedicalAgentRoutingWorkflowServiceImpl implements MedicalAgentRouti
             String caseAnalysis = medicalAgentLlmSupportService.analyzeCaseWithMedGemma(caseId);
 
             logStreamService.sendLog(sessionId, "INFO", "Routing tools", "Calling match_facilities_for_case");
-            List<FacilityMatch> facilityMatches = medicalAgentTools.match_facilities_for_case(caseId, 5, null, null, null, null);
+            List<FacilityMatch> facilityMatches = routingAgentTools.match_facilities_for_case(caseId, 5, null, null, null, null);
             logStreamService.sendLog(sessionId, "INFO", "Routing tools",
                     String.format("match_facilities_for_case returned %d facility matches",
                             facilityMatches != null ? facilityMatches.size() : 0));

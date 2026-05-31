@@ -50,6 +50,46 @@ public class PromptTemplateConfig {
     private Resource routingSummarizationResource;
     @Value("classpath:/prompts/network-analytics-summarization.st")
     private Resource networkAnalyticsSummarizationResource;
+    @Value("classpath:/prompts/clinical-guidelines-search.st")
+    private Resource clinicalGuidelinesSearchResource;
+    @Value("classpath:/prompts/clinical-recommendations.st")
+    private Resource clinicalRecommendationsResource;
+    @Value("classpath:/prompts/clinical-recommendations-task-diagnostic.st")
+    private Resource clinicalRecommendationsTaskDiagnosticResource;
+    @Value("classpath:/prompts/clinical-recommendations-task-treatment.st")
+    private Resource clinicalRecommendationsTaskTreatmentResource;
+    @Value("classpath:/prompts/clinical-recommendations-task-follow-up.st")
+    private Resource clinicalRecommendationsTaskFollowUpResource;
+    @Value("classpath:/prompts/clinical-recommendations-task-default.st")
+    private Resource clinicalRecommendationsTaskDefaultResource;
+    @Value("classpath:/prompts/clinical-recommendations-evidence-instruction.st")
+    private Resource clinicalRecommendationsEvidenceInstructionResource;
+    @Value("classpath:/prompts/differential-diagnosis.st")
+    private Resource differentialDiagnosisResource;
+    @Value("classpath:/prompts/risk-assessment.st")
+    private Resource riskAssessmentResource;
+    @Value("classpath:/prompts/risk-assessment-task-complication.st")
+    private Resource riskAssessmentTaskComplicationResource;
+    @Value("classpath:/prompts/risk-assessment-task-mortality.st")
+    private Resource riskAssessmentTaskMortalityResource;
+    @Value("classpath:/prompts/risk-assessment-task-readmission.st")
+    private Resource riskAssessmentTaskReadmissionResource;
+    @Value("classpath:/prompts/risk-assessment-task-default.st")
+    private Resource riskAssessmentTaskDefaultResource;
+    @Value("classpath:/prompts/auto-memory-system.st")
+    private Resource autoMemorySystemResource;
+    @Value("classpath:/prompts/chat-agent-system.st")
+    private Resource chatAgentSystemResource;
+    @Value("classpath:/prompts/chat-agent-orchestrator-instructions.st")
+    private Resource chatAgentOrchestratorInstructionsResource;
+    @Value("classpath:/prompts/chat-case-id-hint.st")
+    private Resource chatCaseIdHintResource;
+    @Value("classpath:/prompts/chat-no-case-id-hint.st")
+    private Resource chatNoCaseIdHintResource;
+    @Value("classpath:/prompts/chat-user-message.st")
+    private Resource chatUserMessageResource;
+    @Value("classpath:/prompts/agent-matching-orchestration.st")
+    private Resource agentMatchingOrchestrationResource;
 
     @Bean
     public StTemplateRenderer stTemplateRenderer() {
@@ -269,6 +309,133 @@ public class PromptTemplateConfig {
         return PromptTemplate.builder()
                 .renderer(renderer)
                 .resource(networkAnalyticsSummarizationResource)
+                .build();
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("clinicalGuidelinesSearchPromptTemplate")
+    public PromptTemplate clinicalGuidelinesSearchPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, clinicalGuidelinesSearchResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("clinicalRecommendationsPromptTemplate")
+    public PromptTemplate clinicalRecommendationsPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, clinicalRecommendationsResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("clinicalRecommendationsTaskDiagnosticPromptTemplate")
+    public PromptTemplate clinicalRecommendationsTaskDiagnosticPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, clinicalRecommendationsTaskDiagnosticResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("clinicalRecommendationsTaskTreatmentPromptTemplate")
+    public PromptTemplate clinicalRecommendationsTaskTreatmentPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, clinicalRecommendationsTaskTreatmentResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("clinicalRecommendationsTaskFollowUpPromptTemplate")
+    public PromptTemplate clinicalRecommendationsTaskFollowUpPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, clinicalRecommendationsTaskFollowUpResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("clinicalRecommendationsTaskDefaultPromptTemplate")
+    public PromptTemplate clinicalRecommendationsTaskDefaultPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, clinicalRecommendationsTaskDefaultResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("clinicalRecommendationsEvidenceInstructionPromptTemplate")
+    public PromptTemplate clinicalRecommendationsEvidenceInstructionPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, clinicalRecommendationsEvidenceInstructionResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("differentialDiagnosisPromptTemplate")
+    public PromptTemplate differentialDiagnosisPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, differentialDiagnosisResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("riskAssessmentPromptTemplate")
+    public PromptTemplate riskAssessmentPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, riskAssessmentResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("riskAssessmentTaskComplicationPromptTemplate")
+    public PromptTemplate riskAssessmentTaskComplicationPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, riskAssessmentTaskComplicationResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("riskAssessmentTaskMortalityPromptTemplate")
+    public PromptTemplate riskAssessmentTaskMortalityPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, riskAssessmentTaskMortalityResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("riskAssessmentTaskReadmissionPromptTemplate")
+    public PromptTemplate riskAssessmentTaskReadmissionPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, riskAssessmentTaskReadmissionResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("riskAssessmentTaskDefaultPromptTemplate")
+    public PromptTemplate riskAssessmentTaskDefaultPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, riskAssessmentTaskDefaultResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("autoMemorySystemPromptTemplate")
+    public PromptTemplate autoMemorySystemPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, autoMemorySystemResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("chatAgentSystemPromptTemplate")
+    public PromptTemplate chatAgentSystemPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, chatAgentSystemResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("chatAgentOrchestratorInstructionsPromptTemplate")
+    public PromptTemplate chatAgentOrchestratorInstructionsPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, chatAgentOrchestratorInstructionsResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("chatCaseIdHintPromptTemplate")
+    public PromptTemplate chatCaseIdHintPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, chatCaseIdHintResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("chatNoCaseIdHintPromptTemplate")
+    public PromptTemplate chatNoCaseIdHintPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, chatNoCaseIdHintResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("chatUserMessagePromptTemplate")
+    public PromptTemplate chatUserMessagePromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, chatUserMessageResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("agentMatchingOrchestrationPromptTemplate")
+    public PromptTemplate agentMatchingOrchestrationPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, agentMatchingOrchestrationResource);
+    }
+
+    private static PromptTemplate promptTemplate(StTemplateRenderer renderer, Resource resource) {
+        return PromptTemplate.builder()
+                .renderer(renderer)
+                .resource(resource)
                 .build();
     }
 }

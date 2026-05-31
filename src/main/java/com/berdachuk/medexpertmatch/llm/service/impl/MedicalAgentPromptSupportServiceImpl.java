@@ -2,6 +2,8 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -22,12 +24,15 @@ public class MedicalAgentPromptSupportServiceImpl implements MedicalAgentPromptS
 
     private final ResourceLoader resourceLoader;
     private final String skillsDirectory;
+    private final PromptTemplate agentMatchingOrchestrationPromptTemplate;
 
     public MedicalAgentPromptSupportServiceImpl(
             ResourceLoader resourceLoader,
-            @Value("${medexpertmatch.skills.directory:skills}") String skillsDirectory) {
+            @Value("${medexpertmatch.skills.directory:skills}") String skillsDirectory,
+            @Qualifier("agentMatchingOrchestrationPromptTemplate") PromptTemplate agentMatchingOrchestrationPromptTemplate) {
         this.resourceLoader = resourceLoader;
         this.skillsDirectory = skillsDirectory;
+        this.agentMatchingOrchestrationPromptTemplate = agentMatchingOrchestrationPromptTemplate;
     }
 
     @Override
@@ -51,39 +56,30 @@ public class MedicalAgentPromptSupportServiceImpl implements MedicalAgentPromptS
 
     @Override
     public String buildPrompt(List<String> skills, String userRequest, Map<String, Object> requestParams) {
-        StringBuilder promptBuilder = new StringBuilder();
-        promptBuilder.append("You are an expert matching assistant. Your role is to match healthcare specialists to medical cases.\n\n");
-        promptBuilder.append("IMPORTANT: This is NOT a diagnostic system. Medical analysis is handled by the LLM.\n");
-        promptBuilder.append("Your task is to orchestrate tool calls to find matching doctors, not to provide medical diagnosis.\n\n");
-        promptBuilder.append("Use the following guidance for expert matching:\n\n");
-
+        StringBuilder skillsSection = new StringBuilder();
         for (String skill : skills) {
-            promptBuilder.append("---\n");
-            promptBuilder.append(skill);
-            promptBuilder.append("\n---\n\n");
+            skillsSection.append("---\n");
+            skillsSection.append(skill);
+            skillsSection.append("\n---\n\n");
         }
 
-        promptBuilder.append("Task: ").append(userRequest).append("\n");
-        promptBuilder.append("Focus on matching specialists to cases, not on medical diagnosis.\n\n");
+        String requestParametersSection = buildRequestParametersSection(requestParams);
+        return agentMatchingOrchestrationPromptTemplate.render(Map.of(
+                "skillsSection", skillsSection.toString(),
+                "userRequest", userRequest,
+                "requestParametersSection", requestParametersSection));
+    }
 
-        if (requestParams != null && !requestParams.isEmpty()) {
-            promptBuilder.append("Request Parameters:\n");
-            requestParams.forEach((key, value) -> {
-                if (!"sessionId".equals(key)) {
-                    promptBuilder.append("- ").append(key).append(": ").append(value).append("\n");
-                }
-            });
-            promptBuilder.append("\n");
+    private String buildRequestParametersSection(Map<String, Object> requestParams) {
+        if (requestParams == null || requestParams.isEmpty()) {
+            return "";
         }
-
-        promptBuilder.append("Use the available tools to find and match doctors. Provide a clear summary of matched specialists.\n\n");
-        promptBuilder.append("CRITICAL OUTPUT LIMITS:\n");
-        promptBuilder.append("- Provide EXACTLY ONE response and STOP after completing the task\n");
-        promptBuilder.append("- Do NOT repeat the same content multiple times\n");
-        promptBuilder.append("- Maximum response length: 2000 words (approximately 10000 characters)\n");
-        promptBuilder.append("- Stop immediately after providing the response\n");
-        promptBuilder.append("- Do NOT continue generating after the response is complete");
-
-        return promptBuilder.toString();
+        StringBuilder section = new StringBuilder("Request Parameters:\n");
+        requestParams.forEach((key, value) -> {
+            if (!"sessionId".equals(key)) {
+                section.append("- ").append(key).append(": ").append(value).append("\n");
+            }
+        });
+        return section.append("\n").toString();
     }
 }

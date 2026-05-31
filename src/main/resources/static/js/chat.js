@@ -6,6 +6,10 @@
     var currentMarkdownBuffer = '';
 
     function apiHeaders() {
+        var hiddenUserId = document.getElementById('currentUserId')?.value?.trim();
+        if (hiddenUserId) {
+            return { 'Content-Type': 'application/json', 'X-User-Id': hiddenUserId };
+        }
         if (typeof getApiUserHeaders === 'function') {
             return getApiUserHeaders();
         }
@@ -361,7 +365,10 @@
             body: JSON.stringify({ content: text, agentId: agentId || 'auto' })
         }).then(function (response) {
             if (!response.ok || !response.body) {
-                throw new Error('Stream failed');
+                return response.text().then(function (body) {
+                    var detail = body && body.length < 200 ? body : ('HTTP ' + response.status);
+                    throw new Error(detail || 'Stream failed');
+                });
             }
             var reader = response.body.getReader();
             var decoder = new TextDecoder();
@@ -398,7 +405,7 @@
         }).catch(function (err) {
             console.error(err);
             if (logSource) logSource.close();
-            addActivityEntry('done', 'Error: stream failed', agentId || 'auto');
+            addActivityEntry('done', 'Error: ' + (err && err.message ? err.message : 'stream failed'), agentId || 'auto');
             collapseActivityPanel();
             if (btn) btn.disabled = false;
         });

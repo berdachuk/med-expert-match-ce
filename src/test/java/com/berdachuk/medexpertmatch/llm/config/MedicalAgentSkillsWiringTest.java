@@ -4,9 +4,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.util.StreamUtils;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -57,8 +60,11 @@ class MedicalAgentSkillsWiringTest {
 
     @Test
     @DisplayName("Memory system prompt remains PHI-safe alongside skills wiring")
-    void memoryPromptStillPhiSafe() {
-        assertTrue(MedicalAgentConfiguration.MEMORY_SYSTEM_PROMPT.toLowerCase().contains("phi"),
+    void memoryPromptStillPhiSafe() throws Exception {
+        String prompt = StreamUtils.copyToString(
+                new ClassPathResource("prompts/auto-memory-system.st").getInputStream(),
+                StandardCharsets.UTF_8);
+        assertTrue(prompt.toLowerCase().contains("phi"),
                 "memory system prompt must still warn about PHI after skills wiring");
     }
 }

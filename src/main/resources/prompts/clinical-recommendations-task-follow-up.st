@@ -1,0 +1,1 @@
+Generate follow-up and monitoring recommendations for this case. Include recommended follow-up intervals, monitoring parameters, warning signs to watch for, and when to seek immediate medical attention.

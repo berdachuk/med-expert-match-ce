@@ -5,7 +5,7 @@ import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentNetworkAnalyticsWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.GraphAnalyticsAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -31,17 +31,17 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
     private final MedicalCaseRepository medicalCaseRepository;
     private final MedicalAgentLlmSupportService medicalAgentLlmSupportService;
     private final LogStreamService logStreamService;
-    private final MedicalAgentTools medicalAgentTools;
+    private final GraphAnalyticsAgentTools graphAnalyticsAgentTools;
 
     public MedicalAgentNetworkAnalyticsWorkflowServiceImpl(
             MedicalCaseRepository medicalCaseRepository,
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
             LogStreamService logStreamService,
-            MedicalAgentTools medicalAgentTools) {
+            GraphAnalyticsAgentTools graphAnalyticsAgentTools) {
         this.medicalCaseRepository = medicalCaseRepository;
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.logStreamService = logStreamService;
-        this.medicalAgentTools = medicalAgentTools;
+        this.graphAnalyticsAgentTools = graphAnalyticsAgentTools;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
             for (int i = 0; i < maxConditions; i++) {
                 String code = conditionCodes.get(i);
                 logStreamService.sendLog(sessionId, "INFO", "Graph query", "Querying top experts for condition: " + code);
-                List<String> experts = medicalAgentTools.graph_query_top_experts(code, MAX_EXPERTS_PER_CONDITION);
+                List<String> experts = graphAnalyticsAgentTools.graph_query_top_experts(code, MAX_EXPERTS_PER_CONDITION);
                 conditionExperts.put(code, experts);
                 raw.append("## Top experts for condition ").append(code).append("\n");
                 for (String line : experts) {
@@ -73,8 +73,8 @@ public class MedicalAgentNetworkAnalyticsWorkflowServiceImpl implements MedicalA
             }
 
             logStreamService.sendLog(sessionId, "INFO", "Aggregate metrics", "Aggregating condition and doctor metrics");
-            String conditionMetrics = medicalAgentTools.aggregate_metrics("CONDITION", null, "PERFORMANCE");
-            String doctorMetrics = medicalAgentTools.aggregate_metrics("DOCTOR", null, "PERFORMANCE");
+            String conditionMetrics = graphAnalyticsAgentTools.aggregate_metrics("CONDITION", null, "PERFORMANCE");
+            String doctorMetrics = graphAnalyticsAgentTools.aggregate_metrics("DOCTOR", null, "PERFORMANCE");
             raw.append("## Aggregate metrics (condition)\n").append(conditionMetrics).append("\n");
             raw.append("## Aggregate metrics (doctor)\n").append(doctorMetrics).append("\n");
 

@@ -110,7 +110,7 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 - TDD (mandatory): (1) write the test FIRST; (2) verify the test against the requirements with an internal review tool/skill (e.g. a code-review or testing skill, or a review subagent) to confirm it truly encodes the requirement; (3) only then implement the functionality; (4) re-run the test (`mvn verify`) and fix problems until it passes. Prefer integration tests (`*IT.java` suffix).
 - Interface-based design: every service/repo has interface + impl
 - Java records for domain entities (immutable), Lombok for services/impls only
-- External `.st` files for LLM prompts (never hardcode prompt strings)
+- External `.st` files for LLM prompts (never hardcode prompt strings); wire via `PromptTemplate.builder().resource(...)` in `PromptTemplateConfig` — see [Spring AI: using resources instead of raw strings](https://docs.spring.io/spring-ai/reference/2.0/api/prompt.html#_using_resources_instead_of_raw_strings)
 - External `.sql` files for repository queries
 - Service-layer transactions (`@Transactional` on service methods)
 - Separate insert/update repository methods (never `createOrUpdate`)

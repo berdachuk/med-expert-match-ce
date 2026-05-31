@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,13 +28,13 @@ class A2ASendMessageTest {
     private MedicalAgentService medicalAgentService;
 
     @Mock
-    private MedicalAgentTools medicalAgentTools;
+    private EvidenceAgentTools evidenceAgentTools;
 
     private A2AMessageServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new A2AMessageServiceImpl(medicalAgentService, medicalAgentTools);
+        service = new A2AMessageServiceImpl(medicalAgentService, evidenceAgentTools);
     }
 
     @Test
@@ -52,9 +52,9 @@ class A2ASendMessageTest {
     @Test
     @DisplayName("sendMessage routes evidence_search to PubMed and guidelines tools")
     void routesEvidenceSearch() {
-        when(medicalAgentTools.search_clinical_guidelines(any(), eq(null), anyInt()))
+        when(evidenceAgentTools.search_clinical_guidelines(any(), eq(null), anyInt()))
                 .thenReturn(List.of("Guideline 1"));
-        when(medicalAgentTools.query_pubmed(any(), anyInt()))
+        when(evidenceAgentTools.query_pubmed(any(), anyInt()))
                 .thenReturn(List.of("PubMed article 1"));
 
         Map<String, Object> body = Map.of(
@@ -64,7 +64,7 @@ class A2ASendMessageTest {
         Map<String, Object> response = service.sendMessage(body);
         assertEquals("completed", response.get("status"));
         assertEquals("evidence_search", response.get("skill"));
-        verify(medicalAgentTools).query_pubmed("Summarize hypertension treatment guidelines", 5);
+        verify(evidenceAgentTools).query_pubmed("Summarize hypertension treatment guidelines", 5);
     }
 
     @Test
@@ -86,9 +86,9 @@ class A2ASendMessageTest {
     @Test
     @DisplayName("JSON-RPC sendMessage returns result envelope")
     void jsonRpcSendMessage() {
-        when(medicalAgentTools.search_clinical_guidelines(any(), eq(null), anyInt()))
+        when(evidenceAgentTools.search_clinical_guidelines(any(), eq(null), anyInt()))
                 .thenReturn(List.of("G1"));
-        when(medicalAgentTools.query_pubmed(any(), anyInt()))
+        when(evidenceAgentTools.query_pubmed(any(), anyInt()))
                 .thenReturn(List.of("P1"));
 
         Map<String, Object> request = Map.of(

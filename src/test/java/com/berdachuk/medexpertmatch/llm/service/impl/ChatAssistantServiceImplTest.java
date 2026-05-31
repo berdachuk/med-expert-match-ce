@@ -8,14 +8,17 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,10 +38,16 @@ class ChatAssistantServiceImplTest {
     private final LogStreamService logStreamService = mock(LogStreamService.class);
     private final ChatStreamActivityPublisher chatStreamActivityPublisher = mock(ChatStreamActivityPublisher.class);
     private final LlmCallLimiter llmCallLimiter = new LlmCallLimiter(1, 1, 1, 1);
+    private final PromptTemplate chatAgentSystemTemplate = mock(PromptTemplate.class);
+    private final PromptTemplate chatAgentOrchestratorInstructionsTemplate = mock(PromptTemplate.class);
+    private final PromptTemplate chatUserMessageTemplate = mock(PromptTemplate.class);
+    private final ChatCasePromptSupport chatCasePromptSupport = mock(ChatCasePromptSupport.class);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
-            new ChatTurnMetrics(new SimpleMeterRegistry()), "functiongemma");
+            new ChatTurnMetrics(new SimpleMeterRegistry()), chatAgentSystemTemplate,
+            chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
+            "functiongemma");
 
     @AfterEach
     void clearContext() {
@@ -58,6 +67,9 @@ class ChatAssistantServiceImplTest {
         when(chatService.appendAssistantMessage("c1", "user-a", "Here is evidence")).thenReturn(assistantMsg);
         when(promptSupport.loadSkill(any())).thenReturn("skill body");
         when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
+        when(chatAgentSystemTemplate.render(any())).thenReturn("system");
+        when(chatUserMessageTemplate.render(any())).thenReturn("user prompt");
+        when(chatCasePromptSupport.buildCaseToolHints(any())).thenReturn("");
         when(chatClient.prompt()).thenReturn(requestSpec);
         when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
         when(requestSpec.user(any(String.class))).thenReturn(requestSpec);

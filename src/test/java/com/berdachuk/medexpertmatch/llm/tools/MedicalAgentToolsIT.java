@@ -30,7 +30,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Autowired
-    private MedicalAgentTools medicalAgentTools;
+    private RoutingAgentTools routingAgentTools;
+
+    @Autowired
+    private GraphAnalyticsAgentTools graphAnalyticsAgentTools;
+
+    @Autowired
+    private EvidenceAgentTools evidenceAgentTools;
+
+    @Autowired
+    private ClinicalAdvisorAgentTools clinicalAdvisorAgentTools;
 
     @Autowired
     private MedicalCaseRepository medicalCaseRepository;
@@ -136,7 +145,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testSemanticGraphRetrievalRouteScore() {
-        RouteScoreResult result = medicalAgentTools.semantic_graph_retrieval_route_score(testCaseId, testFacilityId);
+        RouteScoreResult result = routingAgentTools.semantic_graph_retrieval_route_score(testCaseId, testFacilityId);
 
         assertNotNull(result);
         assertTrue(result.overallScore() >= 0 && result.overallScore() <= 100);
@@ -150,20 +159,20 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
     @Test
     void testSemanticGraphRetrievalRouteScore_InvalidCaseId() {
         assertThrows(IllegalArgumentException.class, () -> {
-            medicalAgentTools.semantic_graph_retrieval_route_score("invalid-case-id", testFacilityId);
+            routingAgentTools.semantic_graph_retrieval_route_score("invalid-case-id", testFacilityId);
         });
     }
 
     @Test
     void testSemanticGraphRetrievalRouteScore_InvalidFacilityId() {
         assertThrows(IllegalArgumentException.class, () -> {
-            medicalAgentTools.semantic_graph_retrieval_route_score(testCaseId, "invalid-facility-id");
+            routingAgentTools.semantic_graph_retrieval_route_score(testCaseId, "invalid-facility-id");
         });
     }
 
     @Test
     void testGraphQueryCandidateCenters() {
-        List<String> results = medicalAgentTools.graph_query_candidate_centers(conditionCode, 10);
+        List<String> results = routingAgentTools.graph_query_candidate_centers(conditionCode, 10);
 
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Graph query should return at least one facility");
@@ -175,7 +184,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testGraphQueryCandidateCenters_InvalidConditionCode() {
-        List<String> results = medicalAgentTools.graph_query_candidate_centers("", 10);
+        List<String> results = routingAgentTools.graph_query_candidate_centers("", 10);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.get(0).contains("Error") || results.get(0).contains("required"));
@@ -187,7 +196,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testGraphQueryTopExperts() {
-        List<String> results = medicalAgentTools.graph_query_top_experts(conditionCode, 10);
+        List<String> results = graphAnalyticsAgentTools.graph_query_top_experts(conditionCode, 10);
 
         assertNotNull(results);
         assertFalse(results.isEmpty(), "Graph query should return at least one expert");
@@ -203,7 +212,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testGraphQueryTopExperts_InvalidConditionCode() {
-        List<String> results = medicalAgentTools.graph_query_top_experts("", 10);
+        List<String> results = graphAnalyticsAgentTools.graph_query_top_experts("", 10);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.get(0).contains("Error") || results.get(0).contains("required"));
@@ -211,7 +220,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testAggregateMetrics_Doctor() {
-        String result = medicalAgentTools.aggregate_metrics("DOCTOR", testDoctorId, "PERFORMANCE");
+        String result = graphAnalyticsAgentTools.aggregate_metrics("DOCTOR", testDoctorId, "PERFORMANCE");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -220,7 +229,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testAggregateMetrics_Doctor_AllDoctors() {
-        String result = medicalAgentTools.aggregate_metrics("DOCTOR", null, "PERFORMANCE");
+        String result = graphAnalyticsAgentTools.aggregate_metrics("DOCTOR", null, "PERFORMANCE");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -229,7 +238,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testAggregateMetrics_Condition() {
-        String result = medicalAgentTools.aggregate_metrics("CONDITION", conditionCode, "VOLUME");
+        String result = graphAnalyticsAgentTools.aggregate_metrics("CONDITION", conditionCode, "VOLUME");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -238,7 +247,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testAggregateMetrics_Facility() {
-        String result = medicalAgentTools.aggregate_metrics("FACILITY", testFacilityId, "VOLUME");
+        String result = graphAnalyticsAgentTools.aggregate_metrics("FACILITY", testFacilityId, "VOLUME");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -247,7 +256,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testAggregateMetrics_InvalidEntityType() {
-        String result = medicalAgentTools.aggregate_metrics("INVALID", null, "PERFORMANCE");
+        String result = graphAnalyticsAgentTools.aggregate_metrics("INVALID", null, "PERFORMANCE");
         assertNotNull(result);
         assertTrue(result.contains("Error") || result.contains("Unknown entity type"));
     }
@@ -258,7 +267,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testQueryPubMed() {
-        List<String> results = medicalAgentTools.query_pubmed("acute myocardial infarction", 5);
+        List<String> results = evidenceAgentTools.query_pubmed("acute myocardial infarction", 5);
 
         assertNotNull(results);
         // PubMed API might return results or empty list if API is unavailable
@@ -273,7 +282,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testQueryPubMed_InvalidQuery() {
-        List<String> results = medicalAgentTools.query_pubmed("", 10);
+        List<String> results = evidenceAgentTools.query_pubmed("", 10);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.get(0).contains("Error") || results.get(0).contains("required"));
@@ -281,7 +290,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testSearchClinicalGuidelines() {
-        List<String> results = medicalAgentTools.search_clinical_guidelines("acute myocardial infarction", "Cardiology", 5);
+        List<String> results = evidenceAgentTools.search_clinical_guidelines("acute myocardial infarction", "Cardiology", 5);
 
         assertNotNull(results);
         // LLM-based implementation should return guidelines or error message
@@ -294,7 +303,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testSearchClinicalGuidelines_InvalidCondition() {
-        List<String> results = medicalAgentTools.search_clinical_guidelines("", null, 10);
+        List<String> results = evidenceAgentTools.search_clinical_guidelines("", null, 10);
         assertNotNull(results);
         assertFalse(results.isEmpty());
         assertTrue(results.get(0).contains("Error") || results.get(0).contains("required"));
@@ -302,7 +311,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testGenerateRecommendations_Diagnostic() {
-        String result = medicalAgentTools.generate_recommendations(testCaseId, "DIAGNOSTIC", false);
+        String result = clinicalAdvisorAgentTools.generate_recommendations(testCaseId, "DIAGNOSTIC", false);
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -315,7 +324,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testGenerateRecommendations_Treatment() {
-        String result = medicalAgentTools.generate_recommendations(testCaseId, "TREATMENT", false);
+        String result = clinicalAdvisorAgentTools.generate_recommendations(testCaseId, "TREATMENT", false);
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -326,7 +335,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testGenerateRecommendations_FollowUp() {
-        String result = medicalAgentTools.generate_recommendations(testCaseId, "FOLLOW_UP", false);
+        String result = clinicalAdvisorAgentTools.generate_recommendations(testCaseId, "FOLLOW_UP", false);
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -338,14 +347,14 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testGenerateRecommendations_InvalidCaseId() {
-        String result = medicalAgentTools.generate_recommendations("invalid-case-id", "DIAGNOSTIC", false);
+        String result = clinicalAdvisorAgentTools.generate_recommendations("invalid-case-id", "DIAGNOSTIC", false);
         assertNotNull(result);
         assertTrue(result.contains("Error") || result.contains("not found"));
     }
 
     @Test
     void testDifferentialDiagnosis() {
-        String result = medicalAgentTools.differential_diagnosis(testCaseId, 10);
+        String result = clinicalAdvisorAgentTools.differential_diagnosis(testCaseId, 10);
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -356,14 +365,14 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testDifferentialDiagnosis_InvalidCaseId() {
-        String result = medicalAgentTools.differential_diagnosis("invalid-case-id", 10);
+        String result = clinicalAdvisorAgentTools.differential_diagnosis("invalid-case-id", 10);
         assertNotNull(result);
         assertTrue(result.contains("Error") || result.contains("not found"));
     }
 
     @Test
     void testRiskAssessment_Complication() {
-        String result = medicalAgentTools.risk_assessment(testCaseId, "COMPLICATION");
+        String result = clinicalAdvisorAgentTools.risk_assessment(testCaseId, "COMPLICATION");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -375,7 +384,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testRiskAssessment_Mortality() {
-        String result = medicalAgentTools.risk_assessment(testCaseId, "MORTALITY");
+        String result = clinicalAdvisorAgentTools.risk_assessment(testCaseId, "MORTALITY");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -387,7 +396,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testRiskAssessment_Readmission() {
-        String result = medicalAgentTools.risk_assessment(testCaseId, "READMISSION");
+        String result = clinicalAdvisorAgentTools.risk_assessment(testCaseId, "READMISSION");
 
         assertNotNull(result);
         assertFalse(result.isEmpty());
@@ -399,7 +408,7 @@ class MedicalAgentToolsIT extends BaseIntegrationTest {
 
     @Test
     void testRiskAssessment_InvalidCaseId() {
-        String result = medicalAgentTools.risk_assessment("invalid-case-id", "COMPLICATION");
+        String result = clinicalAdvisorAgentTools.risk_assessment("invalid-case-id", "COMPLICATION");
         assertNotNull(result);
         assertTrue(result.contains("Error") || result.contains("not found"));
     }

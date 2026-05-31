@@ -6,7 +6,12 @@ import com.berdachuk.medexpertmatch.llm.automemory.TimeGapConsolidationTrigger;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.CaseAnalysisAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.ClinicalAdvisorAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.GraphAnalyticsAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springaicommunity.agent.tools.AskUserQuestionTool;
 import org.springaicommunity.agent.tools.FileSystemTools;
@@ -20,6 +25,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.session.DefaultSessionService;
 import org.springframework.ai.session.SessionRepository;
@@ -46,6 +52,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import java.util.Collections;
+
 /**
  * Configuration for Medical Agent with Spring AI Agent Skills integration.
  * <p>
@@ -65,21 +73,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
         matchIfMissing = true
 )
 public class MedicalAgentConfiguration {
-
-    /**
-     * System guidance that turns the AutoMemory tools into a usable long-term memory layer
-     * (Option B: explicit tools + prompt, since this spring-ai-agent-utils version exposes no
-     * {@code AutoMemoryToolsAdvisor}). It instructs the agent to curate durable cross-session
-     * facts and — critically — to store ONLY non-PHI (preferences, routing policies, model config),
-     * never patient data. A defense-in-depth complement to the {@code PhiGuard} hard reject.
-     */
-    public static final String MEMORY_SYSTEM_PROMPT = """
-            You have a durable long-term memory across sessions via the AutoMemory tools \
-            (automemory_append, automemory_read, automemory_index). Use automemory_read at the \
-            start of relevant tasks to recall clinician preferences, routing policies, and model \
-            configuration, and automemory_append to persist new durable, non-patient facts. \
-            CRITICAL HIPAA RULE: never write PHI (patient names, SSN, MRN, DOB, contact details, \
-            or any patient-identifying data) to memory. Store ONLY non-PHI operational knowledge.""";
 
     private final ResourceLoader resourceLoader;
 
@@ -319,7 +312,7 @@ public class MedicalAgentConfiguration {
     /**
      * Creates a ChatClient with Agent Skills and Medical Tools enabled.
      * This ChatClient includes SkillsTool for skill discovery, FileSystemTools
-     * for reading reference materials, and MedicalAgentTools for Java @Tool methods.
+     * for reading reference materials, and agent tool components for Java @Tool methods.
      * <p>
      * Uses toolCallingChatModel (FunctionGemma) instead of primaryChatModel (LLM)
      * because FunctionGemma supports tool calling while the primary chat model often does not.
@@ -334,13 +327,19 @@ public class MedicalAgentConfiguration {
             @org.springframework.beans.factory.annotation.Qualifier("skillsTool") ToolCallback skillsTool,
             @org.springframework.beans.factory.annotation.Qualifier("taskTool") ToolCallback taskTool,
             FileSystemTools fileSystemTools,
-            MedicalAgentTools medicalAgentTools,
+            CaseAnalysisAgentTools caseAnalysisAgentTools,
+            DoctorMatchingAgentTools doctorMatchingAgentTools,
+            EvidenceAgentTools evidenceAgentTools,
+            ClinicalAdvisorAgentTools clinicalAdvisorAgentTools,
+            GraphAnalyticsAgentTools graphAnalyticsAgentTools,
+            RoutingAgentTools routingAgentTools,
             AutoMemoryTools autoMemoryTools,
             TodoWriteTool todoWriteTool,
             AskUserQuestionTool askUserQuestionTool,
             ToolCallAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
-            AgentMemoryProperties agentMemoryProperties
+            AgentMemoryProperties agentMemoryProperties,
+            @Qualifier("autoMemorySystemPromptTemplate") PromptTemplate autoMemorySystemPromptTemplate
     ) {
         log.info("Creating medicalAgentChatClient with Agent Skills and Medical Tools enabled");
         log.info("Using toolCallingChatModel: {} for tool invocations", toolCallingChatModel.getClass().getSimpleName());
@@ -348,9 +347,14 @@ public class MedicalAgentConfiguration {
         log.info("AutoMemory long-term memory directory: {}", agentMemoryProperties.dir());
 
         ChatClient.Builder builder = ChatClient.builder(toolCallingChatModel)
-                .defaultSystem(MEMORY_SYSTEM_PROMPT)
+                .defaultSystem(autoMemorySystemPromptTemplate.render(Collections.emptyMap()))
                 .defaultTools(fileSystemTools)
-                .defaultTools(medicalAgentTools)
+                .defaultTools(caseAnalysisAgentTools)
+                .defaultTools(doctorMatchingAgentTools)
+                .defaultTools(evidenceAgentTools)
+                .defaultTools(clinicalAdvisorAgentTools)
+                .defaultTools(graphAnalyticsAgentTools)
+                .defaultTools(routingAgentTools)
                 .defaultTools(autoMemoryTools)
                 .defaultTools(todoWriteTool)
                 .defaultTools(askUserQuestionTool)

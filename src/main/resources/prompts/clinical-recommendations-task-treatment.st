@@ -1,0 +1,1 @@
+Generate treatment recommendations for this case. Include medication options, procedures, interventions, and therapeutic approaches. Consider contraindications, drug interactions, and patient-specific factors.

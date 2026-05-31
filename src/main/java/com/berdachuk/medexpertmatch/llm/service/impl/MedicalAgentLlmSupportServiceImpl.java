@@ -95,11 +95,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             logStreamService.sendLog(sessionId, "INFO", "LLM Call",
                     String.format("Calling model: %s for case analysis", medGemmaModelName));
 
-            String analysis = llmCallLimiter.execute(LlmClientType.CHAT, () -> medGemmaChatClient.prompt()
-                    .system(systemPrompt)
-                    .user(userPrompt)
-                    .call()
-                    .content());
+            String analysis = invokeMedGemma(systemPrompt, userPrompt);
 
             log.info("LLM model: {} completed case analysis (caseId: {}), response length: {}",
                     medGemmaModelName, caseId, analysis != null ? analysis.length() : 0);
@@ -165,13 +161,16 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             logStreamService.sendLog(sessionId, "INFO", "LLM Call",
                     String.format("Calling model: %s for result interpretation", medGemmaModelName));
 
-            String finalSystemPrompt = systemPrompt;
-            String finalUserPrompt = userPrompt;
-            String interpretation = llmCallLimiter.execute(LlmClientType.CHAT, () -> medGemmaChatClient.prompt()
-                    .system(finalSystemPrompt)
-                    .user(finalUserPrompt)
-                    .call()
-                    .content());
+            String interpretation;
+            try {
+                interpretation = invokeMedGemma(systemPrompt, userPrompt);
+            } catch (AgentExecutionException interpretationFailure) {
+                if (!isFinishReasonNull(interpretationFailure)) {
+                    throw interpretationFailure;
+                }
+                log.warn("MedGemma interpretation unavailable (finish_reason null), returning structured fallback");
+                return formatInterpretationFallback(limitedToolResults, limitedCaseAnalysis);
+            }
 
             if (interpretation != null && interpretation.length() > 10000) {
                 log.warn("LLM response very long ({} chars), checking for repetition", interpretation.length());
@@ -198,6 +197,56 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             logStreamService.logError(sessionId, "LLM result interpretation failed", e.getMessage());
             throw new AgentExecutionException(buildLlmErrorMessage("result interpretation", e), e);
         }
+    }
+
+    private String invokeMedGemma(String systemPrompt, String userPrompt) {
+        try {
+            return llmCallLimiter.execute(LlmClientType.CHAT, () -> callMedGemmaOnce(systemPrompt, userPrompt));
+        } catch (RuntimeException first) {
+            if (!isFinishReasonNull(first)) {
+                throw first;
+            }
+            log.warn("MedGemma returned null finish_reason, retrying once");
+            try {
+                String retry = llmCallLimiter.execute(LlmClientType.CHAT, () -> callMedGemmaOnce(systemPrompt, userPrompt));
+                if (retry != null && !retry.isBlank()) {
+                    return retry;
+                }
+            } catch (RuntimeException retryFailure) {
+                if (!isFinishReasonNull(retryFailure)) {
+                    throw retryFailure;
+                }
+            }
+            throw new AgentExecutionException("LLM response incomplete: finish_reason is null");
+        }
+    }
+
+    private String callMedGemmaOnce(String systemPrompt, String userPrompt) {
+        return medGemmaChatClient.prompt()
+                .system(systemPrompt)
+                .user(userPrompt)
+                .call()
+                .content();
+    }
+
+    private static String formatInterpretationFallback(String toolResults, String caseAnalysis) {
+        StringBuilder fallback = new StringBuilder("Based on case analysis:\n\n");
+        fallback.append(caseAnalysis != null ? caseAnalysis : "No case analysis available");
+        fallback.append("\n\nTool results:\n");
+        fallback.append(toolResults != null ? toolResults : "No tool results available");
+        return fallback.toString();
+    }
+
+    private static boolean isFinishReasonNull(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && message.toLowerCase().contains("finish_reason")) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private static String buildLlmErrorMessage(String operation, Exception e) {

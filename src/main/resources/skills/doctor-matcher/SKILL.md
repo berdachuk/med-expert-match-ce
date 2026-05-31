@@ -70,9 +70,29 @@ Scores a doctor-case match using multiple signals:
 score_doctor_match(caseId: "abc123def456", doctorId: "8760000000000420950")
 ```
 
+### Match Doctors from Text: `match_doctors_from_text`
+
+Use when the user describes a case **without** an existing 24-character case ID (typical in AI Chat):
+
+**Parameters:**
+
+- `caseText`: Full anonymized case description (required)
+- `patientAge`, `caseType`, `urgencyLevel`, `maxResults`: optional
+
+**Usage:**
+
+```
+match_doctors_from_text(
+  caseText: "90-year-old with chest pain and double vision, heart failure, needs cardiology input",
+  patientAge: 90,
+  caseType: "SECOND_OPINION",
+  urgencyLevel: "MEDIUM"
+)
+```
+
 ### Match Doctors to Case: `match_doctors_to_case`
 
-Complete matching workflow that finds and scores doctors:
+Use only when an **existing** 24-character case ID is already known (e.g. from Find Specialist):
 
 **Parameters:**
 

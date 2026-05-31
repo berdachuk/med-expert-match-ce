@@ -16,7 +16,6 @@ import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository
 import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -52,7 +51,6 @@ public class MedicalAgentCaseIntakeWorkflowServiceImpl implements MedicalAgentCa
     }
 
     @Override
-    @Transactional
     public MedicalAgentService.AgentResponse matchFromText(String caseText, Map<String, Object> request) {
         log.info("matchFromText() called - caseText length: {}", caseText != null ? caseText.length() : 0);
         if (caseText == null || caseText.isBlank()) {

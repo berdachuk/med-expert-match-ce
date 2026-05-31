@@ -1,0 +1,1 @@
+Generate diagnostic workup recommendations for this case. Include recommended tests, imaging studies, laboratory work, and diagnostic procedures. Prioritize recommendations based on urgency and clinical relevance.

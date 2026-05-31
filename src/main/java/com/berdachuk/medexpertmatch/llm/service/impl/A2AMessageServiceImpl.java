@@ -4,7 +4,7 @@ import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.A2AMessageService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,11 +25,11 @@ public class A2AMessageServiceImpl implements A2AMessageService {
     private static final int EVIDENCE_MAX_RESULTS = 5;
 
     private final MedicalAgentService medicalAgentService;
-    private final MedicalAgentTools medicalAgentTools;
+    private final EvidenceAgentTools evidenceAgentTools;
 
-    public A2AMessageServiceImpl(MedicalAgentService medicalAgentService, MedicalAgentTools medicalAgentTools) {
+    public A2AMessageServiceImpl(MedicalAgentService medicalAgentService, EvidenceAgentTools evidenceAgentTools) {
         this.medicalAgentService = medicalAgentService;
-        this.medicalAgentTools = medicalAgentTools;
+        this.evidenceAgentTools = evidenceAgentTools;
     }
 
     @Override
@@ -166,8 +166,8 @@ public class A2AMessageServiceImpl implements A2AMessageService {
 
     private Map<String, Object> bridgeEvidenceSearch(String message) {
         log.info("A2A evidence_search bridge — message length {}", message.length());
-        List<String> guidelines = medicalAgentTools.search_clinical_guidelines(message, null, EVIDENCE_MAX_RESULTS);
-        List<String> pubmed = medicalAgentTools.query_pubmed(message, EVIDENCE_MAX_RESULTS);
+        List<String> guidelines = evidenceAgentTools.search_clinical_guidelines(message, null, EVIDENCE_MAX_RESULTS);
+        List<String> pubmed = evidenceAgentTools.query_pubmed(message, EVIDENCE_MAX_RESULTS);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("guidelines", guidelines);

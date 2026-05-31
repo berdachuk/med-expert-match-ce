@@ -16,6 +16,7 @@ Spring AI prompt template creation, management, and configuration. Covers extern
 
 - All prompt files: `src/main/resources/prompts/` directory
 - File extension: `.st` (StringTemplate format)
+- Use Spring AI **resource-backed** `PromptTemplate` beans (not raw strings in Java). Reference: [Using resources instead of raw Strings](https://docs.spring.io/spring-ai/reference/2.0/api/prompt.html#_using_resources_instead_of_raw_strings)
 - Template file organization (existing examples):
   ```
   prompts/analysis.st        — Case analysis prompts
@@ -26,15 +27,19 @@ Spring AI prompt template creation, management, and configuration. Covers extern
 
 ### Creating a New Prompt
 
-1. Create `prompts/{purpose}.st` with StringTemplate syntax
-2. Declare a `PromptTemplate` bean in `core/config/PromptTemplateConfig.java`:
+1. Create `prompts/{purpose}.st` with StringTemplate syntax (`<variableName>` placeholders — project uses `<`/`>` delimiters via `StTemplateRenderer`)
+2. Declare a `@Value("classpath:/prompts/{purpose}.st") Resource` field and a `PromptTemplate` bean in `core/config/PromptTemplateConfig.java`:
    ```java
+   @Value("classpath:/prompts/matching.st")
+   private Resource matchingResource;
+
    @Bean
    @Qualifier("matchingPromptTemplate")
-   PromptTemplate matchingPromptTemplate() {
-       return new PromptTemplate(
-           new ClassPathResource("prompts/matching.st")
-       );
+   PromptTemplate matchingPromptTemplate(StTemplateRenderer renderer) {
+       return PromptTemplate.builder()
+               .renderer(renderer)
+               .resource(matchingResource)
+               .build();
    }
    ```
 3. Inject via constructor using `@Qualifier`:
@@ -43,10 +48,21 @@ Spring AI prompt template creation, management, and configuration. Covers extern
        @Qualifier("matchingPromptTemplate") PromptTemplate matchingPrompt
    ) { ... }
    ```
+4. Render at runtime: `matchingPrompt.render(Map.of("caseId", caseId))`
+
+### Preferred vs. Allowed Patterns
+
+| Pattern | Status |
+|---------|--------|
+| `.st` file + `PromptTemplate.builder().resource(...)` bean | **Required** for new prompts |
+| `@Value("classpath:/prompts/foo.st") Resource` + `PromptTemplate` | **Preferred** wiring style |
+| `new PromptTemplate(new ClassPathResource(...))` in service code | Avoid — register bean in config instead |
+| `PromptTemplate.builder().template("...")` inline text block | Avoid — use `.resource(...)` |
+| Dynamic data sections (case fields, tool results) assembled in Java | OK — pass as template variables, not prompt prose |
 
 ### Template Variables
 
-- Use standard StringTemplate syntax: `$variableName$` for substitutions
+- Use project StringTemplate syntax: `<variableName>` for substitutions (configured in `PromptTemplateConfig.stTemplateRenderer()`)
 - Never embed sensitive data in templates — pass as runtime variables only
 - Medical case data passed as template variables must be anonymized
 
@@ -63,8 +79,9 @@ Spring AI prompt template creation, management, and configuration. Covers extern
 
 ### Invalid Patterns
 
-- Hardcoded prompt strings in Java: `new PromptTemplate("Analyze: " + input)`
-- `StringBuilder`-based prompt construction
+- Hardcoded prompt strings in Java: `new PromptTemplate("Analyze: " + input)` or text blocks in service methods
+- `StringBuilder`-based prompt prose construction (assemble dynamic **data** in Java, keep wording in `.st` files)
+- Inline `new PromptTemplate(new ClassPathResource(...))` in services — register beans in `PromptTemplateConfig` instead
 - Inline prompt text in service methods
 
 ## Boundaries

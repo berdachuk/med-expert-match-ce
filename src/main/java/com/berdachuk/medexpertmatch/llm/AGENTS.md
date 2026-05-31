@@ -19,8 +19,9 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 
 ## Conventions
 
-- All LLM prompts use external `.st` files in `src/main/resources/prompts/` — never hardcode prompt strings
-- Prompt templates are configured as Spring beans in `PromptTemplateConfig` with `@Qualifier`
+- All LLM prompts use external `.st` files in `src/main/resources/prompts/` — never hardcode prompt strings in Java
+- Register prompts as `@Qualifier` `PromptTemplate` beans in `core/config/PromptTemplateConfig.java` using `.resource(classpath:...)` (Spring AI resource pattern), not inline `.template("...")` or text blocks
+- Prompt templates are configured with `StTemplateRenderer` (`<variable>` delimiters) and injected via constructor
 - Medical disclaimers must be included in ALL medical AI prompts
 - Agent Skills (runtime) live in `src/main/resources/skills/` — distinct from `.agents/skills/` (development)
 - Sanitize all LLM outputs through `LlmResponseSanitizer` before logging or storing

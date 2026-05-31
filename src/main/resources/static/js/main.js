@@ -8,7 +8,7 @@ const MEDEXPERTMATCH_TEST_USERS = [
         displayName: 'Regular User'
     },
     {
-        id: 'medexpertmatch-admin-002',
+        id: 'admin',
         email: 'admin@example.com',
         roles: ['ROLE_USER', 'ROLE_ADMIN'],
         displayName: 'Administrator'
@@ -47,6 +47,9 @@ function getCurrentUser() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
             const user = JSON.parse(stored);
+            if (user.id === 'medexpertmatch-admin-002') {
+                user.id = 'admin';
+            }
             const found = MEDEXPERTMATCH_TEST_USERS.find(function (u) {
                 return u.id === user.id;
             });

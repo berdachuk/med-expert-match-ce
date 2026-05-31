@@ -5,7 +5,7 @@ import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentCaseAnalysisWorkflowService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
-import com.berdachuk.medexpertmatch.llm.tools.MedicalAgentTools;
+import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -26,17 +26,17 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
     private final MedicalAgentLlmSupportService medicalAgentLlmSupportService;
     private final MedicalCaseRepository medicalCaseRepository;
     private final LogStreamService logStreamService;
-    private final MedicalAgentTools medicalAgentTools;
+    private final EvidenceAgentTools evidenceAgentTools;
 
     public MedicalAgentCaseAnalysisWorkflowServiceImpl(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
             MedicalCaseRepository medicalCaseRepository,
             LogStreamService logStreamService,
-            MedicalAgentTools medicalAgentTools) {
+            EvidenceAgentTools evidenceAgentTools) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.medicalCaseRepository = medicalCaseRepository;
         this.logStreamService = logStreamService;
-        this.medicalAgentTools = medicalAgentTools;
+        this.evidenceAgentTools = evidenceAgentTools;
     }
 
     @Override
@@ -82,8 +82,8 @@ public class MedicalAgentCaseAnalysisWorkflowServiceImpl implements MedicalAgent
             log.info("Case analysis evidence: condition={}, specialty={}, pubmedQuery={}, maxResults={}",
                     condition, specialty, pubmedQuery, evidenceMaxResults);
             logStreamService.sendLog(sessionId, "INFO", "Evidence retrieval", "Calling search_clinical_guidelines and query_pubmed");
-            List<String> guidelines = medicalAgentTools.search_clinical_guidelines(condition, specialty, evidenceMaxResults);
-            List<String> pubmedResults = medicalAgentTools.query_pubmed(pubmedQuery, evidenceMaxResults);
+            List<String> guidelines = evidenceAgentTools.search_clinical_guidelines(condition, specialty, evidenceMaxResults);
+            List<String> pubmedResults = evidenceAgentTools.query_pubmed(pubmedQuery, evidenceMaxResults);
             int pubmedArticleCount = pubmedResults.size();
             if (pubmedResults.size() == 1 && pubmedResults.get(0) != null && pubmedResults.get(0).startsWith("No articles found")) {
                 pubmedArticleCount = 0;
