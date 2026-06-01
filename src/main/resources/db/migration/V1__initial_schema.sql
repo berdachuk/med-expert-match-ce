@@ -494,6 +494,17 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.llm_harness_chain_event (
 CREATE INDEX IF NOT EXISTS idx_llm_harness_chain_root ON medexpertmatch.llm_harness_chain_event (chain_root_session_id);
 
 -- ============================================
+-- Chat Goal Context (M36 — cross-device conversation continuity)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.chat_goal_context (
+    session_id    VARCHAR(255) PRIMARY KEY,
+    goal_type     VARCHAR(64) NOT NULL,
+    case_id       VARCHAR(32),
+    updated_at    TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
 -- Document Ingestion Tables
 -- ============================================
 
