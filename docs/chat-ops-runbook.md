@@ -45,6 +45,21 @@ Access with `?user=admin` (sets `medexpertmatch-user-id=admin` cookie).
 
 Audit API: `GET /api/v1/admin/audit/chat-exports?action=CHAT_EXPORT_BUNDLE` (optional filter).
 
+## LLM harness metrics (M29/M30)
+
+Micrometer counters (no PHI in labels):
+
+| Metric | Meaning |
+|--------|---------|
+| `harness.verify.failure` | Post-tool verification failed (doctor/routing) |
+| `harness.critic.failure` | Critic pass rejected or policy violation |
+
+Workflow logs emit `HARNESS_STATE` transitions on the active session id (doctor match, routing, case intake).
+
+- Config: `medexpertmatch.llm.harness.*` in `application.yml`
+- Eval gate: `scripts/run-eval-harness.sh` (CI after unit tests)
+- Harness backlog template: `.agents/templates/harness-backlog-item.md`
+
 ## Observability
 
 - Dashboard: `grafana/dashboard.json`

@@ -9,7 +9,8 @@ public record HarnessProperties(
         boolean criticChatEnabled,
         int maxIterations,
         boolean retryOnVerifyFail,
-        int doctorMatchMinMatches) {
+        int doctorMatchMinMatches,
+        int routingMatchMinMatches) {
 
     public HarnessProperties {
         if (maxIterations < 1) {
@@ -18,7 +19,7 @@ public record HarnessProperties(
     }
 
     public static HarnessProperties defaults() {
-        return new HarnessProperties(true, true, 2, true, 1);
+        return new HarnessProperties(true, true, 2, true, 1, 0);
     }
 
     public HarnessIterationPolicy iterationPolicy() {

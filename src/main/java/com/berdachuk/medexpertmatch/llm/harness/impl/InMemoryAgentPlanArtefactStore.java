@@ -2,12 +2,12 @@ package com.berdachuk.medexpertmatch.llm.harness.impl;
 
 import com.berdachuk.medexpertmatch.llm.harness.AgentPlanArtefact;
 import com.berdachuk.medexpertmatch.llm.harness.AgentPlanArtefactStore;
-import org.springframework.stereotype.Component;
-
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
+/**
+ * Non-Spring test double; production uses {@link JdbcAgentPlanArtefactStore}.
+ */
 public class InMemoryAgentPlanArtefactStore implements AgentPlanArtefactStore {
 
     private final ConcurrentHashMap<String, AgentPlanArtefact> bySession = new ConcurrentHashMap<>();

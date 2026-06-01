@@ -94,11 +94,8 @@ public class DoctorMatchWorkflowEngine {
             matches = doctorMatchingAgentTools.match_doctors_to_case(caseId, maxResults, null, null, null);
 
             transition(sessionId, DoctorMatchWorkflowState.VERIFYING, "Verifying tool output");
-            verification = agentResponseVerifier.verify(new VerificationRequest(
-                    HarnessWorkflowType.DOCTOR_MATCH,
-                    caseId,
-                    matches,
-                    minMatches));
+            verification = agentResponseVerifier.verify(
+                    VerificationRequest.forDoctorMatch(caseId, matches, minMatches));
 
             if (verification.passed()) {
                 break;

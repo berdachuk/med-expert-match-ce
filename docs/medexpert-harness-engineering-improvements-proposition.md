@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-05-31  
 **Audience:** Engineering leads, LLM module owners, platform/ops  
-**Status:** Strategic proposition — M29 ✅ [archive](../.agents/plans/archive/M29-harness-engineering-improvements.md); next: [M30](../.agents/plans/M30-harness-orchestration-expansion.md)
+**Status:** Strategic proposition — M29/M30 ✅ archived; next: [M31](../.agents/plans/M31-harness-human-checkpoint-and-events.md)
 
 ---
 
@@ -348,7 +348,7 @@ flowchart TB
 
 ## 10. Recommended next steps
 
-**Implementation plan:** M29 complete. Execute [M30: Harness Orchestration Expansion](../.agents/plans/M30-harness-orchestration-expansion.md).
+**Implementation plan:** M29–M30 complete. Next: [M31: Harness Human Checkpoint & Event Handoffs](../.agents/plans/M31-harness-human-checkpoint-and-events.md).
 
 1. **Review Phase A** (M29 Steps 1–5) with LLM module owners.  
 2. **Wire eval CI** (M29 Step 6) — builds on existing `llm/evaluation/`.  

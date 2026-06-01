@@ -2,6 +2,8 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
+import com.berdachuk.medexpertmatch.llm.chat.ChatToolContextHolder;
 import com.berdachuk.medexpertmatch.llm.service.A2AMessageService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
@@ -137,6 +139,7 @@ public class A2AMessageServiceImpl implements A2AMessageService {
     private Map<String, Object> executeSkill(String skill, String message) {
         String sessionId = "a2a-" + UUID.randomUUID();
         OrchestrationContextHolder.setSessionId(sessionId);
+        ChatToolContextHolder.setProfile(profileForSkill(skill));
         try {
             return switch (skill) {
                 case "doctor_match" -> bridgeDoctorMatch(message);
@@ -144,8 +147,17 @@ public class A2AMessageServiceImpl implements A2AMessageService {
                 default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown skill: " + skill);
             };
         } finally {
+            ChatToolContextHolder.clear();
             OrchestrationContextHolder.clear();
         }
+    }
+
+    private static ChatAgentProfile profileForSkill(String skill) {
+        return switch (skill) {
+            case "doctor_match" -> ChatAgentProfile.SPECIALIST_MATCHER;
+            case "evidence_search" -> ChatAgentProfile.EVIDENCE_SCOUT;
+            default -> ChatAgentProfile.AUTO;
+        };
     }
 
     private Map<String, Object> bridgeDoctorMatch(String message) {

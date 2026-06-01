@@ -446,6 +446,21 @@ CREATE INDEX IF NOT EXISTS idx_evaluation_result_run_id ON evaluation_result (ru
 CREATE INDEX IF NOT EXISTS idx_evaluation_run_dataset_id ON evaluation_run (dataset_id);
 
 -- ============================================
+-- LLM Harness Plan Artefacts (M30)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.llm_agent_plan_artefact (
+    session_id VARCHAR(128) PRIMARY KEY,
+    workflow_type VARCHAR(32) NOT NULL,
+    case_id VARCHAR(24),
+    steps_json JSONB NOT NULL,
+    acceptance_criteria_json JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_llm_agent_plan_case_id ON medexpertmatch.llm_agent_plan_artefact (case_id);
+
+-- ============================================
 -- Document Ingestion Tables
 -- ============================================
 

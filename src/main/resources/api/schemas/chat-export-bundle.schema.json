@@ -29,6 +29,16 @@
           "name": { "type": "string" },
           "agentId": { "type": "string" },
           "isDefault": { "type": "boolean" },
+          "plan": {
+            "type": "object",
+            "properties": {
+              "workflowType": { "type": "string" },
+              "caseId": { "type": "string" },
+              "steps": { "type": "array", "items": { "type": "string" } },
+              "acceptanceCriteria": { "type": "array", "items": { "type": "string" } }
+            },
+            "additionalProperties": false
+          },
           "messages": {
             "type": "array",
             "items": {

@@ -27,13 +27,31 @@ public class AgentPlannerServiceImpl implements AgentPlannerService {
 
     @Override
     public AgentPlanArtefact buildPlan(String sessionId, String caseId, HarnessWorkflowType workflowType) {
-        CaseContextBundle bundle = caseContextBundleService.build(caseId, CaseContextIntent.MATCH);
-        List<String> steps = List.of(
-                "Build context bundle (" + bundle.coreSections().size() + " core sections)",
-                "Analyze case with LLM",
-                "Execute match_doctors_to_case",
-                "Verify tool output",
-                "Interpret results and run critic");
+        CaseContextIntent intent = switch (workflowType) {
+            case ROUTING -> CaseContextIntent.ROUTE;
+            case CASE_INTAKE -> CaseContextIntent.MATCH;
+            default -> CaseContextIntent.MATCH;
+        };
+        CaseContextBundle bundle = caseContextBundleService.build(caseId, intent);
+        List<String> steps = switch (workflowType) {
+            case ROUTING -> List.of(
+                    "Build context bundle (" + bundle.coreSections().size() + " core sections)",
+                    "Analyze case for routing",
+                    "Execute match_facilities_for_case",
+                    "Verify facility matches",
+                    "Summarize routing and run critic");
+            case CASE_INTAKE -> List.of(
+                    "Validate intake text",
+                    "Persist anonymized case",
+                    "Generate abstract and embedding",
+                    "Delegate to doctor match harness");
+            default -> List.of(
+                    "Build context bundle (" + bundle.coreSections().size() + " core sections)",
+                    "Analyze case with LLM",
+                    "Execute match_doctors_to_case",
+                    "Verify tool output",
+                    "Interpret results and run critic");
+        };
         List<String> acceptance = List.of(
                 "At least one valid doctor match with name and score",
                 "Response includes medical disclaimer",
