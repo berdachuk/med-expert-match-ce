@@ -4,6 +4,7 @@ import com.berdachuk.medexpertmatch.core.util.CaseIdExtractor;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Classifies user requests into high-level goals using LLM analysis with keyword fallback.
@@ -23,6 +26,13 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class GoalClassifier {
+
+    private static final Set<String> FOLLOW_UP_AFFIRMATIVES = Set.of(
+            "yes", "yeah", "yep", "ok", "okay", "sure", "go ahead", "please", "proceed", "continue");
+
+    private static final Pattern FOLLOW_UP_PREFIX = Pattern.compile(
+            "^\\s*(more|other|another|next|show me more|show more|any other|additional)\\b.*",
+            Pattern.CASE_INSENSITIVE);
 
     private final ChatClient chatClient;
     private final PromptTemplate goalClassificationTemplate;
@@ -71,6 +81,11 @@ public class GoalClassifier {
      * Returns null if the intent is ambiguous, triggering LLM classification.
      */
     GoalClassification classifyByKeywords(String message, Optional<String> caseId) {
+        GoalClassification followUp = detectFollowUp(message, caseId);
+        if (followUp != null) {
+            return followUp;
+        }
+
         String lower = message.toLowerCase();
 
         if (lower.contains("find specialist") || lower.contains("match doctor")
@@ -106,6 +121,57 @@ public class GoalClassifier {
         }
 
         return null;
+    }
+
+    GoalClassification detectFollowUp(String message, Optional<String> caseId) {
+        if (!isFollowUpSignal(message)) {
+            return null;
+        }
+        String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+        if (sessionId == null) {
+            return null;
+        }
+        ConversationGoalContext.Entry ctx = ConversationGoalContext.get(sessionId);
+        if (ctx == null || ctx.lastGoal() == GoalType.GENERAL_QUESTION) {
+            return null;
+        }
+        if (!sessionId.equals(ctx.sessionId())) {
+            return null;
+        }
+        String inheritedCaseId = caseId.orElse(ctx.lastCaseId() != null ? ctx.lastCaseId() : "");
+        return new GoalClassification(
+                ctx.lastGoal(),
+                inheritedCaseId.isEmpty() ? Optional.empty() : Optional.of(inheritedCaseId),
+                Optional.empty(),
+                "follow-up: " + ctx.lastGoal().name()
+        );
+    }
+
+    private boolean isFollowUpSignal(String message) {
+        if (message == null) {
+            return false;
+        }
+        String trimmed = message.trim().toLowerCase();
+        if (FOLLOW_UP_AFFIRMATIVES.contains(trimmed)) {
+            return true;
+        }
+        if (FOLLOW_UP_PREFIX.matcher(trimmed).matches()) {
+            return true;
+        }
+        if (trimmed.length() <= 20
+                && !trimmed.matches(".*\\b(no|cancel|stop|quit|help|hello|hi|what|why|how|who|when|where)\\b.*")
+                && !containsDomainKeyword(trimmed)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean containsDomainKeyword(String lower) {
+        return lower.contains("find") || lower.contains("match") || lower.contains("doctor")
+                || lower.contains("case") || lower.contains("analyze") || lower.contains("specialist")
+                || lower.contains("facility") || lower.contains("route") || lower.contains("evidence")
+                || lower.contains("pubmed") || lower.contains("icd") || lower.contains("triage")
+                || lower.contains("urgency");
     }
 
     /**

@@ -21,6 +21,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.session.SessionService;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -50,13 +51,14 @@ class ChatAssistantServiceImplTest {
     private final MedicalAgentCriticService medicalAgentCriticService = mock(MedicalAgentCriticService.class);
     private final GoalClassifier goalClassifier = mock(GoalClassifier.class);
     private final MedicalAgentService medicalAgentService = mock(MedicalAgentService.class);
+    private final SessionService sessionService = mock(SessionService.class);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
             new ChatTurnMetrics(new SimpleMeterRegistry()), chatAgentSystemTemplate,
             chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
             medicalAgentCriticService, HarnessProperties.defaults(),
-            "functiongemma", goalClassifier, medicalAgentService);
+            "functiongemma", goalClassifier, medicalAgentService, sessionService);
 
     @AfterEach
     void clearContext() {
