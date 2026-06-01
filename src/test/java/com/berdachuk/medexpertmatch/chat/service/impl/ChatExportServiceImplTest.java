@@ -4,6 +4,7 @@ import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportAuditor;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
+import com.berdachuk.medexpertmatch.core.service.HarnessPlanExportQuery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,11 +30,14 @@ class ChatExportServiceImplTest {
     @Mock
     private ChatExportAuditor chatExportAuditor;
 
+    @Mock
+    private HarnessPlanExportQuery harnessPlanExportQuery;
+
     private ChatExportServiceImpl exportService;
 
     @BeforeEach
     void setUp() {
-        exportService = new ChatExportServiceImpl(chatService, chatExportAuditor);
+        exportService = new ChatExportServiceImpl(chatService, chatExportAuditor, harnessPlanExportQuery);
     }
 
     @Test

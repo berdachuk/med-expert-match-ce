@@ -26,6 +26,8 @@ class HarnessWorkflowCheckpointServiceTest {
 
     private InMemoryHarnessWorkflowRunStore runStore;
     private DoctorMatchWorkflowEngine engine;
+    private RoutingWorkflowEngine routingEngine;
+    private CaseIntakeWorkflowEngine intakeEngine;
     private HarnessWorkflowCheckpointService checkpointService;
     private ObjectMapper objectMapper;
 
@@ -33,8 +35,11 @@ class HarnessWorkflowCheckpointServiceTest {
     void setUp() {
         runStore = new InMemoryHarnessWorkflowRunStore();
         engine = mock(DoctorMatchWorkflowEngine.class);
+        routingEngine = mock(RoutingWorkflowEngine.class);
+        intakeEngine = mock(CaseIntakeWorkflowEngine.class);
         objectMapper = new ObjectMapper();
-        checkpointService = new HarnessWorkflowCheckpointService(runStore, engine, objectMapper);
+        checkpointService = new HarnessWorkflowCheckpointService(
+                runStore, engine, routingEngine, intakeEngine, objectMapper);
     }
 
     @Test

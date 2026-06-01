@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.llm.harness.impl.AgentPlannerServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.AgentResponseVerifierImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
+import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentCriticServiceImpl;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -55,7 +56,8 @@ class RoutingWorkflowEngineTest {
 
         RoutingWorkflowEngine engine = new RoutingWorkflowEngine(
                 llmSupport, logStream, routingTools, new AgentResponseVerifierImpl(), critic,
-                bundleService, planner, HarnessProperties.defaults(), metrics);
+                bundleService, planner, HarnessProperties.defaults(), metrics,
+                new HarnessCheckpointSupport(new InMemoryHarnessWorkflowRunStore(), new com.fasterxml.jackson.databind.ObjectMapper()));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",

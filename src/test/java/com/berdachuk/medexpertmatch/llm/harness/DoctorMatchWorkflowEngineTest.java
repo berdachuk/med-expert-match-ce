@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Map;
@@ -63,7 +64,8 @@ class DoctorMatchWorkflowEngineTest {
                 planner,
                 HarnessProperties.defaults(),
                 metrics,
-                new InMemoryHarnessWorkflowRunStore());
+                new InMemoryHarnessWorkflowRunStore(),
+                mock(ApplicationEventPublisher.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",
@@ -111,7 +113,8 @@ class DoctorMatchWorkflowEngineTest {
                 planner,
                 HarnessProperties.defaults(),
                 metrics,
-                new InMemoryHarnessWorkflowRunStore());
+                new InMemoryHarnessWorkflowRunStore(),
+                mock(ApplicationEventPublisher.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",

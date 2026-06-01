@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.llm.harness;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
+import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
 import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.service.CaseIntakeClarificationService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentDoctorMatchingWorkflowService;
@@ -30,6 +31,8 @@ public class CaseIntakeWorkflowEngine {
     private final LogStreamService logStreamService;
     private final CaseIntakeClarificationService caseIntakeClarificationService;
     private final AgentPlannerService agentPlannerService;
+    private final HarnessProperties harnessProperties;
+    private final HarnessCheckpointSupport checkpointSupport;
 
     public CaseIntakeWorkflowEngine(
             MedicalCaseRepository medicalCaseRepository,
@@ -38,7 +41,9 @@ public class CaseIntakeWorkflowEngine {
             MedicalAgentDoctorMatchingWorkflowService doctorMatchingWorkflowService,
             LogStreamService logStreamService,
             CaseIntakeClarificationService caseIntakeClarificationService,
-            AgentPlannerService agentPlannerService) {
+            AgentPlannerService agentPlannerService,
+            HarnessProperties harnessProperties,
+            HarnessCheckpointSupport checkpointSupport) {
         this.medicalCaseRepository = medicalCaseRepository;
         this.embeddingService = embeddingService;
         this.descriptionService = descriptionService;
@@ -46,6 +51,8 @@ public class CaseIntakeWorkflowEngine {
         this.logStreamService = logStreamService;
         this.caseIntakeClarificationService = caseIntakeClarificationService;
         this.agentPlannerService = agentPlannerService;
+        this.harnessProperties = harnessProperties;
+        this.checkpointSupport = checkpointSupport;
     }
 
     public MedicalAgentService.AgentResponse execute(String caseText, Map<String, Object> request) {
@@ -81,6 +88,23 @@ public class CaseIntakeWorkflowEngine {
 
             transition(sessionId, DoctorMatchWorkflowState.TOOLS_EXECUTED, "Delegating to doctor match harness");
             effectiveRequest.put("sessionId", sessionId);
+
+            if (harnessProperties.humanCheckpointEnabled()) {
+                transition(sessionId, DoctorMatchWorkflowState.NEEDS_HUMAN, "Awaiting human intake checkpoint");
+                Map<String, Object> metadata = new HashMap<>();
+                metadata.put("caseId", caseId);
+                metadata.put("skills", List.of("triage-intake", "doctor-matcher"));
+                CaseIntakeCheckpointPayload payload = new CaseIntakeCheckpointPayload(
+                        caseId, sessionId, caseText, effectiveRequest);
+                return checkpointSupport.pause(
+                        sessionId,
+                        caseId,
+                        HarnessWorkflowType.CASE_INTAKE,
+                        payload,
+                        metadata,
+                        "Case persisted and ready for human review before doctor matching.");
+            }
+
             try {
                 return doctorMatchingWorkflowService.matchDoctors(caseId, effectiveRequest);
             } catch (Exception e) {
@@ -101,6 +125,16 @@ public class CaseIntakeWorkflowEngine {
             throw e;
         } catch (Exception e) {
             throw new AgentExecutionException("Failed to match doctors from text: " + e.getMessage(), e);
+        }
+    }
+
+    public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, CaseIntakeCheckpointPayload payload) {
+        transition(payload.sessionId(), DoctorMatchWorkflowState.TOOLS_EXECUTED,
+                "Resuming intake after approval runId=" + runId);
+        try {
+            return doctorMatchingWorkflowService.matchDoctors(payload.caseId(), payload.request());
+        } catch (Exception e) {
+            throw new AgentExecutionException("Intake resume failed: " + e.getMessage(), e);
         }
     }
 

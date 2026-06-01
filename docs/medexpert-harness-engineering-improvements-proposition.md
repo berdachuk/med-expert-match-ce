@@ -348,7 +348,7 @@ flowchart TB
 
 ## 10. Recommended next steps
 
-**Implementation plan:** M29–M31 complete. Next: [M32: Harness Eval Regression & Ops UI](../.agents/plans/M32-harness-eval-and-ops-ui.md).
+**Implementation plan:** M29–M32 complete. Next: [M33: Harness Full Eval & Chain Visibility](../.agents/plans/M33-harness-full-eval-and-chain-ui.md).
 
 1. **Review Phase A** (M29 Steps 1–5) with LLM module owners.  
 2. **Wire eval CI** (M29 Step 6) — builds on existing `llm/evaluation/`.  

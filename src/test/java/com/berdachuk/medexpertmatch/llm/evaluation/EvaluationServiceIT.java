@@ -17,6 +17,12 @@ class EvaluationServiceIT extends BaseIntegrationTest {
     @Autowired
     private EvaluationJdbcRepository jdbcRepository;
 
+    @Autowired
+    private EvalDatasetIntegrityService integrityService;
+
+    @Autowired
+    private EvalHarnessPassRateGate passRateGate;
+
     @Test
     @DisplayName("medical-eval-v1 dataset seeds and loads cases from JDBC")
     void seedsMedicalEvalDataset() {
@@ -25,5 +31,14 @@ class EvaluationServiceIT extends BaseIntegrationTest {
         EvaluationDatasetEntity dataset = jdbcRepository.findDatasetByName("medical-eval-v1");
         assertNotNull(dataset);
         assertFalse(jdbcRepository.findCasesByDatasetId(dataset.id()).isEmpty());
+    }
+
+    @Test
+    @DisplayName("dataset integrity meets baseline pass rate gate")
+    void datasetIntegrityMeetsBaseline() throws Exception {
+        double baseline = Double.parseDouble(new String(
+                getClass().getResourceAsStream("/evaluation/baseline-pass-rate.txt").readAllBytes()));
+        double integrity = integrityService.computeIntegrityPassRate("evaluation/medical-eval-v1.jsonl");
+        assertTrue(passRateGate.passes(integrity, baseline));
     }
 }

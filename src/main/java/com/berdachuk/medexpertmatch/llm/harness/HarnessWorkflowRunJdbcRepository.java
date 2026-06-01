@@ -58,6 +58,19 @@ public class HarnessWorkflowRunJdbcRepository {
                 runId).stream().findFirst();
     }
 
+    public java.util.List<HarnessWorkflowRun> findByState(DoctorMatchWorkflowState state, int limit) {
+        return jdbcTemplate.query("""
+                        SELECT run_id, session_id, case_id, workflow_type, state, resume_token, payload_json, created_at, updated_at
+                        FROM medexpertmatch.llm_harness_workflow_run
+                        WHERE state = ?
+                        ORDER BY updated_at DESC
+                        LIMIT ?
+                        """,
+                rowMapper(),
+                state.name(),
+                limit);
+    }
+
     public static String newRunId() {
         return UUID.randomUUID().toString();
     }

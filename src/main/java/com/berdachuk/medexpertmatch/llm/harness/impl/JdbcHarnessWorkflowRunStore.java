@@ -28,6 +28,11 @@ public class JdbcHarnessWorkflowRunStore implements HarnessWorkflowRunStore {
     }
 
     @Override
+    public java.util.List<HarnessWorkflowRun> findByState(DoctorMatchWorkflowState state, int limit) {
+        return repository.findByState(state, limit);
+    }
+
+    @Override
     public void updateState(String runId, DoctorMatchWorkflowState state) {
         repository.updateState(runId, state);
     }

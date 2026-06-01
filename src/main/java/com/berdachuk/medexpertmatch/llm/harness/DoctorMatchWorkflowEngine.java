@@ -12,6 +12,7 @@ import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -41,6 +42,7 @@ public class DoctorMatchWorkflowEngine {
     private final HarnessProperties harnessProperties;
     private final HarnessMetrics harnessMetrics;
     private final HarnessWorkflowRunStore workflowRunStore;
+    private final ApplicationEventPublisher eventPublisher;
 
     public DoctorMatchWorkflowEngine(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
@@ -54,7 +56,8 @@ public class DoctorMatchWorkflowEngine {
             AgentPlannerService agentPlannerService,
             HarnessProperties harnessProperties,
             HarnessMetrics harnessMetrics,
-            HarnessWorkflowRunStore workflowRunStore) {
+            HarnessWorkflowRunStore workflowRunStore,
+            ApplicationEventPublisher eventPublisher) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.medicalCaseRepository = medicalCaseRepository;
         this.logStreamService = logStreamService;
@@ -67,6 +70,7 @@ public class DoctorMatchWorkflowEngine {
         this.harnessProperties = harnessProperties;
         this.harnessMetrics = harnessMetrics;
         this.workflowRunStore = workflowRunStore;
+        this.eventPublisher = eventPublisher;
     }
 
     public MedicalAgentService.AgentResponse execute(String caseId, Map<String, Object> request) {
@@ -220,6 +224,7 @@ public class DoctorMatchWorkflowEngine {
 
             transition(sessionId, DoctorMatchWorkflowState.DONE, "Complete");
             metadata.put("harnessState", DoctorMatchWorkflowState.DONE.name());
+            eventPublisher.publishEvent(new DoctorMatchCompletedEvent(caseId, sessionId, Instant.now()));
             logStreamService.logCompletion(sessionId, "Match doctors operation",
                     "Successfully matched doctors for case: " + caseId + " (" + matches.size() + " matches)");
             return new MedicalAgentService.AgentResponse(critic.sanitizedResponse(), metadata);

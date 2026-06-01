@@ -32,6 +32,7 @@ public class RoutingWorkflowEngine {
     private final AgentPlannerService agentPlannerService;
     private final HarnessProperties harnessProperties;
     private final HarnessMetrics harnessMetrics;
+    private final HarnessCheckpointSupport checkpointSupport;
 
     public RoutingWorkflowEngine(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
@@ -42,7 +43,8 @@ public class RoutingWorkflowEngine {
             CaseContextBundleService caseContextBundleService,
             AgentPlannerService agentPlannerService,
             HarnessProperties harnessProperties,
-            HarnessMetrics harnessMetrics) {
+            HarnessMetrics harnessMetrics,
+            HarnessCheckpointSupport checkpointSupport) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.logStreamService = logStreamService;
         this.routingAgentTools = routingAgentTools;
@@ -52,6 +54,7 @@ public class RoutingWorkflowEngine {
         this.agentPlannerService = agentPlannerService;
         this.harnessProperties = harnessProperties;
         this.harnessMetrics = harnessMetrics;
+        this.checkpointSupport = checkpointSupport;
     }
 
     public MedicalAgentService.AgentResponse execute(String caseId, Map<String, Object> request) {
@@ -108,22 +111,51 @@ public class RoutingWorkflowEngine {
             return new MedicalAgentService.AgentResponse(SAFE_NO_ROUTE, metadata);
         }
 
+        if (harnessProperties.humanCheckpointEnabled()) {
+            transition(sessionId, DoctorMatchWorkflowState.NEEDS_HUMAN, "Awaiting human routing checkpoint");
+            Map<String, Object> metadata = baseMetadata(caseId, matches, bundle);
+            RoutingCheckpointPayload payload = new RoutingCheckpointPayload(
+                    caseId, sessionId, maxResults, matches, caseAnalysis, bundle.coreSections().size());
+            return checkpointSupport.pause(
+                    sessionId,
+                    caseId,
+                    HarnessWorkflowType.ROUTING,
+                    payload,
+                    metadata,
+                    "Facility routes are ready for human review before final summary.");
+        }
+
+        return completeAfterVerify(caseId, sessionId, matches, caseAnalysis, bundle);
+    }
+
+    public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, RoutingCheckpointPayload payload) {
+        transition(payload.sessionId(), DoctorMatchWorkflowState.CRITIC, "Resuming routing after approval runId=" + runId);
+        CaseContextBundle bundle = caseContextBundleService.build(payload.caseId(), CaseContextIntent.ROUTE);
+        return completeAfterVerify(
+                payload.caseId(),
+                payload.sessionId(),
+                payload.matches(),
+                payload.caseAnalysisJson(),
+                bundle);
+    }
+
+    private MedicalAgentService.AgentResponse completeAfterVerify(
+            String caseId,
+            String sessionId,
+            List<FacilityMatch> matches,
+            String caseAnalysis,
+            CaseContextBundle bundle) {
         String toolResults = formatFacilityMatches(matches);
         transition(sessionId, DoctorMatchWorkflowState.TOOLS_EXECUTED, "Summarizing routing");
         String response = medicalAgentLlmSupportService.summarizeRoutingResults(toolResults, caseAnalysis);
 
         transition(sessionId, DoctorMatchWorkflowState.CRITIC, "Critic review");
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("caseId", caseId);
-        metadata.put("skills", List.of("case-analyzer", "routing-planner"));
-        metadata.put("hybridApproach", true);
-        metadata.put("llmUsed", true);
-        metadata.put("facilityMatchCount", matches != null ? matches.size() : 0);
-        metadata.put("contextBundleSections", bundle.coreSections().size());
+        Map<String, Object> metadata = baseMetadata(caseId, matches, bundle);
         metadata.put("harnessState", DoctorMatchWorkflowState.DONE.name());
 
         MedicalAgentCriticService.CriticResult critic = medicalAgentCriticService.review(response, metadata);
         if (!critic.approved()) {
+            harnessMetrics.recordCriticFailure(critic.reason().name());
             metadata.put("harnessFailureReason", critic.reason().name());
             metadata.put("harnessFailureDetail", critic.detail());
             return new MedicalAgentService.AgentResponse(critic.sanitizedResponse(), metadata);
@@ -131,6 +163,17 @@ public class RoutingWorkflowEngine {
 
         transition(sessionId, DoctorMatchWorkflowState.DONE, "Routing complete");
         return new MedicalAgentService.AgentResponse(critic.sanitizedResponse(), metadata);
+    }
+
+    private static Map<String, Object> baseMetadata(String caseId, List<FacilityMatch> matches, CaseContextBundle bundle) {
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("caseId", caseId);
+        metadata.put("skills", List.of("case-analyzer", "routing-planner"));
+        metadata.put("hybridApproach", true);
+        metadata.put("llmUsed", true);
+        metadata.put("facilityMatchCount", matches != null ? matches.size() : 0);
+        metadata.put("contextBundleSections", bundle.coreSections().size());
+        return metadata;
     }
 
     private void transition(String sessionId, DoctorMatchWorkflowState state, String detail) {

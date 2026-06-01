@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head}">
+    <title>MedExpertMatch - Harness Runs</title>
+</head>
+<body>
+<header th:replace="~{fragments/header :: header}"></header>
+<main class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12 col-lg-10">
+            <h1 class="h3 mb-4">Harness Workflow Runs</h1>
+            <p class="text-muted mb-4">Review paused runs awaiting human checkpoint (no PHI; session ids are hashed).</p>
+
+            <div class="alert alert-success" th:if="${successMessage}" th:text="${successMessage}"></div>
+            <div class="alert alert-danger" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+            <div class="card">
+                <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                        <tr>
+                            <th>Run ID</th>
+                            <th>Workflow</th>
+                            <th>Case ID</th>
+                            <th>Session Hash</th>
+                            <th>Updated</th>
+                            <th>Checkpoint</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(runs)}">
+                            <td class="text-muted" colspan="6">No runs awaiting human review.</td>
+                        </tr>
+                        <tr th:each="run : ${runs}">
+                            <td><code class="small" th:text="${run.runId}">run</code></td>
+                            <td th:text="${run.workflowType}">DOCTOR_MATCH</td>
+                            <td><code th:text="${run.caseId}">case</code></td>
+                            <td><code class="small" th:text="${run.sessionIdHash}">hash</code></td>
+                            <td th:text="${run.updatedAt}">time</td>
+                            <td>
+                                <form class="row g-2" method="post" th:action="@{/admin/harness-runs/checkpoint(user=admin)}">
+                                    <input type="hidden" name="runId" th:value="${run.runId}"/>
+                                    <div class="col-12">
+                                        <input class="form-control form-control-sm" name="resumeToken"
+                                               placeholder="Resume token" required type="password"/>
+                                    </div>
+                                    <div class="col-6">
+                                        <button class="btn btn-success btn-sm w-100" name="decision" type="submit" value="APPROVE">Approve</button>
+                                    </div>
+                                    <div class="col-6">
+                                        <button class="btn btn-outline-danger btn-sm w-100" name="decision" type="submit" value="REJECT">Reject</button>
+                                    </div>
+                                </form>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>

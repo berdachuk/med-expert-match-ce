@@ -15,14 +15,20 @@ public class HarnessWorkflowCheckpointService {
 
     private final HarnessWorkflowRunStore runStore;
     private final DoctorMatchWorkflowEngine doctorMatchWorkflowEngine;
+    private final RoutingWorkflowEngine routingWorkflowEngine;
+    private final CaseIntakeWorkflowEngine caseIntakeWorkflowEngine;
     private final ObjectMapper objectMapper;
 
     public HarnessWorkflowCheckpointService(
             HarnessWorkflowRunStore runStore,
             DoctorMatchWorkflowEngine doctorMatchWorkflowEngine,
+            RoutingWorkflowEngine routingWorkflowEngine,
+            CaseIntakeWorkflowEngine caseIntakeWorkflowEngine,
             ObjectMapper objectMapper) {
         this.runStore = runStore;
         this.doctorMatchWorkflowEngine = doctorMatchWorkflowEngine;
+        this.routingWorkflowEngine = routingWorkflowEngine;
+        this.caseIntakeWorkflowEngine = caseIntakeWorkflowEngine;
         this.objectMapper = objectMapper;
     }
 
@@ -47,9 +53,7 @@ public class HarnessWorkflowCheckpointService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Invalid resume token");
         }
 
-        DoctorMatchCheckpointPayload payload = readPayload(run.payloadJson());
-        MedicalAgentService.AgentResponse response =
-                doctorMatchWorkflowEngine.resumeAfterCheckpoint(runId, payload);
+        MedicalAgentService.AgentResponse response = resume(run, runId);
         runStore.updateState(runId, DoctorMatchWorkflowState.DONE);
 
         Map<String, Object> approved = new LinkedHashMap<>();
@@ -61,9 +65,17 @@ public class HarnessWorkflowCheckpointService {
         return approved;
     }
 
-    private DoctorMatchCheckpointPayload readPayload(String payloadJson) {
+    private MedicalAgentService.AgentResponse resume(HarnessWorkflowRun run, String runId) {
         try {
-            return objectMapper.readValue(payloadJson, DoctorMatchCheckpointPayload.class);
+            return switch (run.workflowType()) {
+                case DOCTOR_MATCH -> doctorMatchWorkflowEngine.resumeAfterCheckpoint(
+                        runId, objectMapper.readValue(run.payloadJson(), DoctorMatchCheckpointPayload.class));
+                case ROUTING -> routingWorkflowEngine.resumeAfterCheckpoint(
+                        runId, objectMapper.readValue(run.payloadJson(), RoutingCheckpointPayload.class));
+                case CASE_INTAKE -> caseIntakeWorkflowEngine.resumeAfterCheckpoint(
+                        runId, objectMapper.readValue(run.payloadJson(), CaseIntakeCheckpointPayload.class));
+                default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported workflow type");
+            };
         } catch (JsonProcessingException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Invalid checkpoint payload");
         }

@@ -24,6 +24,15 @@ public class InMemoryHarnessWorkflowRunStore implements HarnessWorkflowRunStore 
     }
 
     @Override
+    public java.util.List<HarnessWorkflowRun> findByState(DoctorMatchWorkflowState state, int limit) {
+        return runs.values().stream()
+                .filter(run -> run.state() == state)
+                .sorted((a, b) -> b.updatedAt().compareTo(a.updatedAt()))
+                .limit(limit)
+                .toList();
+    }
+
+    @Override
     public void updateState(String runId, DoctorMatchWorkflowState state) {
         HarnessWorkflowRun existing = runs.get(runId);
         if (existing == null) {

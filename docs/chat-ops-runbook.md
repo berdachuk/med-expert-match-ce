@@ -58,7 +58,8 @@ Workflow logs emit `HARNESS_STATE` transitions on the active session id (doctor 
 
 - Config: `medexpertmatch.llm.harness.*` in `application.yml`
 - Human checkpoint: `POST /api/v1/workflows/{runId}/checkpoint` with `X-User-Id: admin` or `clinician`, body `{ "decision": "APPROVE"|"REJECT", "resumeToken": "..." }` (enable via `human-checkpoint-enabled`)
-- Analysis→match handoff: `chain-analysis-to-match` publishes `CaseAnalysisCompletedEvent` and chains doctor match
+- Admin UI: `/admin/harness-runs?user=admin` lists `NEEDS_HUMAN` runs (hashed session ids)
+- Analysis→match handoff: `chain-analysis-to-match`; match→recommend: `chain-match-to-recommend`
 - Eval gate: `scripts/run-eval-harness.sh` (CI after unit tests)
 - Harness backlog template: `.agents/templates/harness-backlog-item.md`
 

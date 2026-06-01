@@ -6,6 +6,7 @@ import com.berdachuk.medexpertmatch.chat.service.ChatExportAuditor;
 import com.berdachuk.medexpertmatch.chat.service.ChatExportService;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
+import com.berdachuk.medexpertmatch.core.service.HarnessPlanExportQuery;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -17,10 +18,15 @@ public class ChatExportServiceImpl implements ChatExportService {
 
     private final ChatService chatService;
     private final ChatExportAuditor chatExportAuditor;
+    private final HarnessPlanExportQuery harnessPlanExportQuery;
 
-    public ChatExportServiceImpl(ChatService chatService, ChatExportAuditor chatExportAuditor) {
+    public ChatExportServiceImpl(
+            ChatService chatService,
+            ChatExportAuditor chatExportAuditor,
+            HarnessPlanExportQuery harnessPlanExportQuery) {
         this.chatService = chatService;
         this.chatExportAuditor = chatExportAuditor;
+        this.harnessPlanExportQuery = harnessPlanExportQuery;
     }
 
     @Override
@@ -35,6 +41,8 @@ public class ChatExportServiceImpl implements ChatExportService {
         export.put("exportedAt", java.time.Instant.now().toString());
         export.put("phiRedacted", true);
         export.put("messages", history.stream().map(this::toExportMessage).toList());
+        String sessionId = userId + "-" + chatId;
+        harnessPlanExportQuery.findPlanBySessionId(sessionId).ifPresent(plan -> export.put("plan", plan));
 
         chatExportAuditor.recordExport(userId, chatId, history.size());
         return export;
