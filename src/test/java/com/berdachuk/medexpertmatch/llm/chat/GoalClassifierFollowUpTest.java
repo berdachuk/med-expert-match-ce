@@ -170,4 +170,70 @@ class GoalClassifierFollowUpTest {
         assertNotNull(result);
         assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
     }
+
+    @Test
+    @DisplayName("case-switch message is not a follow-up")
+    void caseSwitchIsNotFollowUp() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "yes but for a different case", Optional.empty());
+
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("other case message is not a follow-up")
+    void otherCaseIsNotFollowUp() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "try another case instead", Optional.empty());
+
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("separate case message is not a follow-up")
+    void separateCaseIsNotFollowUp() {
+        ConversationGoalContext.set(GoalType.ANALYZE_CASE, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "sure but for a separate case please", Optional.empty());
+
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("tell me more is a follow-up")
+    void tellMeMoreIsFollowUp() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords("tell me more", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+    }
+
+    @Test
+    @DisplayName("go on is a follow-up")
+    void goOnIsFollowUp() {
+        ConversationGoalContext.set(GoalType.ROUTE_CASE, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords("go on", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.ROUTE_CASE, result.goalType());
+    }
+
+    @Test
+    @DisplayName("yes with case ID in message but different case keyword detected — not a follow-up")
+    void yesWithCaseIdButDifferentCaseNotFollowUp() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords(
+                "yes for a different case", Optional.of("a1b2c3d4e5f6a7b8c9d0e1f2"));
+
+        assertNull(result);
+    }
 }

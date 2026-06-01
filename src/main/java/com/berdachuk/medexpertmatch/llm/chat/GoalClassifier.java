@@ -28,11 +28,15 @@ import java.util.regex.Pattern;
 public class GoalClassifier {
 
     private static final Set<String> FOLLOW_UP_AFFIRMATIVES = Set.of(
-            "yes", "yeah", "yep", "ok", "okay", "sure", "go ahead", "please", "proceed", "continue");
+            "yes", "yeah", "yep", "ok", "okay", "sure", "go ahead", "please", "proceed", "continue",
+            "go on", "tell me more");
 
     private static final Pattern FOLLOW_UP_PREFIX = Pattern.compile(
             "^\\s*(more|other|another|next|show me more|show more|any other|additional)\\b.*",
             Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern CASE_SWITCH_PATTERN = Pattern.compile(
+            "\\b(different|other|another|separate)\\s+case\\b", Pattern.CASE_INSENSITIVE);
 
     private final ChatClient chatClient;
     private final PromptTemplate goalClassificationTemplate;
@@ -149,6 +153,9 @@ public class GoalClassifier {
 
     private boolean isFollowUpSignal(String message) {
         if (message == null) {
+            return false;
+        }
+        if (CASE_SWITCH_PATTERN.matcher(message).find()) {
             return false;
         }
         String trimmed = message.trim().toLowerCase();

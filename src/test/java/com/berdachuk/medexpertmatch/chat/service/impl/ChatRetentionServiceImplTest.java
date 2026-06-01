@@ -2,6 +2,7 @@ package com.berdachuk.medexpertmatch.chat.service.impl;
 
 import com.berdachuk.medexpertmatch.chat.config.ChatRetentionProperties;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
+import com.berdachuk.medexpertmatch.chat.repository.ChatGoalContextRepositoryImpl;
 import com.berdachuk.medexpertmatch.chat.repository.ChatMessageRepository;
 import com.berdachuk.medexpertmatch.chat.repository.ChatRepository;
 import com.berdachuk.medexpertmatch.chat.service.ChatRetentionMetrics;
@@ -37,13 +38,16 @@ class ChatRetentionServiceImplTest {
     private ChatRetentionMetrics chatRetentionMetrics;
     private ChatRetentionServiceImpl service;
 
+    @Mock
+    private ChatGoalContextRepositoryImpl goalContextRepository;
+
     @BeforeEach
     void setUp() {
         properties = new ChatRetentionProperties();
         properties.setIdleDays(30);
         properties.setBatchSize(10);
         chatRetentionMetrics = new ChatRetentionMetrics(new SimpleMeterRegistry(), properties);
-        service = new ChatRetentionServiceImpl(properties, chatRepository, chatMessageRepository, chatRetentionMetrics);
+        service = new ChatRetentionServiceImpl(properties, chatRepository, chatMessageRepository, goalContextRepository, chatRetentionMetrics);
     }
 
     @Test
