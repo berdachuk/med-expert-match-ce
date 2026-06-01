@@ -90,6 +90,8 @@ public class PromptTemplateConfig {
     private Resource chatUserMessageResource;
     @Value("classpath:/prompts/agent-matching-orchestration.st")
     private Resource agentMatchingOrchestrationResource;
+    @Value("classpath:/prompts/goal-classification.st")
+    private Resource goalClassificationResource;
 
     @Bean
     public StTemplateRenderer stTemplateRenderer() {
@@ -430,6 +432,12 @@ public class PromptTemplateConfig {
     @org.springframework.beans.factory.annotation.Qualifier("agentMatchingOrchestrationPromptTemplate")
     public PromptTemplate agentMatchingOrchestrationPromptTemplate(StTemplateRenderer renderer) {
         return promptTemplate(renderer, agentMatchingOrchestrationResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("goalClassificationPromptTemplate")
+    public PromptTemplate goalClassificationPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, goalClassificationResource);
     }
 
     private static PromptTemplate promptTemplate(StTemplateRenderer renderer, Resource resource) {

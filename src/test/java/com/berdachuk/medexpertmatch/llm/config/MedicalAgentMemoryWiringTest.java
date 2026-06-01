@@ -11,7 +11,6 @@ import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.session.SessionService;
@@ -62,7 +61,15 @@ class MedicalAgentMemoryWiringTest {
         TodoWriteTool todoWriteTool = config.todoWriteTool(mock(AgentTodoTrackingService.class));
         AskUserQuestionTool askUserQuestionTool = config.askUserQuestionTool(mock(AgentQuestionService.class));
         ToolCallAdvisor toolCallAdvisor = config.agentToolCallAdvisor(mock(ToolCallingManager.class));
-        ToolCallback taskTool = config.taskTool(mock(ChatModel.class), new DefaultResourceLoader());
+        ToolCallback taskTool = config.taskTool(mock(ChatModel.class), new DefaultResourceLoader(),
+                mock(CaseAnalysisAgentTools.class),
+                mock(DoctorMatchingAgentTools.class),
+                mock(EvidenceAgentTools.class),
+                mock(ClinicalAdvisorAgentTools.class),
+                mock(GraphAnalyticsAgentTools.class),
+                mock(RoutingAgentTools.class),
+                mock(TodoWriteTool.class),
+                mock(AskUserQuestionTool.class));
         PromptTemplate autoMemorySystemPromptTemplate = mock(PromptTemplate.class);
         when(autoMemorySystemPromptTemplate.render(any())).thenReturn("automemory system prompt with phi guard");
 
@@ -70,7 +77,6 @@ class MedicalAgentMemoryWiringTest {
                 mock(ChatModel.class),
                 mock(ToolCallback.class),
                 taskTool,
-                FileSystemTools.builder().build(),
                 mock(CaseAnalysisAgentTools.class),
                 mock(DoctorMatchingAgentTools.class),
                 mock(EvidenceAgentTools.class),

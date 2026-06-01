@@ -49,6 +49,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 BUILD="${BUILD:-0}"
+AUTO_REBUILD="${AUTO_REBUILD:-1}"
 NO_MKDOCS="${NO_MKDOCS:-0}"
 REMOTE_MODE=0
 REMOTE_TARGET=""
@@ -61,6 +62,7 @@ usage() {
 while [ $# -gt 0 ]; do
     case "$1" in
         --build) BUILD=1 ;;
+        --no-auto-rebuild) AUTO_REBUILD=0 ;;
         --no-mkdocs) NO_MKDOCS=1 ;;
         --remote)
             REMOTE_MODE=1
@@ -104,6 +106,7 @@ remote_start_stack() {
 
     local remote_cmd="cd '${REMOTE_PROJECT_PATH}' && MEDEXPERTMATCH_STACK_LOCAL=1 bash ./start-stack.sh"
     [ "$BUILD" -eq 1 ] && remote_cmd+=" --build"
+    [ "$AUTO_REBUILD" -eq 0 ] && remote_cmd+=" --no-auto-rebuild"  # defer to local side
     [ "$NO_MKDOCS" -eq 1 ] && remote_cmd+=" --no-mkdocs"
 
     ssh -o StrictHostKeyChecking=no "${REMOTE_SSH}" "${remote_cmd}"
@@ -157,6 +160,30 @@ wait_for_app() {
             return 0
         fi
         if [ "$i" -eq 60 ]; then
+            echo -e "${YELLOW}Application not responding — checking for Flyway checksum mismatch...${NC}"
+            local flyway_logs
+            flyway_logs="$(docker compose -f "${COMPOSE_FILE}" logs app --tail 30 2>/dev/null)"
+            if echo "$flyway_logs" | grep -q "checksum mismatch for migration version"; then
+                echo -e "${YELLOW}Flyway checksum mismatch detected — auto-repairing...${NC}"
+                local resolved_checksum
+                resolved_checksum="$(echo "$flyway_logs" | grep "Resolved locally" | grep -oP '\-?\d+' | tail -1)"
+                if [ -n "$resolved_checksum" ]; then
+                    docker compose -f "${COMPOSE_FILE}" exec -T postgres \
+                        psql -U medexpertmatch -d medexpertmatch \
+                        -c "UPDATE medexpertmatch.flyway_schema_history SET checksum = ${resolved_checksum} WHERE version = '1';"
+                    echo -e "${GREEN}Flyway checksum repaired — restarting app...${NC}"
+                    docker compose -f "${COMPOSE_FILE}" restart app
+                    # Re-enter the wait loop
+                    for j in $(seq 1 60); do
+                        code="$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${APP_PORT}/actuator/health" 2>/dev/null || true)"
+                        if [ "$code" = "200" ] || [ "$code" = "503" ]; then
+                            echo -e "${GREEN}Application is responding (HTTP ${code})${NC}"
+                            return 0
+                        fi
+                        sleep 2
+                    done
+                fi
+            fi
             echo -e "${RED}Application failed to respond within 120s${NC}" >&2
             docker compose -f "${COMPOSE_FILE}" logs app --tail 40
             exit 1
@@ -208,6 +235,26 @@ start_stack_local() {
     wait_for_postgres
 
     echo ""
+    if [ "${AUTO_REBUILD:-1}" -eq 1 ]; then
+        local image_id
+        image_id="$(docker images -q medexpertmatch-app:latest 2>/dev/null || true)"
+        if [ -n "$image_id" ]; then
+            local image_time src_time
+            image_time="$(docker inspect --format='{{.Created}}' "$image_id" 2>/dev/null | head -1 | xargs -I{} date -d {} +%s 2>/dev/null || echo 0)"
+            src_time="$(find src/ -type f -newer /dev/null -printf '%T@\n' 2>/dev/null | sort -rn | head -1 | cut -d. -f1)"
+            src_time="${src_time:-0}"
+            if [ "$src_time" -gt "$image_time" ]; then
+                echo -e "${YELLOW}Source code changed — rebuilding app image...${NC}"
+                docker compose -f "${COMPOSE_FILE}" build app
+                free_app_port
+            fi
+        else
+            echo -e "${YELLOW}No existing app image — building...${NC}"
+            docker compose -f "${COMPOSE_FILE}" build app
+            free_app_port
+        fi
+    fi
+
     echo -e "${YELLOW}Starting application container (docker/Dockerfile.app)...${NC}"
     docker compose -f "${COMPOSE_FILE}" up -d app
     wait_for_app

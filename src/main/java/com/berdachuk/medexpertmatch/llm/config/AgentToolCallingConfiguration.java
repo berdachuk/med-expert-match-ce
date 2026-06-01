@@ -11,7 +11,6 @@ import com.berdachuk.medexpertmatch.llm.tools.EvidenceAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.GraphAnalyticsAgentTools;
 import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
 import org.springaicommunity.agent.tools.AskUserQuestionTool;
-import org.springaicommunity.agent.tools.FileSystemTools;
 import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -47,7 +46,6 @@ public class AgentToolCallingConfiguration {
             GraphAnalyticsAgentTools graphAnalyticsAgentTools,
             RoutingAgentTools routingAgentTools,
             ContextBuilderAgentTools contextBuilderAgentTools,
-            FileSystemTools fileSystemTools,
             AutoMemoryTools autoMemoryTools,
             TodoWriteTool todoWriteTool,
             AskUserQuestionTool askUserQuestionTool) {
@@ -63,7 +61,6 @@ public class AgentToolCallingConfiguration {
                         graphAnalyticsAgentTools,
                         routingAgentTools,
                         contextBuilderAgentTools,
-                        fileSystemTools,
                         autoMemoryTools,
                         todoWriteTool,
                         askUserQuestionTool)

@@ -21,7 +21,7 @@ RUN mvn dependency:go-offline -B -q
 COPY src ./src
 COPY --from=docs-builder /build/site ./src/main/resources/static/docs
 
-RUN mvn package -B -DskipTests -q && \
+RUN mvn package -B -Dmaven.test.skip=true -q && \
     mv target/med-expert-match.jar target/app.jar
 
 # Runtime stage: same Liberica image (compact, TCK-verified)

@@ -9,10 +9,13 @@ import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.chat.ChatCasePromptSupport;
+import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
+import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,13 +48,15 @@ class ChatAssistantServiceImplTest {
     private final PromptTemplate chatUserMessageTemplate = mock(PromptTemplate.class);
     private final ChatCasePromptSupport chatCasePromptSupport = mock(ChatCasePromptSupport.class);
     private final MedicalAgentCriticService medicalAgentCriticService = mock(MedicalAgentCriticService.class);
+    private final GoalClassifier goalClassifier = mock(GoalClassifier.class);
+    private final MedicalAgentService medicalAgentService = mock(MedicalAgentService.class);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
             new ChatTurnMetrics(new SimpleMeterRegistry()), chatAgentSystemTemplate,
             chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
             medicalAgentCriticService, HarnessProperties.defaults(),
-            "functiongemma");
+            "functiongemma", goalClassifier, medicalAgentService);
 
     @AfterEach
     void clearContext() {
@@ -69,6 +74,7 @@ class ChatAssistantServiceImplTest {
         when(chatService.requireOwnedChat("c1", "user-a")).thenReturn(chat);
         when(chatService.appendUserMessage("c1", "user-a", "Find evidence")).thenReturn(userMsg);
         when(chatService.appendAssistantMessage("c1", "user-a", "Here is evidence")).thenReturn(assistantMsg);
+        when(goalClassifier.classify(any())).thenReturn(GoalClassification.general());
         when(promptSupport.loadSkill(any())).thenReturn("skill body");
         when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
         when(chatAgentSystemTemplate.render(any())).thenReturn("system");
