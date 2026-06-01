@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.llm.harness.impl.AgentPlannerServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.AgentResponseVerifierImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
+import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentCriticServiceImpl;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -61,7 +62,8 @@ class DoctorMatchWorkflowEngineTest {
                 bundleService,
                 planner,
                 HarnessProperties.defaults(),
-                metrics);
+                metrics,
+                new InMemoryHarnessWorkflowRunStore());
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",
@@ -108,7 +110,8 @@ class DoctorMatchWorkflowEngineTest {
                 bundleService,
                 planner,
                 HarnessProperties.defaults(),
-                metrics);
+                metrics,
+                new InMemoryHarnessWorkflowRunStore());
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",

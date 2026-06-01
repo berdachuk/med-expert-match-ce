@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.chat.service.ChatExportAuditor;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
 import com.berdachuk.medexpertmatch.core.compliance.PhiGuard;
 import com.berdachuk.medexpertmatch.core.util.IdentifierHasher;
+import com.berdachuk.medexpertmatch.core.service.HarnessPlanExportQuery;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
@@ -24,16 +26,19 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatService chatService;
     private final ChatExportAuditor chatExportAuditor;
+    private final HarnessPlanExportQuery harnessPlanExportQuery;
 
     public ChatDataLifecycleServiceImpl(
             ChatRepository chatRepository,
             ChatMessageRepository chatMessageRepository,
             ChatService chatService,
-            ChatExportAuditor chatExportAuditor) {
+            ChatExportAuditor chatExportAuditor,
+            HarnessPlanExportQuery harnessPlanExportQuery) {
         this.chatRepository = chatRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.chatService = chatService;
         this.chatExportAuditor = chatExportAuditor;
+        this.harnessPlanExportQuery = harnessPlanExportQuery;
     }
 
     @Override
@@ -70,7 +75,7 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
         for (Chat chat : chats) {
             List<ChatMessage> history = chatService.getHistory(chat.id(), userId, 10_000, 0);
             totalMessages += history.size();
-            chatExports.add(toChatExport(chat, history));
+            chatExports.add(toChatExport(userId, chat, history));
         }
 
         String auditReferenceHash = chatExportAuditor.recordExportBundle(userId, chatExports.size(), totalMessages);
@@ -86,13 +91,15 @@ public class ChatDataLifecycleServiceImpl implements ChatDataLifecycleService {
         return bundle;
     }
 
-    private Map<String, Object> toChatExport(Chat chat, List<ChatMessage> history) {
+    private Map<String, Object> toChatExport(String userId, Chat chat, List<ChatMessage> history) {
         Map<String, Object> export = new LinkedHashMap<>();
         export.put("chatId", chat.id());
         export.put("name", chat.name());
         export.put("agentId", chat.agentId());
         export.put("isDefault", chat.isDefault());
         export.put("messages", history.stream().map(this::toExportMessage).toList());
+        String sessionId = userId + "-" + chat.id();
+        harnessPlanExportQuery.findPlanBySessionId(sessionId).ifPresent(plan -> export.put("plan", plan));
         return export;
     }
 

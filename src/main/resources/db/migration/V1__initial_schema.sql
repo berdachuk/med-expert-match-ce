@@ -461,6 +461,24 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.llm_agent_plan_artefact (
 CREATE INDEX IF NOT EXISTS idx_llm_agent_plan_case_id ON medexpertmatch.llm_agent_plan_artefact (case_id);
 
 -- ============================================
+-- LLM Harness Workflow Runs (M31)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.llm_harness_workflow_run (
+    run_id VARCHAR(36) PRIMARY KEY,
+    session_id VARCHAR(128) NOT NULL,
+    case_id VARCHAR(24),
+    workflow_type VARCHAR(32) NOT NULL,
+    state VARCHAR(32) NOT NULL,
+    resume_token VARCHAR(64) NOT NULL,
+    payload_json JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_llm_harness_workflow_run_session ON medexpertmatch.llm_harness_workflow_run (session_id);
+
+-- ============================================
 -- Document Ingestion Tables
 -- ============================================
 

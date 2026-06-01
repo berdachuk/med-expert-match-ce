@@ -57,6 +57,8 @@ Micrometer counters (no PHI in labels):
 Workflow logs emit `HARNESS_STATE` transitions on the active session id (doctor match, routing, case intake).
 
 - Config: `medexpertmatch.llm.harness.*` in `application.yml`
+- Human checkpoint: `POST /api/v1/workflows/{runId}/checkpoint` with `X-User-Id: admin` or `clinician`, body `{ "decision": "APPROVE"|"REJECT", "resumeToken": "..." }` (enable via `human-checkpoint-enabled`)
+- Analysis→match handoff: `chain-analysis-to-match` publishes `CaseAnalysisCompletedEvent` and chains doctor match
 - Eval gate: `scripts/run-eval-harness.sh` (CI after unit tests)
 - Harness backlog template: `.agents/templates/harness-backlog-item.md`
 

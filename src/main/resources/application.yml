@@ -222,6 +222,8 @@ medexpertmatch:
       retry-on-verify-fail: ${MEDEXPERTMATCH_LLM_HARNESS_RETRY_ON_VERIFY_FAIL:true}
       doctor-match-min-matches: ${MEDEXPERTMATCH_LLM_HARNESS_DOCTOR_MATCH_MIN_MATCHES:1}
       routing-match-min-matches: ${MEDEXPERTMATCH_LLM_HARNESS_ROUTING_MATCH_MIN_MATCHES:0}
+      human-checkpoint-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_HUMAN_CHECKPOINT_ENABLED:false}
+      chain-analysis-to-match: ${MEDEXPERTMATCH_LLM_HARNESS_CHAIN_ANALYSIS_TO_MATCH:false}
   synthetic-data: # Test data generation; batch sizes and timeouts
     embedding:
       thread-pool-size: ${SYNTHETIC_DATA_EMBEDDING_THREAD_POOL_SIZE:10}

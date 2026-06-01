@@ -10,7 +10,9 @@ public record HarnessProperties(
         int maxIterations,
         boolean retryOnVerifyFail,
         int doctorMatchMinMatches,
-        int routingMatchMinMatches) {
+        int routingMatchMinMatches,
+        boolean humanCheckpointEnabled,
+        boolean chainAnalysisToMatch) {
 
     public HarnessProperties {
         if (maxIterations < 1) {
@@ -19,7 +21,7 @@ public record HarnessProperties(
     }
 
     public static HarnessProperties defaults() {
-        return new HarnessProperties(true, true, 2, true, 1, 0);
+        return new HarnessProperties(true, true, 2, true, 1, 0, false, false);
     }
 
     public HarnessIterationPolicy iterationPolicy() {

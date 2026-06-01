@@ -154,6 +154,22 @@
       ]
     },
     {
+      "title": "Harness Verify Failures",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(harness_verify_failure_total[5m])"}
+      ]
+    },
+    {
+      "title": "Harness Critic Failures",
+      "type": "timeseries",
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {"expr": "rate(harness_critic_failure_total[5m])"}
+      ]
+    },
+    {
       "title": "Operator Runbook",
       "type": "text",
       "options": {

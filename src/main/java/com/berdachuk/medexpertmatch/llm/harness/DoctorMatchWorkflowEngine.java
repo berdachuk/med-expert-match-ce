@@ -9,10 +9,12 @@ import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,7 @@ public class DoctorMatchWorkflowEngine {
     private final AgentPlannerService agentPlannerService;
     private final HarnessProperties harnessProperties;
     private final HarnessMetrics harnessMetrics;
+    private final HarnessWorkflowRunStore workflowRunStore;
 
     public DoctorMatchWorkflowEngine(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
@@ -50,7 +53,8 @@ public class DoctorMatchWorkflowEngine {
             CaseContextBundleService caseContextBundleService,
             AgentPlannerService agentPlannerService,
             HarnessProperties harnessProperties,
-            HarnessMetrics harnessMetrics) {
+            HarnessMetrics harnessMetrics,
+            HarnessWorkflowRunStore workflowRunStore) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.medicalCaseRepository = medicalCaseRepository;
         this.logStreamService = logStreamService;
@@ -62,6 +66,7 @@ public class DoctorMatchWorkflowEngine {
         this.agentPlannerService = agentPlannerService;
         this.harnessProperties = harnessProperties;
         this.harnessMetrics = harnessMetrics;
+        this.workflowRunStore = workflowRunStore;
     }
 
     public MedicalAgentService.AgentResponse execute(String caseId, Map<String, Object> request) {
@@ -122,6 +127,79 @@ public class DoctorMatchWorkflowEngine {
             return new MedicalAgentService.AgentResponse(SAFE_NO_MATCH, metadata);
         }
 
+        if (harnessProperties.humanCheckpointEnabled()) {
+            return pauseForHumanReview(caseId, sessionId, maxResults, matches, caseAnalysisJson, bundle);
+        }
+
+        return completeAfterVerify(caseId, sessionId, matches, caseAnalysisJson, bundle);
+    }
+
+    public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, DoctorMatchCheckpointPayload payload) {
+        transition(payload.sessionId(), DoctorMatchWorkflowState.CRITIC, "Resuming after human approval runId=" + runId);
+        CaseContextBundle bundle = caseContextBundleService.build(payload.caseId(), CaseContextIntent.MATCH);
+        return completeAfterVerify(
+                payload.caseId(),
+                payload.sessionId(),
+                payload.matches(),
+                payload.caseAnalysisJson(),
+                bundle);
+    }
+
+    private MedicalAgentService.AgentResponse pauseForHumanReview(
+            String caseId,
+            String sessionId,
+            int maxResults,
+            List<DoctorMatch> matches,
+            String caseAnalysisJson,
+            CaseContextBundle bundle) {
+        transition(sessionId, DoctorMatchWorkflowState.NEEDS_HUMAN, "Awaiting human checkpoint review");
+        try {
+            DoctorMatchCheckpointPayload payload = new DoctorMatchCheckpointPayload(
+                    caseId,
+                    sessionId,
+                    maxResults,
+                    matches,
+                    caseAnalysisJson,
+                    bundle.coreSections().size());
+            String payloadJson = objectMapper.writeValueAsString(payload);
+            String runId = HarnessWorkflowRunJdbcRepository.newRunId();
+            String resumeToken = HarnessWorkflowRunJdbcRepository.newResumeToken();
+            Instant now = Instant.now();
+            workflowRunStore.save(new HarnessWorkflowRun(
+                    runId,
+                    sessionId,
+                    caseId,
+                    HarnessWorkflowType.DOCTOR_MATCH,
+                    DoctorMatchWorkflowState.NEEDS_HUMAN,
+                    resumeToken,
+                    payloadJson,
+                    now,
+                    now));
+
+            Map<String, Object> metadata = successMetadata(caseId, matches, bundle);
+            metadata.put("harnessState", DoctorMatchWorkflowState.NEEDS_HUMAN.name());
+            metadata.put("harnessRunId", runId);
+            metadata.put("harnessResumeToken", resumeToken);
+            metadata.put("checkpointEndpoint", "/api/v1/workflows/" + runId + "/checkpoint");
+
+            String pausedMessage = """
+                    Doctor matches are ready for human review before final narrative generation.
+                    This output is for research and educational purposes only and is not a substitute \
+                    for professional medical advice, diagnosis, or treatment.""";
+            logStreamService.logCompletion(sessionId, "Match doctors operation",
+                    "Paused for human checkpoint runId=" + runId);
+            return new MedicalAgentService.AgentResponse(pausedMessage, metadata);
+        } catch (JsonProcessingException e) {
+            throw new AgentExecutionException("Failed to persist checkpoint payload: " + e.getMessage(), e);
+        }
+    }
+
+    private MedicalAgentService.AgentResponse completeAfterVerify(
+            String caseId,
+            String sessionId,
+            List<DoctorMatch> matches,
+            String caseAnalysisJson,
+            CaseContextBundle bundle) {
         try {
             String jsonResponse = objectMapper.writeValueAsString(matches);
             Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
