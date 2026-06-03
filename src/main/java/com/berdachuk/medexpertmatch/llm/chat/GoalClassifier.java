@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +13,10 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -48,16 +51,19 @@ public class GoalClassifier {
     private final PromptTemplate goalClassificationTemplate;
     private final ObjectMapper objectMapper;
     private final LlmCallLimiter llmCallLimiter;
+    private final ApplicationEventPublisher eventPublisher;
 
     public GoalClassifier(
             @Qualifier("primaryChatModel") ChatModel primaryChatModel,
             @Qualifier("goalClassificationPromptTemplate") PromptTemplate goalClassificationTemplate,
             ObjectMapper objectMapper,
-            LlmCallLimiter llmCallLimiter) {
+            LlmCallLimiter llmCallLimiter,
+            ApplicationEventPublisher eventPublisher) {
         this.chatClient = ChatClient.builder(primaryChatModel).build();
         this.goalClassificationTemplate = goalClassificationTemplate;
         this.objectMapper = objectMapper;
         this.llmCallLimiter = llmCallLimiter;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -73,16 +79,32 @@ public class GoalClassifier {
 
         GoalClassification keywordResult = classifyByKeywords(userMessage, extractedCaseId);
         if (keywordResult != null) {
+            publishIfRoutable(keywordResult);
             return keywordResult;
         }
 
         try {
-            return classifyByLlm(userMessage, extractedCaseId);
+            GoalClassification llmResult = classifyByLlm(userMessage, extractedCaseId);
+            publishIfRoutable(llmResult);
+            return llmResult;
         } catch (Exception e) {
             log.warn("LLM goal classification failed, falling back to general: {}", e.getMessage());
-            return extractedCaseId.isPresent()
+            GoalClassification fallback = extractedCaseId.isPresent()
                     ? GoalClassification.matchDoctors(extractedCaseId.get(), "keyword fallback with case ID")
                     : GoalClassification.general();
+            publishIfRoutable(fallback);
+            return fallback;
+        }
+    }
+
+    private void publishIfRoutable(GoalClassification goal) {
+        if (goal.isRoutableToEngine() && goal.hasCaseId()) {
+            String caseId = goal.caseId().orElse("");
+            String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+            eventPublisher.publishEvent(new GoalIdentifiedEvent(
+                    sessionId, goal, caseId, Instant.now()));
+            log.debug("Published GoalIdentifiedEvent: session={} goal={} caseId={}",
+                    sessionId, goal.goalType(), caseId);
         }
     }
 

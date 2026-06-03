@@ -9,8 +9,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Optional;
+
+import static org.mockito.Mockito.mock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -28,7 +31,8 @@ class GoalClassifierFollowUpTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LlmCallLimiter llmCallLimiter = new LlmCallLimiter(1, 1, 1, 1);
     private final GoalClassifier goalClassifier = new GoalClassifier(
-            chatModel, goalClassificationTemplate, objectMapper, llmCallLimiter);
+            chatModel, goalClassificationTemplate, objectMapper, llmCallLimiter,
+            mock(ApplicationEventPublisher.class));
 
     @BeforeEach
     void setUp() {

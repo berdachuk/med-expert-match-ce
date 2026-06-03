@@ -1,17 +1,17 @@
 package com.berdachuk.medexpertmatch.llm.agent;
 
-import com.berdachuk.medexpertmatch.llm.event.DoneEvent;
 import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
-import com.berdachuk.medexpertmatch.llm.event.PlanReadyEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
+@ActiveProfiles("event-driven")
 class MultiAgentPipelineIT {
 
     @Autowired
@@ -39,7 +39,6 @@ class MultiAgentPipelineIT {
     @Test
     @DisplayName("GoalIdentifiedEvent can be published and received")
     void goalIdentifiedEventPublished() {
-        // Verify the event record itself is constructed correctly
         var goal = new com.berdachuk.medexpertmatch.llm.chat.GoalClassification(
                 com.berdachuk.medexpertmatch.llm.chat.GoalType.GENERAL_QUESTION,
                 java.util.Optional.empty(), java.util.Optional.empty(), "test");

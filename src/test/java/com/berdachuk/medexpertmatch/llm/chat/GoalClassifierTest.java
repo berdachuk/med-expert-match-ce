@@ -5,6 +5,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.context.ApplicationEventPublisher;
+import static org.mockito.Mockito.mock;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -27,7 +29,7 @@ class GoalClassifierTest {
         assertEquals(expected, GoalClassifier.toContextIntent(goalType));
     }
 
-    @Test
+@Test
     @DisplayName("classify returns general for null or blank input")
     void classifyReturnsGeneralForNull() {
         org.springframework.ai.chat.model.ChatModel chatModel =
@@ -37,7 +39,8 @@ class GoalClassifierTest {
         GoalClassifier classifier = new GoalClassifier(
                 chatModel, template,
                 new com.fasterxml.jackson.databind.ObjectMapper(),
-                new com.berdachuk.medexpertmatch.core.util.LlmCallLimiter(1, 1, 1, 1));
+                new com.berdachuk.medexpertmatch.core.util.LlmCallLimiter(1, 1, 1, 1),
+                mock(ApplicationEventPublisher.class));
 
         assertEquals(GoalType.GENERAL_QUESTION, classifier.classify(null).goalType());
         assertEquals(GoalType.GENERAL_QUESTION, classifier.classify("").goalType());

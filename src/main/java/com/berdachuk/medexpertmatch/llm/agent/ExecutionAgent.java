@@ -8,6 +8,7 @@ import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@Profile("event-driven")
 public class ExecutionAgent {
 
     private final ApplicationEventPublisher eventPublisher;

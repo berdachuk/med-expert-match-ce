@@ -1,26 +1,29 @@
 package com.berdachuk.medexpertmatch.llm.agent;
 
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
-import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.event.ExecutionPlan;
 import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import com.berdachuk.medexpertmatch.llm.event.PlanReadyEvent;
+import com.berdachuk.medexpertmatch.llm.harness.DoctorMatchWorkflowState;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRun;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRunJdbcRepository;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowType;
-import com.berdachuk.medexpertmatch.llm.harness.DoctorMatchWorkflowState;
+import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
+@Profile("event-driven")
 public class PlannerAgent {
 
     private final ApplicationEventPublisher eventPublisher;
