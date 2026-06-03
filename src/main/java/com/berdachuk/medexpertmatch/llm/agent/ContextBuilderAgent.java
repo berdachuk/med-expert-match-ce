@@ -40,6 +40,7 @@ public class ContextBuilderAgent {
         long start = System.currentTimeMillis();
         log.info("ContextBuilderAgent: plan ready session={} steps={}", event.sessionId(), event.plan().steps().size());
         pipelineProgressCollector.addStage(event.sessionId(), "CONTEXT_BUILD", "ContextBuilderAgent", "in_progress");
+        pipelineMetrics.recordStageInProgress(event.sessionId(), "ContextBuilderAgent");
         pipelineMetrics.recordStageStarted(event.sessionId(), "ContextBuilderAgent");
 
         try {

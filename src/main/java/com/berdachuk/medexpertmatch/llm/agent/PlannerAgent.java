@@ -45,6 +45,7 @@ public class PlannerAgent {
         long start = System.currentTimeMillis();
         log.info("PlannerAgent: goal identified session={} goalType={}", event.sessionId(), event.goal().goalType());
         pipelineProgressCollector.addStage(event.sessionId(), "PLANNING", "PlannerAgent", "in_progress");
+        pipelineMetrics.recordStageInProgress(event.sessionId(), "PlannerAgent");
         pipelineMetrics.recordStageStarted(event.sessionId(), "PlannerAgent");
         try {
             ExecutionPlan plan = buildPlan(event.sessionId(), event.goal(), event.caseId());

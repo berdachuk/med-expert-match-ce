@@ -53,6 +53,7 @@ public class CriticAgent {
         long start = System.currentTimeMillis();
         log.info("CriticAgent: results ready session={}", event.sessionId());
         pipelineProgressCollector.addStage(event.sessionId(), "CRITIC", "CriticAgent", "in_progress");
+        pipelineMetrics.recordStageInProgress(event.sessionId(), "CriticAgent");
         pipelineMetrics.recordStageStarted(event.sessionId(), "CriticAgent");
 
         try {

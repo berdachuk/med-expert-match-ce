@@ -46,6 +46,7 @@ public class ExecutionAgent {
         log.info("ExecutionAgent: context ready session={} caseId={} intent={}",
                 event.sessionId(), event.bundle().caseId(), event.bundle().intent());
         pipelineProgressCollector.addStage(event.sessionId(), "EXECUTION", "ExecutionAgent", "in_progress");
+        pipelineMetrics.recordStageInProgress(event.sessionId(), "ExecutionAgent");
         pipelineMetrics.recordStageStarted(event.sessionId(), "ExecutionAgent");
 
         try {

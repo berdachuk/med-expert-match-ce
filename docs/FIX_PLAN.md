@@ -89,9 +89,9 @@ This plan focuses on:
 
 - [x] Split `MedicalAgentServiceImpl` into smaller workflow-oriented services
 - [x] Extract result formatting and prompt orchestration helpers from `MedicalAgentServiceImpl`
- - [ ] Split `SyntheticDataGenerator` into bootstrap, generation, enrichment, and graph rebuild responsibilities
-   Progress: bootstrap catalog loading, generation orchestration, and post-processing/graph steps are now handled by dedicated helpers; `SyntheticDataGenerator` is a thin façade
-- [ ] Reduce constructor breadth where it signals mixed responsibilities
+ - [x] Split `SyntheticDataGenerator` into bootstrap, generation, enrichment, and graph rebuild responsibilities
+   Completed: bootstrap catalog loading, generation orchestration, and post-processing/graph steps are handled by dedicated helpers; `SyntheticDataGenerator` is a thin façade
+- [x] Reduce constructor breadth where it signals mixed responsibilities
 - [x] Add focused tests around each extracted service
 
 ## Phase 5: Test Hardening
@@ -104,10 +104,10 @@ This plan focuses on:
 ### Checklist
 
 - [x] Tighten graph-based integration tests so they do not silently accept generic error responses
-- [ ] Add startup smoke tests for main profiles and critical beans
-- [ ] Add tests for configuration property binding and validation
-- [ ] Add tests for documentation-sensitive paths where behavior depends on profile configuration
-- [ ] Revisit test comments and names that no longer match current implementation
+- [x] Add startup smoke tests for main profiles and critical beans
+- [x] Add tests for configuration property binding and validation
+- [x] Add tests for documentation-sensitive paths where behavior depends on profile configuration
+- [x] Revisit test comments and names that no longer match current implementation
 
 ## Phase 6: Operational Hardening
 
@@ -118,10 +118,10 @@ This plan focuses on:
 
 ### Checklist
 
-- [ ] Revisit security-related defaults for error messages and actuator exposure
-- [ ] Add startup validation for required AI configuration
-- [ ] Validate skills directory behavior for enabled and disabled modes
-- [ ] Document required external services for local and CI environments
+- [x] Revisit security-related defaults for error messages and actuator exposure
+- [x] Add startup validation for required AI configuration
+- [x] Validate skills directory behavior for enabled and disabled modes
+- [x] Document required external services for local and CI environments
 
 ## Recommended Execution Order
 
