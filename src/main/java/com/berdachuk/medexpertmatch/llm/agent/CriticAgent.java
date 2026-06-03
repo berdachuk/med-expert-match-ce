@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.harness.HarnessFailureReason;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.harness.VerificationRequest;
 import com.berdachuk.medexpertmatch.llm.harness.VerificationResult;
+import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -30,48 +31,61 @@ public class CriticAgent {
     private final ApplicationEventPublisher eventPublisher;
     private final AgentResponseVerifier agentResponseVerifier;
     private final MedicalAgentCriticService medicalAgentCriticService;
+    private final PipelineMetricsService pipelineMetrics;
 
     public CriticAgent(
             ApplicationEventPublisher eventPublisher,
             AgentResponseVerifier agentResponseVerifier,
-            MedicalAgentCriticService medicalAgentCriticService) {
+            MedicalAgentCriticService medicalAgentCriticService,
+            PipelineMetricsService pipelineMetrics) {
         this.eventPublisher = eventPublisher;
         this.agentResponseVerifier = agentResponseVerifier;
         this.medicalAgentCriticService = medicalAgentCriticService;
+        this.pipelineMetrics = pipelineMetrics;
     }
 
     @EventListener
     public void onResultsReady(ResultsReadyEvent event) {
+        long start = System.currentTimeMillis();
         log.info("CriticAgent: results ready session={}", event.sessionId());
+        pipelineMetrics.recordStageStarted(event.sessionId(), "CriticAgent");
 
-        String sessionId = event.sessionId();
-        MedicalAgentService.AgentResponse response = event.response();
+        try {
+            String sessionId = event.sessionId();
+            MedicalAgentService.AgentResponse response = event.response();
 
-        int retryCount = extractRetryCount(response.metadata());
+            int retryCount = extractRetryCount(response.metadata());
 
-        VerificationResult verification = agentResponseVerifier.verify(
-                VerificationRequest.forDoctorMatch(
-                        (String) response.metadata().getOrDefault("caseId", ""),
-                        List.of(),
-                        1));
+            VerificationResult verification = agentResponseVerifier.verify(
+                    VerificationRequest.forDoctorMatch(
+                            (String) response.metadata().getOrDefault("caseId", ""),
+                            List.of(),
+                            1));
 
-        if (!verification.passed()) {
-            log.warn("CriticAgent: verify failed session={} reason={}", sessionId, verification.reasonCode());
-            emitReplan(sessionId, retryCount, response);
-            return;
+            if (!verification.passed()) {
+                log.warn("CriticAgent: verify failed session={} reason={}", sessionId, verification.reasonCode());
+                pipelineMetrics.recordStageFailed(event.sessionId(), "CriticAgent", verification.reasonCode().name());
+                emitReplan(sessionId, retryCount, response);
+                return;
+            }
+
+            MedicalAgentCriticService.CriticResult critic =
+                    medicalAgentCriticService.review(response.response(), response.metadata());
+
+            if (!critic.approved()) {
+                log.warn("CriticAgent: critic rejected session={} reason={}", sessionId, critic.reason());
+                pipelineMetrics.recordStageFailed(event.sessionId(), "CriticAgent", critic.reason().name());
+                emitReplan(sessionId, retryCount, response);
+                return;
+            }
+
+            log.info("CriticAgent: all checks passed session={}", sessionId);
+            eventPublisher.publishEvent(new DoneEvent(sessionId, response, Instant.now()));
+            pipelineMetrics.recordStageCompleted(event.sessionId(), "CriticAgent", System.currentTimeMillis() - start);
+        } catch (Exception e) {
+            pipelineMetrics.recordStageFailed(event.sessionId(), "CriticAgent", e.getMessage());
+            throw e;
         }
-
-        MedicalAgentCriticService.CriticResult critic =
-                medicalAgentCriticService.review(response.response(), response.metadata());
-
-        if (!critic.approved()) {
-            log.warn("CriticAgent: critic rejected session={} reason={}", sessionId, critic.reason());
-            emitReplan(sessionId, retryCount, response);
-            return;
-        }
-
-        log.info("CriticAgent: all checks passed session={}", sessionId);
-        eventPublisher.publishEvent(new DoneEvent(sessionId, response, Instant.now()));
     }
 
     private void emitReplan(String sessionId, int retryCount, MedicalAgentService.AgentResponse response) {

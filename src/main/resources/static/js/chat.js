@@ -387,6 +387,12 @@
                                     addActivityEntryToPanel(agentPanelWrap, 'plan', 'Plan updated (' + act.todos.length + ' items)', 'orchestrator');
                                 }
                             } catch (ignore) { }
+                        } else if (evt.event === 'pipeline_stage') {
+                            try {
+                                var ps = JSON.parse(evt.data);
+                                var statusIcon = ps.status === 'completed' ? '\u2713' : (ps.status === 'failed' ? '\u2717' : '\u25B6');
+                                addActivityEntryToPanel(agentPanelWrap, 'pipeline ' + ps.status, statusIcon + ' ' + ps.stage + ' (' + ps.agent + ')', ps.agent);
+                            } catch (ignore) { }
                         } else if (evt.event === 'done') {
                             applyDonePayload(evt.data);
                             streamDone = true;

@@ -18,6 +18,7 @@ import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,13 +62,14 @@ class ChatAssistantServiceImplTest {
     private final GoalClassifier goalClassifier = mock(GoalClassifier.class);
     private final MedicalAgentService medicalAgentService = mock(MedicalAgentService.class);
     private final SessionService sessionService = mock(SessionService.class);
+    private final PipelineProgressCollector pipelineProgressCollector = mock(PipelineProgressCollector.class);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
             new ChatTurnMetrics(new SimpleMeterRegistry()), chatAgentSystemTemplate,
             chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
             medicalAgentCriticService, HarnessProperties.defaults(),
-            "functiongemma", goalClassifier, medicalAgentService, sessionService);
+            "functiongemma", goalClassifier, medicalAgentService, sessionService, pipelineProgressCollector);
 
     @AfterEach
     void clearContext() {

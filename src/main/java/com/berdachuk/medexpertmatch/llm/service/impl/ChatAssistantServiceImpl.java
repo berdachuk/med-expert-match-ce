@@ -23,6 +23,7 @@ import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -65,6 +66,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final GoalClassifier goalClassifier;
     private final MedicalAgentService medicalAgentService;
     private final SessionService sessionService;
+    private final PipelineProgressCollector pipelineProgressCollector;
 
     public ChatAssistantServiceImpl(
             ChatService chatService,
@@ -83,7 +85,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             @Value("${spring.ai.custom.tool-calling.model:functiongemma}") String functionGemmaModelName,
             GoalClassifier goalClassifier,
             MedicalAgentService medicalAgentService,
-            SessionService sessionService) {
+            SessionService sessionService,
+            PipelineProgressCollector pipelineProgressCollector) {
         this.chatService = chatService;
         this.chatClient = chatClient;
         this.promptSupportService = promptSupportService;
@@ -101,6 +104,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.goalClassifier = goalClassifier;
         this.medicalAgentService = medicalAgentService;
         this.sessionService = sessionService;
+        this.pipelineProgressCollector = pipelineProgressCollector;
     }
 
     @Override
@@ -194,6 +198,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                 ConversationGoalContext.set(ctx.goal().goalType(),
                                         ctx.goal().caseId().orElse(null), ctx.sessionId());
                                 sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", ctx.profile().agentId()));
+                                sendPipelineStageEvents(emitter, ctx.sessionId());
                                 emitter.send(SseEmitter.event().name("done").data(Map.of(
                                         "id", assistant.id(),
                                         "content", reply)));
@@ -382,6 +387,18 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             emitter.send(SseEmitter.event().name("agent").data(payload));
         } catch (IOException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    private void sendPipelineStageEvents(SseEmitter emitter, String sessionId) {
+        var stages = pipelineProgressCollector.drainStages(sessionId);
+        for (var stage : stages) {
+            try {
+                emitter.send(SseEmitter.event().name("pipeline_stage").data(stage.toPayload()));
+            } catch (IOException e) {
+                log.debug("Failed to send pipeline stage event for session {}: {}", sessionId, e.getMessage());
+                break;
+            }
         }
     }
 

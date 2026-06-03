@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRun;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRunJdbcRepository;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowType;
+import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -18,8 +19,6 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
@@ -28,19 +27,30 @@ public class PlannerAgent {
 
     private final ApplicationEventPublisher eventPublisher;
     private final HarnessWorkflowRunStore workflowRunStore;
+    private final PipelineMetricsService pipelineMetrics;
 
-    public PlannerAgent(ApplicationEventPublisher eventPublisher, HarnessWorkflowRunStore workflowRunStore) {
+    public PlannerAgent(ApplicationEventPublisher eventPublisher, HarnessWorkflowRunStore workflowRunStore,
+                        PipelineMetricsService pipelineMetrics) {
         this.eventPublisher = eventPublisher;
         this.workflowRunStore = workflowRunStore;
+        this.pipelineMetrics = pipelineMetrics;
     }
 
     @EventListener
     public void onGoalIdentified(GoalIdentifiedEvent event) {
+        long start = System.currentTimeMillis();
         log.info("PlannerAgent: goal identified session={} goalType={}", event.sessionId(), event.goal().goalType());
-        ExecutionPlan plan = buildPlan(event.sessionId(), event.goal(), event.caseId());
-        persistPlan(event.sessionId(), event.caseId(), plan);
-        eventPublisher.publishEvent(new PlanReadyEvent(event.sessionId(), plan, Instant.now()));
-        log.info("PlannerAgent: published PlanReadyEvent session={} steps={}", event.sessionId(), plan.steps().size());
+        pipelineMetrics.recordStageStarted(event.sessionId(), "PlannerAgent");
+        try {
+            ExecutionPlan plan = buildPlan(event.sessionId(), event.goal(), event.caseId());
+            persistPlan(event.sessionId(), event.caseId(), plan);
+            eventPublisher.publishEvent(new PlanReadyEvent(event.sessionId(), plan, Instant.now()));
+            pipelineMetrics.recordStageCompleted(event.sessionId(), "PlannerAgent", System.currentTimeMillis() - start);
+            log.info("PlannerAgent: published PlanReadyEvent session={} steps={}", event.sessionId(), plan.steps().size());
+        } catch (Exception e) {
+            pipelineMetrics.recordStageFailed(event.sessionId(), "PlannerAgent", e.getMessage());
+            throw e;
+        }
     }
 
     ExecutionPlan buildPlan(String sessionId, GoalClassification goal, String caseId) {

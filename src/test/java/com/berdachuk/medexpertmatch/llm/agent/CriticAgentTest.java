@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.harness.HarnessFailureReason;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentCriticService;
 import com.berdachuk.medexpertmatch.llm.harness.VerificationRequest;
 import com.berdachuk.medexpertmatch.llm.harness.VerificationResult;
+import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,13 +26,15 @@ import static org.mockito.Mockito.when;
 
 class CriticAgentTest {
 
+    private final PipelineMetricsService pipelineMetrics = mock(PipelineMetricsService.class);
+
     @Test
     @DisplayName("emits DoneEvent when verify and critic pass")
     void verifyAndCriticPassEmitsDone() {
         var eventPublisher = mock(ApplicationEventPublisher.class);
         var verifier = mock(AgentResponseVerifier.class);
         var criticService = mock(MedicalAgentCriticService.class);
-        var agent = new CriticAgent(eventPublisher, verifier, criticService);
+        var agent = new CriticAgent(eventPublisher, verifier, criticService, pipelineMetrics);
 
         var response = new MedicalAgentService.AgentResponse("good result", Map.of());
         var event = new ResultsReadyEvent("session-1", response, Instant.now());
@@ -51,7 +54,7 @@ class CriticAgentTest {
         var eventPublisher = mock(ApplicationEventPublisher.class);
         var verifier = mock(AgentResponseVerifier.class);
         var criticService = mock(MedicalAgentCriticService.class);
-        var agent = new CriticAgent(eventPublisher, verifier, criticService);
+        var agent = new CriticAgent(eventPublisher, verifier, criticService, pipelineMetrics);
 
         var response = new MedicalAgentService.AgentResponse("bad result", Map.of("sessionId", "session-1"));
         var event = new ResultsReadyEvent("session-1", response, Instant.now());
@@ -71,7 +74,7 @@ class CriticAgentTest {
         var eventPublisher = mock(ApplicationEventPublisher.class);
         var verifier = mock(AgentResponseVerifier.class);
         var criticService = mock(MedicalAgentCriticService.class);
-        var agent = new CriticAgent(eventPublisher, verifier, criticService);
+        var agent = new CriticAgent(eventPublisher, verifier, criticService, pipelineMetrics);
 
         var response = new MedicalAgentService.AgentResponse("bad result", Map.of("sessionId", "session-1"));
         var event = new ResultsReadyEvent("session-1", response, Instant.now());
