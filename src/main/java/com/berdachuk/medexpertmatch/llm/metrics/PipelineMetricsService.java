@@ -18,6 +18,10 @@ public class PipelineMetricsService {
         meterRegistry.counter("pipeline.stage.started", "agent", agentName).increment();
     }
 
+    public void recordStageInProgress(String sessionId, String agentName) {
+        meterRegistry.counter("pipeline.stage.in_progress", "agent", agentName).increment();
+    }
+
     public void recordStageCompleted(String sessionId, String agentName, long durationMs) {
         meterRegistry.counter("pipeline.stage.completed", "agent", agentName).increment();
         meterRegistry.timer("pipeline.stage.duration", "agent", agentName)

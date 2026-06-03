@@ -11,6 +11,7 @@ import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessWorkflowType;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -28,18 +29,22 @@ public class PlannerAgent {
     private final ApplicationEventPublisher eventPublisher;
     private final HarnessWorkflowRunStore workflowRunStore;
     private final PipelineMetricsService pipelineMetrics;
+    private final PipelineProgressCollector pipelineProgressCollector;
 
     public PlannerAgent(ApplicationEventPublisher eventPublisher, HarnessWorkflowRunStore workflowRunStore,
-                        PipelineMetricsService pipelineMetrics) {
+                        PipelineMetricsService pipelineMetrics,
+                        PipelineProgressCollector pipelineProgressCollector) {
         this.eventPublisher = eventPublisher;
         this.workflowRunStore = workflowRunStore;
         this.pipelineMetrics = pipelineMetrics;
+        this.pipelineProgressCollector = pipelineProgressCollector;
     }
 
     @EventListener
     public void onGoalIdentified(GoalIdentifiedEvent event) {
         long start = System.currentTimeMillis();
         log.info("PlannerAgent: goal identified session={} goalType={}", event.sessionId(), event.goal().goalType());
+        pipelineProgressCollector.addStage(event.sessionId(), "PLANNING", "PlannerAgent", "in_progress");
         pipelineMetrics.recordStageStarted(event.sessionId(), "PlannerAgent");
         try {
             ExecutionPlan plan = buildPlan(event.sessionId(), event.goal(), event.caseId());

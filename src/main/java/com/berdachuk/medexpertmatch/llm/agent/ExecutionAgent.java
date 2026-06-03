@@ -6,6 +6,7 @@ import com.berdachuk.medexpertmatch.llm.harness.DoctorMatchWorkflowEngine;
 import com.berdachuk.medexpertmatch.llm.harness.RoutingWorkflowEngine;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -24,16 +25,19 @@ public class ExecutionAgent {
     private final DoctorMatchWorkflowEngine doctorMatchWorkflowEngine;
     private final RoutingWorkflowEngine routingWorkflowEngine;
     private final PipelineMetricsService pipelineMetrics;
+    private final PipelineProgressCollector pipelineProgressCollector;
 
     public ExecutionAgent(
             ApplicationEventPublisher eventPublisher,
             DoctorMatchWorkflowEngine doctorMatchWorkflowEngine,
             RoutingWorkflowEngine routingWorkflowEngine,
-            PipelineMetricsService pipelineMetrics) {
+            PipelineMetricsService pipelineMetrics,
+            PipelineProgressCollector pipelineProgressCollector) {
         this.eventPublisher = eventPublisher;
         this.doctorMatchWorkflowEngine = doctorMatchWorkflowEngine;
         this.routingWorkflowEngine = routingWorkflowEngine;
         this.pipelineMetrics = pipelineMetrics;
+        this.pipelineProgressCollector = pipelineProgressCollector;
     }
 
     @EventListener
@@ -41,6 +45,7 @@ public class ExecutionAgent {
         long start = System.currentTimeMillis();
         log.info("ExecutionAgent: context ready session={} caseId={} intent={}",
                 event.sessionId(), event.bundle().caseId(), event.bundle().intent());
+        pipelineProgressCollector.addStage(event.sessionId(), "EXECUTION", "ExecutionAgent", "in_progress");
         pipelineMetrics.recordStageStarted(event.sessionId(), "ExecutionAgent");
 
         try {

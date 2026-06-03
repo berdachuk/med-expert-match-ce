@@ -8,6 +8,7 @@ import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundleService;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImpl;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,13 +29,14 @@ import static org.mockito.Mockito.when;
 class ContextBuilderAgentTest {
 
     private final PipelineMetricsService pipelineMetrics = mock(PipelineMetricsService.class);
+    private final PipelineProgressCollector pipelineProgressCollector = mock(PipelineProgressCollector.class);
 
     @Test
     @DisplayName("builds context and emits ContextReadyEvent for MATCH_DOCTORS plan")
     void buildsContextForMatchPlan() {
         var eventPublisher = mock(ApplicationEventPublisher.class);
         var bundleService = mock(CaseContextBundleService.class);
-        var agent = new ContextBuilderAgent(eventPublisher, bundleService, pipelineMetrics);
+        var agent = new ContextBuilderAgent(eventPublisher, bundleService, pipelineMetrics, pipelineProgressCollector);
 
         var bundle = new CaseContextBundle("case-1", CaseContextIntent.MATCH,
                 List.of(), List.of(), "", Map.of());
@@ -56,7 +58,7 @@ class ContextBuilderAgentTest {
     void handlesEmptySteps() {
         var eventPublisher = mock(ApplicationEventPublisher.class);
         var bundleService = mock(CaseContextBundleService.class);
-        var agent = new ContextBuilderAgent(eventPublisher, bundleService, pipelineMetrics);
+        var agent = new ContextBuilderAgent(eventPublisher, bundleService, pipelineMetrics, pipelineProgressCollector);
 
         var plan = new ExecutionPlan("session-1", List.of());
         var event = new PlanReadyEvent("session-1", plan, Instant.now());

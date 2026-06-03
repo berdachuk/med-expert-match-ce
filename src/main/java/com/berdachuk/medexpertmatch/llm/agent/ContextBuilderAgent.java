@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundle;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextBundleService;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -23,18 +24,22 @@ public class ContextBuilderAgent {
     private final ApplicationEventPublisher eventPublisher;
     private final CaseContextBundleService caseContextBundleService;
     private final PipelineMetricsService pipelineMetrics;
+    private final PipelineProgressCollector pipelineProgressCollector;
 
     public ContextBuilderAgent(ApplicationEventPublisher eventPublisher, CaseContextBundleService caseContextBundleService,
-                               PipelineMetricsService pipelineMetrics) {
+                               PipelineMetricsService pipelineMetrics,
+                               PipelineProgressCollector pipelineProgressCollector) {
         this.eventPublisher = eventPublisher;
         this.caseContextBundleService = caseContextBundleService;
         this.pipelineMetrics = pipelineMetrics;
+        this.pipelineProgressCollector = pipelineProgressCollector;
     }
 
     @EventListener
     public void onPlanReady(PlanReadyEvent event) {
         long start = System.currentTimeMillis();
         log.info("ContextBuilderAgent: plan ready session={} steps={}", event.sessionId(), event.plan().steps().size());
+        pipelineProgressCollector.addStage(event.sessionId(), "CONTEXT_BUILD", "ContextBuilderAgent", "in_progress");
         pipelineMetrics.recordStageStarted(event.sessionId(), "ContextBuilderAgent");
 
         try {

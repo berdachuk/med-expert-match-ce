@@ -38,7 +38,7 @@ public class PipelineProgressCollector {
         addStage(event.sessionId(), "CRITIC", "CriticAgent", "completed");
     }
 
-    private void addStage(String sessionId, String stageName, String agent, String status) {
+    public void addStage(String sessionId, String stageName, String agent, String status) {
         pipelineStages.computeIfAbsent(sessionId, k -> new ArrayList<>())
                 .add(new PipelineStage(stageName, agent, status, Instant.now().toEpochMilli()));
     }

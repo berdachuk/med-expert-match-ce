@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.harness.DoctorMatchWorkflowEngine;
 import com.berdachuk.medexpertmatch.llm.harness.RoutingWorkflowEngine;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.when;
 class ExecutionAgentTest {
 
     private final PipelineMetricsService pipelineMetrics = mock(PipelineMetricsService.class);
+    private final PipelineProgressCollector pipelineProgressCollector = mock(PipelineProgressCollector.class);
 
     @Test
     @DisplayName("routes to DoctorMatchWorkflowEngine for MATCH_DOCTORS plan")
@@ -33,7 +35,7 @@ class ExecutionAgentTest {
         var eventPublisher = mock(ApplicationEventPublisher.class);
         var matchEngine = mock(DoctorMatchWorkflowEngine.class);
         var routingEngine = mock(RoutingWorkflowEngine.class);
-        var agent = new ExecutionAgent(eventPublisher, matchEngine, routingEngine, pipelineMetrics);
+        var agent = new ExecutionAgent(eventPublisher, matchEngine, routingEngine, pipelineMetrics, pipelineProgressCollector);
 
         var bundle = new CaseContextBundle("case-1", CaseContextIntent.MATCH,
                 List.of(), List.of(), "", Map.of());
@@ -54,7 +56,7 @@ class ExecutionAgentTest {
         var eventPublisher = mock(ApplicationEventPublisher.class);
         var matchEngine = mock(DoctorMatchWorkflowEngine.class);
         var routingEngine = mock(RoutingWorkflowEngine.class);
-        var agent = new ExecutionAgent(eventPublisher, matchEngine, routingEngine, pipelineMetrics);
+        var agent = new ExecutionAgent(eventPublisher, matchEngine, routingEngine, pipelineMetrics, pipelineProgressCollector);
 
         var bundle = new CaseContextBundle("case-1", CaseContextIntent.ROUTE,
                 List.of(), List.of(), "", Map.of());

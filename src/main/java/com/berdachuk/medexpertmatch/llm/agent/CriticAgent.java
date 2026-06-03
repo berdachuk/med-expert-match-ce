@@ -11,6 +11,7 @@ import com.berdachuk.medexpertmatch.llm.harness.VerificationRequest;
 import com.berdachuk.medexpertmatch.llm.harness.VerificationResult;
 import com.berdachuk.medexpertmatch.llm.metrics.PipelineMetricsService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
+import com.berdachuk.medexpertmatch.llm.service.PipelineProgressCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -32,22 +33,26 @@ public class CriticAgent {
     private final AgentResponseVerifier agentResponseVerifier;
     private final MedicalAgentCriticService medicalAgentCriticService;
     private final PipelineMetricsService pipelineMetrics;
+    private final PipelineProgressCollector pipelineProgressCollector;
 
     public CriticAgent(
             ApplicationEventPublisher eventPublisher,
             AgentResponseVerifier agentResponseVerifier,
             MedicalAgentCriticService medicalAgentCriticService,
-            PipelineMetricsService pipelineMetrics) {
+            PipelineMetricsService pipelineMetrics,
+            PipelineProgressCollector pipelineProgressCollector) {
         this.eventPublisher = eventPublisher;
         this.agentResponseVerifier = agentResponseVerifier;
         this.medicalAgentCriticService = medicalAgentCriticService;
         this.pipelineMetrics = pipelineMetrics;
+        this.pipelineProgressCollector = pipelineProgressCollector;
     }
 
     @EventListener
     public void onResultsReady(ResultsReadyEvent event) {
         long start = System.currentTimeMillis();
         log.info("CriticAgent: results ready session={}", event.sessionId());
+        pipelineProgressCollector.addStage(event.sessionId(), "CRITIC", "CriticAgent", "in_progress");
         pipelineMetrics.recordStageStarted(event.sessionId(), "CriticAgent");
 
         try {
