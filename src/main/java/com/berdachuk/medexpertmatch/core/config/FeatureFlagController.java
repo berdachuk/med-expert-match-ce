@@ -20,11 +20,11 @@ public class FeatureFlagController {
     @GetMapping
     public Map<String, Object> listFeatures() {
         Map<String, Object> features = new LinkedHashMap<>();
-        features.put("documentIngestion", config.isDocumentIngestion());
-        features.put("graphRag", config.isGraphRag());
-        features.put("agentSkills", config.isAgentSkills());
-        features.put("evaluation", config.isEvaluation());
-        features.put("semanticReranking", config.isSemanticReranking());
+        features.put("documentIngestion", config.getDocumentIngestion());
+        features.put("graphRag", config.getGraphRag());
+        features.put("agentSkills", config.getAgentSkills());
+        features.put("evaluation", config.getEvaluation());
+        features.put("semanticReranking", config.getSemanticReranking());
         return features;
     }
 }

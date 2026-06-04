@@ -1,19 +1,9 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
-/**
- * Turn-safe session compaction thresholds for the medical agent's short-term memory.
- * <p>
- * Binds {@code agent.session.*}. Compaction fires when EITHER the turn count or the estimated
- * token count crosses its threshold (see the composite trigger in {@code MedicalAgentConfiguration}).
- * Null values fall back to the blog Part 7 defaults so the advisor is always turn-safe even when
- * properties are omitted.
- *
- * @param maxTurns       turn-count threshold that triggers compaction (default 20)
- * @param maxTokens      estimated-token threshold that triggers compaction (default 4000)
- * @param maxWindowTurns most recent turns kept by the non-LLM window strategy (default 30)
- */
+@Validated
 @ConfigurationProperties(prefix = "agent.session")
 public record AgentSessionProperties(Integer maxTurns, Integer maxTokens, Integer maxWindowTurns) {
 

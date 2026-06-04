@@ -2,7 +2,9 @@ package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.llm.harness.HarnessIterationPolicy;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
 
+@Validated
 @ConfigurationProperties(prefix = "medexpertmatch.llm.harness")
 public record HarnessProperties(
         boolean criticEnabled,

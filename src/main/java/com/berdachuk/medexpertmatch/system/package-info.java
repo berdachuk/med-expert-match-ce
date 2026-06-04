@@ -5,5 +5,5 @@
  * - Comprehensive health indicators
  * - System monitoring and diagnostics
  */
-@org.springframework.modulith.ApplicationModule
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"core :: *", "embedding :: *", "graph :: *"})
 package com.berdachuk.medexpertmatch.system;
