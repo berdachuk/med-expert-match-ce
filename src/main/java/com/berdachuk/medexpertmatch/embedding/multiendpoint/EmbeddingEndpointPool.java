@@ -205,6 +205,10 @@ public class EmbeddingEndpointPool {
         return allFutures;
     }
 
+    public boolean isTerminated() {
+        return executor.isTerminated();
+    }
+
     @PreDestroy
     public void shutdown() {
         if (shutdown.compareAndSet(false, true)) {

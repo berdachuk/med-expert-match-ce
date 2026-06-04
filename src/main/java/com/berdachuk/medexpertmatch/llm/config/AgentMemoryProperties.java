@@ -1,23 +1,14 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Long-term (cross-session) memory settings for the medical agent's AutoMemory layer.
- * <p>
- * Binds {@code agent.memory.*}. The memory directory holds ONLY non-PHI content (clinician
- * preferences, routing policies, model config) — patient data must never be persisted (see
- * {@code PhiGuard} and the HIPAA rules in AGENTS.md).
- *
- * @param dir           filesystem directory for durable memory markdown files; defaults under the
- *                      Spring AI agent memory tree ({@code ${user.home}/.spring-ai-agent/medexpertmatch/memory})
- * @param consolidation memory consolidation trigger settings
- */
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.validation.annotation.Validated;
+
+@Validated
 @ConfigurationProperties(prefix = "agent.memory")
 public record AgentMemoryProperties(String dir, Consolidation consolidation) {
 

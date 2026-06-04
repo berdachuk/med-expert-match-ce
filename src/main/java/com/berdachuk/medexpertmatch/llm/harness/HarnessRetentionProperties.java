@@ -2,6 +2,9 @@ package com.berdachuk.medexpertmatch.llm.harness;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import org.springframework.validation.annotation.Validated;
+
+@Validated
 @ConfigurationProperties(prefix = "medexpertmatch.llm.harness.retention")
 public record HarnessRetentionProperties(
         boolean enabled,

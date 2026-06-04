@@ -5,6 +5,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * Chat retention settings (M21). {@code idleDays = 0} disables purge.
  */
+import org.springframework.validation.annotation.Validated;
+
+@Validated
 @ConfigurationProperties(prefix = "chat.retention")
 public class ChatRetentionProperties {
 

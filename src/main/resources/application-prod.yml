@@ -1,0 +1,59 @@
+# MedExpertMatch production profile.
+# Overrides for cloud/production environments.
+# Activate with: --spring.profiles.active=prod
+# or set SPRING_PROFILES_ACTIVE=prod
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 15
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+  lifecycle:
+    timeout-per-shutdown-phase: 45s
+
+server:
+  shutdown: graceful
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,application/json,application/problem+json
+    min-response-size: 1024
+  error:
+    include-message: never
+    include-binding-errors: never
+  tomcat:
+    connection-timeout: 120000
+    keep-alive-timeout: 300000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+medexpertmatch:
+  features:
+    semantic-reranking: ${MEDEXPERTMATCH_FEATURES_SEMANTIC_RERANKING:true}
+  auth:
+    enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:true}
+  llm:
+    harness:
+      critic-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_CRITIC_ENABLED:true}
+
+logging:
+  level:
+    com.berdachuk.medexpertmatch: WARN
+    org.springframework: WARN
+    org.springframework.security: WARN
+    org.apache: WARN
+  pattern:
+    console: "{\"timestamp\":\"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"level\":\"%-5level\",\"logger\":\"%logger{36}\",\"thread\":\"%thread\",\"message\":\"%msg\"}%n"

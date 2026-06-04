@@ -11,19 +11,19 @@ class FeatureFlagConfigTest {
     @Test
     void shouldInitializeAllFeaturesAsEnabledByDefault() {
         var config = new FeatureFlagConfig();
-        assertTrue(config.isDocumentIngestion());
-        assertTrue(config.isGraphRag());
-        assertTrue(config.isAgentSkills());
-        assertTrue(config.isEvaluation());
-        assertTrue(config.isSemanticReranking());
+        assertTrue(config.getDocumentIngestion());
+        assertTrue(config.getGraphRag());
+        assertTrue(config.getAgentSkills());
+        assertTrue(config.getEvaluation());
+        assertTrue(config.getSemanticReranking());
     }
 
     @Test
     void shouldAllowDisablingFeaturesIndividually() {
         var config = new FeatureFlagConfig();
         config.setDocumentIngestion(false);
-        assertFalse(config.isDocumentIngestion());
-        assertTrue(config.isGraphRag());
+        assertFalse(config.getDocumentIngestion());
+        assertTrue(config.getGraphRag());
     }
 
     @Test
