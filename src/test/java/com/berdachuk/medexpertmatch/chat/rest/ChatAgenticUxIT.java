@@ -102,8 +102,8 @@ class ChatAgenticUxIT extends BaseIntegrationTest {
                         .param("chatId", chat.id())
                         .header(HeaderBasedUserContext.USER_ID_HEADER, userId))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"agentActivityPanel\"")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"agentActivitySummary\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"agentTodoPanel\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"agentQuestionPanel\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("<strong>Bold</strong>")));
     }
 

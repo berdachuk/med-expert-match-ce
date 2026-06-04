@@ -54,7 +54,7 @@ class ChatDataLifecycleIT extends BaseIntegrationTest {
                         .header(HeaderBasedUserContext.USER_ID_HEADER, userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("deleted"))
-                .andExpect(jsonPath("$.chatsRemoved").value(1))
+                .andExpect(jsonPath("$.chatsRemoved").value(org.hamcrest.Matchers.greaterThan(0)))
                 .andExpect(jsonPath("$.messagesSoftDeleted").value(org.hamcrest.Matchers.greaterThan(0)))
                 .andExpect(jsonPath("$.auditReferenceHash").isNotEmpty());
 

@@ -404,7 +404,7 @@ CREATE INDEX IF NOT EXISTS chat_message_chat_id_sequence_idx ON medexpertmatch.c
 -- Evaluation Tables
 -- ============================================
 
-CREATE TABLE IF NOT EXISTS evaluation_dataset (
+CREATE TABLE IF NOT EXISTS medexpertmatch.evaluation_dataset (
     id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
     name VARCHAR(255) NOT NULL UNIQUE,
     version VARCHAR(50),
@@ -412,28 +412,27 @@ CREATE TABLE IF NOT EXISTS evaluation_dataset (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS evaluation_case (
+CREATE TABLE IF NOT EXISTS medexpertmatch.evaluation_case (
     id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
-    dataset_id CHAR(24) NOT NULL REFERENCES evaluation_dataset(id) ON DELETE CASCADE,
+    dataset_id CHAR(24) NOT NULL REFERENCES medexpertmatch.evaluation_dataset(id) ON DELETE CASCADE,
     question TEXT NOT NULL,
     ground_truth_answer TEXT NOT NULL,
     meta_json JSONB
 );
 
-CREATE TABLE IF NOT EXISTS evaluation_run (
+CREATE TABLE IF NOT EXISTS medexpertmatch.evaluation_run (
     id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
-    dataset_id CHAR(24) NOT NULL REFERENCES evaluation_dataset(id),
+    dataset_id CHAR(24) NOT NULL REFERENCES medexpertmatch.evaluation_dataset(id),
     normalized_accuracy DOUBLE PRECISION,
     mean_semantic_similarity DOUBLE PRECISION,
     semantic_accuracy_at_threshold DOUBLE PRECISION,
-    config JSONB,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    config JSONB
 );
 
-CREATE TABLE IF NOT EXISTS evaluation_result (
+CREATE TABLE IF NOT EXISTS medexpertmatch.evaluation_result (
     id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
-    run_id CHAR(24) NOT NULL REFERENCES evaluation_run(id) ON DELETE CASCADE,
-    case_id CHAR(24) NOT NULL REFERENCES evaluation_case(id),
+    run_id CHAR(24) NOT NULL REFERENCES medexpertmatch.evaluation_run(id) ON DELETE CASCADE,
+    case_id CHAR(24) NOT NULL REFERENCES medexpertmatch.evaluation_case(id),
     predicted_answer TEXT,
     exact_match BOOLEAN NOT NULL DEFAULT FALSE,
     normalized_match BOOLEAN NOT NULL DEFAULT FALSE,
@@ -441,9 +440,9 @@ CREATE TABLE IF NOT EXISTS evaluation_result (
     semantic_pass BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE INDEX IF NOT EXISTS idx_evaluation_case_dataset_id ON evaluation_case (dataset_id);
-CREATE INDEX IF NOT EXISTS idx_evaluation_result_run_id ON evaluation_result (run_id);
-CREATE INDEX IF NOT EXISTS idx_evaluation_run_dataset_id ON evaluation_run (dataset_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_case_dataset_id ON medexpertmatch.evaluation_case (dataset_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_result_run_id ON medexpertmatch.evaluation_result (run_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_run_dataset_id ON medexpertmatch.evaluation_run (dataset_id);
 
 -- ============================================
 -- LLM Harness Plan Artefacts (M30)

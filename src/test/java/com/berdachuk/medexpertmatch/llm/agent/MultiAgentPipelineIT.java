@@ -1,18 +1,17 @@
 package com.berdachuk.medexpertmatch.llm.agent;
 
+import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
 import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest
 @ActiveProfiles("event-driven")
-class MultiAgentPipelineIT {
+class MultiAgentPipelineIT extends BaseIntegrationTest {
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;

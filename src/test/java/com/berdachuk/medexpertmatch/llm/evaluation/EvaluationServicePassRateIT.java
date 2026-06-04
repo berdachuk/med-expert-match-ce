@@ -67,17 +67,17 @@ class EvaluationServicePassRateIT extends BaseIntegrationTest {
             }
         }
 
-        when(medicalAgentService.analyzeCase(anyString(), any())).thenAnswer(invocation -> {
+        when(medicalAgentService.analyzeCase(any(), any())).thenAnswer(invocation -> {
             String groundTruth = resolveGroundTruth(invocation.getArgument(0), invocation.getArgument(1),
                     byEvalCaseId, byMedicalCaseId);
             return new MedicalAgentService.AgentResponse(groundTruth, Map.of());
         });
-        when(medicalAgentService.matchDoctors(anyString(), any())).thenAnswer(invocation -> {
+        when(medicalAgentService.matchDoctors(any(), any())).thenAnswer(invocation -> {
             String groundTruth = resolveGroundTruth(invocation.getArgument(0), invocation.getArgument(1),
                     byEvalCaseId, byMedicalCaseId);
             return new MedicalAgentService.AgentResponse(groundTruth, Map.of());
         });
-        when(medicalAgentService.routeCase(anyString(), any())).thenAnswer(invocation -> {
+        when(medicalAgentService.routeCase(any(), any())).thenAnswer(invocation -> {
             String groundTruth = resolveGroundTruth(invocation.getArgument(0), invocation.getArgument(1),
                     byEvalCaseId, byMedicalCaseId);
             return new MedicalAgentService.AgentResponse(groundTruth, Map.of());

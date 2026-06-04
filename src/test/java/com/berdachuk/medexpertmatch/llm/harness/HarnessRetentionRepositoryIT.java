@@ -33,23 +33,23 @@ class HarnessRetentionRepositoryIT extends BaseIntegrationTest {
         Instant now = Instant.now();
         MapSqlParameterSource oldParams = new MapSqlParameterSource()
                 .addValue("id", "old-event")
-                .addValue("runId", "run-1")
-                .addValue("createdAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS)))
-                .addValue("eventType", "TOOL_CALL")
-                .addValue("eventData", "{}");
-        jdbc.update("INSERT INTO medexpertmatch.llm_harness_chain_event (id, run_id, created_at, event_type, event_data) VALUES (:id, :runId, :createdAt, :eventType, :eventData)", oldParams);
+                .addValue("chainRootSessionId", "root-session-1")
+                .addValue("sessionId", "session-1")
+                .addValue("step", "TOOL_CALL")
+                .addValue("createdAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS)));
+        jdbc.update("INSERT INTO medexpertmatch.llm_harness_chain_event (id, chain_root_session_id, session_id, step, created_at) VALUES (:id, :chainRootSessionId, :sessionId, :step, :createdAt)", oldParams);
 
         MapSqlParameterSource recentParams = new MapSqlParameterSource()
                 .addValue("id", "recent-event")
-                .addValue("runId", "run-2")
-                .addValue("createdAt", Timestamp.from(now))
-                .addValue("eventType", "TOOL_CALL")
-                .addValue("eventData", "{}");
-        jdbc.update("INSERT INTO medexpertmatch.llm_harness_chain_event (id, run_id, created_at, event_type, event_data) VALUES (:id, :runId, :createdAt, :eventType, :eventData)", recentParams);
+                .addValue("chainRootSessionId", "root-session-2")
+                .addValue("sessionId", "session-2")
+                .addValue("step", "TOOL_CALL")
+                .addValue("createdAt", Timestamp.from(now));
+        jdbc.update("INSERT INTO medexpertmatch.llm_harness_chain_event (id, chain_root_session_id, session_id, step, created_at) VALUES (:id, :chainRootSessionId, :sessionId, :step, :createdAt)", recentParams);
 
         Instant cutoff = now.minus(60, ChronoUnit.DAYS);
         int deleted = jdbc.update(
-                "DELETE FROM medexpertmatch.llm_harness_chain_event WHERE created_at < :cutoff LIMIT 100",
+                "DELETE FROM medexpertmatch.llm_harness_chain_event WHERE created_at < :cutoff",
                 new MapSqlParameterSource("cutoff", Timestamp.from(cutoff)));
 
         assertEquals(1, deleted, "Should delete only the old event");
@@ -64,27 +64,31 @@ class HarnessRetentionRepositoryIT extends BaseIntegrationTest {
     void deletesOldWorkflowRunsExceptHuman() {
         Instant now = Instant.now();
 
-        jdbc.update("INSERT INTO medexpertmatch.llm_harness_workflow_run (id, state, created_at, updated_at, target_entity_id, target_entity_type) VALUES (:id, :state, :createdAt, :updatedAt, :entityId, :entityType)",
+        jdbc.update("INSERT INTO medexpertmatch.llm_harness_workflow_run (run_id, session_id, workflow_type, state, resume_token, payload_json, created_at, updated_at) VALUES (:runId, :sessionId, :workflowType, :state, :resumeToken, CAST(:payloadJson AS jsonb), :createdAt, :updatedAt)",
                 new MapSqlParameterSource()
-                        .addValue("id", "old-run")
+                        .addValue("runId", "old-run")
+                        .addValue("sessionId", "session-old")
+                        .addValue("workflowType", "DOCTOR_MATCH")
                         .addValue("state", DoctorMatchWorkflowState.DONE.name())
+                        .addValue("resumeToken", "token-old")
+                        .addValue("payloadJson", "{}")
                         .addValue("createdAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS)))
-                        .addValue("updatedAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS)))
-                        .addValue("entityId", "case-1")
-                        .addValue("entityType", "MEDICAL_CASE"));
+                        .addValue("updatedAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS))));
 
-        jdbc.update("INSERT INTO medexpertmatch.llm_harness_workflow_run (id, state, created_at, updated_at, target_entity_id, target_entity_type) VALUES (:id, :state, :createdAt, :updatedAt, :entityId, :entityType)",
+        jdbc.update("INSERT INTO medexpertmatch.llm_harness_workflow_run (run_id, session_id, workflow_type, state, resume_token, payload_json, created_at, updated_at) VALUES (:runId, :sessionId, :workflowType, :state, :resumeToken, CAST(:payloadJson AS jsonb), :createdAt, :updatedAt)",
                 new MapSqlParameterSource()
-                        .addValue("id", "human-run")
+                        .addValue("runId", "human-run")
+                        .addValue("sessionId", "session-human")
+                        .addValue("workflowType", "DOCTOR_MATCH")
                         .addValue("state", DoctorMatchWorkflowState.NEEDS_HUMAN.name())
+                        .addValue("resumeToken", "token-human")
+                        .addValue("payloadJson", "{}")
                         .addValue("createdAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS)))
-                        .addValue("updatedAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS)))
-                        .addValue("entityId", "case-2")
-                        .addValue("entityType", "MEDICAL_CASE"));
+                        .addValue("updatedAt", Timestamp.from(now.minus(100, ChronoUnit.DAYS))));
 
         Instant cutoff = now.minus(60, ChronoUnit.DAYS);
         int deleted = jdbc.update(
-                "DELETE FROM medexpertmatch.llm_harness_workflow_run WHERE updated_at < :cutoff AND state != :needsHumanState LIMIT 100",
+                "DELETE FROM medexpertmatch.llm_harness_workflow_run WHERE updated_at < :cutoff AND state != :needsHumanState",
                 new MapSqlParameterSource()
                         .addValue("cutoff", Timestamp.from(cutoff))
                         .addValue("needsHumanState", DoctorMatchWorkflowState.NEEDS_HUMAN.name()));
