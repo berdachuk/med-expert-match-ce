@@ -34,8 +34,19 @@ public class PubMedServiceImpl implements PubMedService {
     private static final String USER_AGENT = "MedExpertMatch/1.0 (evidence retrieval; mailto:" + NCBI_EMAIL + ")";
 
     private final RestTemplate restTemplate;
+    private final String baseUrl;
 
     public PubMedServiceImpl() {
+        this.restTemplate = createDefaultRestTemplate();
+        this.baseUrl = PUBMED_BASE_URL;
+    }
+
+    public PubMedServiceImpl(RestTemplate restTemplate, String baseUrl) {
+        this.restTemplate = restTemplate;
+        this.baseUrl = baseUrl;
+    }
+
+    static RestTemplate createDefaultRestTemplate() {
         RestTemplate template = new RestTemplate();
         template.setInterceptors(List.of(new ClientHttpRequestInterceptor() {
             @Override
@@ -45,7 +56,7 @@ public class PubMedServiceImpl implements PubMedService {
                 return execution.execute(request, body);
             }
         }));
-        this.restTemplate = template;
+        return template;
     }
 
     @Override
@@ -56,7 +67,7 @@ public class PubMedServiceImpl implements PubMedService {
             // Step 1: Search PubMed to get PMIDs (tool/email per NCBI recommendation)
             String encodedTerm = encodeQuery(query);
             String searchUrl = String.format("%s/esearch.fcgi?db=pubmed&term=%s&retmax=%d&retmode=json&tool=%s&email=%s",
-                    PUBMED_BASE_URL, encodedTerm, maxResults,
+                    baseUrl, encodedTerm, maxResults,
                     URLEncoder.encode(NCBI_TOOL, StandardCharsets.UTF_8),
                     URLEncoder.encode(NCBI_EMAIL, StandardCharsets.UTF_8));
 
@@ -92,7 +103,7 @@ public class PubMedServiceImpl implements PubMedService {
 
             // Step 2: Fetch article details using PMIDs (tool/email per NCBI recommendation)
             String fetchUrl = String.format("%s/efetch.fcgi?db=pubmed&id=%s&retmode=xml&tool=%s&email=%s",
-                    PUBMED_BASE_URL, String.join(",", pmids),
+                    baseUrl, String.join(",", pmids),
                     URLEncoder.encode(NCBI_TOOL, StandardCharsets.UTF_8),
                     URLEncoder.encode(NCBI_EMAIL, StandardCharsets.UTF_8));
 

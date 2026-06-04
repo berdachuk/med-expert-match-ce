@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE PubmedArticleSet PUBLIC "-//NLM//DTD PubMedArticle, 1st January 2024//EN" "https://dtd.nlm.nih.gov/ncbi/pubmed/out/pubmed_240101.dtd">
+<PubmedArticleSet>
+<PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+        <PMID version="1">12345678</PMID>
+        <Article PubModel="Print-Electronic">
+            <Journal>
+                <ISSN IssnType="Electronic">1939-327X</ISSN>
+                <JournalIssue CitedMedium="Internet">
+                    <Volume>47</Volume>
+                    <Issue>3</Issue>
+                    <PubDate>
+                        <Year>2023</Year>
+                        <Month>Mar</Month>
+                    </PubDate>
+                </JournalIssue>
+                <Title>Diabetes care</Title>
+                <ISOAbbreviation>Diabetes Care</ISOAbbreviation>
+            </Journal>
+            <ArticleTitle>Impact of Early Glycemic Control on Long-term Outcomes in Type 2 Diabetes: A Systematic Review</ArticleTitle>
+            <Abstract>
+                <AbstractText Label="BACKGROUND">Early intensive glycemic control in type 2 diabetes has been shown to reduce long-term complications.</AbstractText>
+                <AbstractText Label="METHODS">We conducted a systematic review of randomized controlled trials comparing intensive versus standard glycemic control in newly diagnosed type 2 diabetes patients.</AbstractText>
+                <AbstractText Label="RESULTS">Twelve trials involving 15,234 patients were included. Intensive control reduced HbA1c by an average of 1.2% and cardiovascular events by 18% over 10 years.</AbstractText>
+                <AbstractText Label="CONCLUSIONS">Early intensive glycemic control provides durable benefits for cardiovascular and microvascular outcomes in type 2 diabetes.</AbstractText>
+            </Abstract>
+            <AuthorList CompleteYN="Y">
+                <Author ValidYN="Y">
+                    <LastName>Johnson</LastName>
+                    <ForeName>Michael R</ForeName>
+                </Author>
+                <Author ValidYN="Y">
+                    <LastName>Williams</LastName>
+                    <ForeName>Sarah E</ForeName>
+                </Author>
+                <Author ValidYN="Y">
+                    <LastName>Brown</LastName>
+                    <ForeName>David A</ForeName>
+                </Author>
+            </AuthorList>
+        </Article>
+    </MedlineCitation>
+</PubmedArticle>
+<PubmedArticle>
+    <MedlineCitation Status="MEDLINE" Owner="NLM">
+        <PMID version="1">23456789</PMID>
+        <Article PubModel="Print">
+            <Journal>
+                <ISSN IssnType="Print">0140-6736</ISSN>
+                <JournalIssue CitedMedium="Print">
+                    <Volume>401</Volume>
+                    <Issue>10383</Issue>
+                    <PubDate>
+                        <Year>2023</Year>
+                        <Month>Apr</Month>
+                    </PubDate>
+                </JournalIssue>
+                <Title>The Lancet. Diabetes &amp; endocrinology</Title>
+                <ISOAbbreviation>Lancet Diabetes Endocrinol</ISOAbbreviation>
+            </Journal>
+            <ArticleTitle>Pharmacological Management of Type 1 Diabetes: Current Guidelines and Future Directions</ArticleTitle>
+            <Abstract>
+                <AbstractText Label="BACKGROUND">Type 1 diabetes management has evolved significantly with the advent of continuous glucose monitoring and automated insulin delivery systems.</AbstractText>
+                <AbstractText Label="METHODS">Review of current clinical practice guidelines and emerging pharmacological interventions.</AbstractText>
+            </Abstract>
+            <AuthorList CompleteYN="Y">
+                <Author ValidYN="Y">
+                    <LastName>Smith</LastName>
+                    <ForeName>Emily K</ForeName>
+                </Author>
+            </AuthorList>
+        </Article>
+    </MedlineCitation>
+</PubmedArticle>
+</PubmedArticleSet>

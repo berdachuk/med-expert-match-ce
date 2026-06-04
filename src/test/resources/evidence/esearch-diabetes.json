@@ -1,0 +1,1 @@
+{"header":{"type":"esearch","version":"0.3"},"esearchresult":{"count":"2","retmax":"5","retstart":"0","idlist":["12345678","23456789"],"translationset":[{"from":"diabetes","to":"\"diabetes mellitus\"[MeSH Terms] OR diabetes[All Fields]"}],"querytranslation":"\"diabetes mellitus\"[MeSH Terms] OR diabetes[All Fields]"}}

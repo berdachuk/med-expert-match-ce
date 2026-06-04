@@ -81,6 +81,49 @@ class DoctorRepositoryIT extends BaseIntegrationTest {
 - Mock `ChatModel`, `EmbeddingModel`, `PubMedService` when testing in isolation
 - Use Spring `@MockBean` or `@TestConfiguration` for provider mocks
 
+### External HTTP API Mocking (WireMock)
+
+All integration tests that interact with external services must use WireMock stubs — **never** make live HTTP calls to services outside the project's control (PubMed, NCBI, etc.).
+
+**Pattern**:
+
+```java
+class SomeServiceIT {
+    private WireMockServer wireMockServer;
+
+    @BeforeEach
+    void setUp() {
+        wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
+        wireMockServer.start();
+        String baseUrl = "http://localhost:" + wireMockServer.port();
+
+        stubFor(get(urlPathEqualTo("/api/endpoint"))
+                .withQueryParam("q", equalTo("test"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(loadFixture("module/response.json"))));
+
+        serviceUnderTest = new ServiceImpl(new RestTemplate(), baseUrl);
+    }
+
+    @AfterEach
+    void tearDown() {
+        wireMockServer.stop();
+    }
+
+    private String loadFixture(String path) throws IOException {
+        return new ClassPathResource(path).getContentAsString(StandardCharsets.UTF_8);
+    }
+}
+```
+
+**Rules**:
+1. Store recorded response fixtures in `src/test/resources/{module}/` (e.g. `src/test/resources/evidence/esearch-diabetes.json`).
+2. Record real API responses **once**, save as fixtures, commit them — then stub in all ITs.
+3. External services should expose an injectable base URL (constructor param or Spring property) so WireMock can intercept traffic.
+4. WireMock uses `wiremock-standalone` (already in pom.xml as test dependency, version from `wiremock.version` property).
+
 ### Best Practices
 
 - Prefer integration tests over unit tests

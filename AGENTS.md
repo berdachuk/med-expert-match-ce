@@ -119,6 +119,7 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 - Flyway V1 consolidation (no V2/V3 until post-MVP)
 - OpenAI-compatible providers only (no Ollama)
 - All patient data must be anonymized; no PHI in logs/errors/tests
+- Mock all external HTTP APIs in integration tests: use WireMock (wiremock-standalone) with recorded fixture responses stored in `src/test/resources/{module}/`. Never make live HTTP calls to external services (PubMed, NCBI, etc.) from tests. Record real API responses once, store as fixtures, and stub them in all ITs. External services that accept an injectable base URL (e.g. `baseUrl` constructor param) enable easy WireMock wiring.
 
 ## TDD Workflow (mandatory)
 
