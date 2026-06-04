@@ -53,3 +53,4 @@
 | M11 | E2E tests + feature flags + i18n | 189 |
 | M12 | API v2 + faceted search + release prep | 189 |
 | M49 | Spring AI M8 API migration + test context fix | 495 |
+| M50 | Fix all 19 remaining integration test failures | 495 |
