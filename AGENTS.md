@@ -15,6 +15,7 @@ src/main/java/.../medexpertmatch/
 ├── facility/       # Facility entity + repos
 ├── clinicalexperience/  # ClinicalExperience entity + repos (doctor-case history)
 ├── caseanalysis/   # LLM-based case analysis (→core, medicalcase)
+├── chat/           # Chat agent orchestration + retention (→core, llm, ...)
 ├── evidence/       # PubMed clinical evidence retrieval (→core)
 ├── embedding/      # PgVector embeddings + multi-endpoint pool (→core, medicalcase)
 ├── graph/          # Apache AGE Cypher graph ops (→core + 5 domain modules)
@@ -61,7 +62,7 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 | ingestion | `ingestion/AGENTS.md` | FHIR adapters, synthetic data generation, multi-module bootstrapping |
 | web | `web/AGENTS.md` | Thymeleaf controllers, SSR patterns, web UI conventions |
 
-> All other domain modules (doctor, medicalcase, medicalcoding, facility, clinicalexperience, evidence, embedding, chunking, documents, caseanalysis, graph) follow the same patterns documented in skills. Their conventions are covered by `core-architecture`, `domain-modeling`, and `code-style` skills — no individual AGENTS.md needed.
+> All other domain modules (doctor, medicalcase, medicalcoding, facility, clinicalexperience, chat, caseanalysis, evidence, embedding, chunking, documents, graph) follow the same patterns documented in skills. Their conventions are covered by `core-architecture`, `domain-modeling`, and `code-style` skills — no individual AGENTS.md needed.
 
 ## Skills Index (`.agents/skills/`)
 
@@ -144,6 +145,7 @@ Always use TDD. Before implementing any functionality:
 AGENTS.md             ← Root index (this file)
 {module}/AGENTS.md    ← Module-specific conventions (2-5 files only)
 .cursor/              ← Optional IDE adapter (generated from skills)
+.kilo/                ← Optional Kilo adapter (commands/agents generated from skills)
 ```
 
 See `docs/ai-context-strategy.md` for adapter design and sync rules.
