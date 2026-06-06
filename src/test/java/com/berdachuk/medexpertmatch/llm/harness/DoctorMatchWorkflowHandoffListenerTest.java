@@ -22,7 +22,7 @@ class DoctorMatchWorkflowHandoffListenerTest {
     @DisplayName("chains doctor match when analysis handoff is enabled")
     void chainsWhenEnabled() {
         DoctorMatchWorkflowEngine engine = mock(DoctorMatchWorkflowEngine.class);
-        HarnessProperties properties = new HarnessProperties(true, true, 2, true, 1, 0, false, true, false, false);
+        HarnessProperties properties = new HarnessProperties(true, true, 2, true, 1, 0, false, true, false, false, true);
         DoctorMatchWorkflowHandoffListener listener =
                 new DoctorMatchWorkflowHandoffListener(engine, properties);
 

@@ -17,15 +17,22 @@ public record GoalClassification(
     }
 
     public static GoalClassification matchDoctors(String caseId, String summary) {
-        return new GoalClassification(GoalType.MATCH_DOCTORS, Optional.of(caseId), Optional.empty(), summary);
+        return new GoalClassification(GoalType.MATCH_DOCTORS, optionalCaseId(caseId), Optional.empty(), summary);
     }
 
     public static GoalClassification analyzeCase(String caseId, String summary) {
-        return new GoalClassification(GoalType.ANALYZE_CASE, Optional.of(caseId), Optional.empty(), summary);
+        return new GoalClassification(GoalType.ANALYZE_CASE, optionalCaseId(caseId), Optional.empty(), summary);
     }
 
     public static GoalClassification routeCase(String caseId, String summary) {
-        return new GoalClassification(GoalType.ROUTE_CASE, Optional.of(caseId), Optional.empty(), summary);
+        return new GoalClassification(GoalType.ROUTE_CASE, optionalCaseId(caseId), Optional.empty(), summary);
+    }
+
+    private static Optional<String> optionalCaseId(String caseId) {
+        if (caseId == null || caseId.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(caseId.trim());
     }
 
     public static GoalClassification triageIntake(String summary) {
@@ -44,7 +51,11 @@ public record GoalClassification(
         return goalType == GoalType.MATCH_DOCTORS || goalType == GoalType.ROUTE_CASE;
     }
 
+    public boolean isAnalyzableViaHarness() {
+        return goalType == GoalType.ANALYZE_CASE && hasCaseId();
+    }
+
     public boolean hasCaseId() {
-        return caseId.isPresent();
+        return caseId.filter(id -> !id.isBlank()).isPresent();
     }
 }

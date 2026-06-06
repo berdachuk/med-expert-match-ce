@@ -2,7 +2,9 @@
 
 ## Active
 
-None. All 59 milestones completed and archived.
+| # | Plan | Description |
+|---|------|-------------|
+| M58 | [`M58-functiongemma-tool-calling-finetune.md`](M58-functiongemma-tool-calling-finetune.md) | Optional FunctionGemma fine-tune for tool disambiguation (after M57) |
 
 ## Archive
 
@@ -67,6 +69,7 @@ None. All 59 milestones completed and archived.
 | M54 | [`M54-system-health-monitoring-coverage.md`](archive/M54-system-health-monitoring-coverage.md) | System health monitoring coverage |
 | M55 | [`M55-rest-controller-config-coverage.md`](archive/M55-rest-controller-config-coverage.md) | REST controller config coverage |
 | M56 | [`M56-chat-auto-find-specialist-fix.md`](archive/M56-chat-auto-find-specialist-fix.md) | Chat Auto Find Specialist harness routing and CoT sanitization |
+| M57 | [`M57-goal-classifier-hybrid-session-routing.md`](archive/M57-goal-classifier-hybrid-session-routing.md) | Hybrid GoalClassifier: session rules + LLM context + chat continuity + PolicyGate rename |
 
 ## Creating a New Plan
 

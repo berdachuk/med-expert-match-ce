@@ -277,6 +277,25 @@ class MedicalAgentServiceImplTest {
     }
 
     @Test
+    @DisplayName("Should strip MedGemma Mental Sandbox CoT before Case Summary")
+    void testStripLlmReasoning_MentalSandboxBeforeCaseSummary() {
+        String input = """
+                thought
+                The user wants me to generate a comprehensive response.
+                Mental Sandbox Simulation:
+                Scenario 1: Tool Results Present.
+                Strategizing complete. I will now proceed with generating the response following these steps.Case Summary:
+                The patient is a 30-year-old individual presenting with peripheral vascular disease.
+                Matched Doctors:
+                Dr. Example
+                """;
+        String result = stripLlmReasoningLogic(input);
+        assertTrue(result.startsWith("Case Summary:"));
+        assertFalse(result.contains("Mental Sandbox"));
+        assertFalse(result.toLowerCase().startsWith("thought"));
+    }
+
+    @Test
     @DisplayName("Should handle 'Step 3:' reasoning header")
     void testStripLlmReasoning_Step3Header() {
         String input = "Step 3: Final recommendation.\n\nConsult with an oncologist for further evaluation.";

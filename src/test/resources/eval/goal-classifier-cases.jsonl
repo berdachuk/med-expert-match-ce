@@ -1,0 +1,20 @@
+{"message":"детализируй клинический случай","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"найди еще докторов","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"MATCH_DOCTORS","hasCaseId":true}}
+{"message":"detail the clinical case","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"elaborate on the case presentation","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"find other doctors","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"MATCH_DOCTORS","hasCaseId":true}}
+{"message":"yes","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"MATCH_DOCTORS","hasCaseId":true}}
+{"message":"tell me more about this case","session":{"lastGoal":"ANALYZE_CASE","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"suggest a specialist for referral","session":null,"expect":{"goalType":"MATCH_DOCTORS","hasCaseId":false}}
+{"message":"search pubmed for treatment guidelines","session":null,"expect":{"goalType":"SEARCH_EVIDENCE","hasCaseId":false}}
+{"message":"how urgent is this presentation","session":null,"expect":{"goalType":"TRIAGE_INTAKE","hasCaseId":false}}
+{"message":"route patient to appropriate facility","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ROUTE_CASE","hasCaseId":true}}
+{"message":"find specialist for a different case","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"MATCH_DOCTORS","hasCaseId":false}}
+{"message":"clinical breakdown please","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"what are the clinical findings","session":{"lastGoal":"ROUTE_CASE","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"show me more","session":{"lastGoal":"ROUTE_CASE","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ROUTE_CASE","hasCaseId":true}}
+{"message":"patient case overview","session":{"lastGoal":"MATCH_DOCTORS","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"rank doctors for complex presentation","session":null,"expect":{"goalType":"MATCH_DOCTORS","hasCaseId":false}}
+{"message":"analyze case 6a1db20e86d74aa336e98ff0","session":null,"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}
+{"message":"find specialists case 6a1db20e86d74aa336e98ff0","session":null,"expect":{"goalType":"MATCH_DOCTORS","hasCaseId":true}}
+{"message":"go on","session":{"lastGoal":"ANALYZE_CASE","lastCaseId":"6a1db20e86d74aa336e98ff0"},"expect":{"goalType":"ANALYZE_CASE","hasCaseId":true}}

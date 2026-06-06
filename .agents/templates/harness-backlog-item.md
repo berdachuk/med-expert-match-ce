@@ -8,7 +8,7 @@
 
 - [ ] Tool output invalid
 - [ ] Tool scope violation
-- [ ] Critic / policy (disclaimer, PHI)
+- [ ] Policy gate (disclaimer, PHI)
 - [ ] Context / retrieval miss
 - [ ] Iteration limit
 - [ ] Other: ___

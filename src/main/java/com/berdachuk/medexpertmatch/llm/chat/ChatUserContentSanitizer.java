@@ -24,7 +24,10 @@ public final class ChatUserContentSanitizer {
         String prefix = trimmed.substring(0, abstractMatcher.start());
         String abstractBody = trimmed.substring(abstractMatcher.end()).trim();
         String cleanedAbstract = EmbeddingDescriptionSanitizer.sanitize(abstractBody);
-        if (cleanedAbstract == null || cleanedAbstract.equals(abstractBody)) {
+        if (cleanedAbstract == null || cleanedAbstract.isBlank()) {
+            return prefix.trim();
+        }
+        if (cleanedAbstract.equals(abstractBody)) {
             return trimmed;
         }
         return (prefix + "Abstract: " + cleanedAbstract).trim();

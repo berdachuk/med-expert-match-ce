@@ -111,7 +111,11 @@ public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescription
     @Override
     public String getOrGenerateDescription(MedicalCase medicalCase) {
         if (medicalCase.abstractText() != null && !medicalCase.abstractText().isBlank()) {
-            return medicalCase.abstractText();
+            String sanitized = EmbeddingDescriptionSanitizer.sanitize(medicalCase.abstractText());
+            if (sanitized != null && !sanitized.isBlank()) {
+                return sanitized;
+            }
+            return buildSimpleDescription(medicalCase);
         }
         return generateDescription(medicalCase);
     }

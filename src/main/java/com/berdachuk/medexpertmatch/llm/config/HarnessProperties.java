@@ -7,8 +7,8 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "medexpertmatch.llm.harness")
 public record HarnessProperties(
-        boolean criticEnabled,
-        boolean criticChatEnabled,
+        boolean policyGateEnabled,
+        boolean policyGateChatEnabled,
         int maxIterations,
         boolean retryOnVerifyFail,
         int doctorMatchMinMatches,
@@ -16,7 +16,8 @@ public record HarnessProperties(
         boolean humanCheckpointEnabled,
         boolean chainAnalysisToMatch,
         boolean chainMatchToRecommend,
-        boolean zeroResultFallbackEnabled) {
+        boolean zeroResultFallbackEnabled,
+        boolean analyzeCaseHarnessEnabled) {
 
     public HarnessProperties {
         if (maxIterations < 1) {
@@ -25,7 +26,7 @@ public record HarnessProperties(
     }
 
     public static HarnessProperties defaults() {
-        return new HarnessProperties(true, true, 2, true, 1, 0, false, false, false, false);
+        return new HarnessProperties(true, true, 2, true, 1, 0, false, false, false, false, true);
     }
 
     public HarnessIterationPolicy iterationPolicy() {

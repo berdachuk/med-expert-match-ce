@@ -56,12 +56,12 @@ class ConfigurationBindingTest {
     @DisplayName("harness properties bind from environment")
     void harnessPropertiesBind() {
         var env = new MockEnvironment()
-                .withProperty("medexpertmatch.llm.harness.critic.enabled", "true")
+                .withProperty("medexpertmatch.llm.harness.policy-gate.enabled", "true")
                 .withProperty("medexpertmatch.llm.harness.verify.enabled", "true")
                 .withProperty("medexpertmatch.llm.harness.max-iterations", "5")
                 .withProperty("medexpertmatch.llm.harness.doctor-match-min-matches", "1");
 
-        assertEquals("true", env.getProperty("medexpertmatch.llm.harness.critic.enabled"));
+        assertEquals("true", env.getProperty("medexpertmatch.llm.harness.policy-gate.enabled"));
         assertEquals("true", env.getProperty("medexpertmatch.llm.harness.verify.enabled"));
         assertEquals("5", env.getProperty("medexpertmatch.llm.harness.max-iterations"));
         assertEquals("1", env.getProperty("medexpertmatch.llm.harness.doctor-match-min-matches"));

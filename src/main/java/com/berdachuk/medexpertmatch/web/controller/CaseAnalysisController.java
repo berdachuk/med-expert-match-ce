@@ -3,6 +3,7 @@ package com.berdachuk.medexpertmatch.web.controller;
 import com.berdachuk.medexpertmatch.llm.rest.MedicalAgentController;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
+import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -110,11 +111,14 @@ public class CaseAnalysisController {
         if (c == null || c.abstractText() == null || c.abstractText().isEmpty()) {
             return c != null ? c.abstractText() : null;
         }
+        String text = EmbeddingDescriptionSanitizer.sanitize(c.abstractText());
+        if (text == null || text.isBlank()) {
+            return null;
+        }
         if (c.patientAge() == null) {
-            return c.abstractText();
+            return text;
         }
         String ageStr = c.patientAge().toString();
-        String text = c.abstractText();
         text = Pattern.compile("\\d+(-year-old| year old| years old)", Pattern.CASE_INSENSITIVE)
                 .matcher(text)
                 .replaceFirst(ageStr + "$1");

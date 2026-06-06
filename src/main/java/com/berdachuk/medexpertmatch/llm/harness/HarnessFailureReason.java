@@ -5,7 +5,7 @@ package com.berdachuk.medexpertmatch.llm.harness;
  */
 public enum HarnessFailureReason {
     TOOL_OUTPUT_INVALID,
-    CRITIC_REJECTED,
+    POLICY_GATE_REJECTED,
     POLICY_VIOLATION,
     ITERATION_LIMIT,
     TOOL_SCOPE_VIOLATION,

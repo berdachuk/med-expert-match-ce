@@ -191,7 +191,9 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                             medGemmaModelName, interpretation != null ? interpretation.length() : 0));
             log.debug("LLM interpretation result (first 500 chars): {}",
                     interpretation != null && interpretation.length() > 500 ? interpretation.substring(0, 500) + "..." : interpretation);
-            return LlmResponseSanitizer.toHumanReadable(interpretation != null ? interpretation : "Error: Empty response from LLM");
+            String readable = LlmResponseSanitizer.toHumanReadable(
+                    interpretation != null ? interpretation : "Error: Empty response from LLM");
+            return LlmResponseSanitizer.stripLlmReasoning(readable);
         } catch (Exception e) {
             log.error("Error interpreting results with LLM", e);
             logStreamService.logError(sessionId, "LLM result interpretation failed", e.getMessage());

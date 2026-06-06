@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
-import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentCriticServiceImpl;
+import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentPolicyGateServiceImpl;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,16 +12,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class MedicalAgentCriticServiceTest {
+class MedicalAgentPolicyGateServiceTest {
 
-    private final MedicalAgentCriticService critic = new MedicalAgentCriticServiceImpl(
+    private final MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
             HarnessProperties.defaults(),
             new HarnessMetrics(new SimpleMeterRegistry()));
 
     @Test
     @DisplayName("appends disclaimer when missing from response")
     void appendsDisclaimer() {
-        MedicalAgentCriticService.CriticResult result = critic.review(
+        MedicalAgentPolicyGateService.PolicyGateResult result = policyGate.review(
                 "Top matches include cardiology specialists.",
                 Map.of("matchCount", 2));
         assertTrue(result.approved());
@@ -31,7 +31,7 @@ class MedicalAgentCriticServiceTest {
     @Test
     @DisplayName("rejects obvious PHI patterns")
     void rejectsPhi() {
-        MedicalAgentCriticService.CriticResult result = critic.review(
+        MedicalAgentPolicyGateService.PolicyGateResult result = policyGate.review(
                 "Patient ssn 123-45-6789 noted.",
                 Map.of());
         assertFalse(result.approved());

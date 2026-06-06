@@ -21,6 +21,9 @@ The system requires four OpenAI-compatible endpoints configured via environment 
 | Reranking | `RERANKING_*` | `medgemma1.5:4b` | Semantic reranking |
 | Tool Calling | `TOOL_CALLING_*` | `functiongemma:270m` | Agent tool invocations |
 
+Documentation: [Harness Architecture](HARNESS.md) (workflow routing), [FunctionGemma Tool Calling](FUNCTIONGEMMA.md)
+(tool model), [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) (env vars).
+
 All endpoints use the same pattern: `{PREFIX}_BASE_URL`, `{PREFIX}_API_KEY`, `{PREFIX}_MODEL`.
 
 ## Database

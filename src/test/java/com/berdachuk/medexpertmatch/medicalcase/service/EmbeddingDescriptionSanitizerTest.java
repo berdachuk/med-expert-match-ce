@@ -16,6 +16,16 @@ class EmbeddingDescriptionSanitizerTest {
     }
 
     @Test
+    void shouldStripThoughtOnlyMetaAbstract() {
+        String leaked = "thought The user wants a clinical case summary based on the provided data "
+                + "for embedding generation and specialist matching.";
+
+        String sanitized = EmbeddingDescriptionSanitizer.sanitize(leaked);
+
+        assertTrue(sanitized == null || sanitized.isBlank());
+    }
+
+    @Test
     void shouldExtractFinalNarrativeFromChainOfThoughtLeak() {
         String leaked = """
                 thought The user wants a clinical case summary...

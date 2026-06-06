@@ -34,6 +34,7 @@ revealjs:
 
 | Page | Description |
 |------|-------------|
+| [Harness (how it works)](medexpertmatch-harness.md) | High-level harness steps: goal classification, routing, workflow engines, verify — with leash metaphor visual |
 | [Video (1 slide)](medexpertmatch-video-one-slide.md) | Single slide with embedded YouTube: [watch?v=1KyndK-efKs](https://www.youtube.com/watch?v=1KyndK-efKs) |
 | [Sales pitch (~3 min)](medexpertmatch-sales-3min.md) | Short Reveal deck aligned with [PRESENTATION_SALES_3MIN.md](../PRESENTATION_SALES_3MIN.md): problem, solution, GraphRAG, capabilities, live demo cue, CTA |
 | [Full talk (45 min, English)](medexpertmatch-full-presentation.md) | Complete conference deck: stack motivation, problems, architecture (SGR), demo flow, conclusion |

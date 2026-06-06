@@ -39,7 +39,7 @@ public class AgentPlannerServiceImpl implements AgentPlannerService {
                     "Analyze case for routing",
                     "Execute match_facilities_for_case",
                     "Verify facility matches",
-                    "Summarize routing and run critic");
+                    "Summarize routing and run policy gate");
             case CASE_INTAKE -> List.of(
                     "Validate intake text",
                     "Persist anonymized case",
@@ -50,7 +50,7 @@ public class AgentPlannerServiceImpl implements AgentPlannerService {
                     "Analyze case with LLM",
                     "Execute match_doctors_to_case",
                     "Verify tool output",
-                    "Interpret results and run critic");
+                    "Interpret results and run policy gate");
         };
         List<String> acceptance = List.of(
                 "At least one valid doctor match with name and score",

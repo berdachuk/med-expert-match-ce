@@ -1,8 +1,13 @@
 # Find Specialist Flow
 
+## See also
+
+- [Harness Architecture](HARNESS.md) — goal routing, workflow engines, M57 classifier, SSE events
+- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — Auto chat tool model configuration
+
 ## Overview
 
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-05-31
 
 The "Find Specialist" feature matches medical cases to appropriate doctors using AI-powered analysis. This document
 describes the complete flow, architecture, and how MedGemma model capabilities are leveraged.

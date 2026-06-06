@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
+import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -148,11 +149,14 @@ public class MatchController {
         if (c == null || c.abstractText() == null || c.abstractText().isEmpty()) {
             return c != null ? c.abstractText() : null;
         }
+        String text = EmbeddingDescriptionSanitizer.sanitize(c.abstractText());
+        if (text == null || text.isBlank()) {
+            return null;
+        }
         if (c.patientAge() == null) {
-            return c.abstractText();
+            return text;
         }
         String ageStr = c.patientAge().toString();
-        String text = c.abstractText();
         // Replace first occurrence of "N-year-old", "N year old", or "N years old" with authoritative age
         text = Pattern.compile("\\d+(-year-old| year old| years old)", Pattern.CASE_INSENSITIVE)
                 .matcher(text)

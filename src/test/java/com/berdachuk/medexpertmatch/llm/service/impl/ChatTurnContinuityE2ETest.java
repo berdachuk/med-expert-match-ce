@@ -53,7 +53,7 @@ class ChatTurnContinuityE2ETest {
         org.springframework.ai.chat.prompt.PromptTemplate promptTemplate =
                 org.mockito.Mockito.mock(org.springframework.ai.chat.prompt.PromptTemplate.class);
         com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        goalClassifier = new GoalClassifier(chatModel, promptTemplate, objectMapper, llmCallLimiter,
+        goalClassifier = new GoalClassifier(chatModel, promptTemplate, promptTemplate, objectMapper, llmCallLimiter,
                 org.mockito.Mockito.mock(ApplicationEventPublisher.class));
     }
 
@@ -102,12 +102,24 @@ class ChatTurnContinuityE2ETest {
         ConversationGoalContext.set(turn1Goal.goalType(), CASE_ID, SESSION_ID);
         ConversationGoalContext.clear(SESSION_ID);
 
-        verify(goalContextRepository, times(2)).deleteBySessionId(SESSION_ID);
+        verify(goalContextRepository, times(1)).deleteBySessionId(SESSION_ID);
 
         GoalClassification turn2Goal = goalClassifier.classify("yes");
 
         assertNotNull(turn2Goal);
         assertEquals(GoalType.MATCH_DOCTORS, turn2Goal.goalType());
+        assertEquals(CASE_ID, turn2Goal.caseId().get());
+    }
+
+    @Test
+    @DisplayName("Turn 2: detail clinical case after match shifts to ANALYZE_CASE with caseId")
+    void detailCaseAfterMatchShiftsToAnalyze() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification turn2Goal = goalClassifier.classify("detail the clinical case");
+
+        assertEquals(GoalType.ANALYZE_CASE, turn2Goal.goalType());
+        assertTrue(turn2Goal.hasCaseId());
         assertEquals(CASE_ID, turn2Goal.caseId().get());
     }
 

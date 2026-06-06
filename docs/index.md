@@ -69,6 +69,13 @@ See the [Product Requirements Document](PRD.md) for full challenge alignment det
 - [Evidence Retrieval](EVIDENCE_RETRIEVAL.md) - Clinical guidelines and PubMed integration
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) - Complete documentation of all implemented LLM tools
 
+### AI & LLM
+
+- [Harness Architecture](HARNESS.md) - Goal routing, workflow engines, configuration, and observability
+- [Harness presentation](presentations/medexpertmatch-harness.md) - Reveal.js deck: high-level steps and harness metaphor
+- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) - Tool-calling model setup, tool pairs, and fine-tuning (M58)
+- [Harness & Agent Patterns](HARNESS_AND_AGENT_USAGE.md) - Model vs harness terminology and repository conventions
+
 ## Project Status
 
 **Current Phase**: MVP complete, feature refinement

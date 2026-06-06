@@ -34,7 +34,7 @@ class EventDrivenPipelineIT extends BaseIntegrationTest {
     private ExecutionAgent executionAgent;
 
     @Autowired(required = false)
-    private CriticAgent criticAgent;
+    private PolicyGateAgent policyGateAgent;
 
     @Autowired(required = false)
     private AgentCoordinatorService agentCoordinatorService;
@@ -48,7 +48,7 @@ class EventDrivenPipelineIT extends BaseIntegrationTest {
         assertNotNull(plannerAgent, "PlannerAgent should be loaded");
         assertNotNull(contextBuilderAgent, "ContextBuilderAgent should be loaded");
         assertNotNull(executionAgent, "ExecutionAgent should be loaded");
-        assertNotNull(criticAgent, "CriticAgent should be loaded");
+        assertNotNull(policyGateAgent, "PolicyGateAgent should be loaded");
     }
 
     @Test

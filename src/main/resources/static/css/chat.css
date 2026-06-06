@@ -1,3 +1,55 @@
+.chat-message-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+    max-width: min(42rem, 85%);
+}
+
+.chat-message-row--user {
+    margin-left: auto;
+    align-items: flex-end;
+}
+
+.chat-message-row--assistant {
+    margin-right: auto;
+    align-items: flex-start;
+    max-width: min(48rem, 92%);
+}
+
+.chat-message-label {
+    line-height: 1;
+}
+
+.chat-message-bubble {
+    text-align: start;
+    width: 100%;
+}
+
+.chat-composer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.chat-composer-input {
+    resize: vertical;
+    min-height: 4.5rem;
+}
+
+.chat-composer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.chat-agent-picker {
+    width: auto;
+    min-width: 10rem;
+    max-width: 14rem;
+}
+
 .chat-markdown pre {
     background-color: #f8f9fa;
     border-radius: 0.25rem;
@@ -23,7 +75,7 @@
 }
 
 .agent-activity-spinner {
-    display: inline-block;
+    display: none;
     width: 1rem;
     height: 1rem;
     border: 2px solid #e9ecef;
@@ -32,6 +84,11 @@
     animation: agent-spin 0.6s linear infinite;
     vertical-align: middle;
     margin-right: 0.35rem;
+}
+
+.agent-panel-wrap.agent-panel-active .agent-activity-header .agent-activity-spinner,
+.agent-panel-wrap.agent-panel-active .agent-panel-entries .agent-activity-entry:last-child .agent-activity-spinner {
+    display: inline-block;
 }
 
 @keyframes agent-spin {
@@ -48,7 +105,7 @@
     cursor: pointer;
 }
 
-.agent-activity-header .agent-activity-spinner {
+.agent-panel-wrap.agent-panel-active .agent-activity-header .agent-activity-spinner {
     width: 0.85rem;
     height: 0.85rem;
     border-width: 2px;

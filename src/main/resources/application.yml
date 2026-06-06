@@ -219,8 +219,8 @@ medexpertmatch:
     tool-calling:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS:1}
     harness:
-      critic-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_CRITIC_ENABLED:true}
-      critic-chat-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_CRITIC_CHAT_ENABLED:true}
+      policy-gate-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_POLICY_GATE_ENABLED:true}
+      policy-gate-chat-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_POLICY_GATE_CHAT_ENABLED:true}
       max-iterations: ${MEDEXPERTMATCH_LLM_HARNESS_MAX_ITERATIONS:2}
       retry-on-verify-fail: ${MEDEXPERTMATCH_LLM_HARNESS_RETRY_ON_VERIFY_FAIL:true}
       doctor-match-min-matches: ${MEDEXPERTMATCH_LLM_HARNESS_DOCTOR_MATCH_MIN_MATCHES:1}
@@ -229,6 +229,7 @@ medexpertmatch:
       chain-analysis-to-match: ${MEDEXPERTMATCH_LLM_HARNESS_CHAIN_ANALYSIS_TO_MATCH:false}
       chain-match-to-recommend: ${MEDEXPERTMATCH_LLM_HARNESS_CHAIN_MATCH_TO_RECOMMEND:false}
       zero-result-fallback-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_ZERO_RESULT_FALLBACK_ENABLED:false}
+      analyze-case-harness-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_ANALYZE_CASE_ENABLED:true}
       retention:
         enabled: ${MEDEXPERTMATCH_LLM_HARNESS_RETENTION_ENABLED:false}
         retention-days: ${MEDEXPERTMATCH_LLM_HARNESS_RETENTION_DAYS:90}

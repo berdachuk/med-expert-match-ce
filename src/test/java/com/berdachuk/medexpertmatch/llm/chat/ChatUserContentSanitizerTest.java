@@ -9,6 +9,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ChatUserContentSanitizerTest {
 
     @Test
+    void shouldOmitThoughtOnlyAbstractFromPastedCaseBlock() {
+        String pasted = """
+                Find Specialist Case Information
+                Case ID: 6a23f05200155d711484cf69
+                Type: CONSULT_REQUEST
+                Abstract: thought The user wants a clinical case summary based on the provided data for embedding generation and specialist matching.""";
+
+        String sanitized = ChatUserContentSanitizer.sanitize(pasted);
+
+        assertTrue(sanitized.contains("Case ID: 6a23f05200155d711484cf69"));
+        assertFalse(sanitized.toLowerCase().contains("thought"));
+        assertFalse(sanitized.toLowerCase().contains("embedding generation"));
+    }
+
+    @Test
     void shouldStripChainOfThoughtFromPastedCaseAbstract() {
         String pasted = """
                 Find Specialist Case Information

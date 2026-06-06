@@ -22,7 +22,7 @@ class RecommendationWorkflowHandoffListenerTest {
     @DisplayName("chains recommendations when match handoff is enabled")
     void chainsWhenEnabled() {
         MedicalAgentService agentService = mock(MedicalAgentService.class);
-        HarnessProperties properties = new HarnessProperties(true, true, 2, true, 1, 0, false, false, true, false);
+        HarnessProperties properties = new HarnessProperties(true, true, 2, true, 1, 0, false, false, true, false, true);
         RecommendationWorkflowHandoffListener listener =
                 new RecommendationWorkflowHandoffListener(agentService, properties, mock(org.springframework.context.ApplicationEventPublisher.class));
         when(agentService.generateRecommendations(any(), any()))

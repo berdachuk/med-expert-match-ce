@@ -47,7 +47,7 @@ medexpertmatch:
     enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:true}
   llm:
     harness:
-      critic-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_CRITIC_ENABLED:true}
+      policy-gate-enabled: ${MEDEXPERTMATCH_LLM_HARNESS_POLICY_GATE_ENABLED:true}
 
 logging:
   level:

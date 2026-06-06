@@ -7,7 +7,7 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 - `MedicalAgentService` — primary orchestrator
 - Workflow services for: case analysis, case intake, doctor matching, queue prioritization, routing, recommendations, network analytics
 - `LlmResponseSanitizer` — strips PHI from LLM outputs before logging/storage
-- `llm/harness/` — verify/critic loops, context bundles, tool scope, `DoctorMatchWorkflowEngine` (M29)
+- `llm/harness/` — verify/policy-gate loops, context bundles, tool scope, `DoctorMatchWorkflowEngine` (M29)
 - Spring AI Agent Utils integration (runtime skills in `src/main/resources/skills/`)
 
 ## Owned Domain Models
@@ -34,11 +34,14 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 - Never hardcode API keys — use environment variables or Spring config
 - Agent Skill .md files in `src/main/resources/skills/` are runtime prompts, NOT development guides
 
-## Harness (M29)
+## Harness (M29 / M57)
 
+- Docs: `docs/HARNESS.md` (workflow engines, goal routing), `docs/FUNCTIONGEMMA.md` (tool-calling model)
 - Config: `medexpertmatch.llm.harness.*` (`HarnessProperties`)
+- `GoalClassifier` hybrid routing (M57): session rules → keywords → LLM; analyze-case harness enabled by default
 - Doctor match API uses `DoctorMatchWorkflowEngine` (states logged as `HARNESS_STATE`)
-- Chat: `ChatToolContextHolder` + `ToolScopeEnforcingResolver`; critic via `MedicalAgentCriticService`
+- Chat: `ChatToolContextHolder` + `ToolScopeEnforcingResolver`; policy gate via `MedicalAgentPolicyGateService`
+- Multilingual: `ChatLanguageService` translates to/from English around harness and chat paths
 - Harness backlog template: `.agents/templates/harness-backlog-item.md`
 
 ## Related Skills

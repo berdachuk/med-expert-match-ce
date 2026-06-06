@@ -9,7 +9,7 @@ public class HarnessMetrics {
 
     private final Counter verifyFailureCounter;
     private final Counter verifyAttemptsCounter;
-    private final Counter criticFailureCounter;
+    private final Counter policyGateFailureCounter;
     private final MeterRegistry meterRegistry;
 
     public HarnessMetrics(MeterRegistry meterRegistry) {
@@ -20,8 +20,8 @@ public class HarnessMetrics {
         this.verifyAttemptsCounter = Counter.builder("harness.verify.attempts.total")
                 .description("Harness verify step attempts")
                 .register(meterRegistry);
-        this.criticFailureCounter = Counter.builder("harness.critic.failure")
-                .description("Harness critic step failures")
+        this.policyGateFailureCounter = Counter.builder("harness.policy_gate.failure")
+                .description("Harness policy gate step failures")
                 .register(meterRegistry);
     }
 
@@ -34,9 +34,9 @@ public class HarnessMetrics {
         meterRegistry.counter("harness.verify.failure.reason", "reason", safeReason(reason)).increment();
     }
 
-    public void recordCriticFailure(String reason) {
-        criticFailureCounter.increment();
-        meterRegistry.counter("harness.critic.failure.reason", "reason", safeReason(reason)).increment();
+    public void recordPolicyGateFailure(String reason) {
+        policyGateFailureCounter.increment();
+        meterRegistry.counter("harness.policy_gate.failure.reason", "reason", safeReason(reason)).increment();
     }
 
     private static String safeReason(String reason) {

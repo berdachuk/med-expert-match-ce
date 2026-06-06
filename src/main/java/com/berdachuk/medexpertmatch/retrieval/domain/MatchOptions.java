@@ -32,7 +32,12 @@ public record MatchOptions(
         /**
          * Preferred facility IDs (if any).
          */
-        List<String> preferredFacilityIds
+        List<String> preferredFacilityIds,
+
+        /**
+         * Doctor IDs already shown for this case; excluded from new match results.
+         */
+        List<String> excludedDoctorIds
 ) {
     public MatchOptions {
         if (maxResults <= 0) {

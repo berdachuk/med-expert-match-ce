@@ -96,6 +96,8 @@ public final class LlmResponseSanitizer {
             }
         }
 
+        cleaned = stripMedGemmaPlanningPrefix(cleaned);
+
         if (cleaned.contains("```json")) {
             int jsonStart = cleaned.indexOf("```json");
             int jsonEnd = cleaned.lastIndexOf("```");
@@ -116,6 +118,35 @@ public final class LlmResponseSanitizer {
         }
 
         return cleaned;
+    }
+
+    private static String stripMedGemmaPlanningPrefix(String response) {
+        if (response == null || response.isBlank()) {
+            return response;
+        }
+        String lower = response.toLowerCase();
+        if (!lower.contains("mental sandbox")
+                && !lower.contains("constraint checklist")
+                && !lower.startsWith("thought")) {
+            return response;
+        }
+        String[] anchors = {
+                "Case Summary:",
+                "Matched Doctors:",
+                "Matching Rationale:",
+                "Recommendations:"
+        };
+        int bestIdx = -1;
+        for (String anchor : anchors) {
+            int idx = response.indexOf(anchor);
+            if (idx >= 0 && (bestIdx < 0 || idx < bestIdx)) {
+                bestIdx = idx;
+            }
+        }
+        if (bestIdx > 0) {
+            return response.substring(bestIdx).trim();
+        }
+        return response;
     }
 
     public static String toHumanReadable(String response) {

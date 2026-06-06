@@ -15,17 +15,18 @@
                 <div th:if="${messages == null or messages.isEmpty()}" class="text-muted" id="chatEmptyState" th:text="#{chat.empty}">
                     Start a conversation…
                 </div>
-                <div th:each="msg : ${messages}" class="mb-3 chat-message-row">
-                    <div th:class="${msg.role() == 'user'} ? 'text-end' : 'text-start'">
-                        <span class="badge mb-1" th:classappend="${msg.role() == 'user'} ? 'bg-primary' : 'bg-secondary'"
+                <div th:each="msg : ${messages}"
+                     th:class="'chat-message-row ' + (${msg.role() == 'user'} ? 'chat-message-row--user' : 'chat-message-row--assistant')">
+                    <div class="chat-message-label">
+                        <span class="badge" th:classappend="${msg.role() == 'user'} ? 'bg-primary' : 'bg-secondary'"
                               th:text="${msg.role()}">role</span>
-                        <div th:if="${msg.role() == 'user'}"
-                             class="p-2 rounded d-inline-block text-start bg-primary-subtle"
-                             th:text="${msg.content()}">message</div>
-                        <div th:if="${msg.role() != 'user'}"
-                             class="p-2 rounded d-inline-block text-start bg-light border chat-markdown"
-                             th:utext="${msg.renderedHtml()}"></div>
                     </div>
+                    <div th:if="${msg.role() == 'user'}"
+                         class="chat-message-bubble p-2 rounded bg-primary-subtle"
+                         th:text="${msg.content()}">message</div>
+                    <div th:if="${msg.role() != 'user'}"
+                         class="chat-message-bubble p-2 rounded bg-light border chat-markdown"
+                         th:utext="${msg.renderedHtml()}"></div>
                 </div>
             </div>
             <div class="border-top p-3 bg-white">
@@ -36,20 +37,21 @@
                 <input id="currentUserId" th:value="${currentUserId}" type="hidden"/>
                 <div class="d-none small border rounded p-2 mb-2 bg-light" id="agentTodoPanel"></div>
                 <div class="d-none small border rounded p-2 mb-2 bg-warning-subtle" id="agentQuestionPanel"></div>
-                <form id="chatMessageForm" class="d-flex gap-2 align-items-end">
+                <form id="chatMessageForm" class="chat-composer">
                     <input id="currentChatId" th:value="${currentChat.id()}" type="hidden"/>
-                    <select aria-label="Agent" class="form-select form-select-sm" id="agentPicker" style="max-width: 11rem;">
-                        <option th:selected="${currentChat.agentId() == 'auto'}" value="auto" th:text="#{chat.agent.auto}">Auto</option>
-                        <option value="triage-intake" th:text="#{chat.agent.triage}">Triage</option>
-                        <option value="case-analyzer" th:text="#{chat.agent.case_analyzer}">Case Analyzer</option>
-                        <option value="evidence-scout" th:text="#{chat.agent.evidence}">Evidence</option>
-                        <option value="specialist-matcher" th:text="#{chat.agent.matcher}">Matcher</option>
-                        <option value="routing-planner" th:text="#{chat.agent.routing}">Routing</option>
-                        <option value="network-analyst" th:text="#{chat.agent.network}">Network</option>
-                    </select>
-                    <textarea class="form-control" id="messageInput" placeholder="Ask a clinical question…" rows="2"></textarea>
-                    <button class="btn btn-primary" id="sendBtn" th:text="#{chat.send}" type="submit">Send</button>
-                    <button class="btn btn-outline-danger btn-sm" id="deleteAllHistoryBtn" type="button" title="Delete all chat history" data-bs-target="#deleteAllDataModal" data-bs-toggle="modal"><i class="bi bi-trash3"></i></button>
+                    <textarea class="form-control chat-composer-input" id="messageInput" placeholder="Ask a clinical question…" rows="3"></textarea>
+                    <div class="chat-composer-footer">
+                        <select aria-label="Agent" class="form-select form-select-sm chat-agent-picker" id="agentPicker">
+                            <option th:selected="${currentChat.agentId() == 'auto'}" value="auto" th:text="#{chat.agent.auto}">Auto</option>
+                            <option value="triage-intake" th:text="#{chat.agent.triage}">Triage</option>
+                            <option value="case-analyzer" th:text="#{chat.agent.case_analyzer}">Case Analyzer</option>
+                            <option value="evidence-scout" th:text="#{chat.agent.evidence}">Evidence</option>
+                            <option value="specialist-matcher" th:text="#{chat.agent.matcher}">Matcher</option>
+                            <option value="routing-planner" th:text="#{chat.agent.routing}">Routing</option>
+                            <option value="network-analyst" th:text="#{chat.agent.network}">Network</option>
+                        </select>
+                        <button class="btn btn-primary" id="sendBtn" th:text="#{chat.send}" type="submit">Send</button>
+                    </div>
                 </form>
             </div>
         </div>

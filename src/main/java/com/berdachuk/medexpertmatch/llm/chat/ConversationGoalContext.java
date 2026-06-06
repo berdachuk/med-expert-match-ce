@@ -11,7 +11,7 @@ public final class ConversationGoalContext {
 
     private static final Cache<String, Entry> STORE = Caffeine.newBuilder()
             .maximumSize(500)
-            .expireAfterWrite(60, TimeUnit.SECONDS)
+            .expireAfterWrite(30, TimeUnit.MINUTES)
             .build();
 
     private static volatile ChatGoalContextRepositoryImpl repository;

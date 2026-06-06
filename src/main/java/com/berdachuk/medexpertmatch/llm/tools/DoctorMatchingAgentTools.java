@@ -205,7 +205,8 @@ public class DoctorMatchingAgentTools {
             @ToolParam(description = "Maximum number of results (default: 10)") Integer maxResults,
             @ToolParam(description = "Minimum match score threshold (0-100, optional)") Double minScore,
             @ToolParam(description = "List of preferred medical specialties (e.g. Surgery, Cardiology). Do NOT pass agent or skill names.") List<String> preferredSpecialties,
-            @ToolParam(description = "Require telehealth capability (optional)") Boolean requireTelehealth
+            @ToolParam(description = "Require telehealth capability (optional)") Boolean requireTelehealth,
+            @ToolParam(description = "Doctor IDs already shown to the user; exclude from results (optional)") List<String> excludedDoctorIds
     ) {
         String sessionId = AgentToolSessionSupport.getSessionId();
         String normalizedCaseId = AgentToolCaseIdValidator.requireValid(
@@ -230,6 +231,7 @@ public class DoctorMatchingAgentTools {
                     .minScore(minScore)
                     .preferredSpecialties(sanitizedSpecialties)
                     .requireTelehealth(sanitizedTelehealth)
+                    .excludedDoctorIds(excludedDoctorIds != null ? excludedDoctorIds : List.of())
                     .build();
 
             List<DoctorMatch> result = matchingService.matchDoctorsToCase(normalizedCaseId, options);

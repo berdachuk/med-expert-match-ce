@@ -24,8 +24,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Classifies user requests into high-level goals using LLM analysis with keyword fallback.
- * This is the first step in the harness pipeline: identify goal → plan → route to engine.
+ * Classifies user requests into high-level goals using session rules, keywords, and LLM fallback.
  */
 @Slf4j
 @Service
@@ -47,8 +46,18 @@ public class GoalClassifier {
             "how about|elaborate|expand|details? (?:about|on|for)|explain (?:more|further))\\b",
             Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern MATCH_MORE_DOCTORS = Pattern.compile(
+            "(?:^|\\b)(?:find|show|get|list|any)\\s+(?:other|more|another|additional)\\s+"
+                    + "(?:doctor|doctors|specialist|specialists)\\b",
+            Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern RUSSIAN_MORE_DOCTORS = Pattern.compile(
+            "(?:найди|покажи|дай|подбери).{0,24}(?:ещё|еще).{0,24}(?:доктор|врач|специалист)",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+
     private final ChatClient chatClient;
     private final PromptTemplate goalClassificationTemplate;
+    private final PromptTemplate goalClassificationUserTemplate;
     private final ObjectMapper objectMapper;
     private final LlmCallLimiter llmCallLimiter;
     private final ApplicationEventPublisher eventPublisher;
@@ -56,103 +65,202 @@ public class GoalClassifier {
     public GoalClassifier(
             @Qualifier("primaryChatModel") ChatModel primaryChatModel,
             @Qualifier("goalClassificationPromptTemplate") PromptTemplate goalClassificationTemplate,
+            @Qualifier("goalClassificationUserPromptTemplate") PromptTemplate goalClassificationUserTemplate,
             ObjectMapper objectMapper,
             LlmCallLimiter llmCallLimiter,
             ApplicationEventPublisher eventPublisher) {
         this.chatClient = ChatClient.builder(primaryChatModel).build();
         this.goalClassificationTemplate = goalClassificationTemplate;
+        this.goalClassificationUserTemplate = goalClassificationUserTemplate;
         this.objectMapper = objectMapper;
         this.llmCallLimiter = llmCallLimiter;
         this.eventPublisher = eventPublisher;
     }
 
-    /**
-     * Classifies the user's request into a {@link GoalClassification}.
-     * Uses lightweight keyword matching first, falls back to LLM classification.
-     */
+    public static boolean requestsMoreDoctors(String message) {
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        String trimmed = message.trim();
+        return MATCH_MORE_DOCTORS.matcher(trimmed).find()
+                || RUSSIAN_MORE_DOCTORS.matcher(trimmed).find();
+    }
+
     public GoalClassification classify(String userMessage) {
+        return classify(userMessage, GoalClassificationContext.empty());
+    }
+
+    public GoalClassification classify(String userMessage, GoalClassificationContext context) {
         if (userMessage == null || userMessage.isBlank()) {
             return GoalClassification.general();
         }
 
         Optional<String> extractedCaseId = CaseIdExtractor.extractFromText(userMessage);
 
-        GoalClassification keywordResult = classifyByKeywords(userMessage, extractedCaseId);
-        if (keywordResult != null) {
-            publishIfRoutable(keywordResult);
-            return keywordResult;
+        GoalClassification result = detectSessionContinuation(userMessage, extractedCaseId);
+        if (result == null) {
+            result = classifyByKeywords(userMessage, extractedCaseId);
+        }
+        if (result == null) {
+            try {
+                result = classifyByLlm(userMessage, extractedCaseId, context);
+            } catch (Exception e) {
+                log.warn("LLM goal classification failed, falling back to general: {}", e.getMessage());
+                result = extractedCaseId.isPresent()
+                        ? GoalClassification.matchDoctors(extractedCaseId.get(), "keyword fallback with case ID")
+                        : GoalClassification.general();
+            }
+        }
+        result = inheritSessionCaseId(result, userMessage);
+        result = applySessionOverrides(result, userMessage);
+        publishIfRoutable(result);
+        return result;
+    }
+
+    GoalClassification detectSessionContinuation(String message, Optional<String> caseId) {
+        if (CASE_SWITCH_PATTERN.matcher(message).find()) {
+            clearCurrentContext();
+            return null;
         }
 
-        try {
-            GoalClassification llmResult = classifyByLlm(userMessage, extractedCaseId);
-            publishIfRoutable(llmResult);
-            return llmResult;
-        } catch (Exception e) {
-            log.warn("LLM goal classification failed, falling back to general: {}", e.getMessage());
-            GoalClassification fallback = extractedCaseId.isPresent()
-                    ? GoalClassification.matchDoctors(extractedCaseId.get(), "keyword fallback with case ID")
-                    : GoalClassification.general();
-            publishIfRoutable(fallback);
-            return fallback;
+        ConversationGoalContext.Entry ctx = currentSessionEntry();
+        if (ctx == null || ctx.lastCaseId() == null || ctx.lastCaseId().isBlank()) {
+            return null;
         }
+
+        String inheritedCaseId = caseId.filter(id -> !id.isBlank())
+                .orElse(ctx.lastCaseId());
+
+        if (requestsMoreDoctors(message)) {
+            return GoalClassification.matchDoctors(inheritedCaseId,
+                    "session: more doctors with inherited case");
+        }
+
+        if (GoalIntentPatterns.looksLikeCaseDetailRequest(message)) {
+            return GoalClassification.analyzeCase(inheritedCaseId,
+                    "session: case detail with inherited case");
+        }
+
+        return detectFollowUp(message, caseId);
+    }
+
+    GoalClassification inheritSessionCaseId(GoalClassification goal, String message) {
+        if (goal.hasCaseId()) {
+            return goal;
+        }
+        ConversationGoalContext.Entry ctx = currentSessionEntry();
+        if (ctx == null || ctx.lastCaseId() == null || ctx.lastCaseId().isBlank()) {
+            return goal;
+        }
+
+        return switch (goal.goalType()) {
+            case ANALYZE_CASE, SEARCH_EVIDENCE, GENERATE_RECOMMENDATIONS, ROUTE_CASE -> withInheritedCase(goal, ctx);
+            case MATCH_DOCTORS -> shouldInheritRoutableGoal(goal, ctx, message)
+                    ? withInheritedCase(goal, ctx)
+                    : goal;
+            default -> goal;
+        };
+    }
+
+    GoalClassification applySessionOverrides(GoalClassification goal, String message) {
+        if (goal.goalType() != GoalType.GENERAL_QUESTION) {
+            return goal;
+        }
+        ConversationGoalContext.Entry ctx = currentSessionEntry();
+        if (ctx == null || ctx.lastCaseId() == null || ctx.lastCaseId().isBlank()) {
+            return goal;
+        }
+
+        if (GoalIntentPatterns.looksLikeCaseDetailRequest(message)) {
+            log.info("Goal override: GENERAL_QUESTION → ANALYZE_CASE (session case present)");
+            return GoalClassification.analyzeCase(ctx.lastCaseId(),
+                    "override: case detail with session case");
+        }
+        if (requestsMoreDoctors(message)) {
+            log.info("Goal override: GENERAL_QUESTION → MATCH_DOCTORS (session case present)");
+            return GoalClassification.matchDoctors(ctx.lastCaseId(),
+                    "override: more doctors with session case");
+        }
+        if (GoalIntentPatterns.looksLikeCaseContinuation(message)) {
+            log.info("Goal override: GENERAL_QUESTION → {} (session continuation)",
+                    ctx.lastGoal());
+            return new GoalClassification(
+                    ctx.lastGoal(),
+                    Optional.of(ctx.lastCaseId()),
+                    Optional.empty(),
+                    "override: session continuation");
+        }
+        return goal;
+    }
+
+    private boolean shouldInheritRoutableGoal(
+            GoalClassification goal, ConversationGoalContext.Entry ctx, String message) {
+        if (ctx.lastGoal() == goal.goalType()) {
+            return true;
+        }
+        if (goal.summary() != null && goal.summary().startsWith("follow-up:")) {
+            return true;
+        }
+        return requestsMoreDoctors(message);
+    }
+
+    private GoalClassification withInheritedCase(GoalClassification goal, ConversationGoalContext.Entry ctx) {
+        return new GoalClassification(
+                goal.goalType(),
+                Optional.of(ctx.lastCaseId()),
+                goal.matchId(),
+                goal.summary() + " (inherited case ID from session)");
+    }
+
+    private ConversationGoalContext.Entry currentSessionEntry() {
+        String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+        if (sessionId == null) {
+            return null;
+        }
+        return ConversationGoalContext.get(sessionId);
     }
 
     private void publishIfRoutable(GoalClassification goal) {
-        if (goal.isRoutableToEngine() && goal.hasCaseId()) {
-            String caseId = goal.caseId().orElse("");
-            String sessionId = OrchestrationContextHolder.sessionIdOrNull();
-            eventPublisher.publishEvent(new GoalIdentifiedEvent(
-                    sessionId, goal, caseId, Instant.now()));
-            log.debug("Published GoalIdentifiedEvent: session={} goal={} caseId={}",
-                    sessionId, goal.goalType(), caseId);
+        if (!goal.isRoutableToEngine() || !goal.hasCaseId()) {
+            return;
         }
+        String caseId = goal.caseId().orElse("");
+        String sessionId = OrchestrationContextHolder.sessionIdOrNull();
+        eventPublisher.publishEvent(new GoalIdentifiedEvent(
+                sessionId, goal, caseId, Instant.now()));
+        log.debug("Published GoalIdentifiedEvent: session={} goal={} caseId={}",
+                sessionId, goal.goalType(), caseId);
     }
 
-    /**
-     * Lightweight keyword-based classification as a fast path.
-     * Returns null if the intent is ambiguous, triggering LLM classification.
-     */
     GoalClassification classifyByKeywords(String message, Optional<String> caseId) {
         GoalClassification followUp = detectFollowUp(message, caseId);
         if (followUp != null) {
             return followUp;
         }
 
-        String lower = message.toLowerCase();
-
-        if (lower.contains("find specialist") || lower.contains("match doctor")
-                || lower.contains("recommend doctor") || lower.contains("expert match")
-                || lower.contains("find doctors") || lower.contains("rank doctors")
-                || lower.contains("best doctor") || lower.contains("find expert")) {
+        if (GoalIntentPatterns.matchesMatchDoctorsKeywords(message)) {
             clearCurrentContext();
             return caseId.isPresent()
                     ? GoalClassification.matchDoctors(caseId.get(), "keyword: doctor matching with case ID")
                     : GoalClassification.matchDoctors("", "keyword: doctor matching from text");
         }
 
-        if (lower.contains("analyze case") || lower.contains("analyze this case")
-                || lower.contains("icd") || lower.contains("diagnosis hint")
-                || lower.contains("clinical findings") || lower.contains("case summary")) {
-            clearCurrentContext();
+        if (GoalIntentPatterns.matchesAnalyzeCaseKeywords(message)) {
             return caseId.map(id -> GoalClassification.analyzeCase(id, "keyword: case analysis"))
-                    .orElse(null);
+                    .orElse(GoalClassification.analyzeCase("", "keyword: case analysis from text"));
         }
 
-        if (lower.contains("route") || lower.contains("facility")
-                || lower.contains("referral") || lower.contains("where to send")) {
-            clearCurrentContext();
+        if (GoalIntentPatterns.matchesRouteCaseKeywords(message)) {
             return caseId.map(id -> GoalClassification.routeCase(id, "keyword: facility routing"))
-                    .orElse(null);
+                    .orElseGet(() -> GoalClassification.routeCase("", "keyword: facility routing from text"));
         }
 
-        if (lower.contains("urgency") || lower.contains("triage")
-                || lower.contains("intake") || lower.contains("red flag")) {
+        if (GoalIntentPatterns.matchesTriageKeywords(message)) {
             clearCurrentContext();
             return GoalClassification.triageIntake("keyword: triage");
         }
 
-        if (lower.contains("pubmed") || lower.contains("evidence")
-                || lower.contains("guideline") || lower.contains("literature")) {
+        if (GoalIntentPatterns.matchesEvidenceKeywords(message)) {
             clearCurrentContext();
             return GoalClassification.searchEvidence("keyword: evidence search");
         }
@@ -179,10 +287,11 @@ public class GoalClassifier {
         if (!sessionId.equals(ctx.sessionId())) {
             return null;
         }
-        String inheritedCaseId = caseId.orElse(ctx.lastCaseId() != null ? ctx.lastCaseId() : "");
+        String inheritedCaseId = caseId.filter(id -> !id.isBlank())
+                .orElse(ctx.lastCaseId() != null ? ctx.lastCaseId() : "");
         return new GoalClassification(
                 ctx.lastGoal(),
-                inheritedCaseId.isEmpty() ? Optional.empty() : Optional.of(inheritedCaseId),
+                inheritedCaseId.isBlank() ? Optional.empty() : Optional.of(inheritedCaseId),
                 Optional.empty(),
                 "follow-up: " + ctx.lastGoal().name()
         );
@@ -202,7 +311,13 @@ public class GoalClassifier {
         if (FOLLOW_UP_PREFIX.matcher(trimmed).matches()) {
             return true;
         }
+        if (requestsMoreDoctors(trimmed)) {
+            return true;
+        }
         if (FOLLOW_UP_PHRASING.matcher(trimmed).find()) {
+            return true;
+        }
+        if (GoalIntentPatterns.matchesRussianFollowUp(trimmed)) {
             return true;
         }
         if (trimmed.length() <= 20
@@ -218,7 +333,7 @@ public class GoalClassifier {
                 || lower.contains("case") || lower.contains("analyze") || lower.contains("specialist")
                 || lower.contains("facility") || lower.contains("route") || lower.contains("evidence")
                 || lower.contains("pubmed") || lower.contains("icd") || lower.contains("triage")
-                || lower.contains("urgency");
+                || lower.contains("urgency") || lower.contains("clinical") || lower.contains("patient");
     }
 
     private static void clearCurrentContext() {
@@ -228,12 +343,17 @@ public class GoalClassifier {
         }
     }
 
-    /**
-     * LLM-based goal classification for ambiguous requests.
-     */
-    GoalClassification classifyByLlm(String message, Optional<String> caseId) {
+    GoalClassification classifyByLlm(
+            String message, Optional<String> caseId, GoalClassificationContext context) {
         String systemPrompt = goalClassificationTemplate.render(Collections.emptyMap());
-        String classificationPrompt = "User request:\n" + message;
+        ConversationGoalContext.Entry ctx = currentSessionEntry();
+        String lastGoal = ctx != null ? ctx.lastGoal().name() : "none";
+        String lastCaseId = ctx != null && ctx.lastCaseId() != null ? ctx.lastCaseId() : "none";
+        String classificationPrompt = goalClassificationUserTemplate.render(Map.of(
+                "userMessage", message,
+                "lastGoal", lastGoal,
+                "lastCaseId", lastCaseId,
+                "recentHistory", context.recentHistoryOrNone()));
 
         log.info("Classifying goal via LLM for message length: {}", message.length());
 
@@ -244,13 +364,9 @@ public class GoalClassifier {
                         .call()
                         .content());
 
-        return parseClassification(response, caseId);
+        return parseClassification(response, caseId, ctx);
     }
 
-    /**
-     * Maps a high-level goal type to the appropriate {@link CaseContextIntent}
-     * for building context bundles with the right fields per goal.
-     */
     public static CaseContextIntent toContextIntent(GoalType goalType) {
         return switch (goalType) {
             case MATCH_DOCTORS -> CaseContextIntent.MATCH;
@@ -262,10 +378,8 @@ public class GoalClassifier {
         };
     }
 
-    /**
-     * Parses LLM JSON response into GoalClassification.
-     */
-    GoalClassification parseClassification(String response, Optional<String> caseId) {
+    GoalClassification parseClassification(
+            String response, Optional<String> caseId, ConversationGoalContext.Entry sessionCtx) {
         if (response == null || response.isBlank()) {
             return GoalClassification.general();
         }
@@ -276,35 +390,41 @@ public class GoalClassifier {
             Map<String, Object> parsed = objectMapper.readValue(json, Map.class);
             String goalType = (String) parsed.get("goalType");
             String summary = (String) parsed.getOrDefault("summary", "");
+            boolean useSessionCase = Boolean.TRUE.equals(parsed.get("useSessionCase"));
 
             if (goalType == null) {
                 return GoalClassification.general();
             }
 
-            switch (goalType.toUpperCase()) {
-                case "MATCH_DOCTORS":
-                    return caseId.isPresent()
-                            ? GoalClassification.matchDoctors(caseId.get(), summary)
-                            : GoalClassification.matchDoctors("", summary);
-                case "ANALYZE_CASE":
-                    return caseId.map(id -> GoalClassification.analyzeCase(id, summary))
-                            .orElse(GoalClassification.general());
-                case "ROUTE_CASE":
-                    return caseId.map(id -> GoalClassification.routeCase(id, summary))
-                            .orElse(GoalClassification.general());
-                case "TRIAGE_INTAKE":
-                    return GoalClassification.triageIntake(summary);
-                case "SEARCH_EVIDENCE":
-                    return GoalClassification.searchEvidence(summary);
-                case "GENERATE_RECOMMENDATIONS":
-                    return GoalClassification.generateRecommendations("", summary);
-                case "GENERAL_QUESTION":
-                default:
-                    return GoalClassification.general();
+            Optional<String> effectiveCaseId = caseId.filter(id -> !id.isBlank());
+            if (effectiveCaseId.isEmpty() && useSessionCase && sessionCtx != null
+                    && sessionCtx.lastCaseId() != null && !sessionCtx.lastCaseId().isBlank()) {
+                effectiveCaseId = Optional.of(sessionCtx.lastCaseId());
             }
+
+            return switch (goalType.toUpperCase()) {
+                case "MATCH_DOCTORS" -> effectiveCaseId
+                        .map(id -> GoalClassification.matchDoctors(id, summary))
+                        .orElseGet(() -> GoalClassification.matchDoctors("", summary));
+                case "ANALYZE_CASE" -> effectiveCaseId
+                        .map(id -> GoalClassification.analyzeCase(id, summary))
+                        .orElseGet(() -> GoalClassification.analyzeCase("", summary));
+                case "ROUTE_CASE" -> effectiveCaseId
+                        .map(id -> GoalClassification.routeCase(id, summary))
+                        .orElse(GoalClassification.general());
+                case "TRIAGE_INTAKE" -> GoalClassification.triageIntake(summary);
+                case "SEARCH_EVIDENCE" -> GoalClassification.searchEvidence(summary);
+                case "GENERATE_RECOMMENDATIONS" -> GoalClassification.generateRecommendations("", summary);
+                case "GENERAL_QUESTION" -> GoalClassification.general();
+                default -> GoalClassification.general();
+            };
         } catch (Exception e) {
             log.warn("Failed to parse goal classification response: {}", e.getMessage());
             return GoalClassification.general();
         }
+    }
+
+    GoalClassification parseClassification(String response, Optional<String> caseId) {
+        return parseClassification(response, caseId, currentSessionEntry());
     }
 }

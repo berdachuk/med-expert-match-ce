@@ -77,7 +77,14 @@ public class MatchingServiceImpl implements MatchingService {
         // Score each candidate using SemanticGraphRetrievalService
         List<DoctorMatch> unsortedMatches = new ArrayList<>();
 
+        List<String> excludedDoctorIds = options.excludedDoctorIds() != null
+                ? options.excludedDoctorIds()
+                : List.of();
+
         for (Doctor doctor : candidates) {
+            if (excludedDoctorIds.contains(doctor.id())) {
+                continue;
+            }
             ScoreResult scoreResult = semanticGraphRetrievalService.score(medicalCase, doctor);
 
             // Apply minimum score filter if specified
@@ -104,9 +111,13 @@ public class MatchingServiceImpl implements MatchingService {
         List<DoctorMatch> reranked = rerankingService.rerank(normalizedCaseId, sortedMatches, options.maxResults());
         List<DoctorMatch> limited = reranked.stream().limit(options.maxResults()).toList();
 
-        // Assign correct ranks after sorting (1 = best match)
+        boolean appendMatches = !excludedDoctorIds.isEmpty();
+        int startRank = appendMatches
+                ? consultationMatchRepository.findMaxRankByCaseId(normalizedCaseId)
+                : 0;
+
         List<DoctorMatch> result = new ArrayList<>();
-        int rank = 1;
+        int rank = startRank + 1;
         for (DoctorMatch m : limited) {
             result.add(new DoctorMatch(
                     m.doctor(),
@@ -116,8 +127,6 @@ public class MatchingServiceImpl implements MatchingService {
             ));
         }
 
-        // Persist consultation matches for dashboard and history
-        consultationMatchRepository.deleteByCaseId(normalizedCaseId);
         if (!result.isEmpty()) {
             List<ConsultationMatch> toSave = result.stream()
                     .map(m -> new ConsultationMatch(
@@ -129,7 +138,14 @@ public class MatchingServiceImpl implements MatchingService {
                             m.rank(),
                             "PENDING"))
                     .toList();
-            consultationMatchRepository.insertBatch(toSave);
+            if (appendMatches) {
+                consultationMatchRepository.insertBatch(toSave);
+            } else {
+                consultationMatchRepository.deleteByCaseId(normalizedCaseId);
+                consultationMatchRepository.insertBatch(toSave);
+            }
+        } else if (!appendMatches) {
+            consultationMatchRepository.deleteByCaseId(normalizedCaseId);
         }
 
         return result;
@@ -220,9 +236,16 @@ public class MatchingServiceImpl implements MatchingService {
      */
     private List<Doctor> findCandidateDoctors(MedicalCase medicalCase, MatchOptions options) {
         List<Doctor> candidates = new ArrayList<>();
+        List<String> excludedDoctorIds = options.excludedDoctorIds() != null
+                ? options.excludedDoctorIds()
+                : List.of();
+        boolean broadenSearch = !excludedDoctorIds.isEmpty();
 
-        // If preferred specialties are specified, use them
-        if (options.preferredSpecialties() != null && !options.preferredSpecialties().isEmpty()) {
+        if (broadenSearch) {
+            int poolSize = Math.max(options.maxResults() * 10, 50);
+            List<String> doctorIds = doctorRepository.findAllIds(poolSize);
+            candidates.addAll(doctorRepository.findByIds(doctorIds));
+        } else if (options.preferredSpecialties() != null && !options.preferredSpecialties().isEmpty()) {
             for (String specialty : options.preferredSpecialties()) {
                 List<Doctor> doctors = doctorRepository.findBySpecialty(specialty, options.maxResults() * 2);
                 candidates.addAll(doctors);

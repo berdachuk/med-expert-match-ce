@@ -6,7 +6,7 @@ public enum DoctorMatchWorkflowState {
     CONTEXT_BUILT,
     TOOLS_EXECUTED,
     VERIFYING,
-    CRITIC,
+    POLICY_GATE,
     NEEDS_HUMAN,
     DONE,
     FAILED

@@ -37,7 +37,7 @@ class GoalClassifierTest {
         org.springframework.ai.chat.prompt.PromptTemplate template =
                 org.mockito.Mockito.mock(org.springframework.ai.chat.prompt.PromptTemplate.class);
         GoalClassifier classifier = new GoalClassifier(
-                chatModel, template,
+                chatModel, template, template,
                 new com.fasterxml.jackson.databind.ObjectMapper(),
                 new com.berdachuk.medexpertmatch.core.util.LlmCallLimiter(1, 1, 1, 1),
                 mock(ApplicationEventPublisher.class));

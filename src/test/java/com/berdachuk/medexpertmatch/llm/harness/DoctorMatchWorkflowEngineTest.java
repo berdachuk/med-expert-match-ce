@@ -8,12 +8,13 @@ import com.berdachuk.medexpertmatch.llm.harness.impl.AgentResponseVerifierImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
-import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentCriticServiceImpl;
+import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentPolicyGateServiceImpl;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
+import com.berdachuk.medexpertmatch.retrieval.repository.ConsultationMatchRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
@@ -42,14 +43,14 @@ class DoctorMatchWorkflowEngineTest {
         LogStreamService logStream = mock(LogStreamService.class);
         DoctorMatchingAgentTools matchingTools = mock(DoctorMatchingAgentTools.class);
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any()))
+        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
                 .thenReturn(List.of());
 
         CaseContextBundleService bundleService = new CaseContextBundleServiceImpl(caseRepository);
         AgentPlannerService planner = new AgentPlannerServiceImpl(
                 bundleService, new InMemoryAgentPlanArtefactStore());
         HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
-        MedicalAgentCriticService critic = new MedicalAgentCriticServiceImpl(
+        MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
                 HarnessProperties.defaults(), metrics);
 
         DoctorMatchWorkflowEngine engine = new DoctorMatchWorkflowEngine(
@@ -59,13 +60,14 @@ class DoctorMatchWorkflowEngineTest {
                 matchingTools,
                 new ObjectMapper(),
                 new AgentResponseVerifierImpl(),
-                critic,
+                policyGate,
                 bundleService,
                 planner,
                 HarnessProperties.defaults(),
                 metrics,
                 new InMemoryHarnessWorkflowRunStore(),
-                mock(ApplicationEventPublisher.class));
+                mock(ApplicationEventPublisher.class),
+                mock(ConsultationMatchRepository.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",
@@ -78,7 +80,7 @@ class DoctorMatchWorkflowEngineTest {
     }
 
     @Test
-    @DisplayName("completes when matches pass verify and critic")
+    @DisplayName("completes when matches pass verify and policyGate")
     void successPath() throws Exception {
         MedicalAgentLlmSupportService llmSupport = mock(MedicalAgentLlmSupportService.class);
         MedicalCaseRepository caseRepository = mock(MedicalCaseRepository.class);
@@ -88,7 +90,7 @@ class DoctorMatchWorkflowEngineTest {
         Doctor doctor = new Doctor("d1", "Dr. Lee", null, List.of("Cardiology"), List.of(), List.of(), false, null);
         DoctorMatch match = new DoctorMatch(doctor, 90.0, 1, "fit");
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any()))
+        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
                 .thenReturn(List.of(match));
         when(caseRepository.findById(anyString())).thenReturn(Optional.empty());
         when(llmSupport.interpretResultsWithMedGemma(anyString(), anyString(), any()))
@@ -98,7 +100,7 @@ class DoctorMatchWorkflowEngineTest {
         AgentPlannerService planner = new AgentPlannerServiceImpl(
                 bundleService, new InMemoryAgentPlanArtefactStore());
         HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
-        MedicalAgentCriticService critic = new MedicalAgentCriticServiceImpl(
+        MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
                 HarnessProperties.defaults(), metrics);
 
         DoctorMatchWorkflowEngine engine = new DoctorMatchWorkflowEngine(
@@ -108,19 +110,21 @@ class DoctorMatchWorkflowEngineTest {
                 matchingTools,
                 new ObjectMapper(),
                 new AgentResponseVerifierImpl(),
-                critic,
+                policyGate,
                 bundleService,
                 planner,
                 HarnessProperties.defaults(),
                 metrics,
                 new InMemoryHarnessWorkflowRunStore(),
-                mock(ApplicationEventPublisher.class));
+                mock(ApplicationEventPublisher.class),
+                mock(ConsultationMatchRepository.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",
                 Map.of("sessionId", "test-session-2"));
 
         assertEquals(1, response.metadata().get("matchCount"));
+        assertEquals(1, response.metadata().get("doctorMatchCount"));
         assertTrue(response.response().contains("not a substitute"));
     }
 }

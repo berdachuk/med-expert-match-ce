@@ -9,6 +9,7 @@ import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
+import com.berdachuk.medexpertmatch.retrieval.repository.ConsultationMatchRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +38,14 @@ public class DoctorMatchWorkflowEngine {
     private final DoctorMatchingAgentTools doctorMatchingAgentTools;
     private final ObjectMapper objectMapper;
     private final AgentResponseVerifier agentResponseVerifier;
-    private final MedicalAgentCriticService medicalAgentCriticService;
+    private final MedicalAgentPolicyGateService medicalAgentPolicyGateService;
     private final CaseContextBundleService caseContextBundleService;
     private final AgentPlannerService agentPlannerService;
     private final HarnessProperties harnessProperties;
     private final HarnessMetrics harnessMetrics;
     private final HarnessWorkflowRunStore workflowRunStore;
     private final ApplicationEventPublisher eventPublisher;
+    private final ConsultationMatchRepository consultationMatchRepository;
 
     public DoctorMatchWorkflowEngine(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
@@ -51,31 +54,34 @@ public class DoctorMatchWorkflowEngine {
             DoctorMatchingAgentTools doctorMatchingAgentTools,
             ObjectMapper objectMapper,
             AgentResponseVerifier agentResponseVerifier,
-            MedicalAgentCriticService medicalAgentCriticService,
+            MedicalAgentPolicyGateService medicalAgentPolicyGateService,
             CaseContextBundleService caseContextBundleService,
             AgentPlannerService agentPlannerService,
             HarnessProperties harnessProperties,
             HarnessMetrics harnessMetrics,
             HarnessWorkflowRunStore workflowRunStore,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            ConsultationMatchRepository consultationMatchRepository) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.medicalCaseRepository = medicalCaseRepository;
         this.logStreamService = logStreamService;
         this.doctorMatchingAgentTools = doctorMatchingAgentTools;
         this.objectMapper = objectMapper;
         this.agentResponseVerifier = agentResponseVerifier;
-        this.medicalAgentCriticService = medicalAgentCriticService;
+        this.medicalAgentPolicyGateService = medicalAgentPolicyGateService;
         this.caseContextBundleService = caseContextBundleService;
         this.agentPlannerService = agentPlannerService;
         this.harnessProperties = harnessProperties;
         this.harnessMetrics = harnessMetrics;
         this.workflowRunStore = workflowRunStore;
         this.eventPublisher = eventPublisher;
+        this.consultationMatchRepository = consultationMatchRepository;
     }
 
     public MedicalAgentService.AgentResponse execute(String caseId, Map<String, Object> request) {
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         Integer maxResults = (Integer) request.getOrDefault("maxResults", 10);
+        List<String> excludedDoctorIds = resolveExcludedDoctorIds(caseId, request);
         HarnessIterationPolicy policy = harnessProperties.iterationPolicy();
         int minMatches = harnessProperties.doctorMatchMinMatches();
 
@@ -100,7 +106,8 @@ public class DoctorMatchWorkflowEngine {
             logStreamService.sendLog(sessionId, "INFO", "Step 1: LLM case analysis", "Analyzing case with LLM");
             caseAnalysisJson = medicalAgentLlmSupportService.analyzeCaseWithMedGemma(caseId);
 
-            matches = doctorMatchingAgentTools.match_doctors_to_case(caseId, maxResults, null, null, null);
+            matches = doctorMatchingAgentTools.match_doctors_to_case(
+                    caseId, maxResults, null, null, null, excludedDoctorIds);
 
             transition(sessionId, DoctorMatchWorkflowState.VERIFYING, "Verifying tool output");
             harnessMetrics.recordVerifyAttempt();
@@ -140,7 +147,7 @@ public class DoctorMatchWorkflowEngine {
     }
 
     public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, DoctorMatchCheckpointPayload payload) {
-        transition(payload.sessionId(), DoctorMatchWorkflowState.CRITIC, "Resuming after human approval runId=" + runId);
+        transition(payload.sessionId(), DoctorMatchWorkflowState.POLICY_GATE, "Resuming after human approval runId=" + runId);
         CaseContextBundle bundle = caseContextBundleService.build(payload.caseId(), CaseContextIntent.MATCH);
         return completeAfterVerify(
                 payload.caseId(),
@@ -212,15 +219,15 @@ public class DoctorMatchWorkflowEngine {
             String response = medicalAgentLlmSupportService.interpretResultsWithMedGemma(
                     jsonResponse, caseAnalysisJson, patientAge);
 
-            transition(sessionId, DoctorMatchWorkflowState.CRITIC, "Critic review");
+            transition(sessionId, DoctorMatchWorkflowState.POLICY_GATE, "Policy gate review");
             Map<String, Object> metadata = successMetadata(caseId, matches, bundle);
-            MedicalAgentCriticService.CriticResult critic =
-                    medicalAgentCriticService.review(response, metadata);
-            if (!critic.approved()) {
-                transition(sessionId, DoctorMatchWorkflowState.FAILED, "Critic rejected");
-                metadata.put("harnessFailureReason", critic.reason().name());
-                metadata.put("harnessFailureDetail", critic.detail());
-                return new MedicalAgentService.AgentResponse(critic.sanitizedResponse(), metadata);
+            MedicalAgentPolicyGateService.PolicyGateResult policyGate =
+                    medicalAgentPolicyGateService.review(response, metadata);
+            if (!policyGate.approved()) {
+                transition(sessionId, DoctorMatchWorkflowState.FAILED, "Policy gate rejected");
+                metadata.put("harnessFailureReason", policyGate.reason().name());
+                metadata.put("harnessFailureDetail", policyGate.detail());
+                return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
             }
 
             transition(sessionId, DoctorMatchWorkflowState.DONE, "Complete");
@@ -228,7 +235,7 @@ public class DoctorMatchWorkflowEngine {
             eventPublisher.publishEvent(new DoctorMatchCompletedEvent(caseId, sessionId, Instant.now()));
             logStreamService.logCompletion(sessionId, "Match doctors operation",
                     "Successfully matched doctors for case: " + caseId + " (" + matches.size() + " matches)");
-            return new MedicalAgentService.AgentResponse(critic.sanitizedResponse(), metadata);
+            return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
         } catch (Exception e) {
             throw new AgentExecutionException("Match doctors operation failed: " + e.getMessage(), e);
         }
@@ -239,6 +246,15 @@ public class DoctorMatchWorkflowEngine {
         log.debug("Doctor match harness state {} session {}", state, sessionId);
     }
 
+    private List<String> resolveExcludedDoctorIds(String caseId, Map<String, Object> request) {
+        if (!Boolean.TRUE.equals(request.get("excludePreviouslyMatched"))) {
+            return List.of();
+        }
+        List<String> excluded = new ArrayList<>(consultationMatchRepository.findDoctorIdsByCaseId(caseId));
+        log.info("Follow-up doctor match for case {} excluding {} prior doctor(s)", caseId, excluded.size());
+        return excluded;
+    }
+
     private static Map<String, Object> successMetadata(String caseId, List<DoctorMatch> matches, CaseContextBundle bundle) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("caseId", caseId);
@@ -247,6 +263,7 @@ public class DoctorMatchWorkflowEngine {
         metadata.put("llmUsed", true);
         metadata.put("toolLlmUsed", false);
         metadata.put("matchCount", matches.size());
+        metadata.put("doctorMatchCount", matches.size());
         metadata.put("contextBundleSections", bundle.coreSections().size());
         return metadata;
     }
@@ -258,7 +275,9 @@ public class DoctorMatchWorkflowEngine {
             HarnessFailureReason reason) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("caseId", caseId);
-        metadata.put("matchCount", matches != null ? matches.size() : 0);
+        int matchCount = matches != null ? matches.size() : 0;
+        metadata.put("matchCount", matchCount);
+        metadata.put("doctorMatchCount", matchCount);
         metadata.put("harnessFailureReason", reason.name());
         metadata.put("harnessViolations", verification.violations());
         metadata.put("harnessState", DoctorMatchWorkflowState.FAILED.name());

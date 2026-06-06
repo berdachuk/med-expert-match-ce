@@ -35,7 +35,7 @@ public class PipelineProgressCollector {
 
     @EventListener
     void onDone(DoneEvent event) {
-        addStage(event.sessionId(), "CRITIC", "CriticAgent", "completed");
+        addStage(event.sessionId(), "POLICY_GATE", "PolicyGateAgent", "completed");
     }
 
     public void addStage(String sessionId, String stageName, String agent, String status) {

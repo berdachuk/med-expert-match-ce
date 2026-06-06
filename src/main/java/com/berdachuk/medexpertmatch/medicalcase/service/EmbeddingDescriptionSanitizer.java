@@ -1,5 +1,7 @@
 package com.berdachuk.medexpertmatch.medicalcase.service;
 
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
+
 import java.util.Locale;
 
 /**
@@ -17,7 +19,9 @@ public final class EmbeddingDescriptionSanitizer {
             "attempt 2",
             "attempt 3",
             "attempt 4",
-            "thought the user"
+            "thought the user",
+            "embedding generation",
+            "specialist matching"
     };
 
     private EmbeddingDescriptionSanitizer() {}
@@ -27,6 +31,10 @@ public final class EmbeddingDescriptionSanitizer {
             return raw;
         }
         String trimmed = raw.trim();
+        String reasoningStripped = LlmResponseSanitizer.stripLlmReasoning(trimmed);
+        if (!reasoningStripped.equals(trimmed) && isClinicalNarrative(reasoningStripped)) {
+            return reasoningStripped;
+        }
         if (!looksLikeChainOfThought(trimmed)) {
             return trimmed;
         }
@@ -44,7 +52,29 @@ public final class EmbeddingDescriptionSanitizer {
                 return candidate;
             }
         }
+        if (startsWithThoughtMeta(trimmed) && !containsClinicalSignals(trimmed)) {
+            return "";
+        }
+        if (looksLikeChainOfThought(trimmed) && !containsClinicalSignals(trimmed)) {
+            return "";
+        }
         return trimmed;
+    }
+
+    private static boolean startsWithThoughtMeta(String text) {
+        return text.toLowerCase(Locale.ROOT).startsWith("thought");
+    }
+
+    private static boolean containsClinicalSignals(String text) {
+        String lower = text.toLowerCase(Locale.ROOT);
+        return lower.contains("patient")
+                || lower.contains("presents")
+                || lower.contains("diagnosis")
+                || lower.contains("icd")
+                || lower.contains("complaint")
+                || lower.contains("symptom")
+                || lower.contains("year-old")
+                || lower.contains("year old");
     }
 
     private static boolean looksLikeChainOfThought(String text) {

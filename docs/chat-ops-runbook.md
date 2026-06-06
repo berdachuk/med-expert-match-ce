@@ -47,12 +47,14 @@ Audit API: `GET /api/v1/admin/audit/chat-exports?action=CHAT_EXPORT_BUNDLE` (opt
 
 ## LLM harness metrics (M29/M30)
 
+Canonical harness documentation: [HARNESS.md](HARNESS.md). Tool-calling model: [FUNCTIONGEMMA.md](FUNCTIONGEMMA.md).
+
 Micrometer counters (no PHI in labels):
 
 | Metric | Meaning |
 |--------|---------|
 | `harness.verify.failure` | Post-tool verification failed (doctor/routing) |
-| `harness.critic.failure` | Critic pass rejected or policy violation |
+| `harness.policy_gate.failure` | Policy gate rejected or policy violation |
 
 Workflow logs emit `HARNESS_STATE` transitions on the active session id (doctor match, routing, case intake).
 

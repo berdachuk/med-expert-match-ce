@@ -65,13 +65,13 @@ public class PlannerAgent {
                     new ExecutionPlan.Step("CONTEXT_BUILD", "CaseContextBundleService", caseId),
                     new ExecutionPlan.Step("DOCTOR_MATCH", "DoctorMatchWorkflowEngine", caseId),
                     new ExecutionPlan.Step("VERIFY", "AgentResponseVerifier", null),
-                    new ExecutionPlan.Step("CRITIC", "MedicalAgentCriticService", null)
+                    new ExecutionPlan.Step("POLICY_GATE", "MedicalAgentPolicyGateService", null)
             ));
             case ROUTE_CASE -> new ExecutionPlan(sessionId, List.of(
                     new ExecutionPlan.Step("CONTEXT_BUILD", "CaseContextBundleService", caseId),
                     new ExecutionPlan.Step("ROUTING", "RoutingWorkflowEngine", caseId),
                     new ExecutionPlan.Step("VERIFY", "AgentResponseVerifier", null),
-                    new ExecutionPlan.Step("CRITIC", "MedicalAgentCriticService", null)
+                    new ExecutionPlan.Step("POLICY_GATE", "MedicalAgentPolicyGateService", null)
             ));
             case ANALYZE_CASE -> new ExecutionPlan(sessionId, List.of(
                     new ExecutionPlan.Step("CONTEXT_BUILD", "CaseContextBundleService", caseId),

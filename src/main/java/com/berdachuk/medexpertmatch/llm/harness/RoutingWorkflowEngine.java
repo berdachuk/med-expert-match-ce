@@ -27,7 +27,7 @@ public class RoutingWorkflowEngine {
     private final LogStreamService logStreamService;
     private final RoutingAgentTools routingAgentTools;
     private final AgentResponseVerifier agentResponseVerifier;
-    private final MedicalAgentCriticService medicalAgentCriticService;
+    private final MedicalAgentPolicyGateService medicalAgentPolicyGateService;
     private final CaseContextBundleService caseContextBundleService;
     private final AgentPlannerService agentPlannerService;
     private final HarnessProperties harnessProperties;
@@ -39,7 +39,7 @@ public class RoutingWorkflowEngine {
             LogStreamService logStreamService,
             RoutingAgentTools routingAgentTools,
             AgentResponseVerifier agentResponseVerifier,
-            MedicalAgentCriticService medicalAgentCriticService,
+            MedicalAgentPolicyGateService medicalAgentPolicyGateService,
             CaseContextBundleService caseContextBundleService,
             AgentPlannerService agentPlannerService,
             HarnessProperties harnessProperties,
@@ -49,7 +49,7 @@ public class RoutingWorkflowEngine {
         this.logStreamService = logStreamService;
         this.routingAgentTools = routingAgentTools;
         this.agentResponseVerifier = agentResponseVerifier;
-        this.medicalAgentCriticService = medicalAgentCriticService;
+        this.medicalAgentPolicyGateService = medicalAgentPolicyGateService;
         this.caseContextBundleService = caseContextBundleService;
         this.agentPlannerService = agentPlannerService;
         this.harnessProperties = harnessProperties;
@@ -130,7 +130,7 @@ public class RoutingWorkflowEngine {
     }
 
     public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, RoutingCheckpointPayload payload) {
-        transition(payload.sessionId(), DoctorMatchWorkflowState.CRITIC, "Resuming routing after approval runId=" + runId);
+        transition(payload.sessionId(), DoctorMatchWorkflowState.POLICY_GATE, "Resuming routing after approval runId=" + runId);
         CaseContextBundle bundle = caseContextBundleService.build(payload.caseId(), CaseContextIntent.ROUTE);
         return completeAfterVerify(
                 payload.caseId(),
@@ -150,20 +150,20 @@ public class RoutingWorkflowEngine {
         transition(sessionId, DoctorMatchWorkflowState.TOOLS_EXECUTED, "Summarizing routing");
         String response = medicalAgentLlmSupportService.summarizeRoutingResults(toolResults, caseAnalysis);
 
-        transition(sessionId, DoctorMatchWorkflowState.CRITIC, "Critic review");
+        transition(sessionId, DoctorMatchWorkflowState.POLICY_GATE, "Policy gate review");
         Map<String, Object> metadata = baseMetadata(caseId, matches, bundle);
         metadata.put("harnessState", DoctorMatchWorkflowState.DONE.name());
 
-        MedicalAgentCriticService.CriticResult critic = medicalAgentCriticService.review(response, metadata);
-        if (!critic.approved()) {
-            harnessMetrics.recordCriticFailure(critic.reason().name());
-            metadata.put("harnessFailureReason", critic.reason().name());
-            metadata.put("harnessFailureDetail", critic.detail());
-            return new MedicalAgentService.AgentResponse(critic.sanitizedResponse(), metadata);
+        MedicalAgentPolicyGateService.PolicyGateResult policyGate = medicalAgentPolicyGateService.review(response, metadata);
+        if (!policyGate.approved()) {
+            harnessMetrics.recordPolicyGateFailure(policyGate.reason().name());
+            metadata.put("harnessFailureReason", policyGate.reason().name());
+            metadata.put("harnessFailureDetail", policyGate.detail());
+            return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
         }
 
         transition(sessionId, DoctorMatchWorkflowState.DONE, "Routing complete");
-        return new MedicalAgentService.AgentResponse(critic.sanitizedResponse(), metadata);
+        return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
     }
 
     private static Map<String, Object> baseMetadata(String caseId, List<FacilityMatch> matches, CaseContextBundle bundle) {

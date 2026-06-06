@@ -1,6 +1,6 @@
 # AI Provider Configuration for MedExpertMatch
 
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-05-31
 
 ## Overview
 
@@ -138,13 +138,15 @@ RERANKING_TEMPERATURE=0.1
 
 ### Tool calling
 
-Used for agent tool invocation. This should usually be a tool-capable model distinct from MedGemma.
+Used for AI Chat **Auto orchestrator** tool invocation. Must be a **tool-capable** model distinct from MedGemma chat.
+MedExpertMatch defaults to **FunctionGemma 270M** (`functiongemma:270m`). See
+[FunctionGemma Tool Calling](FUNCTIONGEMMA.md) for architecture, tool pairs, and troubleshooting.
 
 ```bash
 TOOL_CALLING_PROVIDER=openai
 TOOL_CALLING_BASE_URL=https://your-openai-compatible-endpoint
 TOOL_CALLING_API_KEY=your-api-key
-TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
+TOOL_CALLING_MODEL=functiongemma:270m
 TOOL_CALLING_TEMPERATURE=0.7
 TOOL_CALLING_MAX_TOKENS=4096
 ```
@@ -197,7 +199,7 @@ export RERANKING_MODEL=medgemma-1.5-4b-it
 export TOOL_CALLING_PROVIDER=openai
 export TOOL_CALLING_BASE_URL=http://127.0.0.1:1234
 export TOOL_CALLING_API_KEY=local-key
-export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
+export TOOL_CALLING_MODEL=functiongemma:270m
 ```
 
 ## Validation checklist
@@ -211,6 +213,8 @@ export TOOL_CALLING_MODEL=qwen/qwen3-4b-2507
 
 ## Related documentation
 
+- [Harness Architecture](HARNESS.md) — when chat bypasses tool-calling via workflow engines
+- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool model setup and fine-tuning plan
 - [README](../README.md)
 - [Development Guide](DEVELOPMENT_GUIDE.md)
 - [MedGemma Setup Guide](MEDGEMMA_SETUP.md)

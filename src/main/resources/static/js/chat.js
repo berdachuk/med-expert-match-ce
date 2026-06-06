@@ -163,7 +163,7 @@
         wrap.innerHTML =
             '<div class="small border rounded p-2 bg-light agent-panel-expanded">' +
                 '<div class="agent-activity-header small fw-semibold text-muted">' +
-                    '<span class="agent-activity-spinner"></span>Agent Execution' +
+                    '<span class="agent-activity-spinner" style="display:none"></span>Agent Execution' +
                     '<button class="agent-activity-collapse" type="button" title="Collapse">\u25b2</button>' +
                 '</div>' +
                 '<div class="overflow-auto agent-panel-entries"></div>' +
@@ -172,25 +172,47 @@
         return wrap;
     }
 
+    function clearEntrySpinners(entriesEl) {
+        if (!entriesEl) return;
+        entriesEl.querySelectorAll('.agent-activity-entry .agent-activity-spinner').forEach(function (el) {
+            el.remove();
+        });
+    }
+
+    function syncPanelSpinners(panelWrap) {
+        if (!panelWrap) return;
+        var entriesEl = panelWrap.querySelector('.agent-panel-entries');
+        var active = panelWrap._streamActive === true;
+        clearEntrySpinners(entriesEl);
+        if (active) {
+            panelWrap.classList.add('agent-panel-active');
+            var entryNodes = entriesEl ? entriesEl.querySelectorAll('.agent-activity-entry') : [];
+            if (entryNodes.length > 0) {
+                var spinner = document.createElement('span');
+                spinner.className = 'agent-activity-spinner';
+                entryNodes[entryNodes.length - 1].insertBefore(spinner, entryNodes[entryNodes.length - 1].firstChild);
+            }
+        } else {
+            panelWrap.classList.remove('agent-panel-active');
+        }
+    }
+
     function addActivityEntryToPanel(panelWrap, kind, message, agentId) {
         var entriesEl = panelWrap.querySelector('.agent-panel-entries');
         var entries = panelWrap._entries || [];
         entries.push({ kind: kind, message: message, agentId: agentId || 'orchestrator', ts: Date.now() });
         panelWrap._entries = entries;
-        var isStreaming = kind !== 'done';
-        var headerSpinner = panelWrap.querySelector('.agent-activity-header .agent-activity-spinner');
-        if (headerSpinner) headerSpinner.style.display = isStreaming ? '' : 'none';
         var label = kind;
         if (kind === 'tool') label = 'tool_call';
         if (kind === 'plan') label = 'todo';
         if (kind === 'reasoning') label = 'reasoning';
-        var showSpinner = isStreaming;
         var entryDiv = document.createElement('div');
         entryDiv.className = 'agent-activity-entry ' + escapeHtml(label);
-        entryDiv.innerHTML = (showSpinner ? '<span class="agent-activity-spinner"></span>' : '') +
+        entryDiv.innerHTML =
             '<div class="fw-semibold">' + escapeHtml(agentId || 'orchestrator') + '</div>' +
             '<div class="text-muted">' + escapeHtml(message) + '</div>';
         entriesEl.appendChild(entryDiv);
+        syncPanelSpinners(panelWrap);
         entriesEl.scrollTop = entriesEl.scrollHeight;
     }
 
@@ -240,9 +262,10 @@
         hideEmptyState();
         var panel = document.getElementById('messagePanel');
         var wrap = document.createElement('div');
-        wrap.className = 'mb-3 chat-message-row text-end';
-        wrap.innerHTML = '<span class="badge mb-1 bg-primary">user</span>' +
-            '<div class="p-2 rounded d-inline-block text-start bg-primary-subtle">' + escapeHtml(text) + '</div>';
+        wrap.className = 'chat-message-row chat-message-row--user';
+        wrap.innerHTML =
+            '<div class="chat-message-label"><span class="badge bg-primary">user</span></div>' +
+            '<div class="chat-message-bubble p-2 rounded bg-primary-subtle">' + escapeHtml(text) + '</div>';
         panel.appendChild(wrap);
         panel.scrollTop = panel.scrollHeight;
     }
@@ -279,9 +302,10 @@
         hideEmptyState();
         var panel = document.getElementById('messagePanel');
         var wrap = document.createElement('div');
-        wrap.className = 'mb-3 chat-message-row text-start chat-streaming';
-        wrap.innerHTML = '<span class="badge mb-1 bg-secondary">assistant</span>' +
-            '<div class="p-2 rounded d-inline-block text-start bg-light border chat-markdown"></div>';
+        wrap.className = 'chat-message-row chat-message-row--assistant chat-streaming';
+        wrap.innerHTML =
+            '<div class="chat-message-label"><span class="badge bg-secondary">assistant</span></div>' +
+            '<div class="chat-message-bubble p-2 rounded bg-light border chat-markdown"></div>';
         panel.appendChild(wrap);
         currentAssistantBubble = wrap.querySelector('.chat-markdown');
         currentMarkdownBuffer = '';
@@ -317,6 +341,8 @@
         var agentPanelWrap = appendAgentPanel();
         agentPanelWrap._startMs = startMs;
         agentPanelWrap._entries = [];
+        agentPanelWrap._streamActive = true;
+        agentPanelWrap.classList.add('agent-panel-active');
         beginAssistantBubble();
 
         var logSource = null;
@@ -348,6 +374,8 @@
             var buffer = { value: '' };
             function finishStream() {
                 if (logSource) logSource.close();
+                agentPanelWrap._streamActive = false;
+                syncPanelSpinners(agentPanelWrap);
                 finalizeAssistantBubble();
                 collapseAgentPanel(agentPanelWrap, startMs);
                 pollAgenticState();
@@ -418,6 +446,7 @@
         }).catch(function (err) {
             console.error(err);
             if (logSource) logSource.close();
+            agentPanelWrap._streamActive = false;
             addActivityEntryToPanel(agentPanelWrap, 'done', 'Error: ' + (err && err.message ? err.message : 'stream failed'), agentId || 'auto');
             collapseAgentPanel(agentPanelWrap, startMs);
             if (btn) btn.disabled = false;

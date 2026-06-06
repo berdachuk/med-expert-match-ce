@@ -2,7 +2,7 @@ package com.berdachuk.medexpertmatch.llm.chat;
 
 /**
  * High-level goals the AI chat should identify from user requests before routing.
- * Maps to harness workflow engines for execute-verify-critic pipelines.
+ * Maps to harness workflow engines for execute-verify-policy-gate pipelines.
  */
 public enum GoalType {
 

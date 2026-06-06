@@ -24,6 +24,12 @@ public class ConsultationMatchRepositoryImpl implements ConsultationMatchReposit
     @InjectSql("/sql/consultationmatch/insert.sql")
     private String insertSql;
 
+    @InjectSql("/sql/consultationmatch/findDoctorIdsByCaseId.sql")
+    private String findDoctorIdsByCaseIdSql;
+
+    @InjectSql("/sql/consultationmatch/findMaxRankByCaseId.sql")
+    private String findMaxRankByCaseIdSql;
+
     @InjectSql("/sql/consultationmatch/deleteByCaseId.sql")
     private String deleteByCaseIdSql;
 
@@ -35,6 +41,26 @@ public class ConsultationMatchRepositoryImpl implements ConsultationMatchReposit
 
     public ConsultationMatchRepositoryImpl(NamedParameterJdbcTemplate namedJdbcTemplate) {
         this.namedJdbcTemplate = namedJdbcTemplate;
+    }
+
+    @Override
+    public List<String> findDoctorIdsByCaseId(String caseId) {
+        if (caseId == null || caseId.isBlank()) {
+            return List.of();
+        }
+        Map<String, Object> params = Map.of("caseId", caseId.trim().toLowerCase());
+        return namedJdbcTemplate.query(findDoctorIdsByCaseIdSql, params,
+                (rs, rowNum) -> rs.getString("doctor_id"));
+    }
+
+    @Override
+    public int findMaxRankByCaseId(String caseId) {
+        if (caseId == null || caseId.isBlank()) {
+            return 0;
+        }
+        Map<String, Object> params = Map.of("caseId", caseId.trim().toLowerCase());
+        Integer maxRank = namedJdbcTemplate.queryForObject(findMaxRankByCaseIdSql, params, Integer.class);
+        return maxRank != null ? maxRank : 0;
     }
 
     @Override

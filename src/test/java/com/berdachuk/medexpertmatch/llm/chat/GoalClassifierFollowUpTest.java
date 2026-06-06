@@ -30,8 +30,9 @@ class GoalClassifierFollowUpTest {
     private final PromptTemplate goalClassificationTemplate = mock(PromptTemplate.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LlmCallLimiter llmCallLimiter = new LlmCallLimiter(1, 1, 1, 1);
+    private final PromptTemplate goalClassificationUserTemplate = mock(PromptTemplate.class);
     private final GoalClassifier goalClassifier = new GoalClassifier(
-            chatModel, goalClassificationTemplate, objectMapper, llmCallLimiter,
+            chatModel, goalClassificationTemplate, goalClassificationUserTemplate, objectMapper, llmCallLimiter,
             mock(ApplicationEventPublisher.class));
 
     @BeforeEach
@@ -91,6 +92,47 @@ class GoalClassifierFollowUpTest {
 
         assertNotNull(result);
         assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertEquals(CASE_ID, result.caseId().orElse(""));
+        assertTrue(result.hasCaseId());
+    }
+
+    @Test
+    @DisplayName("Russian find more doctors inherits prior MATCH_DOCTORS goal and caseId")
+    void russianFindMoreDoctorsInheritsGoal() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords("найди еще докторов", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertEquals(CASE_ID, result.caseId().orElse(""));
+        assertTrue(result.hasCaseId());
+        assertTrue(GoalClassifier.requestsMoreDoctors("найди еще докторов"));
+    }
+
+    @Test
+    @DisplayName("find other doctors inherits prior MATCH_DOCTORS goal and caseId")
+    void findOtherDoctorsInheritsGoal() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords("find other doctors", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertEquals(CASE_ID, result.caseId().orElse(""));
+        assertTrue(result.hasCaseId());
+    }
+
+    @Test
+    @DisplayName("inheritSessionCaseId fills blank MATCH_DOCTORS case from session")
+    void inheritSessionCaseIdFillsCaseIdFromSession() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+        GoalClassification bare = GoalClassification.matchDoctors("", "llm: match without case");
+
+        GoalClassification enriched = goalClassifier.inheritSessionCaseId(bare, "find more doctors");
+
+        assertEquals(CASE_ID, enriched.caseId().orElse(""));
+        assertTrue(enriched.hasCaseId());
     }
 
     @Test

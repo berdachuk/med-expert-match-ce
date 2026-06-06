@@ -92,6 +92,12 @@ public class PromptTemplateConfig {
     private Resource agentMatchingOrchestrationResource;
     @Value("classpath:/prompts/goal-classification.st")
     private Resource goalClassificationResource;
+    @Value("classpath:/prompts/goal-classification-user.st")
+    private Resource goalClassificationUserResource;
+    @Value("classpath:/prompts/chat-translate-to-english.st")
+    private Resource chatTranslateToEnglishResource;
+    @Value("classpath:/prompts/chat-translate-from-english.st")
+    private Resource chatTranslateFromEnglishResource;
     @Value("classpath:/prompts/reranking-doctors.st")
     private Resource rerankingDoctorsResource;
 
@@ -440,6 +446,24 @@ public class PromptTemplateConfig {
     @org.springframework.beans.factory.annotation.Qualifier("goalClassificationPromptTemplate")
     public PromptTemplate goalClassificationPromptTemplate(StTemplateRenderer renderer) {
         return promptTemplate(renderer, goalClassificationResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("goalClassificationUserPromptTemplate")
+    public PromptTemplate goalClassificationUserPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, goalClassificationUserResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("chatTranslateToEnglishPromptTemplate")
+    public PromptTemplate chatTranslateToEnglishPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, chatTranslateToEnglishResource);
+    }
+
+    @Bean
+    @org.springframework.beans.factory.annotation.Qualifier("chatTranslateFromEnglishPromptTemplate")
+    public PromptTemplate chatTranslateFromEnglishPromptTemplate(StTemplateRenderer renderer) {
+        return promptTemplate(renderer, chatTranslateFromEnglishResource);
     }
 
     @Bean

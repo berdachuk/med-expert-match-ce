@@ -67,7 +67,8 @@ Note: Evidence from data, not only intuition. Support tool; clinicians and polic
 1. **Problems and value**
 2. **Architecture** 
 3. **Live demo**
-4. **Q&A**
+4. **Secret BONUS**
+5. **Q&A**
 
 </div>
 
@@ -587,6 +588,98 @@ Note: If live fails, fall back to screenshots or recorded video.
 
 ---
 
+## Harness — idea
+
+<div class="reveal-slide-row">
+
+<div class="reveal-slide-text-col">
+
+**Idea:** The **model proposes**; the **harness constrains and executes**.
+
+Java orchestration around the LLM — routing, context, tools, verify — not “hope the prompt picks the right action.”
+
+**Benefit:** **Reliable** medical chat workflows — correct goal and case, observable progress, fewer dead-end replies.
+
+The harness is the **leash**: direction and safety while the model does the work.
+
+</div>
+
+<div class="reveal-slide-image-col">
+
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-harness-metaphor.png" alt="Harness metaphor: guided control — model under harness direction" />
+
+</div>
+
+</div>
+
+Note: ~15 s. Contrast with prompt-only agents. Next slide: workflow states.
+
+---
+
+## Harness — workflow
+
+<div class="reveal-slide-row">
+
+<div class="reveal-slide-text-col">
+
+Doctor match (and routing / analyze) run a **state machine** — streamed as SSE `HARNESS_STATE`:
+
+`PLANNING` → `CONTEXT_BUILT` → **`TOOLS_EXECUTED` ⇄ `VERIFYING`** → `POLICY_GATE` → `DONE`
+
+- **Verify loop** — retry tools when output fails (default **2** passes)
+- **Policy gate** — final safety check (PHI, disclaimer); fail-closed, no loop back
+
+`GoalClassifier` routes match / analyze / route **before** the engine starts.
+
+</div>
+
+<div class="reveal-slide-image-col">
+
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-harness-workflow.png" alt="Harness workflow state machine with verify retry loop" />
+
+</div>
+
+</div>
+
+Note: ~20 s. Walk the state line once; mention SSE in AI Chat. Details: [Harness Architecture](../HARNESS.md).
+
+---
+
+## FunctionGemma — tool calling
+
+<div class="reveal-slide-row">
+
+<div class="reveal-slide-text-col">
+
+**Two models in AI Chat:**
+
+| Role | Model | Job |
+|------|-------|-----|
+| Medical reasoning | **MedGemma** `1.5:4b` | Analysis, interpretation, goals, translation |
+| Tool calling | **FunctionGemma** `270m` | Auto orchestrator — pick and invoke `@Tool` methods |
+
+**Why split?** MedGemma excels at clinical text; FunctionGemma is fine-tuned for **structured function calls**.
+
+**When harness routes** (match / route / analyze + case ID) → workflow engines — FunctionGemma **skipped**.
+
+**Otherwise** → Auto chat path: FunctionGemma + `MedicalAgentTools` (evidence, edge cases).
+
+Config: `TOOL_CALLING_*` env vars → `functiongemma:270m` (Ollama OpenAI-compatible).
+
+</div>
+
+<div class="reveal-slide-image-col">
+
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-functiongemma.png" alt="FunctionGemma tool calling — MedGemma to tools flow" />
+
+</div>
+
+</div>
+
+Note: ~25 s. Harness handles high-value flows; FunctionGemma covers the long tail. Details: [FunctionGemma Tool Calling](../FUNCTIONGEMMA.md).
+
+---
+
 ## Conclusion
 
 <div class="reveal-slide-row">
@@ -652,4 +745,6 @@ This section is normal MkDocs content (printable, searchable).
 - [Use cases](../USE_CASES.md)
 - [Demo guide](../DEMO_GUIDE.md)
 - [Harness and agent usage](../HARNESS_AND_AGENT_USAGE.md)
+- [Harness architecture](../HARNESS.md)
+- [FunctionGemma tool calling](../FUNCTIONGEMMA.md)
 - [Presentation plan — speaker script (RU)](../PRESENTATION_PLAN_RU.md)

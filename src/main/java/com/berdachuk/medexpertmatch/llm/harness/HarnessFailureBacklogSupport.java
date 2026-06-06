@@ -38,7 +38,8 @@ public class HarnessFailureBacklogSupport {
         return switch (failureReason) {
             case "TOOL_OUTPUT_INVALID" -> "Tool output invalid";
             case "ITERATION_LIMIT" -> "Iteration limit";
-            case "POLICY_VIOLATION", "PHI_DETECTED", "DISCLAIMER_MISSING" -> "Critic / policy (disclaimer, PHI)";
+            case "POLICY_VIOLATION", "PHI_DETECTED", "DISCLAIMER_MISSING", "POLICY_GATE_REJECTED" ->
+                    "Policy gate (disclaimer, PHI)";
             default -> "Other: " + failureReason;
         };
     }

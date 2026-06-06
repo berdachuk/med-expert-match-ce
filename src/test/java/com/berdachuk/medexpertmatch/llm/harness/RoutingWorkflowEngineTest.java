@@ -8,7 +8,7 @@ import com.berdachuk.medexpertmatch.llm.harness.impl.AgentResponseVerifierImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
-import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentCriticServiceImpl;
+import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentPolicyGateServiceImpl;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
 class RoutingWorkflowEngineTest {
 
     @Test
-    @DisplayName("routing succeeds with facility matches and critic pass")
+    @DisplayName("routing succeeds with facility matches and policy gate pass")
     void successPath() {
         MedicalAgentLlmSupportService llmSupport = mock(MedicalAgentLlmSupportService.class);
         LogStreamService logStream = mock(LogStreamService.class);
@@ -52,10 +52,10 @@ class RoutingWorkflowEngineTest {
         CaseContextBundleService bundleService = new CaseContextBundleServiceImpl(caseRepository);
         AgentPlannerService planner = new AgentPlannerServiceImpl(bundleService, new InMemoryAgentPlanArtefactStore());
         HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
-        MedicalAgentCriticService critic = new MedicalAgentCriticServiceImpl(HarnessProperties.defaults(), metrics);
+        MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(HarnessProperties.defaults(), metrics);
 
         RoutingWorkflowEngine engine = new RoutingWorkflowEngine(
-                llmSupport, logStream, routingTools, new AgentResponseVerifierImpl(), critic,
+                llmSupport, logStream, routingTools, new AgentResponseVerifierImpl(), policyGate,
                 bundleService, planner, HarnessProperties.defaults(), metrics,
                 new HarnessCheckpointSupport(new InMemoryHarnessWorkflowRunStore(), new com.fasterxml.jackson.databind.ObjectMapper()));
 

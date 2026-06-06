@@ -10,6 +10,22 @@ import java.util.List;
 public interface ConsultationMatchRepository {
 
     /**
+     * Returns doctor IDs previously matched for the given case, ordered by rank.
+     *
+     * @param caseId Case ID (internal CHAR(24))
+     * @return Ordered doctor IDs
+     */
+    List<String> findDoctorIdsByCaseId(String caseId);
+
+    /**
+     * Returns the highest persisted rank for the given case.
+     *
+     * @param caseId Case ID (internal CHAR(24))
+     * @return Max rank, or 0 when none exist
+     */
+    int findMaxRankByCaseId(String caseId);
+
+    /**
      * Deletes all consultation matches for the given case.
      *
      * @param caseId Case ID (internal CHAR(24))
