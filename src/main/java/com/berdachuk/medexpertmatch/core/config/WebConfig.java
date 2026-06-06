@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +39,7 @@ public class WebConfig implements WebMvcConfigurer {
      * resolve to /docs/presentations/slide/index.html in the static JAR.
      */
     @Bean
+    @ConditionalOnResource(resources = "classpath:static/docs/index.html")
     public FilterRegistrationBean<Filter> docsIndexHtmlFilter() {
         Filter filter = (request, response, chain) -> {
             HttpServletRequest httpRequest = (HttpServletRequest) request;

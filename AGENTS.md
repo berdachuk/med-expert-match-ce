@@ -49,7 +49,8 @@ mvn test -Dtest=DoctorRepositoryIT   # Single IT class
 mvn test jacoco:report               # Coverage report
 mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 ./scripts/build-test-container.sh    # Build custom Postgres+AGE+PgVector test image
-./scripts/restart-service-local.sh   # Restart local service
+./scripts/start-local-stack.sh       # Local stack: Postgres + mvn -Plocal + MkDocs
+./scripts/restart-service-local.sh   # Restart local stack (stop + start)
 ```
 
 ## Module Guidance (nested AGENTS.md)

@@ -152,6 +152,9 @@ springdoc:
 
 # Application-specific settings
 medexpertmatch:
+  docs:
+    # MkDocs dev server URL when static/docs is not embedded (local mvn spring-boot:run)
+    dev-url: ${MEDEXPERTMATCH_DOCS_DEV_URL:http://localhost:8000}
   features:
     document-ingestion: ${MEDEXPERTMATCH_FEATURES_DOCUMENT_INGESTION:true}
     graph-rag: ${MEDEXPERTMATCH_FEATURES_GRAPH_RAG:true}

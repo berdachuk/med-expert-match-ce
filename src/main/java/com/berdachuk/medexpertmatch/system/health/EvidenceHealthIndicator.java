@@ -15,7 +15,10 @@ import java.util.Map;
 @Component
 public class EvidenceHealthIndicator implements HealthIndicator {
 
-    private static final String PUBMED_PING_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/";
+    /** Lightweight PubMed reachability probe (NCBI rejects bare /eutils/ — requires a named eutil). */
+    private static final String PUBMED_PING_URL =
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/einfo.fcgi?db=pubmed&retmode=json"
+                    + "&tool=MedExpertMatch&email=support@medexpertmatch.com";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
 
     private final RestTemplate restTemplate;

@@ -19,6 +19,8 @@ class EvidenceHealthIndicatorTest {
         assertNotNull(health.getDetails().get("status"));
         assertNotNull(health.getDetails().get("responseTime"));
         assertNotNull(health.getDetails().get("endpoint"));
-        assertTrue(health.getDetails().get("endpoint").toString().contains("ncbi.nlm.nih.gov"));
+        String endpoint = health.getDetails().get("endpoint").toString();
+        assertTrue(endpoint.contains("ncbi.nlm.nih.gov"));
+        assertTrue(endpoint.contains("einfo.fcgi"), "health probe must call a valid NCBI eutil");
     }
 }
