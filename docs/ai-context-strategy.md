@@ -5,10 +5,12 @@
 ```
 .agents/
 ├── skills/          ← Single source of truth (canonical skill definitions)
-└── plans/           ← Milestone implementation plans (M{NN}-*.md)
+├── plans/           ← Milestone implementation plans (M{NN}-*.md; archive/ for completed)
+│   └── 00-index.md  ← Milestone registry index
 AGENTS.md                ← Root index: repo overview, commands, boundaries, skill triggers
 {module}/AGENTS.md       ← Module-specific conventions (5 files: core, retrieval, llm, ingestion, web)
 .cursor/                 ← Optional IDE adapter (generated from skills, not canonical)
+.kilo/                   ← Optional Kilo adapter (commands/agents generated from skills)
 ```
 
 ## Design Principles
@@ -47,18 +49,20 @@ AGENTS.md                ← Root index: repo overview, commands, boundaries, sk
 | New Cypher pattern | `graph-db/SKILL.md` |
 | Code style change | `code-style/SKILL.md`, all nested AGENTS.md that reference it |
 | New prompt template | `llm-prompts/SKILL.md` |
-| New milestone plan | `.agents/plans/M{NN}-{goal-slug}.md`; register in root `AGENTS.md` Plan Files section |
-| Plan completed | Move to `.agents/plans/archive/` |
+| New milestone plan | `.agents/plans/M{NN}-{goal-slug}.md`; register in `00-index.md` |
+| Plan completed | Move to `.agents/plans/archive/`; update `00-index.md` |
+| New Kilo command/agent | `.kilo/command/{name}.md` or `.kilo/agent/{name}.md`; reference from `.agents/skills/` if canonical |
 
 ## IDE Adapter Design (future)
 
 ```
 .agents/skills/          → Read directly by tools that support SKILL.md format
-                           OR
-                         → Transformed into:
-                           .cursor/rules/{skill}.mdc     (Cursor)
-                           .kilo/command/{skill}.md      (Kilo)
-                           .github/copilot-instructions/  (GitHub Copilot)
+                            OR
+                          → Transformed into:
+                            .cursor/rules/{skill}.mdc     (Cursor)
+                            .kilo/command/{skill}.md      (Kilo — commands)
+                            .kilo/agent/{skill}.md        (Kilo — agents)
+                            .github/copilot-instructions/  (GitHub Copilot)
 ```
 
 Adapters should be auto-generated scripts that:
@@ -67,3 +71,5 @@ Adapters should be auto-generated scripts that:
 3. Write to tool-specific directory
 
 Do NOT manually maintain tool-specific copies — they go stale.
+
+Currently, `.kilo/` has only the SDK runtime (`@kilocode/plugin`). Kilo commands and agents should be generated from skills when needed.
