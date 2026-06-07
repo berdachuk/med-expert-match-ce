@@ -14,7 +14,7 @@ class EvalFlywheelReportTest {
         EvalFlywheelReport report = EvalFlywheelAggregator.runDeterministicSuites();
 
         assertTrue(report.releaseGatePassed(), "Release gate failed: " + report);
-        assertEquals(6, report.families().size());
+        assertEquals(7, report.families().size());
         for (EvalFamilyResult family : report.families()) {
             assertEquals(family.total(), family.passed(),
                     "Family " + family.family() + " must pass all cases");
@@ -33,6 +33,7 @@ class EvalFlywheelReportTest {
         assertTrue(markdown.contains("context_summarizer"));
         assertTrue(markdown.contains("scoring_weight_ab"));
         assertTrue(markdown.contains("match_outcome_calibration"));
+        assertTrue(markdown.contains("adjudication"));
         assertTrue(markdown.contains("release_gate"));
     }
 }

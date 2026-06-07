@@ -38,6 +38,16 @@
 |--------|---------|--------|-------|---------|
 | Dr. Lee (Neurology) | 71 | 80% | 62% | 55% |
 
+## Adjudication eval (M69)
+
+Human-in-the-loop regressions are gated by the `adjudication` flywheel family (`policy-adjudication-cases.jsonl`):
+
+- ESCALATE + adjudication enabled → `NEEDS_HUMAN` pause
+- Reject → `OVERRIDDEN` outcome + audit entry
+- Approve → resume to `DONE`
+
+See [RELEASE_GATE.md](../eval/RELEASE_GATE.md) — `./scripts/run-eval-flywheel.sh` must report **GO** before release.
+
 ## References
 
 - [Harness Architecture](../HARNESS.md)

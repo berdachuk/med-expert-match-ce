@@ -23,7 +23,7 @@ public class HarnessWorkflowCheckpointService {
             for professional medical advice, diagnosis, or treatment.""";
 
     private final HarnessWorkflowRunStore runStore;
-    private final DoctorMatchWorkflowEngine doctorMatchWorkflowEngine;
+    private final DoctorMatchCheckpointResumer doctorMatchResumer;
     private final RoutingWorkflowEngine routingWorkflowEngine;
     private final CaseIntakeWorkflowEngine caseIntakeWorkflowEngine;
     private final HarnessAdjudicationService adjudicationService;
@@ -32,14 +32,14 @@ public class HarnessWorkflowCheckpointService {
 
     public HarnessWorkflowCheckpointService(
             HarnessWorkflowRunStore runStore,
-            DoctorMatchWorkflowEngine doctorMatchWorkflowEngine,
+            DoctorMatchCheckpointResumer doctorMatchResumer,
             RoutingWorkflowEngine routingWorkflowEngine,
             CaseIntakeWorkflowEngine caseIntakeWorkflowEngine,
             HarnessAdjudicationService adjudicationService,
             MatchOutcomeService matchOutcomeService,
             ObjectMapper objectMapper) {
         this.runStore = runStore;
-        this.doctorMatchWorkflowEngine = doctorMatchWorkflowEngine;
+        this.doctorMatchResumer = doctorMatchResumer;
         this.routingWorkflowEngine = routingWorkflowEngine;
         this.caseIntakeWorkflowEngine = caseIntakeWorkflowEngine;
         this.adjudicationService = adjudicationService;
@@ -112,7 +112,7 @@ public class HarnessWorkflowCheckpointService {
     private MedicalAgentService.AgentResponse resume(HarnessWorkflowRun run, String runId) {
         try {
             return switch (run.workflowType()) {
-                case DOCTOR_MATCH -> doctorMatchWorkflowEngine.resumeAfterCheckpoint(
+                case DOCTOR_MATCH -> doctorMatchResumer.resumeAfterCheckpoint(
                         runId, objectMapper.readValue(run.payloadJson(), DoctorMatchCheckpointPayload.class));
                 case ROUTING -> routingWorkflowEngine.resumeAfterCheckpoint(
                         runId, objectMapper.readValue(run.payloadJson(), RoutingCheckpointPayload.class));

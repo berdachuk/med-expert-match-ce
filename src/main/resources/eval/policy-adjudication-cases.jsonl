@@ -1,0 +1,7 @@
+{"type":"pause","humanAdjudicationEnabled":true,"policyAction":"ESCALATE","expectedPause":true,"expectedHarnessState":"NEEDS_HUMAN"}
+{"type":"pause","humanAdjudicationEnabled":false,"policyAction":"ESCALATE","expectedPause":false}
+{"type":"pause","humanAdjudicationEnabled":true,"policyAction":"CLARIFY","expectedPause":false}
+{"type":"pause","humanAdjudicationEnabled":true,"policyAction":"ANSWER","expectedPause":false}
+{"type":"pause","humanAdjudicationEnabled":true,"policyAction":"REFUSE","expectedPause":false}
+{"type":"reject","caseId":"6a1c68963a08e800010de68e","doctorId":"d-adj-001","doctorName":"Dr. Synth","reviewerId":"clinician-eval","expectedOutcome":"OVERRIDDEN","expectedHarnessState":"FAILED"}
+{"type":"approve","caseId":"6a1c68963a08e800010de68e","reviewerId":"clinician-eval","expectedHarnessState":"DONE"}

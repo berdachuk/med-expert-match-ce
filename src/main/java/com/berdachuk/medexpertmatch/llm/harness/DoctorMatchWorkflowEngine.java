@@ -27,7 +27,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class DoctorMatchWorkflowEngine {
+public class DoctorMatchWorkflowEngine implements DoctorMatchCheckpointResumer {
 
     private final MedicalAgentLlmSupportService medicalAgentLlmSupportService;
     private final MedicalCaseRepository medicalCaseRepository;

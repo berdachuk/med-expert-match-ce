@@ -2,11 +2,11 @@
 
 ## Active
 
-Roadmap updated 2026-06-08 after **M66** (archived). Suggested order: **M69** → **M60** (deferred).
+Roadmap updated 2026-06-08 after **M69** (archived). Suggested order: **M70** → **M60** (deferred).
 
 | # | Plan | Description |
 |---|------|-------------|
-| M69 | [`M69-adjudication-eval-flywheel.md`](M69-adjudication-eval-flywheel.md) | **Next** — adjudication eval family + release gate |
+| M70 | [`M70-find-specialist-explainability.md`](M70-find-specialist-explainability.md) | **Next** — explainability panel on Find Specialist SSR |
 
 ## Deferred
 
@@ -87,6 +87,7 @@ Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity
 | M63 | [`M63-match-outcome-data-flywheel.md`](archive/M63-match-outcome-data-flywheel.md) | Match outcome labels + historical weight calibration |
 | M65 | [`M65-human-in-the-loop-harness.md`](archive/M65-human-in-the-loop-harness.md) | HUMAN_REVIEW checkpoint, adjudication audit, M63 override hook |
 | M66 | [`M66-agent-vs-chat-packaging.md`](archive/M66-agent-vs-chat-packaging.md) | Chat mode selector, match explainability, pitch/case study |
+| M69 | [`M69-adjudication-eval-flywheel.md`](archive/M69-adjudication-eval-flywheel.md) | Adjudication eval family + release gate (7th flywheel family) |
 | M64 | [`M64-cost-quality-routing.md`](archive/M64-cost-quality-routing.md) | Cost-quality tier routing (LIGHT/STANDARD/FULL), token budgets, Prometheus metrics |
 | M67 | [`M67-llm-role-endpoint-separation.md`](archive/M67-llm-role-endpoint-separation.md) | Clinical + utility LLM endpoints (`CLINICAL_*`, `UTILITY_*`); M64 ADR Phase 2 |
 | M68 | [`M68-harness-context-summarizer.md`](archive/M68-harness-context-summarizer.md) | Harness context summarizer before clinical LLM (M64 ADR Phase 3) |

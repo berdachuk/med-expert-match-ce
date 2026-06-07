@@ -37,6 +37,7 @@ mvn -DskipTests exec:java \
 | `context_summarizer` | `src/main/resources/eval/context-summarizer-cases.jsonl` | FULL |
 | `scoring_weight_ab` | `src/main/resources/eval/scoring-weight-ab-cases.jsonl` | RETRIEVAL |
 | `match_outcome_calibration` | `src/main/resources/eval/match-outcome-calibration-cases.jsonl` | RETRIEVAL |
+| `adjudication` | `src/main/resources/eval/policy-adjudication-cases.jsonl` | FULL |
 
 ## ROI formula (high-stakes changes)
 
