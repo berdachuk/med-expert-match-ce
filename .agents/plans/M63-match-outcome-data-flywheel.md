@@ -1,8 +1,8 @@
 # M63: Match Outcome Data Flywheel
 
-**Status:** Planned  
+**Status:** **Next** — ready to implement (2026-06-08)  
 **Created:** 2026-06-07  
-**Depends on:** M65 (human feedback) optional for labels; graph + retrieval modules
+**Depends on:** M61 (archived — ESCALATE signals), M62 (archived — eval gate); M65 optional for human override labels; graph + retrieval modules
 
 ## Problem Statement
 
@@ -20,13 +20,13 @@ Close the data flywheel: capture anonymized match outcomes and feed them into hi
 
 ## Phases
 
-| Phase | Task | Deliverable |
-|-------|------|-------------|
-| 1 | Outcome entity + repo | `MatchOutcome` record: caseId, doctorId, label (`ACCEPTED`/`REJECTED`/`OVERRIDDEN`), timestamp |
-| 2 | Ingestion API | REST endpoint or admin action to record outcome (synthetic IDs in tests only) |
-| 3 | Historical weight calibration job | Batch recalculates doctor-case affinity weights from outcomes |
-| 4 | Graph quality metrics | Coverage, orphan nodes, stale `ClinicalExperience` — health indicator extension |
-| 5 | Evidence freshness | PubMed/guidelines TTL; deprecate stale evidence in scoring metadata |
+| Phase | Task | Deliverable | Status |
+|-------|------|-------------|--------|
+| 1 | Outcome entity + repo | `MatchOutcome` record: caseId, doctorId, label (`ACCEPTED`/`REJECTED`/`OVERRIDDEN`), timestamp | Pending |
+| 2 | Ingestion API | REST endpoint or admin action to record outcome (synthetic IDs in tests only) | Pending |
+| 3 | Historical weight calibration job | Batch recalculates doctor-case affinity weights from outcomes | Pending |
+| 4 | Graph quality metrics | Coverage, orphan nodes, stale `ClinicalExperience` — health indicator extension | Pending |
+| 5 | Evidence freshness | PubMed/guidelines TTL; deprecate stale evidence in scoring metadata | Pending |
 
 ## Acceptance criteria
 
@@ -34,6 +34,7 @@ Close the data flywheel: capture anonymized match outcomes and feed them into hi
 - [ ] Calibration job demonstrably shifts ranking on held-out synthetic outcomes
 - [ ] Graph quality metrics exposed on `/actuator/health` or comprehensive health details
 - [ ] Flyway V1 consolidation only — single migration patch if schema needed
+- [ ] `scoring-weight-ab-cases.jsonl` extended with outcome-calibrated scenarios (M62 flywheel gate)
 
 ## Artifacts
 
@@ -43,6 +44,13 @@ Close the data flywheel: capture anonymized match outcomes and feed them into hi
 | Calibration | `retrieval/service/MatchOutcomeCalibrationService` |
 | Metrics | `system/health/GraphQualityHealthIndicator` |
 | Tests | `*IT.java` with Testcontainers |
+
+## Implementation notes (Phase 1 kickoff)
+
+1. Add `match_outcome` table via Flyway V1 patch (`db-migrations` skill).
+2. Wire `RetrievalScoringProperties.historicalWeight` to read calibrated values from repo.
+3. Seed synthetic outcomes in `SyntheticDataPostProcessingServiceImpl` for IT fixtures.
+4. M65 `OVERRIDDEN` events will call the same ingestion API — design record shape now.
 
 ## Effort
 
@@ -56,3 +64,5 @@ Close the data flywheel: capture anonymized match outcomes and feed them into hi
 ## References
 
 - User doc Phase C; `graph-db` and `db-migrations` skills
+- M61 policy ESCALATE → future M65 human override labels
+- M62 eval flywheel: `scoring-weight-ab-cases.jsonl` for regression

@@ -1,0 +1,12 @@
+{"matchCount":0,"topMatchScore":0,"verificationPassed":false,"urgency":"CRITICAL","goalType":"MATCH_DOCTORS","expectedAction":"ESCALATE"}
+{"matchCount":0,"topMatchScore":0,"verificationPassed":false,"urgency":"HIGH","goalType":"MATCH_DOCTORS","expectedAction":"ESCALATE"}
+{"matchCount":0,"topMatchScore":0,"verificationPassed":false,"urgency":"MEDIUM","goalType":"MATCH_DOCTORS","expectedAction":"CLARIFY"}
+{"matchCount":0,"topMatchScore":0,"verificationPassed":false,"urgency":"LOW","goalType":"MATCH_DOCTORS","expectedAction":"CLARIFY"}
+{"matchCount":0,"topMatchScore":0,"verificationPassed":false,"urgency":"CRITICAL","goalType":"ROUTE_CASE","expectedAction":"ESCALATE"}
+{"matchCount":1,"topMatchScore":85,"verificationPassed":true,"urgency":"MEDIUM","goalType":"MATCH_DOCTORS","expectedAction":"ANSWER"}
+{"matchCount":2,"topMatchScore":72,"verificationPassed":true,"urgency":"LOW","goalType":"MATCH_DOCTORS","expectedAction":"ANSWER"}
+{"matchCount":1,"topMatchScore":55,"verificationPassed":true,"urgency":"MEDIUM","goalType":"MATCH_DOCTORS","expectedAction":"CLARIFY"}
+{"matchCount":1,"topMatchScore":45,"verificationPassed":true,"urgency":"HIGH","goalType":"MATCH_DOCTORS","expectedAction":"ESCALATE"}
+{"matchCount":1,"topMatchScore":40,"verificationPassed":true,"urgency":"LOW","goalType":"MATCH_DOCTORS","expectedAction":"CLARIFY"}
+{"matchCount":1,"topMatchScore":30,"verificationPassed":false,"urgency":"CRITICAL","goalType":"MATCH_DOCTORS","expectedAction":"ESCALATE"}
+{"matchCount":0,"topMatchScore":0,"verificationPassed":true,"urgency":"MEDIUM","goalType":"ROUTE_CASE","insufficientGrounding":true,"expectedAction":"REFUSE"}

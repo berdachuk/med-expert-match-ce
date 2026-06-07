@@ -64,7 +64,7 @@ flowchart TD
 
 Prompts: `src/main/resources/prompts/goal-classification.st`, `goal-classification-user.st`.
 
-Regression eval set: `src/test/resources/eval/goal-classifier-cases.jsonl` (20+ scenarios).
+Regression eval set: `src/main/resources/eval/goal-classifier-cases.jsonl` (20+ scenarios).
 
 ## Workflow engines
 
@@ -216,7 +216,7 @@ HARNESS_PROGRESS {"engine": "CaseAnalysis", "state": "DONE", ...}
 | Doctor match engine | `llm/harness/DoctorMatchWorkflowEngine.java` |
 | Routing engine | `llm/harness/RoutingWorkflowEngine.java` |
 | Case analysis | `llm/service/impl/MedicalAgentCaseAnalysisWorkflowServiceImpl.java` |
-| Verify / policy gate | `llm/harness/impl/AgentResponseVerifierImpl.java`, `MedicalAgentPolicyGateServiceImpl.java` |
+| Verify / policy gate | `llm/harness/impl/AgentResponseVerifierImpl.java`, `MedicalAgentPolicyGateServiceImpl.java`, `MedicalConfidencePolicyServiceImpl.java` |
 | Config | `llm/config/HarnessProperties.java`, `HarnessConfiguration.java` |
 
 ## Presentation
@@ -264,11 +264,26 @@ Before MedGemma clinical interpretation, `HarnessContextSummarizer` shapes harne
 `checkpoint`, `harnessFailureReason`, `harnessFailureDetail` — never dropped.
 
 Wired in `MedicalAgentLlmSupportServiceImpl` for match/case interpretation and routing summarization.
-Regression eval: `src/test/resources/eval/context-summarizer-cases.jsonl`.
+Regression eval: `src/main/resources/eval/context-summarizer-cases.jsonl`.
+
+## Policy layer (M61)
+
+Between verify and clinical interpretation, `MedicalConfidencePolicyService` routes by match confidence and urgency:
+
+| Action | When |
+|--------|------|
+| `ANSWER` | Scores and verification within safe thresholds |
+| `CLARIFY` | Zero/borderline matches or verify failures (non-urgent) |
+| `ESCALATE` | Urgent case with verify failure or low confidence |
+| `REFUSE` | Insufficient grounding |
+
+Config: `src/main/resources/policy/medical-confidence-policy.yml` (imported via `spring.config.import`).
+
+Harness metadata signals: `policyAction`, `policyReason`, `requiresClinicianReview`, `verificationPassed`.
+
+Regression eval: `src/main/resources/eval/policy-confidence-cases.jsonl`.
 
 ## Related documentation
-
-- [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool-calling model used in Auto chat path
 - [Find Specialist Flow](FIND_SPECIALIST_FLOW.md) — end-to-end UX and API flow
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) — `@Tool` method reference
 - [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) — `CHAT_*` vs `TOOL_CALLING_*`

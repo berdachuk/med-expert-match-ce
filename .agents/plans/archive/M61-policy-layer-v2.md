@@ -1,6 +1,6 @@
 # M61: Policy Layer v2 (Confidence Router)
 
-**Status:** Planned — **next active milestone** (M67 complete)  
+**Status:** Archived (2026-06-08) — Phases 1–5 implemented  
 **Created:** 2026-06-07  
 **Depends on:** M67 (archived), M57 (archived), M58 (archived) — `GoalClassifier`, `MedicalAgentPolicyGateService`, `ToolSelectionPolicy`
 
@@ -45,20 +45,20 @@ Introduce a first-class **confidence policy router** between retrieval/scoring a
 
 ## Phases
 
-| Phase | Task | Deliverable |
-|-------|------|-------------|
-| 1 | Policy schema (YAML/JSON) + loader | `src/main/resources/policy/medical-confidence-policy.yml` |
-| 2 | Wire into `DoctorMatchWorkflowEngine` / `RoutingWorkflowEngine` | Low score → CLARIFY/ESCALATE, not hallucinated match list |
-| 3 | Extend `MedicalAgentPolicyGateService` with harness metadata | Review `matchCount`, `verificationResult`, not text only |
-| 4 | REST/SSE signal `requiresClinicianReview` | Chat UI + API consumers can show escalation state |
-| 5 | Unit + harness IT tests | Frozen scenarios in `src/test/resources/eval/policy-confidence-cases.jsonl` |
+| Phase | Task | Deliverable | Status |
+|-------|------|-------------|--------|
+| 1 | Policy schema (YAML/JSON) + loader | `src/main/resources/policy/medical-confidence-policy.yml` | **Done** |
+| 2 | Wire into `DoctorMatchWorkflowEngine` / `RoutingWorkflowEngine` | Low score → CLARIFY/ESCALATE, not hallucinated match list | **Done** |
+| 3 | Extend `MedicalAgentPolicyGateService` with harness metadata | Review `matchCount`, `verificationResult`, not text only | **Done** |
+| 4 | REST/SSE signal `requiresClinicianReview` | Chat UI + API consumers can show escalation state | **Done** |
+| 5 | Unit + harness IT tests | Frozen scenarios in `src/main/resources/eval/policy-confidence-cases.jsonl` | **Done** |
 
 ## Acceptance criteria
 
-- [ ] Zero-result and below-threshold matches never return confident expert recommendations without CLARIFY/ESCALATE
-- [ ] URGENT cases with low verification pass rate trigger ESCALATE in ≥ 95% of eval scenarios
-- [ ] Policy config change does not require Java recompile (YAML reload or profile-specific file)
-- [ ] `mvn test` green; new `PolicyConfidenceEvalTest` at 100% on JSONL set
+- [x] Zero-result and below-threshold matches never return confident expert recommendations without CLARIFY/ESCALATE
+- [x] URGENT cases with low verification pass rate trigger ESCALATE in ≥ 95% of eval scenarios
+- [x] Policy config change does not require Java recompile (YAML reload or profile-specific file)
+- [x] `mvn test` green; new `PolicyConfidenceEvalTest` at 100% on JSONL set
 
 ## Artifacts
 
@@ -66,7 +66,7 @@ Introduce a first-class **confidence policy router** between retrieval/scoring a
 |----------|----------|
 | Policy config | `src/main/resources/policy/medical-confidence-policy.yml` |
 | Service | `llm/harness/MedicalConfidencePolicyService.java` |
-| Eval JSONL | `src/test/resources/eval/policy-confidence-cases.jsonl` |
+| Eval JSONL | `src/main/resources/eval/policy-confidence-cases.jsonl` |
 | Docs | `docs/HARNESS.md` — Policy Layer section |
 
 ## Effort

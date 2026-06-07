@@ -24,6 +24,8 @@ agent:
       # max-turns / probability are optional nice-to-have triggers (unset = disabled)
 
 spring:
+  config:
+    import: optional:classpath:policy/medical-confidence-policy.yml
   application:
     name: med-expert-match
     version: 1.0.0

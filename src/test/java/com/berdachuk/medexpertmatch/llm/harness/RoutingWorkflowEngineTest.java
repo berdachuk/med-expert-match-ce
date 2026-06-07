@@ -9,6 +9,8 @@ import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImp
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentPolicyGateServiceImpl;
+import com.berdachuk.medexpertmatch.llm.config.MedicalConfidencePolicyProperties;
+import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalConfidencePolicyServiceImpl;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
@@ -53,10 +55,12 @@ class RoutingWorkflowEngineTest {
         AgentPlannerService planner = new AgentPlannerServiceImpl(bundleService, new InMemoryAgentPlanArtefactStore());
         HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
         MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(HarnessProperties.defaults(), metrics);
+        MedicalConfidencePolicyService confidencePolicy = new MedicalConfidencePolicyServiceImpl(
+                MedicalConfidencePolicyProperties.defaults());
 
         RoutingWorkflowEngine engine = new RoutingWorkflowEngine(
                 llmSupport, logStream, routingTools, new AgentResponseVerifierImpl(), policyGate,
-                bundleService, planner, HarnessProperties.defaults(), metrics,
+                confidencePolicy, caseRepository, bundleService, planner, HarnessProperties.defaults(), metrics,
                 new HarnessCheckpointSupport(new InMemoryHarnessWorkflowRunStore(), new com.fasterxml.jackson.databind.ObjectMapper()));
 
         MedicalAgentService.AgentResponse response = engine.execute(

@@ -9,6 +9,8 @@ import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImp
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentPolicyGateServiceImpl;
+import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalConfidencePolicyServiceImpl;
+import com.berdachuk.medexpertmatch.llm.config.MedicalConfidencePolicyProperties;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
@@ -52,6 +54,8 @@ class DoctorMatchWorkflowEngineTest {
         HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
         MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
                 HarnessProperties.defaults(), metrics);
+        MedicalConfidencePolicyService confidencePolicy = new MedicalConfidencePolicyServiceImpl(
+                MedicalConfidencePolicyProperties.defaults());
 
         DoctorMatchWorkflowEngine engine = new DoctorMatchWorkflowEngine(
                 llmSupport,
@@ -61,6 +65,7 @@ class DoctorMatchWorkflowEngineTest {
                 new ObjectMapper(),
                 new AgentResponseVerifierImpl(),
                 policyGate,
+                confidencePolicy,
                 bundleService,
                 planner,
                 HarnessProperties.defaults(),
@@ -74,9 +79,7 @@ class DoctorMatchWorkflowEngineTest {
                 Map.of("sessionId", "test-session"));
 
         assertTrue(response.response().contains("not a substitute"));
-        Object reason = response.metadata().get("harnessFailureReason");
-        assertTrue(HarnessFailureReason.TOOL_OUTPUT_INVALID.name().equals(reason)
-                || HarnessFailureReason.ITERATION_LIMIT.name().equals(reason));
+        assertEquals("CLARIFY", response.metadata().get("policyAction"));
     }
 
     @Test
@@ -102,6 +105,8 @@ class DoctorMatchWorkflowEngineTest {
         HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
         MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
                 HarnessProperties.defaults(), metrics);
+        MedicalConfidencePolicyService confidencePolicy = new MedicalConfidencePolicyServiceImpl(
+                MedicalConfidencePolicyProperties.defaults());
 
         DoctorMatchWorkflowEngine engine = new DoctorMatchWorkflowEngine(
                 llmSupport,
@@ -111,6 +116,7 @@ class DoctorMatchWorkflowEngineTest {
                 new ObjectMapper(),
                 new AgentResponseVerifierImpl(),
                 policyGate,
+                confidencePolicy,
                 bundleService,
                 planner,
                 HarnessProperties.defaults(),

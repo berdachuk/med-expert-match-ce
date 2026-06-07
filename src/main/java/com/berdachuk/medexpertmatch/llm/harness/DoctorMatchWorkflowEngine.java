@@ -1,12 +1,14 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
 import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.DoctorMatchingAgentTools;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
+import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.berdachuk.medexpertmatch.retrieval.repository.ConsultationMatchRepository;
@@ -26,12 +28,6 @@ import java.util.Map;
 @Component
 public class DoctorMatchWorkflowEngine {
 
-    private static final String SAFE_NO_MATCH = """
-            No suitable doctor matches were found for this anonymized case.
-            This output is for research and educational purposes only and is not a substitute \
-            for professional medical advice, diagnosis, or treatment. Always consult qualified \
-            healthcare professionals for medical decisions.""";
-
     private final MedicalAgentLlmSupportService medicalAgentLlmSupportService;
     private final MedicalCaseRepository medicalCaseRepository;
     private final LogStreamService logStreamService;
@@ -39,6 +35,7 @@ public class DoctorMatchWorkflowEngine {
     private final ObjectMapper objectMapper;
     private final AgentResponseVerifier agentResponseVerifier;
     private final MedicalAgentPolicyGateService medicalAgentPolicyGateService;
+    private final MedicalConfidencePolicyService medicalConfidencePolicyService;
     private final CaseContextBundleService caseContextBundleService;
     private final AgentPlannerService agentPlannerService;
     private final HarnessProperties harnessProperties;
@@ -55,6 +52,7 @@ public class DoctorMatchWorkflowEngine {
             ObjectMapper objectMapper,
             AgentResponseVerifier agentResponseVerifier,
             MedicalAgentPolicyGateService medicalAgentPolicyGateService,
+            MedicalConfidencePolicyService medicalConfidencePolicyService,
             CaseContextBundleService caseContextBundleService,
             AgentPlannerService agentPlannerService,
             HarnessProperties harnessProperties,
@@ -69,6 +67,7 @@ public class DoctorMatchWorkflowEngine {
         this.objectMapper = objectMapper;
         this.agentResponseVerifier = agentResponseVerifier;
         this.medicalAgentPolicyGateService = medicalAgentPolicyGateService;
+        this.medicalConfidencePolicyService = medicalConfidencePolicyService;
         this.caseContextBundleService = caseContextBundleService;
         this.agentPlannerService = agentPlannerService;
         this.harnessProperties = harnessProperties;
@@ -125,18 +124,11 @@ public class DoctorMatchWorkflowEngine {
             log.warn("Doctor match verify failed for case {} attempt {}: {}", caseId, attempt, verification.violations());
         }
 
-        if (!verification.passed()) {
-            transition(sessionId, DoctorMatchWorkflowState.FAILED, "Verify failed");
-            HarnessFailureReason failureReason = verification.reasonCode() != null
-                    ? verification.reasonCode()
-                    : HarnessFailureReason.TOOL_OUTPUT_INVALID;
-            if (attempt >= policy.maxIterations() && policy.retryOnVerifyFail()) {
-                failureReason = HarnessFailureReason.ITERATION_LIMIT;
-            }
-            Map<String, Object> metadata = failureMetadata(caseId, matches, verification, failureReason);
-            logStreamService.logCompletion(sessionId, "Match doctors operation",
-                    "Harness verify failed for case: " + caseId);
-            return new MedicalAgentService.AgentResponse(SAFE_NO_MATCH, metadata);
+        UrgencyLevel urgency = resolveUrgency(caseId);
+        MedicalAgentService.AgentResponse policyResponse = applyConfidencePolicy(
+                caseId, sessionId, matches, verification, urgency, bundle);
+        if (policyResponse != null) {
+            return policyResponse;
         }
 
         if (harnessProperties.humanCheckpointEnabled()) {
@@ -221,6 +213,7 @@ public class DoctorMatchWorkflowEngine {
 
             transition(sessionId, DoctorMatchWorkflowState.POLICY_GATE, "Policy gate review");
             Map<String, Object> metadata = successMetadata(caseId, matches, bundle);
+            metadata.put("verificationPassed", true);
             MedicalAgentPolicyGateService.PolicyGateResult policyGate =
                     medicalAgentPolicyGateService.review(response, metadata);
             if (!policyGate.approved()) {
@@ -253,6 +246,42 @@ public class DoctorMatchWorkflowEngine {
         List<String> excluded = new ArrayList<>(consultationMatchRepository.findDoctorIdsByCaseId(caseId));
         log.info("Follow-up doctor match for case {} excluding {} prior doctor(s)", caseId, excluded.size());
         return excluded;
+    }
+
+    private UrgencyLevel resolveUrgency(String caseId) {
+        return medicalCaseRepository.findById(caseId)
+                .map(MedicalCase::urgencyLevel)
+                .orElse(UrgencyLevel.MEDIUM);
+    }
+
+    private MedicalAgentService.AgentResponse applyConfidencePolicy(
+            String caseId,
+            String sessionId,
+            List<DoctorMatch> matches,
+            VerificationResult verification,
+            UrgencyLevel urgency,
+            CaseContextBundle bundle) {
+        int matchCount = matches != null ? matches.size() : 0;
+        ConfidencePolicyInput input = new ConfidencePolicyInput(
+                matchCount,
+                ConfidencePolicySupport.topDoctorMatchScore(matches),
+                verification.passed(),
+                urgency,
+                GoalType.MATCH_DOCTORS,
+                false);
+        ConfidencePolicyDecision decision = medicalConfidencePolicyService.decide(input);
+        if (decision.action() == PolicyAction.ANSWER) {
+            return null;
+        }
+        transition(sessionId, DoctorMatchWorkflowState.FAILED,
+                "Confidence policy " + decision.action() + ": " + decision.reason());
+        logStreamService.logCompletion(sessionId, "Match doctors operation",
+                "Confidence policy " + decision.action() + " for case: " + caseId);
+        Map<String, Object> base = verification.passed()
+                ? successMetadata(caseId, matches, bundle)
+                : failureMetadata(caseId, matches, verification,
+                verification.reasonCode() != null ? verification.reasonCode() : HarnessFailureReason.TOOL_OUTPUT_INVALID);
+        return ConfidencePolicySupport.toAgentResponse(decision, caseId, matchCount, verification, base);
     }
 
     private static Map<String, Object> successMetadata(String caseId, List<DoctorMatch> matches, CaseContextBundle bundle) {

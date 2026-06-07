@@ -32,6 +32,11 @@ public class MedicalAgentPolicyGateServiceImpl implements MedicalAgentPolicyGate
         if (!harnessProperties.policyGateEnabled()) {
             return new PolicyGateResult(true, responseText, null, null);
         }
+        PolicyGateResult harnessMetadataResult = reviewHarnessMetadata(metadata);
+        if (harnessMetadataResult != null) {
+            harnessMetrics.recordPolicyGateFailure(harnessMetadataResult.reason().name());
+            return harnessMetadataResult;
+        }
         if (responseText == null || responseText.isBlank()) {
             harnessMetrics.recordPolicyGateFailure(HarnessFailureReason.POLICY_GATE_REJECTED.name());
             return new PolicyGateResult(false, SAFE_FALLBACK, HarnessFailureReason.POLICY_GATE_REJECTED, "empty response");
@@ -49,6 +54,29 @@ public class MedicalAgentPolicyGateServiceImpl implements MedicalAgentPolicyGate
                     + "for professional medical advice, diagnosis, or treatment.";
         }
         return new PolicyGateResult(true, finalText, null, null);
+    }
+
+    private PolicyGateResult reviewHarnessMetadata(Map<String, Object> metadata) {
+        if (metadata == null || metadata.isEmpty()) {
+            return null;
+        }
+        Object verificationPassed = metadata.get("verificationPassed");
+        if (verificationPassed instanceof Boolean passed && !passed) {
+            return new PolicyGateResult(false, SAFE_FALLBACK, HarnessFailureReason.POLICY_GATE_REJECTED,
+                    "verification not passed");
+        }
+        Object matchCount = metadata.get("matchCount");
+        if (matchCount instanceof Number count && count.intValue() == 0) {
+            Object doctorCount = metadata.get("doctorMatchCount");
+            Object facilityCount = metadata.get("facilityMatchCount");
+            int doctors = doctorCount instanceof Number n ? n.intValue() : -1;
+            int facilities = facilityCount instanceof Number n ? n.intValue() : -1;
+            if (doctors == 0 || facilities == 0 || (doctors < 0 && facilities < 0 && count.intValue() == 0)) {
+                return new PolicyGateResult(false, SAFE_FALLBACK, HarnessFailureReason.POLICY_GATE_REJECTED,
+                        "zero matches in metadata");
+            }
+        }
+        return null;
     }
 
     private static boolean containsDisclaimer(String lower) {

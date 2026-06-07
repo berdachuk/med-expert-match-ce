@@ -584,7 +584,12 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                     ? engineResponse.metadata().getOrDefault("doctorMatchCount",
                     engineResponse.metadata().getOrDefault("facilityMatchCount", 0))
                     : 0;
-            sendHarnessProgress(sessionId, engineName, "DONE", "Completed — " + matchCount + " matches found");
+            boolean requiresClinicianReview = engineResponse.metadata() != null
+                    && Boolean.TRUE.equals(engineResponse.metadata().get("requiresClinicianReview"));
+            String progressDetail = requiresClinicianReview
+                    ? "Clinician review required — " + matchCount + " matches found"
+                    : "Completed — " + matchCount + " matches found";
+            sendHarnessProgress(sessionId, engineName, requiresClinicianReview ? "ESCALATE" : "DONE", progressDetail);
 
             String responseText = formatHarnessReply(languageTurn, engineResponse.response());
             ChatMessage assistantMessage = chatService.appendAssistantMessage(chatId, userId, responseText);

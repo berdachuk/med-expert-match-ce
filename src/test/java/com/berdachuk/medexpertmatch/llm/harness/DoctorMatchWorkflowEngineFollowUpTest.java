@@ -8,6 +8,8 @@ import com.berdachuk.medexpertmatch.llm.harness.impl.AgentResponseVerifierImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.CaseContextBundleServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryAgentPlanArtefactStore;
 import com.berdachuk.medexpertmatch.llm.harness.impl.InMemoryHarnessWorkflowRunStore;
+import com.berdachuk.medexpertmatch.llm.config.MedicalConfidencePolicyProperties;
+import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalConfidencePolicyServiceImpl;
 import com.berdachuk.medexpertmatch.llm.harness.impl.MedicalAgentPolicyGateServiceImpl;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -114,6 +116,8 @@ class DoctorMatchWorkflowEngineFollowUpTest {
         HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
         MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
                 HarnessProperties.defaults(), metrics);
+        MedicalConfidencePolicyService confidencePolicy = new MedicalConfidencePolicyServiceImpl(
+                MedicalConfidencePolicyProperties.defaults());
 
         return new DoctorMatchWorkflowEngine(
                 llmSupport,
@@ -123,6 +127,7 @@ class DoctorMatchWorkflowEngineFollowUpTest {
                 new ObjectMapper(),
                 new AgentResponseVerifierImpl(),
                 policyGate,
+                confidencePolicy,
                 bundleService,
                 planner,
                 HarnessProperties.defaults(),

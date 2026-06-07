@@ -1,10 +1,14 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentLlmSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
 import com.berdachuk.medexpertmatch.llm.tools.RoutingAgentTools;
+import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
+import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
+import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.FacilityMatch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,17 +21,13 @@ import java.util.Map;
 @Component
 public class RoutingWorkflowEngine {
 
-    private static final String SAFE_NO_ROUTE = """
-            No suitable facility routes were found for this anonymized case.
-            This output is for research and educational purposes only and is not a substitute \
-            for professional medical advice, diagnosis, or treatment. Always consult qualified \
-            healthcare professionals for medical decisions.""";
-
     private final MedicalAgentLlmSupportService medicalAgentLlmSupportService;
     private final LogStreamService logStreamService;
     private final RoutingAgentTools routingAgentTools;
     private final AgentResponseVerifier agentResponseVerifier;
     private final MedicalAgentPolicyGateService medicalAgentPolicyGateService;
+    private final MedicalConfidencePolicyService medicalConfidencePolicyService;
+    private final MedicalCaseRepository medicalCaseRepository;
     private final CaseContextBundleService caseContextBundleService;
     private final AgentPlannerService agentPlannerService;
     private final HarnessProperties harnessProperties;
@@ -40,6 +40,8 @@ public class RoutingWorkflowEngine {
             RoutingAgentTools routingAgentTools,
             AgentResponseVerifier agentResponseVerifier,
             MedicalAgentPolicyGateService medicalAgentPolicyGateService,
+            MedicalConfidencePolicyService medicalConfidencePolicyService,
+            MedicalCaseRepository medicalCaseRepository,
             CaseContextBundleService caseContextBundleService,
             AgentPlannerService agentPlannerService,
             HarnessProperties harnessProperties,
@@ -50,6 +52,8 @@ public class RoutingWorkflowEngine {
         this.routingAgentTools = routingAgentTools;
         this.agentResponseVerifier = agentResponseVerifier;
         this.medicalAgentPolicyGateService = medicalAgentPolicyGateService;
+        this.medicalConfidencePolicyService = medicalConfidencePolicyService;
+        this.medicalCaseRepository = medicalCaseRepository;
         this.caseContextBundleService = caseContextBundleService;
         this.agentPlannerService = agentPlannerService;
         this.harnessProperties = harnessProperties;
@@ -98,18 +102,11 @@ public class RoutingWorkflowEngine {
             }
         }
 
-        if (!verification.passed() && minMatches > 0) {
-            transition(sessionId, DoctorMatchWorkflowState.FAILED, "Routing verify failed");
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("caseId", caseId);
-            metadata.put("facilityMatchCount", matches != null ? matches.size() : 0);
-            metadata.put("harnessFailureReason",
-                    attempt >= policy.maxIterations() && policy.retryOnVerifyFail()
-                            ? HarnessFailureReason.ITERATION_LIMIT.name()
-                            : verification.reasonCode().name());
-            metadata.put("harnessViolations", verification.violations());
-            metadata.put("harnessState", DoctorMatchWorkflowState.FAILED.name());
-            return new MedicalAgentService.AgentResponse(SAFE_NO_ROUTE, metadata);
+        UrgencyLevel urgency = resolveUrgency(caseId);
+        MedicalAgentService.AgentResponse policyResponse = applyConfidencePolicy(
+                caseId, sessionId, matches, verification, urgency, bundle);
+        if (policyResponse != null) {
+            return policyResponse;
         }
 
         if (harnessProperties.humanCheckpointEnabled()) {
@@ -153,6 +150,7 @@ public class RoutingWorkflowEngine {
         transition(sessionId, DoctorMatchWorkflowState.POLICY_GATE, "Policy gate review");
         Map<String, Object> metadata = baseMetadata(caseId, matches, bundle);
         metadata.put("harnessState", DoctorMatchWorkflowState.DONE.name());
+        metadata.put("verificationPassed", true);
 
         MedicalAgentPolicyGateService.PolicyGateResult policyGate = medicalAgentPolicyGateService.review(response, metadata);
         if (!policyGate.approved()) {
@@ -164,6 +162,43 @@ public class RoutingWorkflowEngine {
 
         transition(sessionId, DoctorMatchWorkflowState.DONE, "Routing complete");
         return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
+    }
+
+    private UrgencyLevel resolveUrgency(String caseId) {
+        return medicalCaseRepository.findById(caseId)
+                .map(MedicalCase::urgencyLevel)
+                .orElse(UrgencyLevel.MEDIUM);
+    }
+
+    private MedicalAgentService.AgentResponse applyConfidencePolicy(
+            String caseId,
+            String sessionId,
+            List<FacilityMatch> matches,
+            VerificationResult verification,
+            UrgencyLevel urgency,
+            CaseContextBundle bundle) {
+        int matchCount = matches != null ? matches.size() : 0;
+        ConfidencePolicyInput input = new ConfidencePolicyInput(
+                matchCount,
+                ConfidencePolicySupport.topFacilityMatchScore(matches),
+                verification.passed(),
+                urgency,
+                GoalType.ROUTE_CASE,
+                false);
+        ConfidencePolicyDecision decision = medicalConfidencePolicyService.decide(input);
+        if (decision.action() == PolicyAction.ANSWER) {
+            return null;
+        }
+        transition(sessionId, DoctorMatchWorkflowState.FAILED,
+                "Confidence policy " + decision.action() + ": " + decision.reason());
+        Map<String, Object> base = baseMetadata(caseId, matches, bundle);
+        if (!verification.passed()) {
+            base.put("harnessFailureReason", verification.reasonCode() != null
+                    ? verification.reasonCode().name()
+                    : HarnessFailureReason.TOOL_OUTPUT_INVALID.name());
+            base.put("harnessViolations", verification.violations());
+        }
+        return ConfidencePolicySupport.toAgentResponse(decision, caseId, matchCount, verification, base);
     }
 
     private static Map<String, Object> baseMetadata(String caseId, List<FacilityMatch> matches, CaseContextBundle bundle) {

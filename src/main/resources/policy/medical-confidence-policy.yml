@@ -1,0 +1,16 @@
+# Medical confidence policy thresholds (M61).
+# Override via profile-specific copy or env without Java recompile.
+# Loaded via spring.config.import in application.yml.
+
+medexpertmatch:
+  llm:
+    harness:
+      confidence-policy:
+        enabled: ${MEDEXPERTMATCH_LLM_HARNESS_CONFIDENCE_POLICY_ENABLED:true}
+        min-top-match-score: ${MEDEXPERTMATCH_LLM_HARNESS_CONFIDENCE_MIN_TOP_SCORE:50.0}
+        borderline-score: ${MEDEXPERTMATCH_LLM_HARNESS_CONFIDENCE_BORDERLINE_SCORE:70.0}
+        urgent-levels:
+          - CRITICAL
+          - HIGH
+        escalate-on-urgent-verify-fail: ${MEDEXPERTMATCH_LLM_HARNESS_CONFIDENCE_ESCALATE_ON_URGENT_VERIFY_FAIL:true}
+        clarify-on-zero-matches: ${MEDEXPERTMATCH_LLM_HARNESS_CONFIDENCE_CLARIFY_ON_ZERO_MATCHES:true}

@@ -30,6 +30,8 @@ Prometheus (`/actuator/prometheus`):
 
 `llm.tokens.total` API exists in `LlmRoutingMetrics`; wiring from provider responses is planned.
 
+Release gate: [RELEASE_GATE.md](RELEASE_GATE.md) — `./scripts/run-eval-flywheel.sh`
+
 ## References
 
 - [M64 ADR](../decisions/M64-cost-quality-tier-routing.md)

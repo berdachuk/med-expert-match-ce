@@ -37,4 +37,14 @@ class MedicalAgentPolicyGateServiceTest {
         assertFalse(result.approved());
         assertEquals(HarnessFailureReason.POLICY_VIOLATION, result.reason());
     }
+
+    @Test
+    @DisplayName("rejects when harness metadata reports zero matches")
+    void rejectsZeroMatchMetadata() {
+        MedicalAgentPolicyGateService.PolicyGateResult result = policyGate.review(
+                "Top matches include cardiology specialists.",
+                Map.of("matchCount", 0, "doctorMatchCount", 0, "verificationPassed", true));
+        assertFalse(result.approved());
+        assertEquals(HarnessFailureReason.POLICY_GATE_REJECTED, result.reason());
+    }
 }
