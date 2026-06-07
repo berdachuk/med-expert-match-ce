@@ -675,8 +675,13 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private static Map<String, Object> buildHarnessRequest(String sessionId, String userMessage) {
         Map<String, Object> request = new HashMap<>();
         request.put("sessionId", sessionId);
+        if (GoalClassifier.requestsShowAllMatches(userMessage)) {
+            request.put("broadenMatchSearch", true);
+            request.put("operatorDisplayOverride", true);
+        }
         if (GoalClassifier.requestsMoreDoctors(userMessage)) {
             request.put("excludePreviouslyMatched", true);
+            request.put("broadenMatchSearch", true);
         }
         return request;
     }

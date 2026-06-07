@@ -239,7 +239,8 @@ public class MatchingServiceImpl implements MatchingService {
         List<String> excludedDoctorIds = options.excludedDoctorIds() != null
                 ? options.excludedDoctorIds()
                 : List.of();
-        boolean broadenSearch = !excludedDoctorIds.isEmpty();
+        boolean broadenSearch = Boolean.TRUE.equals(options.broadenCandidatePool())
+                || !excludedDoctorIds.isEmpty();
 
         if (broadenSearch) {
             int poolSize = Math.max(options.maxResults() * 10, 50);
@@ -251,14 +252,18 @@ public class MatchingServiceImpl implements MatchingService {
                 candidates.addAll(doctors);
             }
         } else if (medicalCase.requiredSpecialty() != null) {
-            // Use case's required specialty
             List<Doctor> doctors = doctorRepository.findBySpecialty(
                     medicalCase.requiredSpecialty(),
                     options.maxResults() * 2
             );
             candidates.addAll(doctors);
+            if (candidates.isEmpty()) {
+                log.warn("No doctors for required specialty '{}'; falling back to full pool for case {}",
+                        medicalCase.requiredSpecialty(), medicalCase.id());
+                int poolSize = Math.max(options.maxResults() * 10, 50);
+                candidates.addAll(doctorRepository.findByIds(doctorRepository.findAllIds(poolSize)));
+            }
         } else {
-            // Fallback: get all doctors (limited)
             List<String> doctorIds = doctorRepository.findAllIds(options.maxResults() * 2);
             candidates.addAll(doctorRepository.findByIds(doctorIds));
         }

@@ -37,7 +37,12 @@ public record MatchOptions(
         /**
          * Doctor IDs already shown for this case; excluded from new match results.
          */
-        List<String> excludedDoctorIds
+        List<String> excludedDoctorIds,
+
+        /**
+         * When true, search the full doctor pool (ignore case required specialty filter).
+         */
+        Boolean broadenCandidatePool
 ) {
     public MatchOptions {
         if (maxResults <= 0) {

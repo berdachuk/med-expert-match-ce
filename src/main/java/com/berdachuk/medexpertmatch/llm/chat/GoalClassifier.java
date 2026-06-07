@@ -53,6 +53,12 @@ public class GoalClassifier {
                     + "(?:doctor|doctors|specialist|specialists)\\b",
             Pattern.CASE_INSENSITIVE);
 
+    private static final Pattern SHOW_ALL_MATCHES = Pattern.compile(
+            "(?:^|\\b)(?:show|list|display|see|view)\\s+(?:me\\s+)?(?:all|every(?:one)?|full\\s+list|everything)"
+                    + "(?:\\s+(?:doctor|doctors|specialist|specialists|match(?:es)?|result(?:s)?|candidates?))?"
+                    + "\\b|^all\\s+(?:doctor|doctors|specialist|specialists|match(?:es)?|results?)\\b",
+            Pattern.CASE_INSENSITIVE);
+
     private static final Pattern RUSSIAN_MORE_DOCTORS = Pattern.compile(
             "(?:найди|покажи|дай|подбери).{0,24}(?:ещё|еще).{0,24}(?:доктор|врач|специалист)",
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -86,6 +92,13 @@ public class GoalClassifier {
         String trimmed = message.trim();
         return MATCH_MORE_DOCTORS.matcher(trimmed).find()
                 || RUSSIAN_MORE_DOCTORS.matcher(trimmed).find();
+    }
+
+    public static boolean requestsShowAllMatches(String message) {
+        if (message == null || message.isBlank()) {
+            return false;
+        }
+        return SHOW_ALL_MATCHES.matcher(message.trim()).find();
     }
 
     public GoalClassification classify(String userMessage) {
@@ -309,7 +322,7 @@ public class GoalClassifier {
             "yes", "yeah", "yep", "ok", "okay", "sure");
 
     private GoalType resolveFollowUpGoal(String message, GoalType lastGoal) {
-        if (requestsMoreDoctors(message)) {
+        if (requestsMoreDoctors(message) || requestsShowAllMatches(message)) {
             return GoalType.MATCH_DOCTORS;
         }
         if (lastGoal != GoalType.MATCH_DOCTORS && lastGoal != GoalType.ROUTE_CASE) {
@@ -340,6 +353,9 @@ public class GoalClassifier {
             return true;
         }
         if (requestsMoreDoctors(trimmed)) {
+            return true;
+        }
+        if (requestsShowAllMatches(trimmed)) {
             return true;
         }
         if (FOLLOW_UP_PHRASING.matcher(trimmed).find()) {

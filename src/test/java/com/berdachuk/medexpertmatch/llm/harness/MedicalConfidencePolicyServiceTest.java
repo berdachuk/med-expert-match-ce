@@ -16,6 +16,15 @@ class MedicalConfidencePolicyServiceTest {
             new MedicalConfidencePolicyServiceImpl(MedicalConfidencePolicyProperties.defaults());
 
     @Test
+    @DisplayName("operator show-all override clarifies with matches despite urgent verify failure")
+    void operatorShowAllOverrideClarifiesDespiteUrgentVerifyFail() {
+        ConfidencePolicyDecision decision = policyService.decide(new ConfidencePolicyInput(
+                3, 55.0, false, UrgencyLevel.CRITICAL, GoalType.MATCH_DOCTORS, false, true));
+        assertEquals(PolicyAction.CLARIFY, decision.action());
+        assertEquals("operator_show_all", decision.reason());
+    }
+
+    @Test
     @DisplayName("zero matches with failed verify returns CLARIFY for non-urgent cases")
     void zeroMatchesClarify() {
         ConfidencePolicyDecision decision = policyService.decide(new ConfidencePolicyInput(

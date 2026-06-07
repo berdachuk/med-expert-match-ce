@@ -30,6 +30,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -57,8 +58,8 @@ class DoctorMatchWorkflowEngineFollowUpTest {
 
         when(consultationMatchRepository.findDoctorIdsByCaseId(CASE_ID)).thenReturn(List.of("doc-1"));
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(
-                eq(CASE_ID), anyInt(), isNull(), isNull(), isNull(), eq(List.of("doc-1"))))
+        when(matchingTools.matchDoctorsForHarness(
+                eq(CASE_ID), anyInt(), isNull(), eq(List.of("doc-1")), anyBoolean()))
                 .thenReturn(List.of(match));
         when(caseRepository.findById(anyString())).thenReturn(Optional.empty());
         when(llmSupport.interpretResultsWithMedGemma(anyString(), anyString(), any()))
@@ -72,8 +73,8 @@ class DoctorMatchWorkflowEngineFollowUpTest {
                 "excludePreviouslyMatched", true));
 
         verify(consultationMatchRepository).findDoctorIdsByCaseId(CASE_ID);
-        verify(matchingTools).match_doctors_to_case(
-                eq(CASE_ID), anyInt(), isNull(), isNull(), isNull(), eq(List.of("doc-1")));
+        verify(matchingTools).matchDoctorsForHarness(
+                eq(CASE_ID), anyInt(), isNull(), eq(List.of("doc-1")), anyBoolean());
     }
 
     @Test
@@ -89,7 +90,7 @@ class DoctorMatchWorkflowEngineFollowUpTest {
         DoctorMatch match = new DoctorMatch(doctor, 90.0, 1, "fit");
 
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), anyList()))
+        when(matchingTools.matchDoctorsForHarness(anyString(), anyInt(), any(), any(), anyBoolean()))
                 .thenReturn(List.of(match));
         when(caseRepository.findById(anyString())).thenReturn(Optional.empty());
         when(llmSupport.interpretResultsWithMedGemma(anyString(), anyString(), any()))

@@ -34,6 +34,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -49,7 +50,7 @@ class DoctorMatchWorkflowEngineTest {
         LogStreamService logStream = mock(LogStreamService.class);
         DoctorMatchingAgentTools matchingTools = mock(DoctorMatchingAgentTools.class);
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
+        when(matchingTools.matchDoctorsForHarness(anyString(), anyInt(), any(), any(), anyBoolean()))
                 .thenReturn(List.of());
 
         CaseContextBundleService bundleService = new CaseContextBundleServiceImpl(caseRepository);
@@ -98,7 +99,7 @@ class DoctorMatchWorkflowEngineTest {
         Doctor doctor = new Doctor("d1", "Dr. Lee", null, List.of("Cardiology"), List.of(), List.of(), false, null);
         DoctorMatch match = new DoctorMatch(doctor, 90.0, 1, "fit");
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
+        when(matchingTools.matchDoctorsForHarness(anyString(), anyInt(), any(), any(), anyBoolean()))
                 .thenReturn(List.of(match));
         when(caseRepository.findById(anyString())).thenReturn(Optional.empty());
         when(llmSupport.interpretResultsWithMedGemma(anyString(), anyString(), any()))
@@ -151,7 +152,7 @@ class DoctorMatchWorkflowEngineTest {
         Doctor doctor = new Doctor("d1", "Dr. Lee", null, List.of("Neurology"), List.of(), List.of(), false, null);
         DoctorMatch match = new DoctorMatch(doctor, 46.0, 1, "borderline fit");
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
+        when(matchingTools.matchDoctorsForHarness(anyString(), anyInt(), any(), any(), anyBoolean()))
                 .thenReturn(List.of(match));
         when(caseRepository.findById(anyString())).thenReturn(Optional.empty());
         when(llmSupport.interpretResultsWithMedGemma(anyString(), anyString(), any()))
@@ -209,7 +210,7 @@ class DoctorMatchWorkflowEngineTest {
         Doctor doctor = new Doctor("d1", "Dr. Urgent", null, List.of("Neurology"), List.of(), List.of(), false, null);
         DoctorMatch match = new DoctorMatch(doctor, 46.0, 1, "urgent low");
         when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
-        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
+        when(matchingTools.matchDoctorsForHarness(anyString(), anyInt(), any(), any(), anyBoolean()))
                 .thenReturn(List.of(match));
         when(caseRepository.findById(caseId)).thenReturn(Optional.of(
                 new MedicalCase(caseId, 40, "Seizure", "Seizure", "Epilepsy", List.of("G40.9"),

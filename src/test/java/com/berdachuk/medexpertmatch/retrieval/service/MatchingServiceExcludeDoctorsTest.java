@@ -121,6 +121,60 @@ class MatchingServiceExcludeDoctorsTest {
     }
 
     @Test
+    @DisplayName("empty required specialty pool falls back to full doctor pool")
+    void fallsBackWhenRequiredSpecialtyHasNoDoctors() {
+        MedicalCase medicalCase = new MedicalCase(
+                CASE_ID, 30, "Chest pain", null, null, List.of(), List.of(),
+                null, "RareSpecialty", null, null, null, null, null);
+        Doctor doctor = new Doctor("doc-1", "Dr. One", null, List.of("General Medicine"),
+                List.of(), List.of(), false, null);
+
+        when(medicalCaseRepository.findById(CASE_ID)).thenReturn(Optional.of(medicalCase));
+        when(doctorRepository.findBySpecialty("RareSpecialty", 20)).thenReturn(List.of());
+        when(doctorRepository.findAllIds(anyInt())).thenReturn(List.of("doc-1"));
+        when(doctorRepository.findByIds(List.of("doc-1"))).thenReturn(List.of(doctor));
+        when(semanticGraphRetrievalService.score(medicalCase, doctor))
+                .thenReturn(new ScoreResult(80.0, 90.0, 70.0, 60.0, "fit"));
+        when(rerankingService.rerank(eq(CASE_ID), any(), eq(10)))
+                .thenAnswer(invocation -> invocation.getArgument(1));
+
+        List<DoctorMatch> matches = matchingService.matchDoctorsToCase(CASE_ID, MatchOptions.defaultOptions());
+
+        assertEquals(1, matches.size());
+        assertEquals("doc-1", matches.getFirst().doctor().id());
+        verify(doctorRepository).findAllIds(anyInt());
+    }
+
+    @Test
+    @DisplayName("broadenCandidatePool uses full doctor pool without exclusions")
+    void broadenCandidatePoolUsesFullPool() {
+        MedicalCase medicalCase = new MedicalCase(
+                CASE_ID, 30, "Chest pain", null, null, List.of(), List.of(),
+                null, "Cardiology", null, null, null, null, null);
+        Doctor surgeon = new Doctor("doc-surgery", "Dr. Surgery", null, List.of("Surgery"),
+                List.of(), List.of(), false, null);
+
+        when(medicalCaseRepository.findById(CASE_ID)).thenReturn(Optional.of(medicalCase));
+        when(doctorRepository.findAllIds(anyInt())).thenReturn(List.of("doc-surgery"));
+        when(doctorRepository.findByIds(List.of("doc-surgery"))).thenReturn(List.of(surgeon));
+        when(semanticGraphRetrievalService.score(eq(medicalCase), any(Doctor.class)))
+                .thenReturn(new ScoreResult(70.0, 80.0, 60.0, 50.0, "fit"));
+        when(rerankingService.rerank(eq(CASE_ID), any(), eq(10)))
+                .thenAnswer(invocation -> invocation.getArgument(1));
+
+        MatchOptions options = MatchOptions.builder()
+                .maxResults(10)
+                .broadenCandidatePool(true)
+                .build();
+
+        List<DoctorMatch> matches = matchingService.matchDoctorsToCase(CASE_ID, options);
+
+        assertEquals(1, matches.size());
+        assertEquals("doc-surgery", matches.getFirst().doctor().id());
+        verify(doctorRepository, never()).findBySpecialty(any(), anyInt());
+    }
+
+    @Test
     @DisplayName("first match without exclusions replaces persisted consultation matches")
     void replacesConsultationMatchesOnFirstMatch() {
         MedicalCase medicalCase = new MedicalCase(

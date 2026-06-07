@@ -13,6 +13,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ConfidencePolicySupportTest {
 
     @Test
+    @DisplayName("operator show-all CLARIFY includes matches even when verify failed")
+    void operatorShowAllIncludesMatchesDespiteVerifyFail() {
+        ConfidencePolicyDecision decision = new ConfidencePolicyDecision(
+                PolicyAction.CLARIFY, "operator_show_all", "Showing all matches.");
+        assertTrue(ConfidencePolicySupport.shouldIncludeMatchesInResponse(decision, 3, false));
+    }
+
+    @Test
     @DisplayName("CLARIFY with verified matches should include match list in response")
     void clarifyWithMatchesIncludesList() {
         ConfidencePolicyDecision decision = new ConfidencePolicyDecision(

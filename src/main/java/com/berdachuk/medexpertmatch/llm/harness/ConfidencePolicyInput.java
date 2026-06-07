@@ -12,7 +12,8 @@ public record ConfidencePolicyInput(
         boolean verificationPassed,
         UrgencyLevel urgencyLevel,
         GoalType goalType,
-        boolean insufficientGrounding) {
+        boolean insufficientGrounding,
+        boolean operatorDisplayOverride) {
 
     public ConfidencePolicyInput {
         if (urgencyLevel == null) {
@@ -21,5 +22,15 @@ public record ConfidencePolicyInput(
         if (goalType == null) {
             goalType = GoalType.MATCH_DOCTORS;
         }
+    }
+
+    public ConfidencePolicyInput(
+            int matchCount,
+            double topMatchScore,
+            boolean verificationPassed,
+            UrgencyLevel urgencyLevel,
+            GoalType goalType,
+            boolean insufficientGrounding) {
+        this(matchCount, topMatchScore, verificationPassed, urgencyLevel, goalType, insufficientGrounding, false);
     }
 }

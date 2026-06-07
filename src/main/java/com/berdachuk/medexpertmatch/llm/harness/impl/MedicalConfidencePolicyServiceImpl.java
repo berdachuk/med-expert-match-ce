@@ -33,6 +33,12 @@ public class MedicalConfidencePolicyServiceImpl implements MedicalConfidencePoli
                     """ + DISCLAIMER);
         }
         if (!input.verificationPassed()) {
+            if (input.operatorDisplayOverride() && input.matchCount() > 0) {
+                return clarify("operator_show_all", """
+                        Showing all available ranked matches for review. Confidence verification did not fully pass — \
+                        treat these as research candidates only.
+                        """ + DISCLAIMER);
+            }
             if (isUrgent(input.urgencyLevel()) && properties.escalateOnUrgentVerifyFail()) {
                 return escalate("urgent_verify_failed", """
                         Match verification did not pass for this urgent case. A clinician should review \

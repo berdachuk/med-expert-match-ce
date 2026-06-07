@@ -85,6 +85,8 @@ public class DoctorMatchWorkflowEngine implements DoctorMatchCheckpointResumer {
         String sessionId = (String) request.getOrDefault("sessionId", "default");
         Integer maxResults = (Integer) request.getOrDefault("maxResults", 10);
         List<String> excludedDoctorIds = resolveExcludedDoctorIds(caseId, request);
+        boolean broadenSearch = Boolean.TRUE.equals(request.get("broadenMatchSearch"));
+        boolean operatorDisplayOverride = Boolean.TRUE.equals(request.get("operatorDisplayOverride"));
         HarnessIterationPolicy policy = harnessProperties.iterationPolicy();
         int minMatches = harnessProperties.doctorMatchMinMatches();
 
@@ -109,8 +111,8 @@ public class DoctorMatchWorkflowEngine implements DoctorMatchCheckpointResumer {
             logStreamService.sendLog(sessionId, "INFO", "Step 1: LLM case analysis", "Analyzing case with LLM");
             caseAnalysisJson = medicalAgentLlmSupportService.analyzeCaseWithMedGemma(caseId);
 
-            matches = doctorMatchingAgentTools.match_doctors_to_case(
-                    caseId, maxResults, null, null, null, excludedDoctorIds);
+            matches = doctorMatchingAgentTools.matchDoctorsForHarness(
+                    caseId, maxResults, null, excludedDoctorIds, broadenSearch);
 
             transition(sessionId, DoctorMatchWorkflowState.VERIFYING, "Verifying tool output");
             harnessMetrics.recordVerifyAttempt();
@@ -125,13 +127,18 @@ public class DoctorMatchWorkflowEngine implements DoctorMatchCheckpointResumer {
             if (!policy.retryOnVerifyFail() || attempt >= policy.maxIterations()) {
                 break;
             }
+            if (!broadenSearch && attempt == 1) {
+                broadenSearch = true;
+                log.info("Doctor match verify failed for case {} — retrying with broadened pool", caseId);
+                continue;
+            }
             log.warn("Doctor match verify failed for case {} attempt {}: {}", caseId, attempt, verification.violations());
         }
 
         UrgencyLevel urgency = resolveUrgency(caseId);
         int matchCount = matches != null ? matches.size() : 0;
         ConfidencePolicyDecision confidenceDecision = evaluateConfidencePolicy(
-                matchCount, matches, verification, urgency);
+                matchCount, matches, verification, urgency, operatorDisplayOverride);
         if (HumanAdjudicationSupport.shouldPauseForAdjudication(harnessProperties, confidenceDecision)) {
             return pauseForHumanReview(
                     caseId, sessionId, maxResults, matches, caseAnalysisJson, bundle, confidenceDecision);
@@ -295,14 +302,16 @@ public class DoctorMatchWorkflowEngine implements DoctorMatchCheckpointResumer {
             int matchCount,
             List<DoctorMatch> matches,
             VerificationResult verification,
-            UrgencyLevel urgency) {
+            UrgencyLevel urgency,
+            boolean operatorDisplayOverride) {
         ConfidencePolicyInput input = new ConfidencePolicyInput(
                 matchCount,
                 ConfidencePolicySupport.topDoctorMatchScore(matches),
                 verification.passed(),
                 urgency,
                 GoalType.MATCH_DOCTORS,
-                false);
+                false,
+                operatorDisplayOverride);
         return medicalConfidencePolicyService.decide(input);
     }
 

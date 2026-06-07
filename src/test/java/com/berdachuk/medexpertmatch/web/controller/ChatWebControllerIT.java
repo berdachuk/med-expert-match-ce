@@ -43,4 +43,16 @@ class ChatWebControllerIT extends BaseIntegrationTest {
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"deleteAllDataModal\"")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"lifecycleToast\"")));
     }
+
+    @Test
+    @DisplayName("Chat page renders localized mode picker labels")
+    void includesLocalizedChatModeLabels() throws Exception {
+        mockMvc.perform(get("/chat")
+                        .header(HeaderBasedUserContext.USER_ID_HEADER, "chat-mode-i18n-user"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Quick question")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Expert match")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("data-cost-quick")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("??chat.mode."))));
+    }
 }

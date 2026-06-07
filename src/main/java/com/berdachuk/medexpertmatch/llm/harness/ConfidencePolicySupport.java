@@ -40,7 +40,7 @@ public final class ConfidencePolicySupport {
         return decision != null
                 && decision.action() == PolicyAction.CLARIFY
                 && matchCount > 0
-                && verificationPassed;
+                && (verificationPassed || "operator_show_all".equals(decision.reason()));
     }
 
     public static String formatDoctorMatchList(List<DoctorMatch> matches) {

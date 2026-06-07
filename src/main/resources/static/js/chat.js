@@ -479,11 +479,6 @@
         currentMarkdownBuffer = '';
     }
 
-    var MODE_COST_HINTS = {
-        quick: '~1× token budget (LIGHT chat)',
-        expert_match: '~2–3× token budget (FULL harness + GraphRAG)'
-    };
-
     function selectedChatMode() {
         return document.getElementById('chatModePicker')?.value || 'quick';
     }
@@ -491,7 +486,12 @@
     function updateChatModeCostHint() {
         var hint = document.getElementById('chatModeCostHint');
         if (!hint) return;
-        hint.textContent = MODE_COST_HINTS[selectedChatMode()] || MODE_COST_HINTS.quick;
+        var mode = selectedChatMode();
+        if (mode === 'expert_match' && hint.dataset.costExpert) {
+            hint.textContent = hint.dataset.costExpert;
+        } else if (hint.dataset.costQuick) {
+            hint.textContent = hint.dataset.costQuick;
+        }
     }
 
     function renderExplainabilityPanel(parentBubble, payload) {

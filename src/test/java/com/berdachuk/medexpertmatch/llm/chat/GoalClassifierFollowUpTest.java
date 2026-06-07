@@ -47,6 +47,31 @@ class GoalClassifierFollowUpTest {
     }
 
     @Test
+    @DisplayName("show all inherits prior MATCH_DOCTORS goal and triggers show-all intent")
+    void showAllInheritsMatchDoctorsGoal() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords("show all", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertEquals(CASE_ID, result.caseId().orElse(""));
+        assertTrue(GoalClassifier.requestsShowAllMatches("show all"));
+    }
+
+    @Test
+    @DisplayName("show me all matches inherits prior MATCH_DOCTORS goal")
+    void showMeAllMatchesInheritsGoal() {
+        ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);
+
+        GoalClassification result = goalClassifier.classifyByKeywords("show me all matches", Optional.empty());
+
+        assertNotNull(result);
+        assertEquals(GoalType.MATCH_DOCTORS, result.goalType());
+        assertTrue(GoalClassifier.requestsShowAllMatches("show me all matches"));
+    }
+
+    @Test
     @DisplayName("yes inherits prior MATCH_DOCTORS goal and caseId")
     void yesInheritsMatchDoctorsGoal() {
         ConversationGoalContext.set(GoalType.MATCH_DOCTORS, CASE_ID, SESSION_ID);

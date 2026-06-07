@@ -243,4 +243,42 @@ public class DoctorMatchingAgentTools {
             throw e;
         }
     }
+
+    /**
+     * Harness-only match path with optional broad candidate pool (not exposed to LLM tool schema).
+     */
+    public List<DoctorMatch> matchDoctorsForHarness(
+            String caseId,
+            int maxResults,
+            Double minScore,
+            List<String> excludedDoctorIds,
+            boolean broadenCandidatePool) {
+        String sessionId = AgentToolSessionSupport.getSessionId();
+        String normalizedCaseId = AgentToolCaseIdValidator.requireValid(
+                caseId, "match_doctors_to_case", logStreamService, sessionId);
+
+        log.info("matchDoctorsForHarness() - caseId: {} broaden={} excluded={}",
+                normalizedCaseId, broadenCandidatePool,
+                excludedDoctorIds != null ? excludedDoctorIds.size() : 0);
+        String params = String.format("caseId: %s broaden=%s maxResults: %s",
+                normalizedCaseId, broadenCandidatePool, maxResults);
+        logStreamService.logToolCall(sessionId, "match_doctors_to_case", params);
+
+        try {
+            MatchOptions options = MatchOptions.builder()
+                    .maxResults(maxResults > 0 ? maxResults : 10)
+                    .minScore(minScore)
+                    .excludedDoctorIds(excludedDoctorIds != null ? excludedDoctorIds : List.of())
+                    .broadenCandidatePool(broadenCandidatePool)
+                    .build();
+
+            List<DoctorMatch> result = matchingService.matchDoctorsToCase(normalizedCaseId, options);
+            logStreamService.logToolResult(sessionId, "match_doctors_to_case",
+                    "Found " + (result != null ? result.size() : 0) + " matches");
+            return result;
+        } catch (Exception e) {
+            logStreamService.logError(sessionId, "match_doctors_to_case failed", e.getMessage());
+            throw e;
+        }
+    }
 }
