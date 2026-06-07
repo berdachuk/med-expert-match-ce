@@ -103,10 +103,14 @@ public class RoutingWorkflowEngine {
         }
 
         UrgencyLevel urgency = resolveUrgency(caseId);
-        MedicalAgentService.AgentResponse policyResponse = applyConfidencePolicy(
-                caseId, sessionId, matches, verification, urgency, bundle);
-        if (policyResponse != null) {
-            return policyResponse;
+        int matchCount = matches != null ? matches.size() : 0;
+        ConfidencePolicyDecision confidenceDecision = evaluateConfidencePolicy(
+                matchCount, matches, verification, urgency);
+        if (confidenceDecision.action() != PolicyAction.ANSWER
+                && !ConfidencePolicySupport.shouldIncludeMatchesInResponse(
+                        confidenceDecision, matchCount, verification.passed())) {
+            return buildPolicyBlockedResponse(
+                    caseId, sessionId, matches, verification, bundle, confidenceDecision);
         }
 
         if (harnessProperties.humanCheckpointEnabled()) {
@@ -123,7 +127,10 @@ public class RoutingWorkflowEngine {
                     "Facility routes are ready for human review before final summary.");
         }
 
-        return completeAfterVerify(caseId, sessionId, matches, caseAnalysis, bundle);
+        ConfidencePolicyDecision caveat = confidenceDecision.action() == PolicyAction.ANSWER
+                ? null
+                : confidenceDecision;
+        return completeAfterVerify(caseId, sessionId, matches, caseAnalysis, bundle, caveat);
     }
 
     public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, RoutingCheckpointPayload payload) {
@@ -134,7 +141,8 @@ public class RoutingWorkflowEngine {
                 payload.sessionId(),
                 payload.matches(),
                 payload.caseAnalysisJson(),
-                bundle);
+                bundle,
+                null);
     }
 
     private MedicalAgentService.AgentResponse completeAfterVerify(
@@ -142,15 +150,22 @@ public class RoutingWorkflowEngine {
             String sessionId,
             List<FacilityMatch> matches,
             String caseAnalysis,
-            CaseContextBundle bundle) {
+            CaseContextBundle bundle,
+            ConfidencePolicyDecision policyCaveat) {
+        if (policyCaveat != null) {
+            transition(sessionId, DoctorMatchWorkflowState.VERIFYING,
+                    "Confidence policy CLARIFY with matches: " + policyCaveat.reason());
+        }
         String toolResults = formatFacilityMatches(matches);
         transition(sessionId, DoctorMatchWorkflowState.TOOLS_EXECUTED, "Summarizing routing");
         String response = medicalAgentLlmSupportService.summarizeRoutingResults(toolResults, caseAnalysis);
+        response = ConfidencePolicySupport.prependPolicyCaveat(response, policyCaveat);
 
         transition(sessionId, DoctorMatchWorkflowState.POLICY_GATE, "Policy gate review");
         Map<String, Object> metadata = baseMetadata(caseId, matches, bundle);
         metadata.put("harnessState", DoctorMatchWorkflowState.DONE.name());
         metadata.put("verificationPassed", true);
+        ConfidencePolicySupport.applyPolicyMetadata(metadata, policyCaveat);
 
         MedicalAgentPolicyGateService.PolicyGateResult policyGate = medicalAgentPolicyGateService.review(response, metadata);
         if (!policyGate.approved()) {
@@ -170,14 +185,11 @@ public class RoutingWorkflowEngine {
                 .orElse(UrgencyLevel.MEDIUM);
     }
 
-    private MedicalAgentService.AgentResponse applyConfidencePolicy(
-            String caseId,
-            String sessionId,
+    private ConfidencePolicyDecision evaluateConfidencePolicy(
+            int matchCount,
             List<FacilityMatch> matches,
             VerificationResult verification,
-            UrgencyLevel urgency,
-            CaseContextBundle bundle) {
-        int matchCount = matches != null ? matches.size() : 0;
+            UrgencyLevel urgency) {
         ConfidencePolicyInput input = new ConfidencePolicyInput(
                 matchCount,
                 ConfidencePolicySupport.topFacilityMatchScore(matches),
@@ -185,10 +197,17 @@ public class RoutingWorkflowEngine {
                 urgency,
                 GoalType.ROUTE_CASE,
                 false);
-        ConfidencePolicyDecision decision = medicalConfidencePolicyService.decide(input);
-        if (decision.action() == PolicyAction.ANSWER) {
-            return null;
-        }
+        return medicalConfidencePolicyService.decide(input);
+    }
+
+    private MedicalAgentService.AgentResponse buildPolicyBlockedResponse(
+            String caseId,
+            String sessionId,
+            List<FacilityMatch> matches,
+            VerificationResult verification,
+            CaseContextBundle bundle,
+            ConfidencePolicyDecision decision) {
+        int matchCount = matches != null ? matches.size() : 0;
         transition(sessionId, DoctorMatchWorkflowState.FAILED,
                 "Confidence policy " + decision.action() + ": " + decision.reason());
         Map<String, Object> base = baseMetadata(caseId, matches, bundle);

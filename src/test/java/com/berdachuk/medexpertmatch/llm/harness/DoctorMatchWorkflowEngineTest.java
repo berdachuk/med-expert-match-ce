@@ -133,4 +133,59 @@ class DoctorMatchWorkflowEngineTest {
         assertEquals(1, response.metadata().get("doctorMatchCount"));
         assertTrue(response.response().contains("not a substitute"));
     }
+
+    @Test
+    @DisplayName("CLARIFY with verified matches still returns interpreted doctor list and caveat")
+    void clarifyWithMatchesReturnsInterpretedList() throws Exception {
+        MedicalAgentLlmSupportService llmSupport = mock(MedicalAgentLlmSupportService.class);
+        MedicalCaseRepository caseRepository = mock(MedicalCaseRepository.class);
+        LogStreamService logStream = mock(LogStreamService.class);
+        DoctorMatchingAgentTools matchingTools = mock(DoctorMatchingAgentTools.class);
+
+        Doctor doctor = new Doctor("d1", "Dr. Lee", null, List.of("Neurology"), List.of(), List.of(), false, null);
+        DoctorMatch match = new DoctorMatch(doctor, 46.0, 1, "borderline fit");
+        when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{}");
+        when(matchingTools.match_doctors_to_case(anyString(), anyInt(), any(), any(), any(), any()))
+                .thenReturn(List.of(match));
+        when(caseRepository.findById(anyString())).thenReturn(Optional.empty());
+        when(llmSupport.interpretResultsWithMedGemma(anyString(), anyString(), any()))
+                .thenReturn("1. Dr. Lee — Neurology (score 46). Not a substitute for professional medical advice.");
+
+        CaseContextBundleService bundleService = new CaseContextBundleServiceImpl(caseRepository);
+        AgentPlannerService planner = new AgentPlannerServiceImpl(
+                bundleService, new InMemoryAgentPlanArtefactStore());
+        HarnessMetrics metrics = new HarnessMetrics(new SimpleMeterRegistry());
+        MedicalAgentPolicyGateService policyGate = new MedicalAgentPolicyGateServiceImpl(
+                HarnessProperties.defaults(), metrics);
+        MedicalConfidencePolicyService confidencePolicy = new MedicalConfidencePolicyServiceImpl(
+                MedicalConfidencePolicyProperties.defaults());
+
+        DoctorMatchWorkflowEngine engine = new DoctorMatchWorkflowEngine(
+                llmSupport,
+                caseRepository,
+                logStream,
+                matchingTools,
+                new ObjectMapper(),
+                new AgentResponseVerifierImpl(),
+                policyGate,
+                confidencePolicy,
+                bundleService,
+                planner,
+                HarnessProperties.defaults(),
+                metrics,
+                new InMemoryHarnessWorkflowRunStore(),
+                mock(ApplicationEventPublisher.class),
+                mock(ConsultationMatchRepository.class));
+
+        MedicalAgentService.AgentResponse response = engine.execute(
+                "6a1c68963a08e800010de68e",
+                Map.of("sessionId", "test-session-clarify"));
+
+        assertEquals("CLARIFY", response.metadata().get("policyAction"));
+        assertEquals("low_score", response.metadata().get("policyReason"));
+        assertEquals(1, response.metadata().get("matchCount"));
+        assertEquals("DONE", response.metadata().get("harnessState"));
+        assertTrue(response.response().contains("below the recommended threshold"));
+        assertTrue(response.response().contains("Dr. Lee"));
+    }
 }

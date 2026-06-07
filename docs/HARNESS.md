@@ -273,7 +273,7 @@ Between verify and clinical interpretation, `MedicalConfidencePolicyService` rou
 | Action | When |
 |--------|------|
 | `ANSWER` | Scores and verification within safe thresholds |
-| `CLARIFY` | Zero/borderline matches or verify failures (non-urgent) |
+| `CLARIFY` | Zero/borderline/low-score matches or verify failures (non-urgent). When verify passed and matches exist, the harness still interprets and returns the match list with the policy caveat prepended. |
 | `ESCALATE` | Urgent case with verify failure or low confidence |
 | `REFUSE` | Insufficient grounding |
 

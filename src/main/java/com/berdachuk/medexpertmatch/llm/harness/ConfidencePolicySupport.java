@@ -29,6 +29,39 @@ public final class ConfidencePolicySupport {
         return matches.stream().mapToDouble(FacilityMatch::routeScore).max().orElse(0);
     }
 
+    /**
+     * When policy is CLARIFY but verification passed and matches exist, still surface the match list
+     * with the policy caveat instead of blocking the response entirely.
+     */
+    public static boolean shouldIncludeMatchesInResponse(
+            ConfidencePolicyDecision decision,
+            int matchCount,
+            boolean verificationPassed) {
+        return decision != null
+                && decision.action() == PolicyAction.CLARIFY
+                && matchCount > 0
+                && verificationPassed;
+    }
+
+    public static String prependPolicyCaveat(String body, ConfidencePolicyDecision decision) {
+        if (decision == null || decision.userMessage() == null || decision.userMessage().isBlank()) {
+            return body;
+        }
+        if (body == null || body.isBlank()) {
+            return decision.userMessage();
+        }
+        return decision.userMessage() + "\n\n" + body;
+    }
+
+    public static void applyPolicyMetadata(Map<String, Object> metadata, ConfidencePolicyDecision decision) {
+        if (decision == null || decision.action() == PolicyAction.ANSWER) {
+            return;
+        }
+        metadata.put("policyAction", decision.action().name());
+        metadata.put("policyReason", decision.reason());
+        metadata.put("requiresClinicianReview", decision.requiresClinicianReview());
+    }
+
     public static MedicalAgentService.AgentResponse toAgentResponse(
             ConfidencePolicyDecision decision,
             String caseId,

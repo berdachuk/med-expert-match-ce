@@ -125,17 +125,24 @@ public class DoctorMatchWorkflowEngine {
         }
 
         UrgencyLevel urgency = resolveUrgency(caseId);
-        MedicalAgentService.AgentResponse policyResponse = applyConfidencePolicy(
-                caseId, sessionId, matches, verification, urgency, bundle);
-        if (policyResponse != null) {
-            return policyResponse;
+        int matchCount = matches != null ? matches.size() : 0;
+        ConfidencePolicyDecision confidenceDecision = evaluateConfidencePolicy(
+                matchCount, matches, verification, urgency);
+        if (confidenceDecision.action() != PolicyAction.ANSWER
+                && !ConfidencePolicySupport.shouldIncludeMatchesInResponse(
+                        confidenceDecision, matchCount, verification.passed())) {
+            return buildPolicyBlockedResponse(
+                    caseId, sessionId, matches, verification, bundle, confidenceDecision);
         }
 
         if (harnessProperties.humanCheckpointEnabled()) {
             return pauseForHumanReview(caseId, sessionId, maxResults, matches, caseAnalysisJson, bundle);
         }
 
-        return completeAfterVerify(caseId, sessionId, matches, caseAnalysisJson, bundle);
+        ConfidencePolicyDecision caveat = confidenceDecision.action() == PolicyAction.ANSWER
+                ? null
+                : confidenceDecision;
+        return completeAfterVerify(caseId, sessionId, matches, caseAnalysisJson, bundle, caveat);
     }
 
     public MedicalAgentService.AgentResponse resumeAfterCheckpoint(String runId, DoctorMatchCheckpointPayload payload) {
@@ -146,7 +153,8 @@ public class DoctorMatchWorkflowEngine {
                 payload.sessionId(),
                 payload.matches(),
                 payload.caseAnalysisJson(),
-                bundle);
+                bundle,
+                null);
     }
 
     private MedicalAgentService.AgentResponse pauseForHumanReview(
@@ -203,17 +211,25 @@ public class DoctorMatchWorkflowEngine {
             String sessionId,
             List<DoctorMatch> matches,
             String caseAnalysisJson,
-            CaseContextBundle bundle) {
+            CaseContextBundle bundle,
+            ConfidencePolicyDecision policyCaveat) {
         try {
+            if (policyCaveat != null) {
+                transition(sessionId, DoctorMatchWorkflowState.VERIFYING,
+                        "Confidence policy CLARIFY with matches: " + policyCaveat.reason());
+            }
+
             String jsonResponse = objectMapper.writeValueAsString(matches);
             Integer patientAge = medicalCaseRepository.findById(caseId).map(MedicalCase::patientAge).orElse(null);
             logStreamService.sendLog(sessionId, "INFO", "Step 3: LLM result interpretation", "Interpreting tool results");
             String response = medicalAgentLlmSupportService.interpretResultsWithMedGemma(
                     jsonResponse, caseAnalysisJson, patientAge);
+            response = ConfidencePolicySupport.prependPolicyCaveat(response, policyCaveat);
 
             transition(sessionId, DoctorMatchWorkflowState.POLICY_GATE, "Policy gate review");
             Map<String, Object> metadata = successMetadata(caseId, matches, bundle);
             metadata.put("verificationPassed", true);
+            ConfidencePolicySupport.applyPolicyMetadata(metadata, policyCaveat);
             MedicalAgentPolicyGateService.PolicyGateResult policyGate =
                     medicalAgentPolicyGateService.review(response, metadata);
             if (!policyGate.approved()) {
@@ -223,11 +239,13 @@ public class DoctorMatchWorkflowEngine {
                 return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
             }
 
+            String completionDetail = policyCaveat != null
+                    ? "Matched doctors with confidence caveat for case: " + caseId
+                    : "Successfully matched doctors for case: " + caseId + " (" + matches.size() + " matches)";
             transition(sessionId, DoctorMatchWorkflowState.DONE, "Complete");
             metadata.put("harnessState", DoctorMatchWorkflowState.DONE.name());
             eventPublisher.publishEvent(new DoctorMatchCompletedEvent(caseId, sessionId, Instant.now()));
-            logStreamService.logCompletion(sessionId, "Match doctors operation",
-                    "Successfully matched doctors for case: " + caseId + " (" + matches.size() + " matches)");
+            logStreamService.logCompletion(sessionId, "Match doctors operation", completionDetail);
             return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
         } catch (Exception e) {
             throw new AgentExecutionException("Match doctors operation failed: " + e.getMessage(), e);
@@ -254,14 +272,11 @@ public class DoctorMatchWorkflowEngine {
                 .orElse(UrgencyLevel.MEDIUM);
     }
 
-    private MedicalAgentService.AgentResponse applyConfidencePolicy(
-            String caseId,
-            String sessionId,
+    private ConfidencePolicyDecision evaluateConfidencePolicy(
+            int matchCount,
             List<DoctorMatch> matches,
             VerificationResult verification,
-            UrgencyLevel urgency,
-            CaseContextBundle bundle) {
-        int matchCount = matches != null ? matches.size() : 0;
+            UrgencyLevel urgency) {
         ConfidencePolicyInput input = new ConfidencePolicyInput(
                 matchCount,
                 ConfidencePolicySupport.topDoctorMatchScore(matches),
@@ -269,10 +284,17 @@ public class DoctorMatchWorkflowEngine {
                 urgency,
                 GoalType.MATCH_DOCTORS,
                 false);
-        ConfidencePolicyDecision decision = medicalConfidencePolicyService.decide(input);
-        if (decision.action() == PolicyAction.ANSWER) {
-            return null;
-        }
+        return medicalConfidencePolicyService.decide(input);
+    }
+
+    private MedicalAgentService.AgentResponse buildPolicyBlockedResponse(
+            String caseId,
+            String sessionId,
+            List<DoctorMatch> matches,
+            VerificationResult verification,
+            CaseContextBundle bundle,
+            ConfidencePolicyDecision decision) {
+        int matchCount = matches != null ? matches.size() : 0;
         transition(sessionId, DoctorMatchWorkflowState.FAILED,
                 "Confidence policy " + decision.action() + ": " + decision.reason());
         logStreamService.logCompletion(sessionId, "Match doctors operation",
