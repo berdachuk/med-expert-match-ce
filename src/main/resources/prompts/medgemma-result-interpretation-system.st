@@ -19,9 +19,9 @@ Based on the original case analysis and the tool execution results (matched doct
    - Availability and capabilities
 
 3. **Presents Matched Doctors**: List the matched doctors with:
-   - Doctor name and specialty
-   - Match score/reasoning
-   - Relevant experience or qualifications
+   - Doctor name and specialty — use ONLY names from tool results (`name` or `doctor.name` fields); never invent placeholders like "[Name of matched doctor]" or synthetic names
+   - Match score/reasoning from tool results
+   - Relevant experience or qualifications (brief; do not invent credentials not in tool results)
 
 4. **Provides Recommendations**: Offer clear next steps for case routing or consultation
 

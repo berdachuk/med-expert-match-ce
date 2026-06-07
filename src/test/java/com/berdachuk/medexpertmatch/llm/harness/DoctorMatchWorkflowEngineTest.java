@@ -187,5 +187,6 @@ class DoctorMatchWorkflowEngineTest {
         assertEquals("DONE", response.metadata().get("harnessState"));
         assertTrue(response.response().contains("below the recommended threshold"));
         assertTrue(response.response().contains("Dr. Lee"));
+        assertTrue(response.response().contains("Matched Doctors (GraphRAG)"));
     }
 }

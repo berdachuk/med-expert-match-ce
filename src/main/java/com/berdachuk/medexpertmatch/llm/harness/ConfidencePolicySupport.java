@@ -43,6 +43,36 @@ public final class ConfidencePolicySupport {
                 && verificationPassed;
     }
 
+    public static String formatDoctorMatchList(List<DoctorMatch> matches) {
+        if (matches == null || matches.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder("**Matched Doctors (GraphRAG):**\n");
+        for (DoctorMatch match : matches) {
+            if (match == null || match.doctor() == null) {
+                continue;
+            }
+            String name = match.doctor().name() != null ? match.doctor().name().trim() : "Unknown";
+            String specialty = match.doctor().specialties() != null && !match.doctor().specialties().isEmpty()
+                    ? match.doctor().specialties().getFirst()
+                    : "General";
+            sb.append("- ").append(name).append(" (").append(specialty).append(") — score ")
+                    .append(String.format("%.1f", match.matchScore())).append('\n');
+        }
+        return sb.toString().strip();
+    }
+
+    public static String prependDeterministicDoctorList(String body, List<DoctorMatch> matches) {
+        String list = formatDoctorMatchList(matches);
+        if (list.isBlank()) {
+            return body;
+        }
+        if (body == null || body.isBlank()) {
+            return list;
+        }
+        return list + "\n\n" + body;
+    }
+
     public static String prependPolicyCaveat(String body, ConfidencePolicyDecision decision) {
         if (decision == null || decision.userMessage() == null || decision.userMessage().isBlank()) {
             return body;

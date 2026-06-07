@@ -239,6 +239,9 @@ public class DoctorMatchWorkflowEngine {
                 return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
             }
 
+            String finalResponse = ConfidencePolicySupport.prependDeterministicDoctorList(
+                    policyGate.sanitizedResponse(), matches);
+
             String completionDetail = policyCaveat != null
                     ? "Matched doctors with confidence caveat for case: " + caseId
                     : "Successfully matched doctors for case: " + caseId + " (" + matches.size() + " matches)";
@@ -246,7 +249,7 @@ public class DoctorMatchWorkflowEngine {
             metadata.put("harnessState", DoctorMatchWorkflowState.DONE.name());
             eventPublisher.publishEvent(new DoctorMatchCompletedEvent(caseId, sessionId, Instant.now()));
             logStreamService.logCompletion(sessionId, "Match doctors operation", completionDetail);
-            return new MedicalAgentService.AgentResponse(policyGate.sanitizedResponse(), metadata);
+            return new MedicalAgentService.AgentResponse(finalResponse, metadata);
         } catch (Exception e) {
             throw new AgentExecutionException("Match doctors operation failed: " + e.getMessage(), e);
         }

@@ -1,7 +1,11 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
+import com.berdachuk.medexpertmatch.doctor.domain.Doctor;
+import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,5 +34,16 @@ class ConfidencePolicySupportTest {
         ConfidencePolicyDecision decision = new ConfidencePolicyDecision(
                 PolicyAction.ESCALATE, "urgent_low_score", "Escalate.");
         assertFalse(ConfidencePolicySupport.shouldIncludeMatchesInResponse(decision, 1, true));
+    }
+
+    @Test
+    @DisplayName("formatDoctorMatchList uses database doctor names and scores")
+    void formatDoctorMatchListUsesRealNames() {
+        Doctor doctor = new Doctor("d1", "Dr. Eulah Kunde", null, List.of("Neurology"), List.of(), List.of(), false, null);
+        DoctorMatch match = new DoctorMatch(doctor, 46.48, 1, "graph+vector blend");
+        String formatted = ConfidencePolicySupport.formatDoctorMatchList(List.of(match));
+        assertTrue(formatted.contains("Dr. Eulah Kunde"));
+        assertTrue(formatted.contains("46.5"));
+        assertTrue(formatted.contains("Neurology"));
     }
 }
