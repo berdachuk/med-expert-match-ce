@@ -2,7 +2,7 @@
 
 **Status:** Planned  
 **Created:** 2026-06-07  
-**Depends on:** M58 (archived) eval JSONL; M57 goal-classifier eval; harness metrics
+**Depends on:** M67 (clinical vs utility cost metrics), M58 (archived) eval JSONL; M57 goal-classifier eval; harness metrics
 
 ## Problem Statement
 

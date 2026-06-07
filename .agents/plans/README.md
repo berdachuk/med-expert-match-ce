@@ -11,4 +11,4 @@ Milestone implementation plans. See root `AGENTS.md` → Plan Files for conventi
 
 ## Index
 
-See `00-index.md` for the milestone registry. Completed plans in `archive/`.
+See `00-index.md` for the milestone registry. Deferred plans stay in the root folder; completed plans in `archive/`.

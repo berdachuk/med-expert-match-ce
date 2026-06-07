@@ -28,7 +28,11 @@ Phase 2 live eval tooling is in-repo; run against Ollama when the endpoint is av
 | `negative_text_only` | 4 |
 | Other (triage, route no ID) | 10 |
 
-## Next steps (M60)
+## Next steps (M60 — deferred)
+
+M60 GPU fine-tune is postponed. Current mitigations: `ToolSelectionGuardingResolver` + M57 harness routing.
+
+When resumed:
 
 1. Run live baseline: `./scripts/run-tool-selection-live-eval.sh baseline`
 2. Compare live accuracy to thresholds (Pair A ≥ 90%, Pair B ≥ 95%).

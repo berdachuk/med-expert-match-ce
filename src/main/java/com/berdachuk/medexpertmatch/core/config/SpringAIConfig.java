@@ -1,15 +1,13 @@
 package com.berdachuk.medexpertmatch.core.config;
 
+import com.berdachuk.medexpertmatch.llm.config.LlmTierProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.embedding.EmbeddingModel;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingOptions;
-import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -30,12 +28,13 @@ import java.util.List;
 @Configuration
 @org.springframework.context.annotation.Profile("!test")
 public class SpringAIConfig {
-    private final Environment environment;
-    private final ListableBeanFactory beanFactory;
 
-    public SpringAIConfig(Environment environment, ListableBeanFactory beanFactory) {
+    private final Environment environment;
+    private final LlmTierProperties tierProperties;
+
+    public SpringAIConfig(Environment environment, LlmTierProperties tierProperties) {
         this.environment = environment;
-        this.beanFactory = beanFactory;
+        this.tierProperties = tierProperties;
         String[] activeProfiles = environment.getActiveProfiles();
         log.info("SpringAIConfig is being instantiated! Active profiles: {}", Arrays.toString(activeProfiles));
         if (Arrays.asList(activeProfiles).contains("test")) {
@@ -43,11 +42,6 @@ public class SpringAIConfig {
         }
     }
 
-    /**
-     * Chat client configuration.
-     * Uses the primary ChatModel for chat operations.
-     * Only created when skills are disabled (when skills are enabled, MedicalAgentConfiguration creates the ChatClient).
-     */
     @Bean
     @Primary
     @ConditionalOnProperty(
@@ -55,88 +49,70 @@ public class SpringAIConfig {
             havingValue = "false",
             matchIfMissing = false
     )
-    public ChatClient chatClient(@Qualifier("primaryChatModel") ChatModel primaryChatModel) {
-        log.info("Configuring ChatClient with @Primary ChatModel: {}", primaryChatModel.getClass().getSimpleName());
-        return ChatClient.builder(primaryChatModel).build();
+    public ChatClient chatClient(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
+        log.info("Configuring ChatClient with clinical ChatModel: {}", clinicalChatModel.getClass().getSimpleName());
+        return ChatClient.builder(clinicalChatModel).build();
     }
 
-    /**
-     * Dedicated ChatClient for CaseAnalysisService.
-     * Always uses primaryChatModel regardless of skills configuration.
-     * This ensures medical case analysis uses the configured LLM.
-     */
     @Bean("caseAnalysisChatClient")
-    public ChatClient caseAnalysisChatClient(@Qualifier("primaryChatModel") ChatModel primaryChatModel) {
-        log.info("Creating caseAnalysisChatClient with primary LLM (primaryChatModel): {}", primaryChatModel.getClass().getSimpleName());
-        return ChatClient.builder(primaryChatModel).build();
+    public ChatClient caseAnalysisChatClient(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
+        log.info("Creating caseAnalysisChatClient with clinical LLM: {}", clinicalChatModel.getClass().getSimpleName());
+        return ChatClient.builder(clinicalChatModel).build();
+    }
+
+    @Bean("clinicalChatModel")
+    @Lazy
+    public ChatModel clinicalChatModel() {
+        LlmRoleEndpointResolver.ResolvedEndpoint endpoint = LlmRoleEndpointResolver.resolveClinical(environment);
+        return OpenAiChatModelFactory.createWithMaxTokens(
+                endpoint, "clinical", tierProperties.full().maxTokens());
+    }
+
+    @Bean("utilityChatModel")
+    @Lazy
+    public ChatModel utilityChatModel() {
+        LlmRoleEndpointResolver.ResolvedEndpoint endpoint = LlmRoleEndpointResolver.resolveUtility(environment);
+        return OpenAiChatModelFactory.createWithMaxTokens(
+                endpoint, "utility", tierProperties.standard().maxTokens());
     }
 
     /**
-     * ChatModel for synthetic data description generation.
-     * Uses same endpoint as primary chat but with lower max_tokens (default 1024) for short case abstracts.
+     * @deprecated Use {@link #clinicalChatModel()}; retained for one release cycle (M67).
      */
+    @Bean
+    @Primary
+    @Lazy
+    @Deprecated
+    public ChatModel primaryChatModel(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
+        log.warn("primaryChatModel is deprecated; inject clinicalChatModel instead (M67)");
+        return clinicalChatModel;
+    }
+
     @Bean("descriptionGenerationChatModel")
     @Lazy
-    public ChatModel descriptionGenerationChatModel(@Qualifier("primaryChatModel") ChatModel primaryChatModel) {
-        String chatBaseUrl = environment.getProperty("spring.ai.custom.chat.base-url");
-        if (chatBaseUrl == null || chatBaseUrl.isEmpty()) {
-            log.info("No custom chat base URL; description generation uses primaryChatModel");
-            return primaryChatModel;
-        }
-        String chatProvider = environment.getProperty("spring.ai.custom.chat.provider", "openai");
-        String chatApiKey = environment.getProperty("spring.ai.custom.chat.api-key");
-        String chatModelName = environment.getProperty("spring.ai.custom.chat.model");
-        String chatTemperature = environment.getProperty("spring.ai.custom.chat.temperature");
-        String descriptionMaxTokens = environment.getProperty("medexpertmatch.synthetic-data.description.llm.max-tokens", "1024");
-
-        if (!"openai".equalsIgnoreCase(chatProvider)) {
-            return primaryChatModel;
-        }
-        String apiKey = chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key";
-        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
-                .baseUrl(chatBaseUrl)
-                .apiKey(apiKey);
-        if (chatModelName != null && !chatModelName.isEmpty()) {
-            optionsBuilder.model(chatModelName);
-        }
-        if (chatTemperature != null && !chatTemperature.isEmpty()) {
-            try {
-                optionsBuilder.temperature(Double.parseDouble(chatTemperature));
-            } catch (NumberFormatException e) {
-                log.warn("Invalid chat temperature for description model. Using default.");
-            }
-        }
+    public ChatModel descriptionGenerationChatModel(@Qualifier("utilityChatModel") ChatModel utilityChatModel) {
+        String descriptionMaxTokens = environment.getProperty(
+                "medexpertmatch.synthetic-data.description.llm.max-tokens", "1024");
         try {
-            optionsBuilder.maxTokens(Integer.parseInt(descriptionMaxTokens));
+            int maxTokens = Integer.parseInt(descriptionMaxTokens);
+            LlmRoleEndpointResolver.ResolvedEndpoint endpoint = LlmRoleEndpointResolver.resolveUtility(environment);
+            return OpenAiChatModelFactory.createWithMaxTokens(endpoint, "description-generation", maxTokens);
         } catch (NumberFormatException e) {
-            log.warn("Invalid description max-tokens: {}. Using 1024.", descriptionMaxTokens);
-            optionsBuilder.maxTokens(1024);
+            log.warn("Invalid description max-tokens: {}. Using utilityChatModel bean.", descriptionMaxTokens);
+            return utilityChatModel;
         }
-        log.info("Creating descriptionGenerationChatModel with max_tokens: {}", descriptionMaxTokens);
-        return OpenAiChatModel.builder()
-                .options(optionsBuilder.build())
-                .build();
     }
 
-    /**
-     * ChatClient for medical case description generation (synthetic data).
-     * Uses descriptionGenerationChatModel with lower max_tokens than primary chat.
-     */
     @Bean("descriptionGenerationChatClient")
-    public ChatClient descriptionGenerationChatClient(@Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel) {
+    public ChatClient descriptionGenerationChatClient(
+            @Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel) {
         log.info("Creating descriptionGenerationChatClient");
         return ChatClient.builder(descriptionGenerationChatModel).build();
     }
 
-    /**
-     * Primary EmbeddingModel configuration.
-     * Supports separate base URLs for embedding service via spring.ai.custom.embedding.* properties.
-     * Only supports OpenAI-compatible providers.
-     */
     @Bean
     @Primary
     public EmbeddingModel primaryEmbeddingModel(List<EmbeddingModel> models) {
-        // Check if custom embedding configuration is provided (separate base URL and provider)
         String embeddingBaseUrl = environment.getProperty("spring.ai.custom.embedding.base-url");
         String embeddingProvider = environment.getProperty("spring.ai.custom.embedding.provider", "openai");
         String embeddingApiKey = environment.getProperty("spring.ai.custom.embedding.api-key");
@@ -144,10 +120,8 @@ public class SpringAIConfig {
         String embeddingDimensions = environment.getProperty("spring.ai.custom.embedding.dimensions");
 
         if (embeddingBaseUrl != null && !embeddingBaseUrl.isEmpty()) {
-            // Create custom EmbeddingModel with separate base URL
             log.info("Creating custom EmbeddingModel with provider: {}, base URL: {}", embeddingProvider, embeddingBaseUrl);
 
-            // Only support OpenAI-compatible providers
             if (!"openai".equalsIgnoreCase(embeddingProvider)) {
                 throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + embeddingProvider);
             }
@@ -173,7 +147,6 @@ public class SpringAIConfig {
             return model;
         }
 
-        // Fall back to auto-configured models (should not happen as auto-config is disabled)
         if (models.isEmpty()) {
             throw new IllegalStateException("No EmbeddingModel bean found. Please configure 'spring.ai.custom.embedding.*' properties.");
         }
@@ -182,7 +155,6 @@ public class SpringAIConfig {
             return models.get(0);
         }
 
-        // Select OpenAI-compatible model if multiple are present
         EmbeddingModel selected = models.stream()
                 .filter(m -> m.getClass().getSimpleName().toLowerCase().contains("openai"))
                 .findFirst()
@@ -195,149 +167,26 @@ public class SpringAIConfig {
         return selected;
     }
 
-    /**
-     * Primary ChatModel configuration.
-     * Supports separate base URLs for chat service via spring.ai.custom.chat.* properties.
-     * Only supports OpenAI-compatible providers.
-     */
-    @Bean
-    @Primary
-    @Lazy
-    public ChatModel primaryChatModel() {
-        // Check if custom chat configuration is provided (separate base URL and provider)
-        String chatBaseUrl = environment.getProperty("spring.ai.custom.chat.base-url");
-        String chatProvider = environment.getProperty("spring.ai.custom.chat.provider", "openai");
-        String chatApiKey = environment.getProperty("spring.ai.custom.chat.api-key");
-        String chatModel = environment.getProperty("spring.ai.custom.chat.model");
-        String chatTemperature = environment.getProperty("spring.ai.custom.chat.temperature");
-        // Read max-tokens from custom config, fall back to openai.chat.options.max-tokens, then default to 4096
-        String chatMaxTokens = environment.getProperty("spring.ai.custom.chat.max-tokens",
-                environment.getProperty("spring.ai.openai.chat.options.max-tokens", "4096"));
-
-        if (chatBaseUrl != null && !chatBaseUrl.isEmpty()) {
-            // Create custom ChatModel with separate base URL
-            log.info("Creating custom ChatModel with provider: {}, base URL: {}", chatProvider, chatBaseUrl);
-
-            // Only support OpenAI-compatible providers
-            if (!"openai".equalsIgnoreCase(chatProvider)) {
-                throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + chatProvider);
-            }
-
-            String apiKey = chatApiKey != null && !chatApiKey.isEmpty() ? chatApiKey : "dummy-key";
-            OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
-                    .baseUrl(chatBaseUrl)
-                    .apiKey(apiKey);
-            if (chatModel != null && !chatModel.isEmpty()) {
-                optionsBuilder.model(chatModel);
-            }
-            if (chatTemperature != null && !chatTemperature.isEmpty()) {
-                try {
-                    optionsBuilder.temperature(Double.parseDouble(chatTemperature));
-                } catch (NumberFormatException e) {
-                    log.warn("Invalid chat temperature: {}. Using default.", chatTemperature);
-                }
-            }
-            if (chatMaxTokens != null && !chatMaxTokens.isEmpty()) {
-                try {
-                    optionsBuilder.maxTokens(Integer.parseInt(chatMaxTokens));
-                } catch (NumberFormatException e) {
-                    log.warn("Invalid chat max-tokens: {}. Using default.", chatMaxTokens);
-                }
-            }
-
-            log.info("Creating OpenAiChatModel!");
-            OpenAiChatModel model = OpenAiChatModel.builder()
-                    .options(optionsBuilder.build())
-                    .build();
-            log.info("OpenAiChatModel created! Type: {}", model.getClass().getName());
-            return model;
-        }
-
-        // Fall back to auto-configured models (should not happen as auto-config is disabled)
-        String[] beanNames = beanFactory.getBeanNamesForType(ChatModel.class);
-        List<ChatModel> models = Arrays.stream(beanNames)
-                .filter(name -> !name.equals("primaryChatModel") && !name.equals("rerankingChatModel") && !name.equals("toolCallingChatModel"))
-                .map(name -> beanFactory.getBean(name, ChatModel.class))
-                .toList();
-
-        if (models.isEmpty()) {
-            throw new IllegalStateException("No ChatModel bean found. Please configure 'spring.ai.custom.chat.*' properties.");
-        }
-
-        ChatModel primary = models.get(0);
-        if (models.size() > 1) {
-            // Select OpenAI-compatible model if multiple are present
-            primary = models.stream()
-                    .filter(m -> m.getClass().getSimpleName().toLowerCase().contains("openai"))
-                    .findFirst()
-                    .orElse(models.get(0));
-        }
-
-        log.info("Primary ChatModel: {}", primary.getClass().getSimpleName());
-        return primary;
-    }
-
-    /**
-     * Reranking ChatModel configuration.
-     * Creates a dedicated ChatModel for semantic reranking using the configured reranking model.
-     * Only supports OpenAI-compatible providers.
-     */
     @Bean
     @Qualifier("rerankingChatModel")
     public ChatModel rerankingChatModel() {
-        // Check if custom reranking configuration is provided (separate base URL and provider)
-        String rerankingBaseUrl = environment.getProperty("spring.ai.custom.reranking.base-url");
-        String rerankingProvider = environment.getProperty("spring.ai.custom.reranking.provider", "openai");
-        String rerankingModel = environment.getProperty("spring.ai.custom.reranking.model");
-        String rerankingApiKey = environment.getProperty("spring.ai.custom.reranking.api-key");
-        String rerankingTemperature = environment.getProperty("spring.ai.custom.reranking.temperature", "0.1");
-
-        if (rerankingBaseUrl != null && !rerankingBaseUrl.isEmpty() && rerankingModel != null && !rerankingModel.isEmpty()) {
-            // Create custom reranking ChatModel with separate base URL
-            log.info("Creating custom reranking ChatModel with provider: {}, base URL: {}, model: {}",
-                    rerankingProvider, rerankingBaseUrl, rerankingModel);
-
-            // Only support OpenAI-compatible providers
-            if (!"openai".equalsIgnoreCase(rerankingProvider)) {
-                throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + rerankingProvider);
+        try {
+            LlmRoleEndpointResolver.ResolvedEndpoint endpoint = LlmRoleEndpointResolver.resolveReranking(environment);
+            if (endpoint.model() == null || endpoint.model().isEmpty()) {
+                log.info("Reranking model name not configured for role '{}'; semantic reranking may use placeholder.",
+                        endpoint.role());
+                return null;
             }
-
-            String apiKey = rerankingApiKey != null && !rerankingApiKey.isEmpty() ? rerankingApiKey : "dummy-key";
-            OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
-                    .baseUrl(rerankingBaseUrl)
-                    .apiKey(apiKey)
-                    .model(rerankingModel);
-            try {
-                optionsBuilder.temperature(Double.parseDouble(rerankingTemperature));
-            } catch (NumberFormatException e) {
-                log.warn("Invalid reranking temperature: {}. Using default 0.1.", rerankingTemperature);
-                optionsBuilder.temperature(0.1);
-            }
-
-            log.info("Creating OpenAiChatModel for reranking!");
-            OpenAiChatModel rerankingModelInstance = OpenAiChatModel.builder()
-                    .options(optionsBuilder.build())
-                    .build();
-            log.info("OpenAiChatModel created! Type: {}", rerankingModelInstance.getClass().getName());
-            return rerankingModelInstance;
+            return OpenAiChatModelFactory.create(endpoint, "reranking");
+        } catch (IllegalStateException e) {
+            log.info("Reranking ChatModel not configured. Semantic reranking will use placeholder implementation.");
+            return null;
         }
-
-        // If reranking is not configured, return null (semantic reranker will handle gracefully)
-        log.info("Reranking ChatModel not configured. Semantic reranking will use placeholder implementation.");
-        return null;
     }
 
-    /**
-     * Tool Calling ChatModel configuration.
-     * Creates a dedicated ChatModel for tool/function calling operations using FunctionGemma.
-     * This is separate from the primary ChatModel because medgemma:1.5-4b doesn't support tools,
-     * while functiongemma does support tool calling.
-     * Only supports OpenAI-compatible providers.
-     */
     @Bean
     @Qualifier("toolCallingChatModel")
-    public ChatModel toolCallingChatModel() {
-        // Check if custom tool calling configuration is provided (separate base URL and provider)
+    public ChatModel toolCallingChatModel(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
         String toolCallingBaseUrl = environment.getProperty("spring.ai.custom.tool-calling.base-url");
         String toolCallingProvider = environment.getProperty("spring.ai.custom.tool-calling.provider", "openai");
         String toolCallingModel = environment.getProperty("spring.ai.custom.tool-calling.model", "functiongemma");
@@ -345,54 +194,27 @@ public class SpringAIConfig {
         String toolCallingTemperature = environment.getProperty("spring.ai.custom.tool-calling.temperature", "0.7");
         String toolCallingMaxTokens = environment.getProperty("spring.ai.custom.tool-calling.max-tokens", "4096");
 
-        // If base URL is not explicitly set, fall back to chat base URL
         if (toolCallingBaseUrl == null || toolCallingBaseUrl.isEmpty()) {
             toolCallingBaseUrl = environment.getProperty("spring.ai.custom.chat.base-url");
         }
-        // If API key is not explicitly set, fall back to chat API key
         if (toolCallingApiKey == null || toolCallingApiKey.isEmpty()) {
             toolCallingApiKey = environment.getProperty("spring.ai.custom.chat.api-key");
         }
 
         if (toolCallingBaseUrl != null && !toolCallingBaseUrl.isEmpty()) {
-            // Create custom tool calling ChatModel with separate base URL
-            log.info("Creating custom tool calling ChatModel with provider: {}, base URL: {}, model: {}",
-                    toolCallingProvider, toolCallingBaseUrl, toolCallingModel);
-
-            // Only support OpenAI-compatible providers
-            if (!"openai".equalsIgnoreCase(toolCallingProvider)) {
-                throw new IllegalArgumentException("Only OpenAI-compatible providers are supported. Provider: " + toolCallingProvider);
-            }
-
-            String apiKey = toolCallingApiKey != null && !toolCallingApiKey.isEmpty() ? toolCallingApiKey : "dummy-key";
-            OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
-                    .baseUrl(toolCallingBaseUrl)
-                    .apiKey(apiKey)
-                    .model(toolCallingModel);
-            try {
-                optionsBuilder.temperature(Double.parseDouble(toolCallingTemperature));
-            } catch (NumberFormatException e) {
-                log.warn("Invalid tool calling temperature: {}. Using default 0.7.", toolCallingTemperature);
-                optionsBuilder.temperature(0.7);
-            }
-            if (toolCallingMaxTokens != null && !toolCallingMaxTokens.isEmpty()) {
-                try {
-                    optionsBuilder.maxTokens(Integer.parseInt(toolCallingMaxTokens));
-                } catch (NumberFormatException e) {
-                    log.warn("Invalid tool calling max-tokens: {}. Using default.", toolCallingMaxTokens);
-                }
-            }
-
-            log.info("Creating OpenAiChatModel for tool calling!");
-            OpenAiChatModel toolCallingModelInstance = OpenAiChatModel.builder()
-                    .options(optionsBuilder.build())
-                    .build();
-            log.info("OpenAiChatModel created! Type: {}", toolCallingModelInstance.getClass().getName());
-            return toolCallingModelInstance;
+            LlmRoleEndpointResolver.ResolvedEndpoint endpoint = new LlmRoleEndpointResolver.ResolvedEndpoint(
+                    "tool-calling",
+                    toolCallingProvider,
+                    toolCallingBaseUrl,
+                    toolCallingApiKey,
+                    toolCallingModel,
+                    toolCallingTemperature,
+                    toolCallingMaxTokens);
+            return OpenAiChatModelFactory.createWithMaxTokens(
+                    endpoint, "tool-calling", tierProperties.light().maxTokens());
         }
 
-        // If tool calling is not configured, fall back to primary chat model (may not support tools)
-        log.warn("Tool calling ChatModel not configured. Falling back to primary ChatModel (may not support tools).");
-        return primaryChatModel();
+        log.warn("Tool calling ChatModel not configured. Falling back to clinical ChatModel (may not support tools).");
+        return clinicalChatModel;
     }
 }

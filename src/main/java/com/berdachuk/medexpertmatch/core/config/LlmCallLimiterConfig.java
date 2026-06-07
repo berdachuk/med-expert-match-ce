@@ -17,15 +17,21 @@ public class LlmCallLimiterConfig {
 
     @Bean
     public LlmCallLimiter llmCallLimiter(
-            @Value("${medexpertmatch.llm.chat.max-concurrent-calls:10}") int chatMaxConcurrentCalls,
+            @Value("${medexpertmatch.llm.clinical.max-concurrent-calls:${medexpertmatch.llm.chat.max-concurrent-calls:10}}")
+            int clinicalMaxConcurrentCalls,
+            @Value("${medexpertmatch.llm.utility.max-concurrent-calls:${medexpertmatch.llm.chat.max-concurrent-calls:10}}")
+            int utilityMaxConcurrentCalls,
             @Value("${medexpertmatch.llm.embedding.max-concurrent-calls:10}") int embeddingMaxConcurrentCalls,
             @Value("${medexpertmatch.llm.reranking.max-concurrent-calls:10}") int rerankingMaxConcurrentCalls,
             @Value("${medexpertmatch.llm.tool-calling.max-concurrent-calls:10}") int toolCallingMaxConcurrentCalls,
             LlmCallMetrics callMetrics) {
-        log.info("Creating LlmCallLimiter bean with limits - CHAT: {}, EMBEDDING: {}, RERANKING: {}, TOOL_CALLING: {}",
-                chatMaxConcurrentCalls, embeddingMaxConcurrentCalls, rerankingMaxConcurrentCalls, toolCallingMaxConcurrentCalls);
+        log.info("Creating LlmCallLimiter bean with limits - CLINICAL: {}, UTILITY: {}, EMBEDDING: {}, "
+                        + "RERANKING: {}, TOOL_CALLING: {}",
+                clinicalMaxConcurrentCalls, utilityMaxConcurrentCalls, embeddingMaxConcurrentCalls,
+                rerankingMaxConcurrentCalls, toolCallingMaxConcurrentCalls);
         return new LlmCallLimiter(
-                chatMaxConcurrentCalls,
+                clinicalMaxConcurrentCalls,
+                utilityMaxConcurrentCalls,
                 embeddingMaxConcurrentCalls,
                 rerankingMaxConcurrentCalls,
                 toolCallingMaxConcurrentCalls,

@@ -63,13 +63,13 @@ public class GoalClassifier {
     private final ApplicationEventPublisher eventPublisher;
 
     public GoalClassifier(
-            @Qualifier("primaryChatModel") ChatModel primaryChatModel,
+            @Qualifier("utilityChatModel") ChatModel utilityChatModel,
             @Qualifier("goalClassificationPromptTemplate") PromptTemplate goalClassificationTemplate,
             @Qualifier("goalClassificationUserPromptTemplate") PromptTemplate goalClassificationUserTemplate,
             ObjectMapper objectMapper,
             LlmCallLimiter llmCallLimiter,
             ApplicationEventPublisher eventPublisher) {
-        this.chatClient = ChatClient.builder(primaryChatModel).build();
+        this.chatClient = ChatClient.builder(utilityChatModel).build();
         this.goalClassificationTemplate = goalClassificationTemplate;
         this.goalClassificationUserTemplate = goalClassificationUserTemplate;
         this.objectMapper = objectMapper;
@@ -383,7 +383,7 @@ public class GoalClassifier {
 
         log.info("Classifying goal via LLM for message length: {}", message.length());
 
-        String response = llmCallLimiter.execute(LlmClientType.CHAT, () ->
+        String response = llmCallLimiter.execute(LlmClientType.UTILITY, () ->
                 chatClient.prompt()
                         .system(systemPrompt)
                         .user(classificationPrompt)

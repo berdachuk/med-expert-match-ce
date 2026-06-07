@@ -315,7 +315,7 @@ Expected: −20–40% output tokens with quality held by eval set.
 |-------|-------|--------|
 | **0** | Baseline metrics, cost model doc | Metrics partial; `docs/eval/cost-model.md` planned |
 | **1** | `RoutingTier`, resolver, config, Prometheus | **Done** |
-| **2** | Utility model bean; translate/classify/rerank migration; enforce `max-tokens` on ChatClient | Planned |
+| **2** | Utility + clinical endpoint beans; translate/classify/rerank migration; enforce `max-tokens` | **Done (M67)** |
 | **3** | ContextSummarizer (code-first, then LLM); harness payload shaping | Planned |
 | **4** | Draft-and-refine for long T3 outputs | Planned |
 | **5** | Cache key extension; M60 fine-tuned FunctionGemma on Light tier | Planned |
@@ -344,7 +344,7 @@ TDD mandatory per project rules: test → verify requirement → implement → `
 - FunctionGemma role: [FUNCTIONGEMMA.md](../FUNCTIONGEMMA.md)
 - Goal routing: [HARNESS.md — Goal classification](../HARNESS.md#goal-classification)
 - Fine-tuned tool model profile: `application-local-finetuned.yml.sample`
-- Related milestones: M57 (goal classifier), M60 (FunctionGemma fine-tune), M61 (policy tiers), M62 (eval flywheel)
+- Related milestones: M57 (goal classifier), M67 (clinical/utility endpoints), M60 (FunctionGemma fine-tune, deferred), M61 (policy tiers), M62 (eval flywheel)
 - External inspiration: multi-tier agent token economics (read delegation, draft-and-refine, semantic routing)
 
 ---
@@ -354,5 +354,6 @@ TDD mandatory per project rules: test → verify requirement → implement → `
 | Date | Change |
 |------|--------|
 | 2026-06-07 | ADR accepted; Phase 0–1 implemented (routing, config, metrics) |
-| TBD | Phase 2 — utility model + token budget enforcement |
+| 2026-06-07 | Phase 2 scoped as **M67** (clinical + utility endpoint separation); roadmap reprioritized |
+| 2026-06-07 | M67 complete — Phase 2 closed |
 | TBD | Phase 3–4 — context pipeline + draft-and-refine |

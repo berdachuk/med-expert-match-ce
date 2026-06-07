@@ -23,9 +23,11 @@ public class AiConfigStartupValidator {
         validateRequiredProperty("spring.ai.custom.embedding.base-url", "${EMBEDDING_BASE_URL}");
 
         logRequiredProperty("spring.ai.custom.chat.model", "${CHAT_MODEL}");
+        logRequiredProperty("spring.ai.custom.clinical.model", "${CLINICAL_MODEL} (falls back to CHAT_MODEL)");
+        logRequiredProperty("spring.ai.custom.utility.model", "${UTILITY_MODEL} (falls back to RERANKING/CHAT)");
         logRequiredProperty("spring.ai.custom.embedding.model", "${EMBEDDING_MODEL}");
 
-        log.info("AI configuration startup validation passed");
+        log.info("AI configuration startup validation passed (M67 clinical + utility roles)");
     }
 
     private void validateRequiredProperty(String key, String envVar) {

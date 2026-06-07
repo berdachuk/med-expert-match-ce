@@ -33,11 +33,11 @@ final class MedicalCaseEmbeddingSupport {
             return List.of();
         }
 
-        int chatMaxConcurrentCalls = llmCallLimiter.getMaxConcurrentCalls(LlmClientType.CHAT);
+        int chatMaxConcurrentCalls = llmCallLimiter.getMaxConcurrentCalls(LlmClientType.UTILITY);
         List<String> texts = (chatMaxConcurrentCalls == 1
                 ? medicalCases.stream()
                 : medicalCases.parallelStream())
-                .map(medicalCase -> llmCallLimiter.execute(LlmClientType.CHAT, () ->
+                .map(medicalCase -> llmCallLimiter.execute(LlmClientType.UTILITY, () ->
                         descriptionService.getOrGenerateDescription(medicalCase)))
                 .toList();
 

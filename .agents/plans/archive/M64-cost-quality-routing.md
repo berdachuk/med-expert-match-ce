@@ -63,6 +63,18 @@ Route requests by goal tier and enforce token budgets with Prometheus visibility
 | Docs | 0.5 day |
 | **Total** | **2.5 days** |
 
+## Follow-up
+
+M64 ADR Phases 2–6 continue outside this archived plan:
+
+| ADR Phase | Milestone |
+|-----------|-----------|
+| 2 — clinical + utility endpoints | **M67** (active) |
+| 3 — context summarizer | Backlog (post-M67) |
+| 4 — draft-and-refine | Backlog |
+| 5 — cache + M60 fine-tune | M60 deferred |
+| 6 — retry-aware execution state | Backlog |
+
 ## References
 
-- User doc Phase D; M60 for phase 5
+- User doc Phase D; M67 for ADR Phase 2; M60 for phase 5

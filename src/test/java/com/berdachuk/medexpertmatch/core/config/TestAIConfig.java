@@ -888,10 +888,21 @@ public class TestAIConfig {
      * This replaces any auto-configured ChatModel beans.
      * Returns valid JSON responses for extraction calls.
      */
+    @Bean("clinicalChatModel")
+    public ChatModel clinicalChatModel() {
+        return createMockChatModel();
+    }
+
+    @Bean("utilityChatModel")
+    public ChatModel utilityChatModel() {
+        return createMockChatModel();
+    }
+
     @Bean("primaryChatModel")
     @Primary
-    public ChatModel primaryChatModel() {
-        return createMockChatModel();
+    @Deprecated
+    public ChatModel primaryChatModel(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
+        return clinicalChatModel;
     }
 
     /**

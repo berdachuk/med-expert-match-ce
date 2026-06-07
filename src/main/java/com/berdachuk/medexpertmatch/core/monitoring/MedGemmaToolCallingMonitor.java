@@ -32,8 +32,8 @@ public class MedGemmaToolCallingMonitor {
     private final AtomicReference<String> lastCheckResult = new AtomicReference<>("Not checked yet");
 
     public MedGemmaToolCallingMonitor(
-            @Qualifier("primaryChatModel") ChatModel primaryChatModel) {
-        this.medGemmaModel = primaryChatModel;
+            @Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
+        this.medGemmaModel = clinicalChatModel;
         log.info("LLM tool-calling monitor initialized (primary chat model). Will check for tool calling support periodically.");
     }
 

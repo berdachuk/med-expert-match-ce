@@ -24,11 +24,11 @@ public class ChatLanguageServiceImpl implements ChatLanguageService {
     private final LlmCallLimiter llmCallLimiter;
 
     public ChatLanguageServiceImpl(
-            @Qualifier("primaryChatModel") ChatModel primaryChatModel,
+            @Qualifier("utilityChatModel") ChatModel utilityChatModel,
             @Qualifier("chatTranslateToEnglishPromptTemplate") PromptTemplate translateToEnglishTemplate,
             @Qualifier("chatTranslateFromEnglishPromptTemplate") PromptTemplate translateFromEnglishTemplate,
             LlmCallLimiter llmCallLimiter) {
-        this.chatClient = ChatClient.builder(primaryChatModel).build();
+        this.chatClient = ChatClient.builder(utilityChatModel).build();
         this.translateToEnglishTemplate = translateToEnglishTemplate;
         this.translateFromEnglishTemplate = translateFromEnglishTemplate;
         this.llmCallLimiter = llmCallLimiter;
@@ -62,7 +62,7 @@ public class ChatLanguageServiceImpl implements ChatLanguageService {
         try {
             String systemPrompt = translateToEnglishTemplate.render(Map.of());
             String userPrompt = "Source language: " + sourceLanguage + "\n\nMessage:\n" + text;
-            String translated = llmCallLimiter.execute(LlmClientType.CHAT, () ->
+            String translated = llmCallLimiter.execute(LlmClientType.UTILITY, () ->
                     chatClient.prompt()
                             .system(systemPrompt)
                             .user(userPrompt)
@@ -85,7 +85,7 @@ public class ChatLanguageServiceImpl implements ChatLanguageService {
         try {
             String systemPrompt = translateFromEnglishTemplate.render(Map.of("targetLanguage", targetLanguage));
             String userPrompt = "English reply:\n" + englishReply;
-            String translated = llmCallLimiter.execute(LlmClientType.CHAT, () ->
+            String translated = llmCallLimiter.execute(LlmClientType.UTILITY, () ->
                     chatClient.prompt()
                             .system(systemPrompt)
                             .user(userPrompt)

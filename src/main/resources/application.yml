@@ -1,7 +1,7 @@
 # MedExpertMatch default configuration (no profile, or base for profile-specific overrides).
 #
 # OpenAI-compatible AI is driven by environment variables mapped in spring.ai.custom.* below:
-#   CHAT_*, EMBEDDING_*, RERANKING_*, TOOL_CALLING_*
+#   CHAT_*, CLINICAL_*, UTILITY_*, EMBEDDING_*, RERANKING_*, TOOL_CALLING_*
 # Optional embedding pool: medexpertmatch.embedding.multi-endpoint (see that section).
 # Override datasource with MEDEXPERTMATCH_DB_* or SPRING_DATASOURCE_*.
 
@@ -69,22 +69,36 @@ spring:
       enabled: false
     # OpenAI-compatible providers only; base-url must include /v1 for Ollama (M6 official SDK)
     custom:
-      chat: # Case analysis, reasoning; e.g. LLM Studio, LiteLLM, or OpenAI
+      chat: # Legacy alias; clinical/utility roles fall back here when unset (M67)
         provider: ${CHAT_PROVIDER:openai}
         base-url: ${CHAT_BASE_URL:http://localhost:11434/v1}
         api-key: ${CHAT_API_KEY:none}
         model: ${CHAT_MODEL:medgemma1.5:4b}
         temperature: ${CHAT_TEMPERATURE:0.7}
         max-tokens: ${CHAT_MAX_TOKENS:6000}
+      clinical: # T3 harness analyze/interpret; falls back to chat.*
+        provider: ${CLINICAL_PROVIDER:${CHAT_PROVIDER:openai}}
+        base-url: ${CLINICAL_BASE_URL:${CHAT_BASE_URL:http://localhost:11434/v1}}
+        api-key: ${CLINICAL_API_KEY:${CHAT_API_KEY:none}}
+        model: ${CLINICAL_MODEL:${CHAT_MODEL:medgemma1.5:4b}}
+        temperature: ${CLINICAL_TEMPERATURE:${CHAT_TEMPERATURE:0.7}}
+        max-tokens: ${CLINICAL_MAX_TOKENS:${CHAT_MAX_TOKENS:6000}}
+      utility: # T2 classify/translate/summarize; falls back reranking → chat
+        provider: ${UTILITY_PROVIDER:${RERANKING_PROVIDER:${CHAT_PROVIDER:openai}}}
+        base-url: ${UTILITY_BASE_URL:${RERANKING_BASE_URL:${CHAT_BASE_URL:http://localhost:11434/v1}}}
+        api-key: ${UTILITY_API_KEY:${RERANKING_API_KEY:${CHAT_API_KEY:none}}}
+        model: ${UTILITY_MODEL:${RERANKING_MODEL:${CHAT_MODEL:medgemma1.5:4b}}}
+        temperature: ${UTILITY_TEMPERATURE:${RERANKING_TEMPERATURE:0.1}}
+        max-tokens: ${UTILITY_MAX_TOKENS:${CHAT_MAX_TOKENS:4096}}
       embedding: # Vector embeddings for similarity search; dimensions must match DB column
         provider: ${EMBEDDING_PROVIDER:openai}
         base-url: ${EMBEDDING_BASE_URL:http://localhost:11434/v1}
         api-key: ${EMBEDDING_API_KEY:none}
         model: ${EMBEDDING_MODEL:nomic-embed-text:v1.5}
         dimensions: ${EMBEDDING_DIMENSIONS:768}
-      reranking: # Semantic reranking of match results; lower temperature preferred
+      reranking: # Semantic reranking; falls back utility → chat when unset (M67)
         provider: ${RERANKING_PROVIDER:openai}
-        base-url: ${RERANKING_BASE_URL:http://localhost:11434/v1}
+        base-url: ${RERANKING_BASE_URL:${UTILITY_BASE_URL:${CHAT_BASE_URL:http://localhost:11434/v1}}}
         api-key: ${RERANKING_API_KEY:none}
         model: ${RERANKING_MODEL:medgemma1.5:4b}
         temperature: ${RERANKING_TEMPERATURE:0.1}
@@ -210,8 +224,12 @@ medexpertmatch:
   llm: # Concurrency per component; 1 = sequential (safe for local Ollama), increase for remote APIs
     max-tokens: 4096
     temperature: 0.7
-    chat:
+    chat: # Deprecated alias for clinical limit (M67)
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS:1}
+    clinical:
+      max-concurrent-calls: ${MEDEXPERTMATCH_LLM_CLINICAL_MAX_CONCURRENT_CALLS:${MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS:1}}
+    utility:
+      max-concurrent-calls: ${MEDEXPERTMATCH_LLM_UTILITY_MAX_CONCURRENT_CALLS:${MEDEXPERTMATCH_LLM_CHAT_MAX_CONCURRENT_CALLS:1}}
     embedding:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_EMBEDDING_MAX_CONCURRENT_CALLS:1}
     reranking:

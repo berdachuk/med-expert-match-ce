@@ -86,7 +86,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for case analysis (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)
@@ -132,7 +132,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for ICD-10 extraction (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)
@@ -168,7 +168,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for urgency classification (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)
@@ -215,7 +215,7 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for specialty determination (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)

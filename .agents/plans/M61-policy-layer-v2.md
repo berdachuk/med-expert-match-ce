@@ -1,8 +1,8 @@
 # M61: Policy Layer v2 (Confidence Router)
 
-**Status:** Planned  
+**Status:** Planned — **next active milestone** (M67 complete)  
 **Created:** 2026-06-07  
-**Depends on:** M57 (archived), M58 (archived) — `GoalClassifier`, `MedicalAgentPolicyGateService`, `ToolSelectionPolicy`
+**Depends on:** M67 (archived), M57 (archived), M58 (archived) — `GoalClassifier`, `MedicalAgentPolicyGateService`, `ToolSelectionPolicy`
 
 ## Problem Statement
 

@@ -1,8 +1,11 @@
 # M60: FunctionGemma Fine-Tune Execution
 
-**Status:** Planned  
+**Status:** Deferred (2026-06-07) — resume when GPU fine-tune capacity is available  
 **Created:** 2026-06-07  
 **Depends on:** M58 (archived) — policy guard, eval pipeline, dataset export in repo
+
+> **Note:** Server-side `ToolSelectionGuardingResolver` and M57 harness routing cover current production gaps.
+> Fine-tune is optional optimization, not a blocker for M61–M66.
 
 ## Problem Statement
 

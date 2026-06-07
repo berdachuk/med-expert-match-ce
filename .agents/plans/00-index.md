@@ -2,16 +2,32 @@
 
 ## Active
 
-Roadmap derived from agent-vs-chat strategy review (2026-06-07). Suggested order: **M60** (parallel) → **M61** → **M62** → **M63** + **M65** → **M66**.
+Roadmap updated 2026-06-07 after **M67** (archived). Suggested order: **M61** → **M62** → **M63** + **M65** → **M66**.
+Backlog: **M68** (context summarizer) after M61/M62 or in parallel when token cost is priority.
 
 | # | Plan | Description |
 |---|------|-------------|
-| M60 | [`M60-functiongemma-finetune-execution.md`](M60-functiongemma-finetune-execution.md) | GPU fine-tune execution + live before/after eval (after M58 repo work) |
-| M61 | [`M61-policy-layer-v2.md`](M61-policy-layer-v2.md) | Confidence policy router: ANSWER / CLARIFY / ESCALATE / REFUSE |
+| M61 | [`M61-policy-layer-v2.md`](M61-policy-layer-v2.md) | **Next** — confidence policy router: ANSWER / CLARIFY / ESCALATE / REFUSE |
 | M62 | [`M62-eval-flywheel-release-gate.md`](M62-eval-flywheel-release-gate.md) | Unified eval report + ROI release gate |
 | M63 | [`M63-match-outcome-data-flywheel.md`](M63-match-outcome-data-flywheel.md) | Match outcome labels + historical weight calibration |
 | M65 | [`M65-human-in-the-loop-harness.md`](M65-human-in-the-loop-harness.md) | HUMAN_REVIEW checkpoint + audit trail |
 | M66 | [`M66-agent-vs-chat-packaging.md`](M66-agent-vs-chat-packaging.md) | UI modes, explainability, pitch/case study |
+
+## Backlog
+
+Not in the immediate sequence; pick up after M61/M62 or when cost compression is the priority.
+
+| # | Plan | Description |
+|---|------|-------------|
+| M68 | [`M68-harness-context-summarizer.md`](M68-harness-context-summarizer.md) | Harness payload shaping before clinical LLM (M64 ADR Phase 3) |
+
+## Deferred
+
+Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity is available.
+
+| # | Plan | Description |
+|---|------|-------------|
+| M60 | [`M60-functiongemma-finetune-execution.md`](M60-functiongemma-finetune-execution.md) | GPU fine-tune execution + live before/after eval (deferred 2026-06-07) |
 
 ## Archive
 
@@ -80,6 +96,7 @@ Roadmap derived from agent-vs-chat strategy review (2026-06-07). Suggested order
 | M58 | [`M58-functiongemma-tool-calling-finetune.md`](archive/M58-functiongemma-tool-calling-finetune.md) | FunctionGemma tool-selection policy, live eval pipeline, Unsloth export (GPU train → M60) |
 | M59 | [`M59-chat-collapsible-reasoning-and-follow-up.md`](archive/M59-chat-collapsible-reasoning-and-follow-up.md) | Collapsible CoT in chat, follow-up routing, case-analysis interpretation, chat UI |
 | M64 | [`M64-cost-quality-routing.md`](archive/M64-cost-quality-routing.md) | Cost-quality tier routing (LIGHT/STANDARD/FULL), token budgets, Prometheus metrics |
+| M67 | [`M67-llm-role-endpoint-separation.md`](archive/M67-llm-role-endpoint-separation.md) | Clinical + utility LLM endpoints (`CLINICAL_*`, `UTILITY_*`); M64 ADR Phase 2 |
 
 ## Creating a New Plan
 

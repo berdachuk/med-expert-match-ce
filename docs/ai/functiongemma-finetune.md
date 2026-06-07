@@ -1,7 +1,7 @@
 # FunctionGemma Fine-Tuning Runbook (M58)
 
 **Audience:** ML engineers improving Auto chat tool selection.  
-**Plans:** [M58 (archived)](../../.agents/plans/archive/M58-functiongemma-tool-calling-finetune.md) · [M60 (active)](../../.agents/plans/M60-functiongemma-finetune-execution.md)
+**Plans:** [M58 (archived)](../../.agents/plans/archive/M58-functiongemma-tool-calling-finetune.md) · [M60 (deferred)](../../.agents/plans/M60-functiongemma-finetune-execution.md)
 
 ## Phase 1 — Baseline (complete in repo)
 

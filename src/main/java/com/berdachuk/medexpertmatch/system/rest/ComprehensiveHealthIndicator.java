@@ -36,14 +36,16 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
     private static final Duration LLM_CHECK_CACHE_DURATION = Duration.ofMinutes(5);
 
     private final NamedParameterJdbcTemplate namedJdbcTemplate;
-    private final ChatModel primaryChatModel;
+    private final ChatModel clinicalChatModel;
+    private final ChatModel utilityChatModel;
     private final ChatModel rerankingChatModel;
     private final ChatModel toolCallingChatModel;
     private final EmbeddingModel embeddingModel;
     private final Environment environment;
 
     // Cache for expensive checks
-    private final AtomicReference<CachedHealthResult> llmHealthCache = new AtomicReference<>();
+    private final AtomicReference<CachedHealthResult> clinicalLlmHealthCache = new AtomicReference<>();
+    private final AtomicReference<CachedHealthResult> utilityLlmHealthCache = new AtomicReference<>();
     private final AtomicReference<CachedHealthResult> embeddingHealthCache = new AtomicReference<>();
     private final AtomicReference<CachedHealthResult> rerankingHealthCache = new AtomicReference<>();
     private final AtomicReference<CachedHealthResult> toolCallingHealthCache = new AtomicReference<>();
@@ -51,13 +53,15 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
     @Autowired
     public ComprehensiveHealthIndicator(
             NamedParameterJdbcTemplate namedJdbcTemplate,
-            @Qualifier("primaryChatModel") ChatModel primaryChatModel,
+            @Qualifier("clinicalChatModel") ChatModel clinicalChatModel,
+            @Qualifier("utilityChatModel") ChatModel utilityChatModel,
             @Nullable @Qualifier("rerankingChatModel") ChatModel rerankingChatModel,
             @Nullable @Qualifier("toolCallingChatModel") ChatModel toolCallingChatModel,
             @Qualifier("primaryEmbeddingModel") EmbeddingModel embeddingModel,
             Environment environment) {
         this.namedJdbcTemplate = namedJdbcTemplate;
-        this.primaryChatModel = primaryChatModel;
+        this.clinicalChatModel = clinicalChatModel;
+        this.utilityChatModel = utilityChatModel;
         this.rerankingChatModel = rerankingChatModel;
         this.toolCallingChatModel = toolCallingChatModel;
         this.embeddingModel = embeddingModel;
@@ -92,14 +96,23 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
             log.debug("Vector store health check passed");
         }
 
-        // 3. Primary LLM Model Health Check (cached to avoid costs)
-        Health llmHealth = checkLlmModel();
-        details.put("llm", llmHealth.getDetails());
-        if (!llmHealth.getStatus().getCode().equals("UP")) {
+        // 3. Clinical LLM health (T3 harness; cached)
+        Health clinicalLlmHealth = checkClinicalLlmModel();
+        details.put("clinicalLlm", clinicalLlmHealth.getDetails());
+        if (!clinicalLlmHealth.getStatus().getCode().equals("UP")) {
             isUp = false;
-            log.warn("LLM health check failed: {}", llmHealth.getStatus());
+            log.warn("Clinical LLM health check failed: {}", clinicalLlmHealth.getStatus());
         } else {
-            log.debug("LLM health check passed");
+            log.debug("Clinical LLM health check passed");
+        }
+
+        // 3b. Utility LLM health (T2 auxiliary; cached, optional for overall UP)
+        Health utilityLlmHealth = checkUtilityLlmModel();
+        details.put("utilityLlm", utilityLlmHealth.getDetails());
+        if (!utilityLlmHealth.getStatus().getCode().equals("UP")) {
+            log.warn("Utility LLM health check failed: {}", utilityLlmHealth.getStatus());
+        } else {
+            log.debug("Utility LLM health check passed");
         }
 
         // 4. Embedding Model Health Check (cached to avoid costs)
@@ -142,20 +155,22 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
         Health result = healthBuilder.build();
 
         if (isUp) {
-            log.info("Comprehensive health check passed in {}ms - PrimaryDB: {}, VectorStore: {}, LLM: {}, Embedding: {}, Reranking: {}, ToolCalling: {}",
+            log.info("Comprehensive health check passed in {}ms - PrimaryDB: {}, VectorStore: {}, Clinical: {}, Utility: {}, Embedding: {}, Reranking: {}, ToolCalling: {}",
                     duration.toMillis(),
                     primaryDbHealth.getStatus().getCode(),
                     vectorHealth.getStatus().getCode(),
-                    llmHealth.getStatus().getCode(),
+                    clinicalLlmHealth.getStatus().getCode(),
+                    utilityLlmHealth.getStatus().getCode(),
                     embeddingHealth.getStatus().getCode(),
                     rerankingHealth.getStatus().getCode(),
                     toolCallingHealth.getStatus().getCode());
         } else {
-            log.error("Comprehensive health check failed in {}ms - PrimaryDB: {}, VectorStore: {}, LLM: {}, Embedding: {}, Reranking: {}, ToolCalling: {}",
+            log.error("Comprehensive health check failed in {}ms - PrimaryDB: {}, VectorStore: {}, Clinical: {}, Utility: {}, Embedding: {}, Reranking: {}, ToolCalling: {}",
                     duration.toMillis(),
                     primaryDbHealth.getStatus().getCode(),
                     vectorHealth.getStatus().getCode(),
-                    llmHealth.getStatus().getCode(),
+                    clinicalLlmHealth.getStatus().getCode(),
+                    utilityLlmHealth.getStatus().getCode(),
                     embeddingHealth.getStatus().getCode(),
                     rerankingHealth.getStatus().getCode(),
                     toolCallingHealth.getStatus().getCode());
@@ -310,55 +325,84 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
     /**
      * Checks primary LLM model availability (cached to avoid API costs).
      */
-    private Health checkLlmModel() {
-        // Check cache first
-        CachedHealthResult cached = llmHealthCache.get();
+    private Health checkClinicalLlmModel() {
+        CachedHealthResult cached = clinicalLlmHealthCache.get();
         if (cached != null && !cached.isExpired()) {
-            log.debug("Using cached LLM health check result (age: {}ms)", cached.getAge().toMillis());
+            log.debug("Using cached clinical LLM health check result (age: {}ms)", cached.getAge().toMillis());
             return cached.health();
         }
 
-        // Perform actual check
         try {
-            if (primaryChatModel == null) {
+            if (clinicalChatModel == null) {
                 Health result = Health.down()
-                        .withDetail("error", "Primary ChatModel bean not available")
+                        .withDetail("error", "clinicalChatModel bean not available")
                         .withDetail("cached", false)
                         .build();
-                cacheResult(llmHealthCache, result);
+                cacheResult(clinicalLlmHealthCache, result);
                 return result;
             }
 
-            // Simple test to verify model is accessible
-            // Note: We don't make an actual API call to avoid costs
-            // Just verify the bean is available and configured
-            String modelType = primaryChatModel.getClass().getSimpleName();
-
+            String modelType = clinicalChatModel.getClass().getSimpleName();
             Map<String, Object> details = new HashMap<>();
             details.put("status", "UP");
             details.put("modelType", modelType);
             details.put("cached", false);
-            details.put("role", "primary");
-
-            // Extract model configuration details
-            Map<String, Object> modelConfig = extractChatModelConfig();
-            if (!modelConfig.isEmpty()) {
-                details.putAll(modelConfig);
-            }
+            details.put("role", "clinical");
+            details.putAll(extractRoleModelConfig("clinical", "CLINICAL_"));
 
             Health result = Health.up().withDetails(details).build();
-            cacheResult(llmHealthCache, result);
-
-            log.info("Primary LLM health check passed - Model: {}", modelType);
+            cacheResult(clinicalLlmHealthCache, result);
+            log.info("Clinical LLM health check passed - Model: {}", modelType);
             return result;
         } catch (Exception e) {
-            log.error("Primary LLM health check failed", e);
+            log.error("Clinical LLM health check failed", e);
             Health result = Health.down()
                     .withDetail("error", e.getMessage())
                     .withDetail("exception", e.getClass().getSimpleName())
                     .withDetail("cached", false)
                     .build();
-            cacheResult(llmHealthCache, result);
+            cacheResult(clinicalLlmHealthCache, result);
+            return result;
+        }
+    }
+
+    private Health checkUtilityLlmModel() {
+        CachedHealthResult cached = utilityLlmHealthCache.get();
+        if (cached != null && !cached.isExpired()) {
+            log.debug("Using cached utility LLM health check result (age: {}ms)", cached.getAge().toMillis());
+            return cached.health();
+        }
+
+        try {
+            if (utilityChatModel == null) {
+                Health result = Health.down()
+                        .withDetail("error", "utilityChatModel bean not available")
+                        .withDetail("cached", false)
+                        .build();
+                cacheResult(utilityLlmHealthCache, result);
+                return result;
+            }
+
+            String modelType = utilityChatModel.getClass().getSimpleName();
+            Map<String, Object> details = new HashMap<>();
+            details.put("status", "UP");
+            details.put("modelType", modelType);
+            details.put("cached", false);
+            details.put("role", "utility");
+            details.putAll(extractRoleModelConfig("utility", "UTILITY_"));
+
+            Health result = Health.up().withDetails(details).build();
+            cacheResult(utilityLlmHealthCache, result);
+            log.info("Utility LLM health check passed - Model: {}", modelType);
+            return result;
+        } catch (Exception e) {
+            log.error("Utility LLM health check failed", e);
+            Health result = Health.down()
+                    .withDetail("error", e.getMessage())
+                    .withDetail("exception", e.getClass().getSimpleName())
+                    .withDetail("cached", false)
+                    .build();
+            cacheResult(utilityLlmHealthCache, result);
             return result;
         }
     }
@@ -531,24 +575,23 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
      *
      * @return Map containing model name, base URL, and provider
      */
-    private Map<String, Object> extractChatModelConfig() {
+    private Map<String, Object> extractRoleModelConfig(String role, String envPrefix) {
         Map<String, Object> config = new HashMap<>();
         if (environment == null) {
             return config;
         }
 
         try {
-            // Try custom configuration first (spring.ai.custom.chat.*)
-            String model = environment.getProperty("spring.ai.custom.chat.model");
-            String baseUrl = environment.getProperty("spring.ai.custom.chat.base-url");
-            String provider = environment.getProperty("spring.ai.custom.chat.provider", "openai");
+            String prefix = "spring.ai.custom." + role + ".";
+            String model = environment.getProperty(prefix + "model");
+            String baseUrl = environment.getProperty(prefix + "base-url");
+            String provider = environment.getProperty(prefix + "provider", "openai");
 
-            // Fallback to environment variables (CHAT_MODEL, CHAT_BASE_URL, etc.)
             if (model == null || model.isEmpty()) {
-                model = environment.getProperty("CHAT_MODEL");
+                model = environment.getProperty(envPrefix + "MODEL");
             }
             if (baseUrl == null || baseUrl.isEmpty()) {
-                baseUrl = environment.getProperty("CHAT_BASE_URL");
+                baseUrl = environment.getProperty(envPrefix + "BASE_URL");
             }
 
             if (model != null && !model.isEmpty()) {
@@ -561,7 +604,7 @@ public class ComprehensiveHealthIndicator implements HealthIndicator {
                 config.put("provider", provider);
             }
         } catch (Exception e) {
-            log.debug("Failed to extract chat model configuration: {}", e.getMessage());
+            log.debug("Failed to extract {} model configuration: {}", role, e.getMessage());
         }
 
         return config;

@@ -1,6 +1,6 @@
 # AI Provider Configuration for MedExpertMatch
 
-**Last Updated:** 2026-05-31
+**Last Updated:** 2026-06-07
 
 ## Overview
 
@@ -11,11 +11,12 @@ OpenAI auto-configuration. Instead, it creates its own beans in `SpringAIConfig`
 Configuration flow:
 
 ```text
-Environment variables and/or YAML (CHAT_*, EMBEDDING_*, ...) -> application.yml placeholders -> SpringAIConfig -> Chat/Embedding beans
+Environment variables and/or YAML (CLINICAL_*, UTILITY_*, CHAT_*, EMBEDDING_*, ...) -> application.yml placeholders -> SpringAIConfig -> role-specific ChatModel beans
 ```
 
 The default [application.yml](../src/main/resources/application.yml) documents at the top of the file how
-`CHAT_*`, `EMBEDDING_*`, `RERANKING_*`, and `TOOL_CALLING_*` override nested `spring.ai.custom.*` values. Optional
+`CLINICAL_*`, `UTILITY_*`, `CHAT_*` (legacy fallback), `EMBEDDING_*`, `RERANKING_*`, and `TOOL_CALLING_*` override
+nested `spring.ai.custom.*` values. Optional
 **embedding multi-endpoint pool** settings live under `medexpertmatch.embedding.multi-endpoint` (see below).
 
 ## Supported deployment patterns
@@ -79,9 +80,41 @@ via `${ENV:default}` for all `CHAT_*` / `EMBEDDING_*` variables. It includes:
 
 Each AI function is configured independently.
 
-### Chat
+### Clinical (T3 harness — `clinicalChatModel`)
 
-Used for case analysis and general medical reasoning.
+MedGemma paths: harness analyze/interpret, case analysis, policy-sensitive text. Falls back to `CHAT_*` when unset.
+
+```bash
+CLINICAL_PROVIDER=openai
+CLINICAL_BASE_URL=https://your-openai-compatible-endpoint
+CLINICAL_API_KEY=your-api-key
+CLINICAL_MODEL=medgemma-1.5-4b-it
+CLINICAL_TEMPERATURE=0.7
+CLINICAL_MAX_TOKENS=6000
+```
+
+Concurrency: `MEDEXPERTMATCH_LLM_CLINICAL_MAX_CONCURRENT_CALLS` (defaults to legacy chat limit).
+
+### Utility (T2 auxiliary — `utilityChatModel`)
+
+Goal-classify fallback, translation, summarization, synthetic description generation. Fallback chain:
+`UTILITY_*` → `RERANKING_*` → `CHAT_*`.
+
+```bash
+UTILITY_PROVIDER=openai
+UTILITY_BASE_URL=https://your-utility-endpoint
+UTILITY_API_KEY=your-api-key
+UTILITY_MODEL=qwen3:1.5b
+UTILITY_TEMPERATURE=0.1
+UTILITY_MAX_TOKENS=4096
+```
+
+Concurrency: `MEDEXPERTMATCH_LLM_UTILITY_MAX_CONCURRENT_CALLS`.
+
+### Chat (legacy fallback)
+
+Shared local-dev default when role-specific vars are unset. `primaryChatModel` is a deprecated alias to
+`clinicalChatModel` (M67).
 
 ```bash
 CHAT_PROVIDER=openai

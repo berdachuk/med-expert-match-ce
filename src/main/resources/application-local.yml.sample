@@ -2,7 +2,9 @@
 # Copy to application-local.yml and adjust. docker-compose.dev.yml exposes Postgres on localhost:5434.
 #
 # AI settings use top-level CHAT_*, EMBEDDING_*, RERANKING_*, TOOL_CALLING_* keys; they map to
-# spring.ai.custom.* in application.yml. Optional: medexpertmatch.embedding.multi-endpoint for an embedding pool.
+# spring.ai.custom.* in application.yml. M67: optional CLINICAL_* / UTILITY_* override harness vs auxiliary roles;
+# when unset, clinical and utility fall back to CHAT_* / RERANKING_* automatically.
+# Optional: medexpertmatch.embedding.multi-endpoint for an embedding pool.
 #
 # Run: --spring.profiles.active=local  or  SPRING_PROFILES_ACTIVE=local
 

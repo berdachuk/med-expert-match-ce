@@ -90,10 +90,10 @@ public class EmbeddingGeneratorServiceImpl implements EmbeddingGeneratorService 
             batches.add(cases.subList(i, end));
         }
 
-        int chatMaxConcurrentCalls = llmCallLimiter.getMaxConcurrentCalls(LlmClientType.CHAT);
+        int utilityMaxConcurrentCalls = llmCallLimiter.getMaxConcurrentCalls(LlmClientType.UTILITY);
 
-        if (chatMaxConcurrentCalls == 1) {
-            log.info("CHAT max concurrent calls is 1 - processing batches sequentially");
+        if (utilityMaxConcurrentCalls == 1) {
+            log.info("UTILITY max concurrent calls is 1 - processing batches sequentially");
             for (List<MedicalCase> batch : batches) {
                 if (progress != null && progress.isCancelled()) {
                     log.info("Generation cancelled before processing all batches");

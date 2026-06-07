@@ -45,7 +45,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     private final LlmCallLimiter llmCallLimiter;
 
     public MedicalAgentLlmSupportServiceImpl(
-            @Qualifier("primaryChatModel") ChatModel primaryChatModel,
+            @Qualifier("clinicalChatModel") ChatModel clinicalChatModel,
             MedicalCaseRepository medicalCaseRepository,
             @Qualifier("medgemmaCaseAnalysisSystemPromptTemplate") PromptTemplate medgemmaCaseAnalysisSystemPromptTemplate,
             @Qualifier("medgemmaCaseAnalysisUserPromptTemplate") PromptTemplate medgemmaCaseAnalysisUserPromptTemplate,
@@ -58,7 +58,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             @Value("${spring.ai.custom.chat.model:medgemma:1.5-4b}") String medGemmaModelName,
             LogStreamService logStreamService,
             LlmCallLimiter llmCallLimiter) {
-        this.medGemmaChatClient = ChatClient.builder(primaryChatModel).build();
+        this.medGemmaChatClient = ChatClient.builder(clinicalChatModel).build();
         this.medGemmaModelName = medGemmaModelName;
         this.medicalCaseRepository = medicalCaseRepository;
         this.medgemmaCaseAnalysisSystemPromptTemplate = medgemmaCaseAnalysisSystemPromptTemplate;
@@ -257,14 +257,14 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
     private String invokeMedGemma(String systemPrompt, String userPrompt) {
         try {
-            return llmCallLimiter.execute(LlmClientType.CHAT, () -> callMedGemmaOnce(systemPrompt, userPrompt));
+            return llmCallLimiter.execute(LlmClientType.CLINICAL, () -> callMedGemmaOnce(systemPrompt, userPrompt));
         } catch (RuntimeException first) {
             if (!isFinishReasonNull(first)) {
                 throw first;
             }
             log.warn("MedGemma returned null finish_reason, retrying once");
             try {
-                String retry = llmCallLimiter.execute(LlmClientType.CHAT, () -> callMedGemmaOnce(systemPrompt, userPrompt));
+                String retry = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> callMedGemmaOnce(systemPrompt, userPrompt));
                 if (retry != null && !retry.isBlank()) {
                     return retry;
                 }
@@ -338,7 +338,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                 "caseAnalysis", caseAnalysis != null ? caseAnalysis : "",
                 "rawToolResults", rawToolResults != null ? rawToolResults : ""));
         try {
-            String response = llmCallLimiter.execute(LlmClientType.CHAT,
+            String response = llmCallLimiter.execute(LlmClientType.CLINICAL,
                     () -> medGemmaChatClient.prompt().user(prompt).call().content());
             return LlmResponseSanitizer.stripLlmReasoning(response);
         } catch (Exception e) {
@@ -353,7 +353,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         String prompt = networkAnalyticsSummarizationPromptTemplate.render(Map.of(
                 "rawResults", rawResults != null ? rawResults : ""));
         try {
-            String response = llmCallLimiter.execute(LlmClientType.CHAT,
+            String response = llmCallLimiter.execute(LlmClientType.CLINICAL,
                     () -> medGemmaChatClient.prompt().user(prompt).call().content());
             return LlmResponseSanitizer.toHumanReadable(response);
         } catch (Exception e) {
