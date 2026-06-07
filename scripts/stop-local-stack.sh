@@ -40,9 +40,18 @@ docker_compose() {
 
 echo "Stopping Spring Boot (mvn spring-boot:run)..."
 pkill -f "med-expert-match.*spring-boot:run" 2>/dev/null || true
+pkill -f "MedExpertMatchApplication" 2>/dev/null || true
 sleep 2
 if command -v fuser >/dev/null 2>&1; then
     fuser -k "${APP_PORT}/tcp" 2>/dev/null || true
+fi
+# Git Bash on Windows: pkill/fuser often miss java.exe; free the app port via PowerShell
+if command -v powershell.exe >/dev/null 2>&1; then
+    powershell.exe -NoProfile -Command "
+      \$p = Get-NetTCPConnection -LocalPort ${APP_PORT} -State Listen -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty OwningProcess -Unique
+      foreach (\$pid in \$p) { if (\$pid) { Stop-Process -Id \$pid -Force -ErrorAction SilentlyContinue } }
+    " 2>/dev/null || true
 fi
 
 echo "Stopping MkDocs..."
