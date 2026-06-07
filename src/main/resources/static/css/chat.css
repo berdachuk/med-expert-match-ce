@@ -63,7 +63,8 @@
     max-width: 14rem;
 }
 
-.chat-explainability-panel {
+.chat-explainability-panel,
+.match-explainability-panel {
     margin-top: 0.5rem;
     padding: 0.5rem 0.65rem;
     border: 1px solid var(--bs-border-color);
@@ -72,13 +73,16 @@
     font-size: 0.8rem;
 }
 
-.chat-explainability-panel table {
+.chat-explainability-panel table,
+.match-explainability-panel table {
     width: 100%;
     margin-bottom: 0;
 }
 
 .chat-explainability-panel th,
-.chat-explainability-panel td {
+.chat-explainability-panel td,
+.match-explainability-panel th,
+.match-explainability-panel td {
     padding: 0.2rem 0.35rem;
     vertical-align: top;
 }

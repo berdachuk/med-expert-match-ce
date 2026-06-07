@@ -1251,6 +1251,10 @@ The LLM generates a final response that includes:
 - **Case Selection Form**: Dropdown to select medical case
 - **Match Button**: Triggers matching operation
 - **Results Card**: Shows the LLM-generated response with matched doctors
+- **Match signal breakdown panel**: Collapsible `<details>` table (vector / graph / history %) below match results when
+  `AgentResponse.metadata.matchExplainability` is present — same non-PHI contract as AI Chat expert-match mode (see
+  `MatchExplainabilityService`). Rendered on SSR POST and AJAX poll completion paths; hidden when metadata is absent or
+  empty.
 - **Execution Trace Panel**: Real-time log of the matching process (via SSE)
 - **Progress Indicator**: Shows "Matching..." during processing
 
@@ -2141,6 +2145,8 @@ The web UI (`/match` page) includes:
 - **Case Search Modal**: Search and select existing cases to populate the form
 - **Form Auto-Population**: Selected cases automatically fill form fields
 - **Dual Input Methods**: Both dropdown selection and text input are available
+- **Match explainability panel**: When the harness attaches `matchExplainability` to agent metadata, the results card
+  shows a collapsible signal breakdown (Doctor, Score, Vector %, Graph %, History %). See [Result Display](#9-result-display).
 
 ### Benefits
 

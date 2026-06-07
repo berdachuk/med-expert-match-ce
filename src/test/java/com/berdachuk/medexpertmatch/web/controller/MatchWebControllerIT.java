@@ -75,6 +75,7 @@ class MatchWebControllerIT extends BaseIntegrationTest {
                 .andExpect(view().name("match"))
                 .andExpect(model().attribute("caseId", testCaseId))
                 .andExpect(model().attributeExists("matchResult"))
+                .andExpect(model().attributeDoesNotExist("matchExplainability"))
                 .andExpect(model().attributeDoesNotExist("error"));
     }
 

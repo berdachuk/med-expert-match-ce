@@ -2,11 +2,11 @@
 
 ## Active
 
-Roadmap updated 2026-06-08 after **M69** (archived). Suggested order: **M70** → **M60** (deferred).
+Roadmap updated 2026-06-08. Suggested order: **M71** → **M60** (deferred).
 
 | # | Plan | Description |
 |---|------|-------------|
-| M70 | [`M70-find-specialist-explainability.md`](M70-find-specialist-explainability.md) | **Next** — explainability panel on Find Specialist SSR |
+| M71 | [`M71-llm-usage-telemetry.md`](M71-llm-usage-telemetry.md) | **Next** — LLM usage metadata capture + compact summary in agent activity panel |
 
 ## Deferred
 
@@ -91,6 +91,7 @@ Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity
 | M64 | [`M64-cost-quality-routing.md`](archive/M64-cost-quality-routing.md) | Cost-quality tier routing (LIGHT/STANDARD/FULL), token budgets, Prometheus metrics |
 | M67 | [`M67-llm-role-endpoint-separation.md`](archive/M67-llm-role-endpoint-separation.md) | Clinical + utility LLM endpoints (`CLINICAL_*`, `UTILITY_*`); M64 ADR Phase 2 |
 | M68 | [`M68-harness-context-summarizer.md`](archive/M68-harness-context-summarizer.md) | Harness context summarizer before clinical LLM (M64 ADR Phase 3) |
+| M70 | [`M70-find-specialist-explainability.md`](archive/M70-find-specialist-explainability.md) | Find Specialist explainability panel (SSR + AJAX) |
 
 ## Creating a New Plan
 

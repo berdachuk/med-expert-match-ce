@@ -15,6 +15,7 @@ import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSani
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -121,6 +122,7 @@ public class MatchController {
                 }
                 model.addAttribute("matchResult", fallbackMessage);
             }
+            addMatchExplainabilityToModel(agentResponse, model);
             model.addAttribute("error", null);
         } catch (Exception e) {
             log.error("Error matching doctors for case: {}", caseId, e);
@@ -139,6 +141,18 @@ public class MatchController {
         model.addAttribute("cases", cases != null ? cases : new ArrayList<>());
 
         return "match";
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void addMatchExplainabilityToModel(
+            MedicalAgentService.AgentResponse agentResponse, Model model) {
+        if (agentResponse == null || agentResponse.metadata() == null) {
+            return;
+        }
+        Object raw = agentResponse.metadata().get("matchExplainability");
+        if (raw instanceof List<?> list && !list.isEmpty()) {
+            model.addAttribute("matchExplainability", (List<Map<String, Object>>) raw);
+        }
     }
 
     /**
