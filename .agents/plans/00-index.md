@@ -2,11 +2,11 @@
 
 ## Active
 
-Roadmap updated 2026-06-08. Suggested order: **M71** → **M60** (deferred).
+Roadmap updated 2026-06-08. Suggested order: **M60** (GPU fine-tune, when capacity available).
 
 | # | Plan | Description |
 |---|------|-------------|
-| M71 | [`M71-llm-usage-telemetry.md`](M71-llm-usage-telemetry.md) | **Next** — LLM usage metadata capture + compact summary in agent activity panel |
+| M60 | [`M60-functiongemma-finetune-execution-next.md`](M60-functiongemma-finetune-execution-next.md) | **Next** — GPU fine-tune execution + live before/after eval (blocked on GPU) |
 
 ## Deferred
 
@@ -14,7 +14,7 @@ Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity
 
 | # | Plan | Description |
 |---|------|-------------|
-| M60 | [`M60-functiongemma-finetune-execution.md`](M60-functiongemma-finetune-execution.md) | GPU fine-tune execution + live before/after eval (deferred 2026-06-07) |
+| — | [`M60-functiongemma-finetune-execution.md`](M60-functiongemma-finetune-execution.md) | Superseded by `M60-functiongemma-finetune-execution-next.md` (same scope, refreshed 2026-06-08) |
 
 ## Archive
 
@@ -59,7 +59,7 @@ Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity
 | M34 | [`M34-harness-production-readiness.md`](archive/M34-harness-production-readiness.md) | Harness production readiness |
 | M35 | [`M35-chat-conversation-context-turn-continuity.md`](archive/M35-chat-conversation-context-turn-continuity.md) | Chat conversation context turn continuity |
 | M36 | [`M36-chat-context-hardening.md`](archive/M36-chat-context-hardening.md) | Chat context hardening |
-| M37 | [`M37-harness-production-hardening.md`](archive/M37-harness-production-hardening.md) | Harness production hardening |
+| M37 | [`M37-harness-production-hardening.md`](archive/M37-harness-production-hardening.md) | Harness production hardiness |
 | M38 | [`M38-multi-agent-event-pipeline.md`](archive/M38-multi-agent-event-pipeline.md) | Multi-agent event pipeline |
 | M39 | [`M39-wire-event-agents-into-chat.md`](archive/M39-wire-event-agents-into-chat.md) | Wire event agents into chat |
 | M40 | [`M40-inline-agent-activity-panel.md`](archive/M40-inline-agent-activity-panel.md) | Inline agent activity panel |
@@ -92,6 +92,7 @@ Postponed; repo scaffolding from M58 remains. Resume when GPU fine-tune capacity
 | M67 | [`M67-llm-role-endpoint-separation.md`](archive/M67-llm-role-endpoint-separation.md) | Clinical + utility LLM endpoints (`CLINICAL_*`, `UTILITY_*`); M64 ADR Phase 2 |
 | M68 | [`M68-harness-context-summarizer.md`](archive/M68-harness-context-summarizer.md) | Harness context summarizer before clinical LLM (M64 ADR Phase 3) |
 | M70 | [`M70-find-specialist-explainability.md`](archive/M70-find-specialist-explainability.md) | Find Specialist explainability panel (SSR + AJAX) |
+| M71 | [`M71-llm-usage-telemetry.md`](archive/M71-llm-usage-telemetry.md) | LLM usage metadata capture + compact summary in agent activity panel |
 
 ## Creating a New Plan
 

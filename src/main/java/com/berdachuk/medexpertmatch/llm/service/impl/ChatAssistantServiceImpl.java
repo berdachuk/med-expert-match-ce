@@ -14,6 +14,9 @@ import com.berdachuk.medexpertmatch.llm.chat.ChatUserContentSanitizer;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassificationContext;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContextRunner;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.agent.SessionAdvisorSupport;
 import com.berdachuk.medexpertmatch.llm.chat.ChatAgentProfile;
@@ -29,6 +32,7 @@ import com.berdachuk.medexpertmatch.core.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmUsageTelemetryService;
 import com.berdachuk.medexpertmatch.llm.routing.RoutingTier;
 import com.berdachuk.medexpertmatch.llm.routing.RoutingTierResolver;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
@@ -81,6 +85,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
     private final PipelineProgressCollector pipelineProgressCollector;
     private final LlmRoutingMetrics llmRoutingMetrics;
     private final LlmTierProperties llmTierProperties;
+    private final LlmUsageTelemetryService llmUsageTelemetryService;
 
     public ChatAssistantServiceImpl(
             ChatService chatService,
@@ -103,7 +108,8 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             SessionService sessionService,
             PipelineProgressCollector pipelineProgressCollector,
             LlmRoutingMetrics llmRoutingMetrics,
-            LlmTierProperties llmTierProperties) {
+            LlmTierProperties llmTierProperties,
+            LlmUsageTelemetryService llmUsageTelemetryService) {
         this.chatService = chatService;
         this.chatClient = chatClient;
         this.promptSupportService = promptSupportService;
@@ -125,6 +131,7 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
         this.pipelineProgressCollector = pipelineProgressCollector;
         this.llmRoutingMetrics = llmRoutingMetrics;
         this.llmTierProperties = llmTierProperties;
+        this.llmUsageTelemetryService = llmUsageTelemetryService;
     }
 
     @Override
@@ -212,12 +219,14 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                 logStreamService.sendLog(ctx.sessionId(), "INFO", "Chat Agent",
                         "Streaming turn for agent " + ctx.profile().agentId());
 
-                Flux<String> tokenFlux = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
-                        .system(ctx.systemPrompt())
-                        .user(ctx.userPrompt())
-                        .advisors(a -> SessionAdvisorSupport.applyOrchestratorContext(a, ctx.sessionId()))
-                        .stream()
-                        .content());
+                Flux<String> tokenFlux = LlmUsageContextRunner.execute(
+                        chatUsageContext(ctx, LlmOperation.CHAT_STREAM),
+                        () -> llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
+                                .system(ctx.systemPrompt())
+                                .user(ctx.userPrompt())
+                                .advisors(a -> SessionAdvisorSupport.applyOrchestratorContext(a, ctx.sessionId()))
+                                .stream()
+                                .content()));
 
                 tokenFlux.doOnNext(chunk -> {
                             full.append(chunk);
@@ -241,6 +250,9 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                                         ctx.goal().caseId().orElse(null), ctx.sessionId());
                                 sendAgentEvent(emitter, Map.of("type", "agent_done", "agentId", ctx.profile().agentId()));
                                 sendPipelineStageEvents(emitter, ctx.sessionId());
+                                var rollup = llmUsageTelemetryService.sessionRollup(ctx.sessionId());
+                                chatStreamActivityPublisher.publishTurnSummary(ctx.sessionId(), rollup);
+                                llmUsageTelemetryService.clearSessionRollup(ctx.sessionId());
                                 emitter.send(SseEmitter.event().name("done").data(Map.of(
                                         "id", assistant.id(),
                                         "content", reply)));
@@ -365,12 +377,14 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                         + " (tier=" + ctx.routingTier() + ")");
 
         llmRoutingMetrics.recordLlmCall(LlmClientType.TOOL_CALLING, ctx.routingTier(), ctx.goal().goalType());
-        String reply = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
-                .system(ctx.systemPrompt())
-                .user(ctx.userPrompt())
-                .advisors(a -> SessionAdvisorSupport.applyOrchestratorContext(a, ctx.sessionId()))
-                .call()
-                .content());
+        String reply = LlmUsageContextRunner.execute(
+                chatUsageContext(ctx, LlmOperation.CHAT_TURN),
+                () -> llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
+                        .system(ctx.systemPrompt())
+                        .user(ctx.userPrompt())
+                        .advisors(a -> SessionAdvisorSupport.applyOrchestratorContext(a, ctx.sessionId()))
+                        .call()
+                        .content()));
 
         if (reply == null || reply.isBlank()) {
             return "I could not generate a response. Please try again or rephrase your question.";
@@ -700,12 +714,15 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
                     "userMessage", augmentedContent));
             String systemPrompt = buildSystemPrompt(profile);
 
-            String reply = llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
-                    .system(systemPrompt)
-                    .user(userPrompt)
-                    .advisors(a -> SessionAdvisorSupport.applyOrchestratorContext(a, sessionId))
-                    .call()
-                    .content());
+            String reply = LlmUsageContextRunner.execute(
+                    new LlmUsageContext(sessionId, LlmClientType.TOOL_CALLING, LlmOperation.CHAT_TURN,
+                            null, null, null),
+                    () -> llmCallLimiter.execute(LlmClientType.TOOL_CALLING, () -> chatClient.prompt()
+                            .system(systemPrompt)
+                            .user(userPrompt)
+                            .advisors(a -> SessionAdvisorSupport.applyOrchestratorContext(a, sessionId))
+                            .call()
+                            .content()));
 
             String finalReply = applyChatPolicyGate(
                     reply != null && !reply.isBlank() ? reply.trim() : "No alternative matches could be suggested.",
@@ -821,6 +838,16 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             payload.put("matchExplainability", engineMetadata.get("matchExplainability"));
         }
         return payload;
+    }
+
+    private LlmUsageContext chatUsageContext(TurnContext ctx, LlmOperation operation) {
+        return new LlmUsageContext(
+                ctx.sessionId(),
+                LlmClientType.TOOL_CALLING,
+                operation,
+                ctx.routingTier().name(),
+                ctx.goal().goalType().name(),
+                RoutingTierResolver.maxTokensFor(ctx.routingTier(), llmTierProperties));
     }
 
     private record HarnessChatResult(

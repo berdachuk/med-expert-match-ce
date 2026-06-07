@@ -28,7 +28,7 @@ Prometheus (`/actuator/prometheus`):
 - `llm.harness.invocations.total{goal_type}` — full workflow starts
 - `llm.calls.by_client.total{client_type}` — CLINICAL vs UTILITY vs TOOL_CALLING
 
-`llm.tokens.total` API exists in `LlmRoutingMetrics`; wiring from provider responses is planned.
+`llm.tokens.total` is wired from provider `Usage` via `LlmUsageCaptureAdvisor` and `LlmUsageTelemetryService` (M71).
 
 Release gate: [RELEASE_GATE.md](RELEASE_GATE.md) — `./scripts/run-eval-flywheel.sh`
 

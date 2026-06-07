@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.monitoring;
 
+import com.berdachuk.medexpertmatch.core.util.LlmCacheSource;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.berdachuk.medexpertmatch.llm.routing.RoutingTier;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -16,6 +18,8 @@ public class LlmRoutingMetrics {
     private static final String GOAL_TAG = "goal_type";
     private static final String CLIENT_TAG = "client_type";
     private static final String DIRECTION_TAG = "direction";
+    private static final String OPERATION_TAG = "operation";
+    private static final String CACHE_SOURCE_TAG = "cache_source";
 
     private final MeterRegistry meterRegistry;
 
@@ -62,5 +66,21 @@ public class LlmRoutingMetrics {
                     DIRECTION_TAG, "output")
                     .increment(outputTokens);
         }
+    }
+
+    public void recordLatency(LlmClientType clientType, LlmOperation operation, long latencyMs) {
+        if (latencyMs <= 0) {
+            return;
+        }
+        meterRegistry.timer("llm.call.latency",
+                CLIENT_TAG, clientType.name(),
+                OPERATION_TAG, operation.name())
+                .record(java.time.Duration.ofMillis(latencyMs));
+    }
+
+    public void recordCacheHit(LlmCacheSource cacheSource) {
+        meterRegistry.counter("llm.cache.hits.total",
+                CACHE_SOURCE_TAG, cacheSource.name())
+                .increment();
     }
 }

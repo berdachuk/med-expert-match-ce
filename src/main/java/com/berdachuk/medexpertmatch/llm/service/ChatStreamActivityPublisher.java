@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service;
 
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmUsageSessionRollup;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /**
@@ -12,4 +13,6 @@ public interface ChatStreamActivityPublisher {
     void unregister(String sessionId);
 
     void publishReasoning(String sessionId, String message);
+
+    void publishTurnSummary(String sessionId, LlmUsageSessionRollup rollup);
 }

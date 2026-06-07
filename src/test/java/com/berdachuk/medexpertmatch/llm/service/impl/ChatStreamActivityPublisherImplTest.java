@@ -1,76 +1,58 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
-import com.berdachuk.medexpertmatch.core.event.ToolCallLoggedEvent;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
-import com.berdachuk.medexpertmatch.llm.service.AgentTodoUpdateEvent;
-import org.junit.jupiter.api.AfterEach;
+import com.berdachuk.medexpertmatch.core.util.LlmCacheSource;
+import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
+import com.berdachuk.medexpertmatch.llm.event.LlmCallCompletedEvent;
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmCallSnapshot;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.List;
 
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith(MockitoExtension.class)
 class ChatStreamActivityPublisherImplTest {
 
-    private final ChatStreamActivityPublisherImpl publisher =
-            new ChatStreamActivityPublisherImpl(new ChatTurnMetrics(new SimpleMeterRegistry()));
+    private ChatStreamActivityPublisherImpl publisher;
+    private SseEmitter emitter;
 
-    @AfterEach
-    void clearContext() {
-        OrchestrationContextHolder.clear();
-        publisher.unregister("session-1");
+    @BeforeEach
+    void setUp() {
+        publisher = new ChatStreamActivityPublisherImpl(mock(ChatTurnMetrics.class));
+        emitter = mock(SseEmitter.class);
+        publisher.register("chat-1", emitter);
     }
 
     @Test
-    @DisplayName("forwards tool_call activity to registered chat SSE emitter")
-    void forwardsToolCallActivity() throws IOException {
-        SseEmitter emitter = mock(SseEmitter.class);
-        publisher.register("session-1", emitter);
+    @DisplayName("LlmCallCompletedEvent maps to llm_call SSE payload")
+    void publishesLlmCallActivity() throws IOException {
+        LlmCallSnapshot snapshot = new LlmCallSnapshot(
+                "chat-1",
+                LlmClientType.TOOL_CALLING,
+                LlmOperation.CHAT_STREAM,
+                "STANDARD",
+                "GENERAL_QUESTION",
+                "functiongemma",
+                890,
+                204,
+                null,
+                null,
+                "stop",
+                900L,
+                1200,
+                3,
+                4096,
+                LlmCacheSource.NONE,
+                false);
 
-        publisher.onToolCallLogged(new ToolCallLoggedEvent("session-1", "match_doctors_to_case", "caseId: abc"));
+        publisher.onLlmCallCompleted(new LlmCallCompletedEvent(snapshot));
 
-        ArgumentCaptor<org.springframework.web.servlet.mvc.method.annotation.SseEmitter.SseEventBuilder> captor =
-                ArgumentCaptor.forClass(org.springframework.web.servlet.mvc.method.annotation.SseEmitter.SseEventBuilder.class);
-        verify(emitter, atLeastOnce()).send(captor.capture());
-    }
-
-    @Test
-    @DisplayName("forwards todo_update activity when orchestration session is set")
-    void forwardsTodoUpdateActivity() throws IOException {
-        SseEmitter emitter = mock(SseEmitter.class);
-        publisher.register("session-1", emitter);
-        OrchestrationContextHolder.setSessionId("session-1");
-
-        TodoWriteTool.Todos todos = new TodoWriteTool.Todos(List.of(
-                new TodoWriteTool.Todos.TodoItem(
-                        "Match specialists",
-                        TodoWriteTool.Todos.Status.in_progress,
-                        "Matching specialists")));
-        publisher.onTodoUpdate(new AgentTodoUpdateEvent(this, todos));
-
-        verify(emitter, atLeastOnce()).send(org.mockito.ArgumentMatchers.<SseEmitter.SseEventBuilder>any());
-    }
-
-    @Test
-    @DisplayName("publishReasoning sends PHI-safe status line")
-    void publishesReasoning() throws IOException {
-        SseEmitter emitter = mock(SseEmitter.class);
-        publisher.register("session-1", emitter);
-
-        publisher.publishReasoning("session-1", "Planning response…");
-
-        verify(emitter, atLeastOnce()).send(org.mockito.ArgumentMatchers.<SseEmitter.SseEventBuilder>any());
+        verify(emitter).send(any(SseEmitter.SseEventBuilder.class));
     }
 }

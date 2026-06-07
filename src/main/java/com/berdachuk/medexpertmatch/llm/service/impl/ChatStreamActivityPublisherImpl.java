@@ -3,10 +3,12 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 import com.berdachuk.medexpertmatch.chat.service.ChatTurnMetrics;
 import com.berdachuk.medexpertmatch.core.event.ToolCallLoggedEvent;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.event.LlmCallCompletedEvent;
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmCallSnapshot;
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmUsageSessionRollup;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoUpdateEvent;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import lombok.extern.slf4j.Slf4j;
-import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -46,6 +48,46 @@ public class ChatStreamActivityPublisherImpl implements ChatStreamActivityPublis
     @Override
     public void publishReasoning(String sessionId, String message) {
         publish(sessionId, "reasoning", Map.of("message", message));
+    }
+
+    @Override
+    public void publishTurnSummary(String sessionId, LlmUsageSessionRollup rollup) {
+        if (rollup == null || rollup.llmCallCount() == 0) {
+            return;
+        }
+        publish(sessionId, "llm_turn_summary", Map.of(
+                "message", rollup.compactSummary(),
+                "llmCallCount", rollup.llmCallCount(),
+                "totalPromptTokens", rollup.totalPromptTokens(),
+                "totalCompletionTokens", rollup.totalCompletionTokens()));
+    }
+
+    @EventListener
+    void onLlmCallCompleted(LlmCallCompletedEvent event) {
+        LlmCallSnapshot snapshot = event.snapshot();
+        String sessionId = event.sessionId();
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("message", snapshot.compactMessage());
+        payload.put("operation", snapshot.operation().uiLabel());
+        payload.put("clientType", snapshot.clientType().name());
+        if (snapshot.model() != null) {
+            payload.put("model", snapshot.model());
+        }
+        if (snapshot.promptTokens() != null) {
+            payload.put("promptTokens", snapshot.promptTokens());
+        }
+        if (snapshot.completionTokens() != null) {
+            payload.put("completionTokens", snapshot.completionTokens());
+        }
+        if (snapshot.cacheReadTokens() != null) {
+            payload.put("cacheReadTokens", snapshot.cacheReadTokens());
+        }
+        payload.put("latencyMs", snapshot.latencyMs());
+        payload.put("cacheHit", snapshot.cacheHit());
+        publish(sessionId, "llm_call", payload);
     }
 
     @EventListener

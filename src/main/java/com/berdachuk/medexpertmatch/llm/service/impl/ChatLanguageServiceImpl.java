@@ -2,6 +2,9 @@ package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContextRunner;
 import com.berdachuk.medexpertmatch.llm.chat.ChatLanguageDetector;
 import com.berdachuk.medexpertmatch.llm.chat.ChatLanguageService;
 import com.berdachuk.medexpertmatch.llm.chat.ChatLanguageTurn;
@@ -61,12 +64,14 @@ public class ChatLanguageServiceImpl implements ChatLanguageService {
         try {
             String systemPrompt = translateToEnglishTemplate.render(Map.of());
             String userPrompt = "Source language: " + sourceLanguage + "\n\nMessage:\n" + text;
-            String translated = llmCallLimiter.execute(LlmClientType.UTILITY, () ->
-                    chatClient.prompt()
-                            .system(systemPrompt)
-                            .user(userPrompt)
-                            .call()
-                            .content());
+            String translated = LlmUsageContextRunner.execute(
+                    new LlmUsageContext(null, LlmClientType.UTILITY, LlmOperation.TRANSLATE, null, null, null),
+                    () -> llmCallLimiter.execute(LlmClientType.UTILITY, () ->
+                            chatClient.prompt()
+                                    .system(systemPrompt)
+                                    .user(userPrompt)
+                                    .call()
+                                    .content()));
             if (translated == null || translated.isBlank()) {
                 log.warn("Empty EN translation for language {}; using original text", sourceLanguage);
                 return text;
@@ -84,12 +89,14 @@ public class ChatLanguageServiceImpl implements ChatLanguageService {
         try {
             String systemPrompt = translateFromEnglishTemplate.render(Map.of("targetLanguage", targetLanguage));
             String userPrompt = "English reply:\n" + englishReply;
-            String translated = llmCallLimiter.execute(LlmClientType.UTILITY, () ->
-                    chatClient.prompt()
-                            .system(systemPrompt)
-                            .user(userPrompt)
-                            .call()
-                            .content());
+            String translated = LlmUsageContextRunner.execute(
+                    new LlmUsageContext(null, LlmClientType.UTILITY, LlmOperation.TRANSLATE, null, null, null),
+                    () -> llmCallLimiter.execute(LlmClientType.UTILITY, () ->
+                            chatClient.prompt()
+                                    .system(systemPrompt)
+                                    .user(userPrompt)
+                                    .call()
+                                    .content()));
             if (translated == null || translated.isBlank()) {
                 log.warn("Empty translation to {}; returning English reply", targetLanguage);
                 return englishReply;

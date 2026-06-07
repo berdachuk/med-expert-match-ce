@@ -242,6 +242,7 @@ medexpertmatch:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_RERANKING_MAX_CONCURRENT_CALLS:1}
     tool-calling:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS:1}
+    acquire-timeout-seconds: ${MEDEXPERTMATCH_LLM_ACQUIRE_TIMEOUT_SECONDS:120}
     tier:
       light:
         max-tokens: ${MEDEXPERTMATCH_LLM_TIER_LIGHT_MAX_TOKENS:2048}

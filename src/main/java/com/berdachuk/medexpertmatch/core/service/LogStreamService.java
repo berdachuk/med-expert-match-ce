@@ -205,6 +205,16 @@ public class LogStreamService {
     }
 
     /**
+     * Logs enriched LLM usage metadata for harness execution traces (M71).
+     */
+    public void logLlmUsage(String sessionId, String details) {
+        if (details == null || details.isBlank()) {
+            return;
+        }
+        sendLog(sessionId, "INFO", "LLM usage", details);
+    }
+
+    /**
      * Removes emitter for a session.
      */
     public void removeEmitter(String sessionId) {

@@ -1,6 +1,6 @@
 # M71: LLM Usage Telemetry and Agent Panel Summary
 
-**Status:** **Next** — ready to implement (2026-06-08)  
+**Status:** **Completed** (2026-06-08)  
 **Created:** 2026-06-07  
 **Depends on:** M64 (tier metrics API), M40/M42 (inline agent activity panel), M67 (client types)
 
@@ -308,16 +308,16 @@ Per `security-check` skill:
 
 ## Acceptance Criteria
 
-- [ ] Every `ChatClient` call through default advisors produces a `LlmCallSnapshot` with latency; tokens when provider returns `Usage`
-- [ ] `llm.tokens.total` increments in Prometheus for chat and harness paths
-- [ ] Provider cache fields (`cacheReadInputTokens`) shown when present; omitted when null (no fake zeros)
-- [ ] App-level `LLM_RESPONSES_CACHE` hits emit snapshot with `cacheHit=true` and **no** provider call
-- [ ] Chat agent panel shows one compact row per LLM call during streaming
-- [ ] Collapsed summary includes turn-level token totals when ≥1 LLM call occurred
-- [ ] Harness pages show enriched `LLM Call` log lines (tokens + latency); no prompt content
-- [ ] `mvn test` covers advisor extraction, telemetry recording, and event payload shape
-- [ ] Security review: no PHI in metrics tags, SSE payloads, or info logs
-- [ ] Phase 9 (optional): limiter acquire timeout prevents indefinite chat-thread blocking; wait/throttle metrics visible in Prometheus
+- [x] Every `ChatClient` call through default advisors produces a `LlmCallSnapshot` with latency; tokens when provider returns `Usage`
+- [x] `llm.tokens.total` increments in Prometheus for chat and harness paths
+- [x] Provider cache fields (`cacheReadInputTokens`) shown when present; omitted when null (no fake zeros)
+- [x] App-level `LLM_RESPONSES_CACHE` hits emit snapshot with `cacheHit=true` and **no** provider call
+- [x] Chat agent panel shows one compact row per LLM call during streaming
+- [x] Collapsed summary includes turn-level token totals when ≥1 LLM call occurred
+- [x] Harness pages show enriched `LLM Call` log lines (tokens + latency); no prompt content
+- [x] `mvn test` covers advisor extraction, telemetry recording, and event payload shape
+- [x] Security review: no PHI in metrics tags, SSE payloads, or info logs
+- [x] Phase 9 (optional): limiter acquire timeout prevents indefinite chat-thread blocking; wait/throttle metrics visible in Prometheus
 
 ## UI Copy Examples (English)
 

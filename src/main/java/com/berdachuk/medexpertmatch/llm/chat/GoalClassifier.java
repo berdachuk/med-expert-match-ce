@@ -3,6 +3,9 @@ package com.berdachuk.medexpertmatch.llm.chat;
 import com.berdachuk.medexpertmatch.core.util.CaseIdExtractor;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContextRunner;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
@@ -382,12 +385,15 @@ public class GoalClassifier {
 
         log.info("Classifying goal via LLM for message length: {}", message.length());
 
-        String response = llmCallLimiter.execute(LlmClientType.UTILITY, () ->
-                chatClient.prompt()
-                        .system(systemPrompt)
-                        .user(classificationPrompt)
-                        .call()
-                        .content());
+        String response = LlmUsageContextRunner.execute(
+                new LlmUsageContext(OrchestrationContextHolder.sessionIdOrNull(),
+                        LlmClientType.UTILITY, LlmOperation.GOAL_CLASSIFY, null, null, null),
+                () -> llmCallLimiter.execute(LlmClientType.UTILITY, () ->
+                        chatClient.prompt()
+                                .system(systemPrompt)
+                                .user(classificationPrompt)
+                                .call()
+                                .content()));
 
         return parseClassification(response, caseId, ctx);
     }

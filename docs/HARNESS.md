@@ -288,6 +288,17 @@ Harness metadata signals: `policyAction`, `policyReason`, `requiresClinicianRevi
 
 Regression eval: `src/main/resources/eval/policy-confidence-cases.jsonl`.
 
+## LLM usage observability (M71)
+
+Every ChatClient call through default advisors emits a `LlmCallSnapshot` (tokens, latency, model, provider cache reads when present). Metrics:
+
+- `llm.tokens.total{client_type,tier,goal_type,direction}` — wired from provider `Usage`
+- `llm.call.latency{client_type,operation}` — per-call wall clock
+- `llm.cache.hits.total{cache_source}` — app-level `LLM_RESPONSES_CACHE` hits
+- `llm.limiter.wait.time{client_type}` / `llm.limiter.timeout.total{client_type}` — semaphore back-pressure
+
+AI Chat agent panel receives SSE `activity` events: `llm_call` (per call) and `llm_turn_summary` (turn rollup). Harness execution traces show enriched `LLM Call` log lines with token and latency details (no prompt content).
+
 ## Related documentation
 - [Find Specialist Flow](FIND_SPECIALIST_FLOW.md) — end-to-end UX and API flow
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) — `@Tool` method reference

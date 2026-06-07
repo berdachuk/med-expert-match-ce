@@ -20,6 +20,7 @@ import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
 import com.berdachuk.medexpertmatch.core.config.LlmTierProperties;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
+import com.berdachuk.medexpertmatch.llm.monitoring.LlmUsageTelemetryService;
 import com.berdachuk.medexpertmatch.llm.service.ChatStreamActivityPublisher;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentPromptSupportService;
 import com.berdachuk.medexpertmatch.llm.service.MedicalAgentService;
@@ -75,6 +76,7 @@ class ChatAssistantServiceImplTest {
     private final SimpleMeterRegistry meterRegistry = new SimpleMeterRegistry();
     private final LlmRoutingMetrics llmRoutingMetrics = new LlmRoutingMetrics(meterRegistry);
     private final LlmTierProperties llmTierProperties = new LlmTierProperties(null, null, null);
+    private final LlmUsageTelemetryService llmUsageTelemetryService = mock(LlmUsageTelemetryService.class);
 
     private final ChatAssistantServiceImpl service = new ChatAssistantServiceImpl(
             chatService, chatClient, promptSupport, logStreamService, chatStreamActivityPublisher, llmCallLimiter,
@@ -82,7 +84,7 @@ class ChatAssistantServiceImplTest {
             chatAgentOrchestratorInstructionsTemplate, chatUserMessageTemplate, chatCasePromptSupport,
             medicalAgentPolicyGateService, HarnessProperties.defaults(),
             "functiongemma", goalClassifier, chatLanguageService, medicalAgentService, sessionService,
-            pipelineProgressCollector, llmRoutingMetrics, llmTierProperties);
+            pipelineProgressCollector, llmRoutingMetrics, llmTierProperties, llmUsageTelemetryService);
 
     @BeforeEach
     void stubLanguageAndClassification() {

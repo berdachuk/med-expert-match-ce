@@ -5,6 +5,9 @@ import com.berdachuk.medexpertmatch.caseanalysis.exception.CaseAnalysisException
 import com.berdachuk.medexpertmatch.caseanalysis.service.CaseAnalysisService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContextRunner;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
@@ -86,13 +89,15 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for case analysis (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
+            String responseText = LlmUsageContextRunner.execute(
+                    new LlmUsageContext(null, LlmClientType.CLINICAL, LlmOperation.STRUCTURED_ANALYSIS, null, null, null),
+                    () -> llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)
                         .call()
                         .content();
-            });
+            }));
 
             log.info("LLM model: {} completed case analysis (caseId: {}), response length: {}",
                     medGemmaModelName, caseId, responseText != null ? responseText.length() : 0);
@@ -132,13 +137,15 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for ICD-10 extraction (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
+            String responseText = LlmUsageContextRunner.execute(
+                    new LlmUsageContext(null, LlmClientType.CLINICAL, LlmOperation.STRUCTURED_ANALYSIS, null, null, null),
+                    () -> llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)
                         .call()
                         .content();
-            });
+            }));
             log.info("LLM model: {} completed ICD-10 extraction (caseId: {}), response length: {}",
                     medGemmaModelName, caseId, responseText != null ? responseText.length() : 0);
 
@@ -168,13 +175,15 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for urgency classification (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
+            String responseText = LlmUsageContextRunner.execute(
+                    new LlmUsageContext(null, LlmClientType.CLINICAL, LlmOperation.STRUCTURED_ANALYSIS, null, null, null),
+                    () -> llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)
                         .call()
                         .content();
-            });
+            }));
             log.info("LLM model: {} completed urgency classification (caseId: {}), response length: {}",
                     medGemmaModelName, caseId, responseText != null ? responseText.length() : 0);
 
@@ -215,13 +224,15 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             log.debug("System prompt: {}", systemPrompt);
             log.debug("User prompt: {}", userPrompt);
             log.info("Calling LLM model: {} for specialty determination (caseId: {})", medGemmaModelName, caseId);
-            String responseText = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
+            String responseText = LlmUsageContextRunner.execute(
+                    new LlmUsageContext(null, LlmClientType.CLINICAL, LlmOperation.STRUCTURED_ANALYSIS, null, null, null),
+                    () -> llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
                 return chatClient.prompt()
                         .system(systemPrompt)
                         .user(userPrompt)
                         .call()
                         .content();
-            });
+            }));
             log.info("LLM model: {} completed specialty determination (caseId: {}), response length: {}",
                     medGemmaModelName, caseId, responseText != null ? responseText.length() : 0);
 

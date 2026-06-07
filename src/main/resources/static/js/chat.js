@@ -349,6 +349,7 @@
         if (kind === 'tool') label = 'tool_call';
         if (kind === 'plan') label = 'todo';
         if (kind === 'reasoning') label = 'reasoning';
+        if (kind === 'llm') label = 'llm';
         var entryDiv = document.createElement('div');
         entryDiv.className = 'agent-activity-entry ' + escapeHtml(label);
         entryDiv.innerHTML =
@@ -366,7 +367,12 @@
         if (!summary) return;
         var elapsedSec = activityStartMs ? Math.max(1, Math.round((Date.now() - activityStartMs) / 1000)) : 0;
         var agents = new Set(entries.map(function (e) { return e.agentId; }));
-        summary.textContent = '\u25b8 ' + agents.size + ' agent(s) \u00b7 ' + entries.length + ' steps \u00b7 ' + elapsedSec + 's \u2014 click to expand';
+        var summaryText = '\u25b8 ' + agents.size + ' agent(s) \u00b7 ' + entries.length + ' steps \u00b7 ' + elapsedSec + 's';
+        if (panelWrap._llmRollup) {
+            summaryText += ' \u00b7 ' + panelWrap._llmRollup;
+        }
+        summaryText += ' \u2014 click to expand';
+        summary.textContent = summaryText;
         summary.setAttribute('aria-expanded', 'false');
         summary.classList.remove('d-none');
         if (expanded) expanded.classList.add('d-none');
@@ -622,6 +628,10 @@
                                     addActivityEntryToPanel(agentPanelWrap, 'reasoning', act.message || 'Thinking\u2026', 'orchestrator');
                                 } else if (act.type === 'todo_update' && act.todos) {
                                     addActivityEntryToPanel(agentPanelWrap, 'plan', 'Plan updated (' + act.todos.length + ' items)', 'orchestrator');
+                                } else if (act.type === 'llm_call') {
+                                    addActivityEntryToPanel(agentPanelWrap, 'llm', act.message || 'LLM call', act.clientType || 'llm');
+                                } else if (act.type === 'llm_turn_summary') {
+                                    agentPanelWrap._llmRollup = act.message;
                                 }
                             } catch (ignore) { }
                         } else if (evt.event === 'pipeline_stage') {

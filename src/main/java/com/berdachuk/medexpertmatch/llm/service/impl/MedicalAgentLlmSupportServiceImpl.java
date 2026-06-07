@@ -4,7 +4,10 @@ import com.berdachuk.medexpertmatch.core.config.CacheConfig;
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
 import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContextSupport;
 import com.berdachuk.medexpertmatch.llm.exception.AgentExecutionException;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessContextKind;
 import com.berdachuk.medexpertmatch.llm.harness.HarnessContextSummarizer;
@@ -16,12 +19,14 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.net.ConnectException;
 
 /**
@@ -45,6 +50,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     private final LogStreamService logStreamService;
     private final LlmCallLimiter llmCallLimiter;
     private final HarnessContextSummarizer harnessContextSummarizer;
+    private final CacheManager cacheManager;
 
     public MedicalAgentLlmSupportServiceImpl(
             @Qualifier("caseAnalysisChatClient") ChatClient medGemmaChatClient,
@@ -60,7 +66,8 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             @Value("${spring.ai.custom.chat.model:medgemma:1.5-4b}") String medGemmaModelName,
             LogStreamService logStreamService,
             LlmCallLimiter llmCallLimiter,
-            HarnessContextSummarizer harnessContextSummarizer) {
+            HarnessContextSummarizer harnessContextSummarizer,
+            CacheManager cacheManager) {
         this.medGemmaChatClient = medGemmaChatClient;
         this.medGemmaModelName = medGemmaModelName;
         this.medicalCaseRepository = medicalCaseRepository;
@@ -75,11 +82,17 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         this.logStreamService = logStreamService;
         this.llmCallLimiter = llmCallLimiter;
         this.harnessContextSummarizer = harnessContextSummarizer;
+        this.cacheManager = cacheManager;
     }
 
     @Override
-    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE, key = "'analyze:' + #caseId")
     public String analyzeCaseWithMedGemma(String caseId) {
+        String cacheKey = "analyze:" + caseId;
+        return withCachedResponse(cacheKey, harnessContext(LlmOperation.CASE_ANALYSIS),
+                () -> analyzeCaseWithMedGemmaUncached(caseId));
+    }
+
+    private String analyzeCaseWithMedGemmaUncached(String caseId) {
         log.info("Analyzing case {} with LLM", caseId);
         String sessionId = logStreamService.getCurrentSessionId();
         logStreamService.sendLog(sessionId, "INFO", "LLM case analysis", "Starting case analysis for: " + caseId);
@@ -105,7 +118,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
             logStreamService.sendLog(sessionId, "INFO", "LLM Call",
                     String.format("Calling model: %s for case analysis", medGemmaModelName));
 
-            String analysis = invokeMedGemma(systemPrompt, userPrompt);
+            String analysis = invokeMedGemma(systemPrompt, userPrompt, LlmOperation.CASE_ANALYSIS);
 
             log.info("LLM model: {} completed case analysis (caseId: {}), response length: {}",
                     medGemmaModelName, caseId, analysis != null ? analysis.length() : 0);
@@ -121,36 +134,37 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     }
 
     @Override
-    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
-            key = "'interpret:match:v5:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase)")
     public String interpretResultsWithMedGemma(String toolResults, String caseAnalysis, Integer patientAgeFromCase) {
-        return invokeInterpretation(
-                "doctor match result interpretation",
-                toolResults,
-                caseAnalysis,
-                patientAgeFromCase,
-                null,
-                HarnessContextKind.DOCTOR_MATCHES,
-                medgemmaResultInterpretationSystemPromptTemplate,
-                medgemmaResultInterpretationUserPromptTemplate,
-                true);
+        String cacheKey = "interpret:match:v5:" + java.util.Objects.hash(toolResults, caseAnalysis, patientAgeFromCase);
+        return withCachedResponse(cacheKey, harnessContext(LlmOperation.MATCH_INTERPRET),
+                () -> invokeInterpretation(
+                        "doctor match result interpretation",
+                        toolResults,
+                        caseAnalysis,
+                        patientAgeFromCase,
+                        null,
+                        HarnessContextKind.DOCTOR_MATCHES,
+                        medgemmaResultInterpretationSystemPromptTemplate,
+                        medgemmaResultInterpretationUserPromptTemplate,
+                        true));
     }
 
     @Override
-    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
-            key = "'interpret:case:v3:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase, #userFocus)")
     public String interpretCaseAnalysisWithMedGemma(
             String toolResults, String caseAnalysis, Integer patientAgeFromCase, String userFocus) {
-        return invokeInterpretation(
-                "case analysis interpretation",
-                toolResults,
-                caseAnalysis,
-                patientAgeFromCase,
-                userFocus,
-                HarnessContextKind.EVIDENCE,
-                medgemmaCaseAnalysisInterpretationSystemPromptTemplate,
-                medgemmaCaseAnalysisInterpretationUserPromptTemplate,
-                false);
+        String cacheKey = "interpret:case:v3:"
+                + java.util.Objects.hash(toolResults, caseAnalysis, patientAgeFromCase, userFocus);
+        return withCachedResponse(cacheKey, harnessContext(LlmOperation.CASE_INTERPRET),
+                () -> invokeInterpretation(
+                        "case analysis interpretation",
+                        toolResults,
+                        caseAnalysis,
+                        patientAgeFromCase,
+                        userFocus,
+                        HarnessContextKind.EVIDENCE,
+                        medgemmaCaseAnalysisInterpretationSystemPromptTemplate,
+                        medgemmaCaseAnalysisInterpretationUserPromptTemplate,
+                        false));
     }
 
     private String invokeInterpretation(
@@ -210,8 +224,10 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
                     String.format("Calling model: %s for result interpretation", medGemmaModelName));
 
             String interpretation;
+            LlmOperation interpretOp = operationLabel.contains("match")
+                    ? LlmOperation.MATCH_INTERPRET : LlmOperation.CASE_INTERPRET;
             try {
-                interpretation = invokeMedGemma(systemPrompt, userPrompt);
+                interpretation = invokeMedGemma(systemPrompt, userPrompt, interpretOp);
             } catch (AgentExecutionException interpretationFailure) {
                 if (!isFinishReasonNull(interpretationFailure)) {
                     throw interpretationFailure;
@@ -264,25 +280,32 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
         return response.replaceAll("(?i)\\b\\d{1,3}-year-old\\b", authoritative);
     }
 
-    private String invokeMedGemma(String systemPrompt, String userPrompt) {
+    private String invokeMedGemma(String systemPrompt, String userPrompt, LlmOperation operation) {
+        LlmUsageContext context = harnessContext(operation);
         try {
-            return llmCallLimiter.execute(LlmClientType.CLINICAL, () -> callMedGemmaOnce(systemPrompt, userPrompt));
-        } catch (RuntimeException first) {
-            if (!isFinishReasonNull(first)) {
-                throw first;
-            }
-            log.warn("MedGemma returned null finish_reason, retrying once");
-            try {
-                String retry = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> callMedGemmaOnce(systemPrompt, userPrompt));
-                if (retry != null && !retry.isBlank()) {
-                    return retry;
+            return LlmUsageContextSupport.call(context, () -> {
+                try {
+                    return llmCallLimiter.execute(LlmClientType.CLINICAL, () -> callMedGemmaOnce(systemPrompt, userPrompt));
+                } catch (RuntimeException first) {
+                    if (!isFinishReasonNull(first)) {
+                        throw first;
+                    }
+                    log.warn("MedGemma returned null finish_reason, retrying once");
+                    String retry = llmCallLimiter.execute(LlmClientType.CLINICAL,
+                            () -> callMedGemmaOnce(systemPrompt, userPrompt));
+                    if (retry != null && !retry.isBlank()) {
+                        return retry;
+                    }
+                    throw new AgentExecutionException("LLM response incomplete: finish_reason is null");
                 }
-            } catch (RuntimeException retryFailure) {
-                if (!isFinishReasonNull(retryFailure)) {
-                    throw retryFailure;
-                }
+            });
+        } catch (AgentExecutionException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            if (isFinishReasonNull(e)) {
+                throw new AgentExecutionException("LLM response incomplete: finish_reason is null");
             }
-            throw new AgentExecutionException("LLM response incomplete: finish_reason is null");
+            throw e;
         }
     }
 
@@ -340,36 +363,66 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
     }
 
     @Override
-    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
-            key = "'routing:' + T(java.util.Objects).hash(#rawToolResults, #caseAnalysis)")
     public String summarizeRoutingResults(String rawToolResults, String caseAnalysis) {
-        String shapedResults = harnessContextSummarizer.summarizeToolResults(
-                rawToolResults != null ? rawToolResults : "", HarnessContextKind.ROUTING);
-        String prompt = routingSummarizationPromptTemplate.render(Map.of(
-                "caseAnalysis", caseAnalysis != null ? caseAnalysis : "",
-                "rawToolResults", shapedResults));
-        try {
-            String response = llmCallLimiter.execute(LlmClientType.CLINICAL,
-                    () -> medGemmaChatClient.prompt().user(prompt).call().content());
-            return LlmResponseSanitizer.stripLlmReasoning(response);
-        } catch (Exception e) {
-            log.warn("Routing summarization failed, returning raw results", e);
-            return rawToolResults != null ? rawToolResults : "No routing results available.";
-        }
+        String cacheKey = "routing:" + java.util.Objects.hash(rawToolResults, caseAnalysis);
+        return withCachedResponse(cacheKey, harnessContext(LlmOperation.ROUTING_SUMMARIZE), () -> {
+            String shapedResults = harnessContextSummarizer.summarizeToolResults(
+                    rawToolResults != null ? rawToolResults : "", HarnessContextKind.ROUTING);
+            String prompt = routingSummarizationPromptTemplate.render(Map.of(
+                    "caseAnalysis", caseAnalysis != null ? caseAnalysis : "",
+                    "rawToolResults", shapedResults));
+            try {
+                String response = LlmUsageContextSupport.call(harnessContext(LlmOperation.ROUTING_SUMMARIZE),
+                        () -> llmCallLimiter.execute(LlmClientType.CLINICAL,
+                                () -> medGemmaChatClient.prompt().user(prompt).call().content()));
+                return LlmResponseSanitizer.stripLlmReasoning(response);
+            } catch (Exception e) {
+                log.warn("Routing summarization failed, returning raw results", e);
+                return rawToolResults != null ? rawToolResults : "No routing results available.";
+            }
+        });
     }
 
     @Override
-    @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE, key = "'network:' + T(java.util.Objects).hash(#rawResults)")
     public String summarizeNetworkAnalyticsResults(String rawResults) {
-        String prompt = networkAnalyticsSummarizationPromptTemplate.render(Map.of(
-                "rawResults", rawResults != null ? rawResults : ""));
-        try {
-            String response = llmCallLimiter.execute(LlmClientType.CLINICAL,
-                    () -> medGemmaChatClient.prompt().user(prompt).call().content());
-            return LlmResponseSanitizer.toHumanReadable(response);
-        } catch (Exception e) {
-            log.warn("Summarization failed, returning raw results", e);
-            return rawResults;
+        String cacheKey = "network:" + java.util.Objects.hash(rawResults);
+        return withCachedResponse(cacheKey, harnessContext(LlmOperation.NETWORK_SUMMARIZE), () -> {
+            String prompt = networkAnalyticsSummarizationPromptTemplate.render(Map.of(
+                    "rawResults", rawResults != null ? rawResults : ""));
+            try {
+                String response = LlmUsageContextSupport.call(harnessContext(LlmOperation.NETWORK_SUMMARIZE),
+                        () -> llmCallLimiter.execute(LlmClientType.CLINICAL,
+                                () -> medGemmaChatClient.prompt().user(prompt).call().content()));
+                return LlmResponseSanitizer.toHumanReadable(response);
+            } catch (Exception e) {
+                log.warn("Summarization failed, returning raw results", e);
+                return rawResults;
+            }
+        });
+    }
+
+    private LlmUsageContext harnessContext(LlmOperation operation) {
+        String sessionId = logStreamService.getCurrentSessionId();
+        if ("default".equals(sessionId)) {
+            sessionId = null;
         }
+        return new LlmUsageContext(sessionId, LlmClientType.CLINICAL, operation, null, null, null);
+    }
+
+    private <T> T withCachedResponse(String cacheKey, LlmUsageContext context, Supplier<T> loader) {
+        Cache cache = cacheManager.getCache(CacheConfig.LLM_RESPONSES_CACHE);
+        if (cache != null) {
+            Cache.ValueWrapper hit = cache.get(cacheKey);
+            if (hit != null) {
+                @SuppressWarnings("unchecked")
+                T cached = (T) hit.get();
+                return cached;
+            }
+        }
+        T value = loader.get();
+        if (cache != null) {
+            cache.put(cacheKey, value);
+        }
+        return value;
     }
 }

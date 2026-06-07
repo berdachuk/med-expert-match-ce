@@ -3,11 +3,13 @@ package com.berdachuk.medexpertmatch.core.config;
 import com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.MetadataMode;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingModel;
 import org.springframework.ai.openai.OpenAiEmbeddingOptions;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +19,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -51,37 +54,37 @@ public class SpringAIConfig {
     )
     public ChatClient chatClient(
             @Qualifier("clinicalChatModel") ChatModel clinicalChatModel,
-            DateTimeContextAdvisor dateTimeContextAdvisor) {
+            List<Advisor> advisors) {
         log.info("Configuring ChatClient with clinical ChatModel: {}", clinicalChatModel.getClass().getSimpleName());
-        return chatClientBuilder(clinicalChatModel, dateTimeContextAdvisor).build();
+        return chatClientBuilder(clinicalChatModel, advisors).build();
     }
 
     @Bean("caseAnalysisChatClient")
     public ChatClient caseAnalysisChatClient(
             @Qualifier("clinicalChatModel") ChatModel clinicalChatModel,
-            DateTimeContextAdvisor dateTimeContextAdvisor) {
+            List<Advisor> advisors) {
         log.info("Creating caseAnalysisChatClient with clinical LLM: {}", clinicalChatModel.getClass().getSimpleName());
-        return chatClientBuilder(clinicalChatModel, dateTimeContextAdvisor).build();
+        return chatClientBuilder(clinicalChatModel, advisors).build();
     }
 
     @Bean("utilityChatClient")
     public ChatClient utilityChatClient(
             @Qualifier("utilityChatModel") ChatModel utilityChatModel,
-            DateTimeContextAdvisor dateTimeContextAdvisor) {
+            List<Advisor> advisors) {
         log.info("Creating utilityChatClient");
-        return chatClientBuilder(utilityChatModel, dateTimeContextAdvisor).build();
+        return chatClientBuilder(utilityChatModel, advisors).build();
     }
 
     @Bean("rerankingChatClient")
     @org.springframework.lang.Nullable
     public ChatClient rerankingChatClient(
             @Qualifier("rerankingChatModel") @org.springframework.lang.Nullable ChatModel rerankingChatModel,
-            DateTimeContextAdvisor dateTimeContextAdvisor) {
+            List<Advisor> advisors) {
         if (rerankingChatModel == null) {
             return null;
         }
         log.info("Creating rerankingChatClient");
-        return chatClientBuilder(rerankingChatModel, dateTimeContextAdvisor).build();
+        return chatClientBuilder(rerankingChatModel, advisors).build();
     }
 
     @Bean("clinicalChatModel")
@@ -130,13 +133,17 @@ public class SpringAIConfig {
     @Bean("descriptionGenerationChatClient")
     public ChatClient descriptionGenerationChatClient(
             @Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel,
-            DateTimeContextAdvisor dateTimeContextAdvisor) {
+            List<Advisor> advisors) {
         log.info("Creating descriptionGenerationChatClient");
-        return chatClientBuilder(descriptionGenerationChatModel, dateTimeContextAdvisor).build();
+        return chatClientBuilder(descriptionGenerationChatModel, advisors).build();
     }
 
-    private static ChatClient.Builder chatClientBuilder(ChatModel model, DateTimeContextAdvisor dateTimeContextAdvisor) {
-        return ChatClient.builder(model).defaultAdvisors(dateTimeContextAdvisor);
+    private static ChatClient.Builder chatClientBuilder(ChatModel model, List<Advisor> advisors) {
+        ChatClient.Builder builder = ChatClient.builder(model);
+        advisors.stream()
+                .sorted(Comparator.comparingInt(Advisor::getOrder))
+                .forEach(builder::defaultAdvisors);
+        return builder;
     }
 
     @Bean

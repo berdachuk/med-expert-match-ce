@@ -256,6 +256,10 @@
     border-left-color: #dc3545;
 }
 
+.agent-activity-entry.llm {
+    border-left-color: #20c997;
+}
+
 .chat-streaming .chat-markdown {
     min-height: 1.5rem;
     white-space: pre-wrap;
