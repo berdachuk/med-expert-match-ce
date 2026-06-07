@@ -2,9 +2,17 @@
 
 ## Active
 
+Roadmap derived from agent-vs-chat strategy review (2026-06-07). Suggested order: **M60** (parallel) → **M61** → **M62** → **M64** → **M63** + **M65** → **M66**.
+
 | # | Plan | Description |
 |---|------|-------------|
 | M60 | [`M60-functiongemma-finetune-execution.md`](M60-functiongemma-finetune-execution.md) | GPU fine-tune execution + live before/after eval (after M58 repo work) |
+| M61 | [`M61-policy-layer-v2.md`](M61-policy-layer-v2.md) | Confidence policy router: ANSWER / CLARIFY / ESCALATE / REFUSE |
+| M62 | [`M62-eval-flywheel-release-gate.md`](M62-eval-flywheel-release-gate.md) | Unified eval report + ROI release gate |
+| M63 | [`M63-match-outcome-data-flywheel.md`](M63-match-outcome-data-flywheel.md) | Match outcome labels + historical weight calibration |
+| M64 | [`M64-cost-quality-routing.md`](M64-cost-quality-routing.md) | Tier routing + token budgets per goal |
+| M65 | [`M65-human-in-the-loop-harness.md`](M65-human-in-the-loop-harness.md) | HUMAN_REVIEW checkpoint + audit trail |
+| M66 | [`M66-agent-vs-chat-packaging.md`](M66-agent-vs-chat-packaging.md) | UI modes, explainability, pitch/case study |
 
 ## Archive
 
