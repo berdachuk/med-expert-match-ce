@@ -60,6 +60,9 @@ public class HarnessContextSummarizerImpl implements HarnessContextSummarizer {
             ObjectNode entry = objectMapper.createObjectNode();
             entry.put("rank", match.rank() > 0 ? match.rank() : i + 1);
             entry.put("doctor_id", match.doctor().id());
+            if (match.doctor().name() != null && !match.doctor().name().isBlank()) {
+                entry.put("name", match.doctor().name());
+            }
             entry.put("score", match.matchScore());
             if (match.doctor().specialties() != null && !match.doctor().specialties().isEmpty()) {
                 entry.put("specialty", match.doctor().specialties().getFirst());

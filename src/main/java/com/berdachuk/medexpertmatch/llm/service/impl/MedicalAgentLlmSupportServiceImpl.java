@@ -122,7 +122,7 @@ public class MedicalAgentLlmSupportServiceImpl implements MedicalAgentLlmSupport
 
     @Override
     @Cacheable(value = CacheConfig.LLM_RESPONSES_CACHE,
-            key = "'interpret:match:v3:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase)")
+            key = "'interpret:match:v4:' + T(java.util.Objects).hash(#toolResults, #caseAnalysis, #patientAgeFromCase)")
     public String interpretResultsWithMedGemma(String toolResults, String caseAnalysis, Integer patientAgeFromCase) {
         return invokeInterpretation(
                 "doctor match result interpretation",

@@ -59,6 +59,7 @@ class HarnessContextSummarizerTest {
 
         assertTrue(summary.contains("\"top_matches\""));
         assertTrue(summary.contains("\"doctor_id\":\"doc-1\""));
+        assertTrue(summary.contains("\"name\":\"Dr. Smith\""));
         assertTrue(summary.contains("\"match_count\":2"));
         assertFalse(summary.contains("Strong vector and graph alignment"));
         assertFalse(summary.contains("s@example.com"));
