@@ -645,6 +645,39 @@ Note: ~20 s. Walk the state line once; mention SSE in AI Chat. Details: [Harness
 
 ---
 
+## Agent vs chat — four layers & ROI test
+
+<div class="reveal-slide-row">
+
+<div class="reveal-slide-text-col">
+
+**Product packaging (M66)** — users choose before sending in AI Chat:
+
+| Mode | Path | Relative cost |
+|------|------|----------------|
+| **Quick question** | FunctionGemma + tools (LIGHT) | ~1× token budget |
+| **Expert match (harness)** | GraphRAG workflow + MedGemma interpretation (FULL) | ~2–3× token budget |
+
+**Four layers:** Chat (UX) → Harness (verify + tools) → Policy (ANSWER/CLARIFY/ESCALATE) → Data (outcomes flywheel)
+
+**Go / no-go rule for paying for the agent:** harness must deliver **≥20% quality uplift** at **≤2× cost** vs chat-only on held-out eval (see [cost model](../eval/cost-model.md)).
+
+Case study template: [agent-vs-chat-case-study-template.md](agent-vs-chat-case-study-template.md)
+
+</div>
+
+<div class="reveal-slide-image-col">
+
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-harness-workflow.png" alt="Harness vs chat packaging" />
+
+</div>
+
+</div>
+
+Note: ~90 s. Demo the chat mode selector and match explainability panel (vector / graph / history %).
+
+---
+
 ## FunctionGemma — tool calling
 
 <div class="reveal-slide-row">

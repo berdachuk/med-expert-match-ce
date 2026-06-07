@@ -20,6 +20,7 @@ import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.berdachuk.medexpertmatch.retrieval.repository.ConsultationMatchRepository;
+import com.berdachuk.medexpertmatch.retrieval.service.MatchExplainabilityService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
@@ -75,7 +76,8 @@ class DoctorMatchWorkflowEngineTest {
                 metrics,
                 new InMemoryHarnessWorkflowRunStore(),
                 mock(ApplicationEventPublisher.class),
-                mock(ConsultationMatchRepository.class));
+                mock(ConsultationMatchRepository.class),
+                mock(MatchExplainabilityService.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",
@@ -126,7 +128,8 @@ class DoctorMatchWorkflowEngineTest {
                 metrics,
                 new InMemoryHarnessWorkflowRunStore(),
                 mock(ApplicationEventPublisher.class),
-                mock(ConsultationMatchRepository.class));
+                mock(ConsultationMatchRepository.class),
+                mock(MatchExplainabilityService.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",
@@ -178,7 +181,8 @@ class DoctorMatchWorkflowEngineTest {
                 metrics,
                 new InMemoryHarnessWorkflowRunStore(),
                 mock(ApplicationEventPublisher.class),
-                mock(ConsultationMatchRepository.class));
+                mock(ConsultationMatchRepository.class),
+                mock(MatchExplainabilityService.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 "6a1c68963a08e800010de68e",
@@ -237,7 +241,8 @@ class DoctorMatchWorkflowEngineTest {
                 metrics,
                 new InMemoryHarnessWorkflowRunStore(),
                 mock(ApplicationEventPublisher.class),
-                mock(ConsultationMatchRepository.class));
+                mock(ConsultationMatchRepository.class),
+                mock(MatchExplainabilityService.class));
 
         MedicalAgentService.AgentResponse response = engine.execute(
                 caseId,

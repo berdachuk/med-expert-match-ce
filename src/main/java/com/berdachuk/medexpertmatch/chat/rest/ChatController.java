@@ -98,7 +98,7 @@ public class ChatController {
         }
         String agentId = body.get("agentId");
         return Map.copyOf(chatAssistantService.processMessage(
-                chatId, userContext.currentUserId(), content.trim(), agentId));
+                chatId, userContext.currentUserId(), content.trim(), agentId, body.get("chatMode")));
     }
 
     @Operation(summary = "Export anonymized bundle of all user chats")
@@ -135,6 +135,11 @@ public class ChatController {
             throw new IllegalArgumentException("content is required");
         }
         return chatAssistantService.streamMessage(
-                chatId, userId, content.trim(), body.get("agentId"), userContext.currentRateLimitTier());
+                chatId,
+                userId,
+                content.trim(),
+                body.get("agentId"),
+                body.get("chatMode"),
+                userContext.currentRateLimitTier());
     }
 }

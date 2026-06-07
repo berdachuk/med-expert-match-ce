@@ -37,6 +37,11 @@ flowchart LR
 When `GoalClassifier` routes to a **harness workflow** (match, route, analyze with case ID), FunctionGemma is **not**
 used for that turn. It handles general Auto chat, evidence queries, and edge cases that stay on the LLM path.
 
+**User-facing packaging (M66):** In AI Chat, **Quick question** keeps turns on the FunctionGemma path (LIGHT tier) even
+when a case ID is present; **Expert match (harness)** opts into workflow engines and FULL-tier GraphRAG. See
+[Harness Architecture](HARNESS.md) and the
+[synthetic case study](presentations/agent-vs-chat-case-study-template.md).
+
 ## Configuration
 
 FunctionGemma is configured via `TOOL_CALLING_*` environment variables, mapped to `spring.ai.custom.tool-calling.*`

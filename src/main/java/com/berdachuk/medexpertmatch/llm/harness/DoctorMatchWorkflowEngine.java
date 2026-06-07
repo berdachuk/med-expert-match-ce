@@ -12,6 +12,7 @@ import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.retrieval.domain.DoctorMatch;
 import com.berdachuk.medexpertmatch.retrieval.repository.ConsultationMatchRepository;
+import com.berdachuk.medexpertmatch.retrieval.service.MatchExplainabilityService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class DoctorMatchWorkflowEngine {
     private final HarnessWorkflowRunStore workflowRunStore;
     private final ApplicationEventPublisher eventPublisher;
     private final ConsultationMatchRepository consultationMatchRepository;
+    private final MatchExplainabilityService matchExplainabilityService;
 
     public DoctorMatchWorkflowEngine(
             MedicalAgentLlmSupportService medicalAgentLlmSupportService,
@@ -59,7 +61,8 @@ public class DoctorMatchWorkflowEngine {
             HarnessMetrics harnessMetrics,
             HarnessWorkflowRunStore workflowRunStore,
             ApplicationEventPublisher eventPublisher,
-            ConsultationMatchRepository consultationMatchRepository) {
+            ConsultationMatchRepository consultationMatchRepository,
+            MatchExplainabilityService matchExplainabilityService) {
         this.medicalAgentLlmSupportService = medicalAgentLlmSupportService;
         this.medicalCaseRepository = medicalCaseRepository;
         this.logStreamService = logStreamService;
@@ -75,6 +78,7 @@ public class DoctorMatchWorkflowEngine {
         this.workflowRunStore = workflowRunStore;
         this.eventPublisher = eventPublisher;
         this.consultationMatchRepository = consultationMatchRepository;
+        this.matchExplainabilityService = matchExplainabilityService;
     }
 
     public MedicalAgentService.AgentResponse execute(String caseId, Map<String, Object> request) {
@@ -321,7 +325,7 @@ public class DoctorMatchWorkflowEngine {
         return ConfidencePolicySupport.toAgentResponse(decision, caseId, matchCount, verification, base);
     }
 
-    private static Map<String, Object> successMetadata(String caseId, List<DoctorMatch> matches, CaseContextBundle bundle) {
+    private Map<String, Object> successMetadata(String caseId, List<DoctorMatch> matches, CaseContextBundle bundle) {
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("caseId", caseId);
         metadata.put("skills", List.of("case-analyzer", "doctor-matcher"));
@@ -331,6 +335,11 @@ public class DoctorMatchWorkflowEngine {
         metadata.put("matchCount", matches.size());
         metadata.put("doctorMatchCount", matches.size());
         metadata.put("contextBundleSections", bundle.coreSections().size());
+        if (matches != null && !matches.isEmpty()) {
+            metadata.put(
+                    "matchExplainability",
+                    matchExplainabilityService.explainMatchesAsViews(caseId, matches, 5));
+        }
         return metadata;
     }
 

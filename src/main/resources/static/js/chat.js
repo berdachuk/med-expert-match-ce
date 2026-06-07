@@ -240,13 +240,7 @@
     }
 
     function applyDonePayload(rawData) {
-        if (!rawData) return;
-        try {
-            var parsed = JSON.parse(rawData);
-            if (parsed && typeof parsed.content === 'string') {
-                currentMarkdownBuffer = parsed.content;
-            }
-        } catch (ignore) { }
+        applyDonePackaging(rawData);
     }
 
     function renderTodos(todos) {
@@ -479,6 +473,72 @@
         currentMarkdownBuffer = '';
     }
 
+    var MODE_COST_HINTS = {
+        quick: '~1× token budget (LIGHT chat)',
+        expert_match: '~2–3× token budget (FULL harness + GraphRAG)'
+    };
+
+    function selectedChatMode() {
+        return document.getElementById('chatModePicker')?.value || 'quick';
+    }
+
+    function updateChatModeCostHint() {
+        var hint = document.getElementById('chatModeCostHint');
+        if (!hint) return;
+        hint.textContent = MODE_COST_HINTS[selectedChatMode()] || MODE_COST_HINTS.quick;
+    }
+
+    function renderExplainabilityPanel(parentBubble, payload) {
+        if (!parentBubble || !payload || !payload.matchExplainability || !payload.matchExplainability.length) {
+            return;
+        }
+        var existing = parentBubble.parentElement?.querySelector('.chat-explainability-panel');
+        if (existing) existing.remove();
+        var panel = document.createElement('div');
+        panel.className = 'chat-explainability-panel';
+        var title = document.createElement('div');
+        title.className = 'fw-semibold mb-1';
+        title.textContent = 'Match signal breakdown (research only)';
+        panel.appendChild(title);
+        if (payload.relativeCostHint) {
+            var cost = document.createElement('div');
+            cost.className = 'text-muted mb-1';
+            cost.textContent = payload.chatMode + ' · ' + payload.routingTier + ' · ' + payload.relativeCostHint;
+            panel.appendChild(cost);
+        }
+        var table = document.createElement('table');
+        table.className = 'table table-sm table-borderless mb-0';
+        table.innerHTML = '<thead><tr><th>Doctor</th><th>Score</th><th>Vector</th><th>Graph</th><th>History</th></tr></thead>';
+        var tbody = document.createElement('tbody');
+        payload.matchExplainability.forEach(function (row) {
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>' + escapeHtml(row.doctorName || row.doctorId || '') + '</td>' +
+                '<td>' + escapeHtml(String(row.overallScore != null ? row.overallScore : '')) + '</td>' +
+                '<td>' + escapeHtml(String(row.vectorPercent != null ? row.vectorPercent + '%' : '')) + '</td>' +
+                '<td>' + escapeHtml(String(row.graphPercent != null ? row.graphPercent + '%' : '')) + '</td>' +
+                '<td>' + escapeHtml(String(row.historyPercent != null ? row.historyPercent + '%' : '')) + '</td>';
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        panel.appendChild(table);
+        var row = parentBubble.closest('.chat-message-row');
+        if (row) row.appendChild(panel);
+    }
+
+    function applyDonePackaging(rawData) {
+        if (!rawData) return;
+        try {
+            var parsed = JSON.parse(rawData);
+            if (parsed && typeof parsed.content === 'string') {
+                currentMarkdownBuffer = parsed.content;
+            }
+            if (currentAssistantBubble) {
+                renderExplainabilityPanel(currentAssistantBubble, parsed);
+            }
+        } catch (ignore) { }
+    }
+
     function sendMessageStream(chatId, text, agentId, btn) {
         var sid = sessionId();
         var startMs = Date.now();
@@ -506,7 +566,11 @@
         fetch('/api/v1/chats/' + encodeURIComponent(chatId) + '/messages/stream', {
             method: 'POST',
             headers: apiHeaders(),
-            body: JSON.stringify({ content: text, agentId: agentId || 'auto' })
+            body: JSON.stringify({
+                content: text,
+                agentId: agentId || 'auto',
+                chatMode: selectedChatMode()
+            })
         }).then(function (response) {
             if (!response.ok || !response.body) {
                 return response.text().then(function (body) {
@@ -640,6 +704,9 @@
         input.value = '';
         sendMessageStream(chatId, text, document.getElementById('agentPicker')?.value || 'auto', btn);
     });
+
+    document.getElementById('chatModePicker')?.addEventListener('change', updateChatModeCostHint);
+    updateChatModeCostHint();
 
     document.getElementById('messageInput')?.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {

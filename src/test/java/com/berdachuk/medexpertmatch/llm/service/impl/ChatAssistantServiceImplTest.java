@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
+import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.chat.domain.Chat;
 import com.berdachuk.medexpertmatch.chat.domain.ChatMessage;
 import com.berdachuk.medexpertmatch.chat.service.ChatService;
@@ -123,7 +124,7 @@ class ChatAssistantServiceImplTest {
         when(medicalAgentPolicyGateService.review(any(), any()))
                 .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "Here is evidence", null, null));
 
-        Map<String, ChatMessage> result = service.processMessage("c1", "user-a", "Find evidence", "auto");
+        Map<String, ChatMessage> result = service.processMessage("c1", "user-a", "Find evidence", "auto", null);
 
         assertNotNull(result.get("userMessage"));
         assertEquals("Here is evidence", result.get("assistantMessage").content());
@@ -158,7 +159,7 @@ class ChatAssistantServiceImplTest {
         when(medicalAgentPolicyGateService.review(any(), any()))
                 .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "Here is evidence", null, null));
 
-        service.processMessage("c1", "user-a", "Find evidence", "auto");
+        service.processMessage("c1", "user-a", "Find evidence", "auto", null);
 
         ConversationGoalContext.Entry entry = ConversationGoalContext.get("user-a-c1");
         assertNotNull(entry);
@@ -195,7 +196,7 @@ class ChatAssistantServiceImplTest {
         when(callSpec.content()).thenReturn("Here is more info");
         when(medicalAgentPolicyGateService.review(any(), any()))
                 .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "Here is more info", null, null));
-        service.processMessage("c1", "user-a", "more", "auto");
+        service.processMessage("c1", "user-a", "more", "auto", null);
 
         verify(chatService).getHistory("c1", "user-a", 6, 0);
     }
@@ -215,7 +216,7 @@ class ChatAssistantServiceImplTest {
                 new MedicalAgentService.AgentResponse("Dr. Smith ranked first", Map.of("doctorMatchCount", 3)));
 
         SseEmitter emitter = service.streamMessage("c1", "user-a",
-                "Find Specialist Case Information Case ID: " + caseId, "auto", null);
+                "Find Specialist Case Information Case ID: " + caseId, "auto", "expert_match", RateLimitTier.DEFAULT);
 
         assertNotNull(emitter);
         TimeUnit.MILLISECONDS.sleep(300);
@@ -238,7 +239,7 @@ class ChatAssistantServiceImplTest {
                 new MedicalAgentService.AgentResponse("Dr. Smith ranked first", Map.of("doctorMatchCount", 3)));
 
         Map<String, ChatMessage> result = service.processMessage("c1", "user-a",
-                "Find Specialist Case Information Case ID: " + caseId, "auto");
+                "Find Specialist Case Information Case ID: " + caseId, "auto", "expert_match");
 
         assertEquals("Dr. Smith ranked first", result.get("assistantMessage").content());
         verify(medicalAgentService).matchDoctors(eq(caseId), any());
@@ -272,7 +273,7 @@ class ChatAssistantServiceImplTest {
         when(medicalAgentPolicyGateService.review(any(), any()))
                 .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "Here are more doctors", null, null));
 
-        service.processMessage("c1", "user-a", "find other doctors", "auto");
+        service.processMessage("c1", "user-a", "find other doctors", "auto", null);
 
         verify(medicalAgentService, never()).matchDoctors(any(), any());
         verify(chatClient).prompt();
@@ -304,7 +305,7 @@ class ChatAssistantServiceImplTest {
         when(medicalAgentPolicyGateService.review(any(), any()))
                 .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "ICD-10 is...", null, null));
 
-        service.processMessage("c1", "user-a", "What is ICD-10?", "auto");
+        service.processMessage("c1", "user-a", "What is ICD-10?", "auto", "quick");
 
         assertEquals(1.0, meterRegistry.get("llm.routing.decisions.total")
                 .tag("tier", "LIGHT")
@@ -329,11 +330,46 @@ class ChatAssistantServiceImplTest {
                 new MedicalAgentService.AgentResponse("Dr. Smith ranked first", Map.of("doctorMatchCount", 3)));
 
         service.processMessage("c1", "user-a",
-                "Find Specialist Case Information Case ID: " + caseId, "auto");
+                "Find Specialist Case Information Case ID: " + caseId, "auto", "expert_match");
 
         assertEquals(1.0, meterRegistry.get("llm.harness.invocations.total")
                 .tag("goal_type", "MATCH_DOCTORS")
                 .counter()
                 .count());
+    }
+
+    @Test
+    @DisplayName("QUICK chat mode skips harness even when MATCH_DOCTORS has case ID")
+    void quickModeSkipsHarness() {
+        String caseId = "6a23f05200155d711484cf64";
+        Chat chat = new Chat("c1", "user-a", "Test", "auto", false,
+                Instant.now(), Instant.now(), Instant.now(), 0);
+        ChatMessage userMsg = new ChatMessage("m1", "c1", "user", "find specialist", 1, null, Instant.now());
+        ChatMessage assistantMsg = new ChatMessage("m2", "c1", "assistant", "Quick reply", 2, null, Instant.now());
+
+        when(goalClassifier.classify(anyString(), any())).thenReturn(
+                GoalClassification.matchDoctors(caseId, "keyword: doctor matching with case ID"));
+        when(chatService.requireOwnedChat("c1", "user-a")).thenReturn(chat);
+        when(chatService.appendUserMessage(eq("c1"), eq("user-a"), any())).thenReturn(userMsg);
+        when(chatService.appendAssistantMessage(eq("c1"), eq("user-a"), any())).thenReturn(assistantMsg);
+        when(promptSupport.loadSkill(any())).thenReturn("skill body");
+        when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
+        when(chatAgentSystemTemplate.render(any())).thenReturn("system");
+        when(chatUserMessageTemplate.render(any())).thenReturn("user prompt");
+        when(chatCasePromptSupport.buildCaseToolHints(any(), any())).thenReturn("");
+        when(chatClient.prompt()).thenReturn(requestSpec);
+        when(requestSpec.system(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.user(any(String.class))).thenReturn(requestSpec);
+        when(requestSpec.advisors(any(java.util.function.Consumer.class))).thenReturn(requestSpec);
+        when(requestSpec.call()).thenReturn(callSpec);
+        when(callSpec.content()).thenReturn("Quick reply");
+        when(medicalAgentPolicyGateService.review(any(), any()))
+                .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "Quick reply", null, null));
+
+        service.processMessage("c1", "user-a",
+                "Find Specialist Case Information Case ID: " + caseId, "auto", "quick");
+
+        verify(medicalAgentService, never()).matchDoctors(any(), any());
+        verify(chatClient).prompt();
     }
 }

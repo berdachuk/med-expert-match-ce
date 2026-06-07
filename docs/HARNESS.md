@@ -17,6 +17,11 @@ medical workflow:
 The **model proposes**; the **harness constrains and executes**. See also
 [Harness & Agent Patterns](HARNESS_AND_AGENT_USAGE.md) for terminology shared with coding-agent discussions.
 
+**Agent vs chat packaging (M66):** AI Chat exposes **Quick question** vs **Expert match (harness)** before send, with
+relative cost hints and match explainability (vector / graph / history signals). Narrative:
+[Agent vs chat case study](presentations/agent-vs-chat-case-study-template.md) ·
+[pitch deck slide](presentations/medexpertmatch-full-presentation.md).
+
 ### Temporal context (FR-18)
 
 Every LLM call receives **current UTC date/time** in the system prompt via `DateTimeContextAdvisor`. AI Chat also
