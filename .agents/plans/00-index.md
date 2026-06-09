@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M75 | [`M75-find-specialist-case-specialty-reconcile.md`](M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` for the case side (parallel to M73's doctor-side heal) + bidirectional substring match in `calculateSpecializationMatchScore` so "Cardiology" matches "Advanced Heart Failure and Transplant Cardiology" |
+| M76 | [`M76-resolve-modulith-cycle.md`](M76-resolve-modulith-cycle.md) | Move `MedicalCaseDescriptionService` from `medicalcase` to `llm` (it calls an LLM, but lives in the wrong module, creating two Modulith cycles and breaking `mvn verify`) |
 
 ## Deferred
 
@@ -95,6 +95,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M72 | [`M72-find-specialist-data-quality-fixes.md`](archive/M72-find-specialist-data-quality-fixes.md) | PubMed ObjectId guard, LLM session ID in advisor context, circular dep fix, missing `match_outcomes` tables, match validation with extended context, file-backed logs |
 | M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](archive/M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality: `MAJOR_SPECIALTIES` round-robin, `reconcileSpecialtyGraph()` (idempotent MERGE), admin endpoint `POST /api/v1/admin/synthetic-data/reconcile-specialties`, unconditional `INFO` LLM-usage log with `cache_hit=true\|false` |
 | M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, **UI path only** (`formatForChatDisplay`); data path (`toHumanReadable`) kept untouched so internal consumers still see the original JSON |
+| M75 | [`M75-find-specialist-case-specialty-reconcile.md`](archive/M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` for the case side (parallel to M73's doctor-side heal) + bidirectional substring match in `calculateSpecializationMatchScore` so "Cardiology" matches "Advanced Heart Failure and Transplant Cardiology" |
 
 ## Creating a New Plan
 

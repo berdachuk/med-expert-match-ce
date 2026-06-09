@@ -1,6 +1,6 @@
 # M75: Find Specialist — Case→Specialty Graph Reconciliation + Specialty Name Normalization
 
-**Status:** Active (in progress 2026-06-09)
+**Status:** **Done** (2026-06-09)
 **Created:** 2026-06-09
 **Depends on:** M73 (archived — `reconcileSpecialtyGraph()` is the template we mirror for cases); M72 (archived — `required_specialty` data quality and `medical_cases` field hygiene).
 
