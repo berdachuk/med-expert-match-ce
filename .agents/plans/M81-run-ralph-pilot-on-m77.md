@@ -1,6 +1,6 @@
 # M81: Run the Ralph Loop Unattended on M77 (the Real Pilot)
 
-**Status:** Active (planned 2026-06-09)
+**Status:** Active (planned 2026-06-09; Phases 1-9 done in commit 611c017, Phases 10-12 pending — needs a real `OPENAI_API_KEY` and 6h wall-clock)
 **Created:** 2026-06-09
 **Depends on:** M80 (done — `invoke_agent()` is real; 14 hermetic tests pass), M79 (done — `M77-stories.json` enumerates 10 atomic stories with `passes: false`), M77 (active — the plan to actually implement), the M77 plan's own 10 phases (`M77-runtime-measured-estimates.md:64-75`)
 
@@ -72,18 +72,18 @@ The non-goal is doing M77 by hand. The M77 plan's Phases 1-10 are exactly the M7
 
 | Phase | Task | Status |
 |-------|------|--------|
-| 1 | TDD: add test 6 (`--max-time 0` exits 8) and test 7 (`--max-consecutive-failures 0` exits 1) to test_ralph.sh | Pending |
-| 2 | Implement `--max-time` and `--max-consecutive-failures` arg parsing in ralph.sh (with set -e) | Pending |
-| 3 | Wire wall-clock check at the top of each iteration; on cap, append `[RED-TIMEOUT]` and exit 8 | Pending |
-| 4 | Wire consecutive-failure tracker; on N-same-rc-in-a-row, append `[RED-LOOP-GIVEUP]` and exit 7 | Pending |
-| 5 | Update `progress.txt` format header to document the new `[RED-*]` tokens | Pending |
-| 6 | Update `AGENTS.md` Ralph workflow section with the new flags | Pending |
-| 7 | Update `docs/ai-context-strategy.md` with a "Pilot results" subsection placeholder | Pending |
-| 8 | Sanity: all 7 ralph + 6 render + 3 extract = 16 tests pass | Pending |
-| 9 | `mvn test` green (regression check) | Pending |
-| 10 | Run the actual pilot: `./scripts/ralph.sh M77 --max 10 --max-time 21600 --max-consecutive-failures 3 --agent openai` against feature/m81-ralph-pilot-m77, with `OPENAI_*` env set | Pending |
-| 11 | Append the M81 Retrospective block to progress.txt; capture the actual numbers | Pending |
-| 12 | Merge feature/m81-ralph-pilot-m77 to develop (if any stories passed) OR open an M82 plan to drive the failures to green by hand | Pending |
+| 1 | TDD: add test 6 (`--max-time 0` exits 1) and test 7 (`--max-consecutive-failures 0` exits 1) to test_ralph.sh | Done (611c017) |
+| 2 | Implement `--max-time` and `--max-consecutive-failures` arg parsing in ralph.sh (with set -e) | Done (611c017) |
+| 3 | Wire wall-clock check at the top of each iteration; on cap, append `[RED-TIMEOUT]` and exit 8 | Done (611c017) |
+| 4 | Wire consecutive-failure tracker; on N-same-rc-in-a-row, append `[RED-LOOP-GIVEUP]` and exit 7 | Done (611c017) |
+| 5 | Update `progress.txt` format header to document the new `[RED-*]` tokens | Done (611c017) |
+| 6 | Update `AGENTS.md` Ralph workflow section with the new flags | Done (611c017) |
+| 7 | Update `docs/ai-context-strategy.md` with a "Pilot results" subsection placeholder | Done (611c017) |
+| 8 | Sanity: all 8 ralph + 6 render + 3 extract = 17 tests pass | Done (611c017) |
+| 9 | `mvn test` green (regression check) | Done (611c017) |
+| 10 | Run the actual pilot: `./scripts/ralph.sh M77 --max 10 --max-time 21600 --max-consecutive-failures 3 --agent openai` against feature/m81-ralph-pilot-m77, with `OPENAI_*` env set | **Pending** (needs `OPENAI_API_KEY` + 6h) |
+| 11 | Append the M81 Retrospective block to progress.txt; capture the actual numbers | Pending (depends on 10) |
+| 12 | Merge feature/m81-ralph-pilot-m77 to develop (if any stories passed) OR open an M82 plan to drive the failures to green by hand | Pending (depends on 10, 11) |
 
 ## Acceptance criteria
 
