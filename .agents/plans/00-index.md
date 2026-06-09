@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M76 | [`M76-resolve-modulith-cycle.md`](M76-resolve-modulith-cycle.md) | Move `MedicalCaseDescriptionService` from `medicalcase` to `llm` (it calls an LLM, but lives in the wrong module, creating two Modulith cycles and breaking `mvn verify`) |
+| M76 | [`M76-update-data-sizes-and-add-very-large.md`](M76-update-data-sizes-and-add-very-large.md) | Fix wildly wrong time estimates in `data-sizes.csv` (current "1 day 14 hours" for `large` is actually ~95 s), normalize all sizes to 20 cases per doctor, add new `very-large` size (1,000 doctors / 20,000 cases) |
 
 ## Deferred
 

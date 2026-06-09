@@ -1,8 +1,9 @@
 size,doctor_count,case_count,description,estimated_time_minutes
-tiny,3,15,"Tiny (3 doctors, 15 cases)",4
-micro,5,25,"Micro (5 doctors, 25 cases)",25
-mini,10,50,"Mini (10 doctors, 50 cases)",48
-compact,20,100,"Compact (20 doctors, 100 cases)",93
-small,50,250,"Small (50 doctors, 250 cases)",231
-standard,100,1000,"Standard (100 doctors, 1,000 cases)",459
-large,500,5000,"Large (500 doctors, 5,000 cases)",2285
+tiny,3,60,"Tiny (3 doctors, 60 cases)",1
+micro,5,100,"Micro (5 doctors, 100 cases)",1
+mini,10,200,"Mini (10 doctors, 200 cases)",1
+compact,20,400,"Compact (20 doctors, 400 cases)",1
+small,50,1000,"Small (50 doctors, 1,000 cases)",2
+standard,100,2000,"Standard (100 doctors, 2,000 cases)",3
+large,500,10000,"Large (500 doctors, 10,000 cases)",5
+very_large,1000,20000,"Very Large (1,000 doctors, 20,000 cases)",10
