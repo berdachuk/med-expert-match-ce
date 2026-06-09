@@ -8,6 +8,7 @@ Roadmap updated 2026-06-08. Suggested order: **M60** (GPU fine-tune, when capaci
 |---|------|-------------|
 | M60 | [`M60-functiongemma-finetune-execution-next.md`](M60-functiongemma-finetune-execution-next.md) | **Next** — GPU fine-tune execution + live before/after eval (blocked on GPU) |
 | M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality (primary specialty guarantees, SQL/graph sync, admin reconcile endpoint) + unconditional `INFO` log for LLM cache hits |
+| M74 | [`M74-human-readable-response-rendering.md`](M74-human-readable-response-rendering.md) | Render LLM JSON blocks (e.g. `{"requiredSpecialty":...,"icd10Codes":[...]}`) embedded in narrative as human-readable prose, server-side in `LlmResponseSanitizer` |
 
 ## Deferred
 
