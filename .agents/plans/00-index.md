@@ -2,11 +2,9 @@
 
 ## Active
 
-Roadmap updated 2026-06-09. All currently planned work is implemented or in archive; next iteration TBD.
-
 | # | Plan | Description |
 |---|------|-------------|
-| _none_ | | |
+| M77 | [`M77-runtime-measured-estimates.md`](M77-runtime-measured-estimates.md) | Measure every actual synthetic-data run; persist in new `synthetic_data_generation_runs` table; surface "Last actual: X" in admin UI; nightly job auto-adjusts the static `estimated_time_minutes` in `data-sizes.csv` so the estimate never silently drifts from reality |
 
 ## Deferred
 
