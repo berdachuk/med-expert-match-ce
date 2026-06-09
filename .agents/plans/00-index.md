@@ -7,6 +7,7 @@ Roadmap updated 2026-06-08. Suggested order: **M60** (GPU fine-tune, when capaci
 | # | Plan | Description |
 |---|------|-------------|
 | M60 | [`M60-functiongemma-finetune-execution-next.md`](M60-functiongemma-finetune-execution-next.md) | **Next** — GPU fine-tune execution + live before/after eval (blocked on GPU) |
+| M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality (primary specialty guarantees, SQL/graph sync, admin reconcile endpoint) + unconditional `INFO` log for LLM cache hits |
 
 ## Deferred
 
