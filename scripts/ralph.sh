@@ -16,13 +16,17 @@ set -euo pipefail
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") M{NN} [--max N] [--dry-run]
+Usage: $(basename "$0") M{NN} [--max N] [--agent stub|openai|<path>] [--dry-run]
 
 Arguments:
   M{NN}          Milestone id (e.g. M77). Reads .agents/plans/M{NN}-stories.json.
 
 Options:
   --max N        Run at most N stories (default: 999999 = run until done).
+  --agent MODE   Agent mode: stub (default, human-driven), openai (call the
+                 OpenAI-compatible chat endpoint with env vars OPENAI_API_KEY,
+                 OPENAI_BASE_URL, OPENAI_MODEL), or a path to an external
+                 script that reads a story id and prints a patch on stdout.
   --dry-run      Print the chosen story and exit without invoking agent/tests.
   -h, --help     Show this help.
 
@@ -31,6 +35,9 @@ Exit codes:
   1   Bad usage.
   2   Missing stories.json or repo state.
   3   Test failure on the chosen story.
+  4   Agent invocation failure (missing env, non-200, empty response, etc.).
+  5   Agent returned no parseable patch.
+  6   Patch did not apply cleanly.
 EOF
 }
 
@@ -50,6 +57,7 @@ shift
 
 MAX=999999
 DRY_RUN=0
+AGENT_MODE="stub"
 while [ $# -gt 0 ]; do
     case "$1" in
         --max)
@@ -62,6 +70,14 @@ while [ $# -gt 0 ]; do
             ;;
         --dry-run)
             DRY_RUN=1
+            shift
+            ;;
+        --agent)
+            AGENT_MODE="${2:-stub}"
+            shift 2
+            ;;
+        --agent=*)
+            AGENT_MODE="${1#--agent=}"
             shift
             ;;
         -h|--help)
@@ -137,12 +153,81 @@ mark_passed() {
 }
 
 invoke_agent() {
-    # TODO(M80): wire real agent invocation (e.g. opencode / claude-code subprocess).
-    # For M79, the agent is a no-op: the story is considered "implemented" if its
-    # test_target passes against the current working tree. Human-driven runs
-    # implement the story in their working tree first, then invoke ralph.sh to
-    # mark the test pass + commit.
-    log "agent stub: assuming $1 is already implemented in working tree"
+    # Dispatch on $AGENT_MODE. The default 'stub' is the M79 no-op behavior:
+    # a human has already implemented the story in the working tree, the
+    # loop just runs the test and commits. M80 adds 'openai' (real LLM call)
+    # and arbitrary <path> (custom agent script).
+    local story_id="$1"
+    case "$AGENT_MODE" in
+        stub)
+            log "agent stub: assuming $story_id is already implemented in working tree"
+            return 0
+            ;;
+        openai)
+            invoke_agent_openai "$story_id"
+            ;;
+        *)
+            # Treat as a path to an external agent script
+            if [ -x "$AGENT_MODE" ] || [ -x "$(command -v "$AGENT_MODE" 2>/dev/null || true)" ]; then
+                invoke_agent_path "$story_id" "$AGENT_MODE"
+            else
+                log "ERROR: --agent value '$AGENT_MODE' is not 'stub', 'openai', or an executable path"
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+invoke_agent_openai() {
+    local story_id="$1"
+    local prompt
+    local response
+    local patch_path
+
+    log "agent openai: rendering prompt for $story_id"
+    prompt=$("$SCRIPT_DIR/ralph/render_prompt.sh" "$story_id") || {
+        log "ERROR: render_prompt.sh failed"
+        return 4
+    }
+
+    log "agent openai: calling ${OPENAI_BASE_URL:-unset}/chat/completions (model=${OPENAI_MODEL:-unset})"
+    response=$(printf '%s' "$prompt" | "$SCRIPT_DIR/ralph/call_openai.sh") || {
+        log "ERROR: call_openai.sh failed (rc=$?)"
+        return 4
+    }
+
+    log "agent openai: extracting patch from response"
+    patch_path=$(printf '%s' "$response" | "$SCRIPT_DIR/ralph/extract_patch.sh") || {
+        log "ERROR: extract_patch.sh found no ```diff block"
+        return 5
+    }
+
+    log "agent openai: applying patch from $patch_path"
+    "$SCRIPT_DIR/ralph/apply_patch.sh" "$patch_path" || {
+        log "ERROR: apply_patch.sh failed (rc=$?)"
+        return 6
+    }
+}
+
+invoke_agent_path() {
+    local story_id="$1"
+    local agent_path="$2"
+    local response
+    local patch_path
+
+    log "agent path: invoking $agent_path for $story_id"
+    response=$("$agent_path" "$story_id") || {
+        log "ERROR: external agent $agent_path failed (rc=$?)"
+        return 4
+    }
+    patch_path=$(printf '%s' "$response" | "$SCRIPT_DIR/ralph/extract_patch.sh") || {
+        log "ERROR: extract_patch.sh found no ```diff block in $agent_path output"
+        return 5
+    }
+    "$SCRIPT_DIR/ralph/apply_patch.sh" "$patch_path" || {
+        log "ERROR: apply_patch.sh failed (rc=$?)"
+        return 6
+    }
 }
 
 run_test() {
@@ -162,7 +247,7 @@ run_test() {
 
 # ---- main loop ----
 
-log "ralph.sh start: milestone=$MILESTONE max=$MAX dry_run=$DRY_RUN"
+log "ralph.sh start: milestone=$MILESTONE max=$MAX dry_run=$DRY_RUN agent=$AGENT_MODE"
 
 iter=0
 while [ "$iter" -lt "$MAX" ]; do
@@ -184,7 +269,20 @@ while [ "$iter" -lt "$MAX" ]; do
         exit 0
     fi
 
+    set +e
     invoke_agent "$story_id"
+    agent_rc=$?
+    set -e
+
+    if [ "$agent_rc" -ne 0 ]; then
+        # 4 = openai/auth error, 5 = no patch, 6 = patch did not apply
+        append_progress "## $(date -u +%Y-%m-%d) ${story_id} (${title}) [RED-AGENT]
+- agent mode=$AGENT_MODE rc=$agent_rc (4=auth/llm, 5=no-patch, 6=apply-failed)
+- Discovered: agent invocation failed; see logs above
+- Next: fix agent config or re-run ralph.sh"
+        log "agent failed (rc=$agent_rc); appended red-agent block to progress.txt"
+        exit "$agent_rc"
+    fi
 
     set +e
     run_test "$test_target"
@@ -192,7 +290,7 @@ while [ "$iter" -lt "$MAX" ]; do
     set -e
 
     if [ "$test_rc" -ne 0 ]; then
-        append_progress "## $(date -u +%Y-%m-%d) ${MILESTONE}-${story_id} (${title}) [RED]
+        append_progress "## $(date -u +%Y-%m-%d) ${story_id} (${title}) [RED]
 - test_target '$test_target' failed (rc=$test_rc)
 - Discovered: $(cd "$REPO_ROOT" && mvn test -Dtest="$test_target" 2>&1 | tail -20 || true)
 - Next: fix and re-run ralph.sh"
@@ -207,7 +305,7 @@ while [ "$iter" -lt "$MAX" ]; do
 
     mark_passed "$story_id" "$commit_sha"
 
-    append_progress "## $(date -u +%Y-%m-%d) ${MILESTONE}-${story_id} (${title}) [GREEN]
+    append_progress "## $(date -u +%Y-%m-%d) ${story_id} (${title}) [GREEN]
 - commit: $commit_sha
 - test_target '$test_target' green
 - Next: $(pick_next_story || echo 'none')"
