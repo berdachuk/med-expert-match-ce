@@ -103,3 +103,31 @@ M80 pilot. The M79 build assumes the human has implemented the story in
 the working tree and the loop's job is to verify + commit + advance
 state. See root `AGENTS.md` → "Ralph workflow" for the full
 contract and the explicit "Do NOT Ralph-ify" list.
+
+### Prompt contract (M80)
+
+When `--agent openai` is selected, the loop renders each story via
+`.agents/templates/M{NN}-prompt.md.template` and sends the rendered
+markdown to `OPENAI_BASE_URL/chat/completions`.
+
+Template variables (set as shell env vars; the renderer uses `envsubst`):
+
+| Var | Source | Meaning |
+|-----|--------|---------|
+| `MILESTONE_ID` | story id prefix | e.g. `M77` |
+| `STORY_ID` | full id | e.g. `M77-02` |
+| `STORY_TITLE` | `stories[].title` | human-readable title |
+| `TEST_TARGET` | `stories[].test_target` | the Java class `mvn test -Dtest=...` will run |
+| `PHASE_REF` | `stories[].phase_ref` | pointer back to the source plan |
+| `ACCEPT_BLOCK` | `stories[].accept[]` | bullet list of acceptance criteria |
+| `SKILLS_BLOCK` | `stories[].skills_to_load[]` | bullet list of `SKILL.md` paths to read |
+| `FILES_BLOCK` | `stories[].files_touched[]` | the additive file list (stay within it) |
+| `STORIES_FILE` | env | absolute path to `M{NN}-stories.json` |
+| `REPO_ROOT` | env | absolute path to the repo |
+
+Return format: the LLM is told (in the template) to return EXACTLY one
+```diff ... ``` fenced block as the very last thing in its response.
+`scripts/ralph/extract_patch.sh` pulls the first such block (exit 5 if
+none); `scripts/ralph/apply_patch.sh` runs `git apply --check` (exit 6
+on failure) then `git apply` from the repo root. Multiple ```diff
+blocks in one response are tolerated: only the first is applied.

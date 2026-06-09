@@ -1,0 +1,75 @@
+# Ralph Loop per-story agent prompt template.
+#
+# Variables (set as shell env vars before calling envsubst):
+#   MILESTONE_ID      e.g. M77
+#   STORY_ID          e.g. M77-02
+#   STORY_TITLE       the story title
+#   TEST_TARGET       the story's test_target (Java class)
+#   PHASE_REF         line reference in the source plan
+#   ACCEPT_BLOCK      newline-separated acceptance bullets
+#   SKILLS_BLOCK      newline-separated skill names
+#   FILES_BLOCK       newline-separated files this story touches
+#   STORIES_FILE      absolute path to M{NN}-stories.json
+#   REPO_ROOT         absolute path to repo root
+#
+# Invocation:  envsubst < .agents/templates/M{NN}-prompt.md.template
+# Or via:      scripts/ralph/render_prompt.sh $STORY_ID
+
+# Ralph Loop — ${MILESTONE_ID} / ${STORY_ID}
+
+You are an autonomous coding agent working on the MedExpertMatch repo at `${REPO_ROOT}`.
+
+## Story
+
+- **Milestone:** ${MILESTONE_ID}
+- **Story ID:** ${STORY_ID}
+- **Title:** ${STORY_TITLE}
+- **Phase reference:** ${PHASE_REF}
+- **Test target:** `${TEST_TARGET}` (run with `mvn test -Dtest='${TEST_TARGET}'` for unit, `mvn verify -Dit.test='${TEST_TARGET}'` for IT)
+- **Stories file:** `${STORIES_FILE}`
+
+## Skills to load (mandatory — read each SKILL.md before changing code)
+
+${SKILLS_BLOCK}
+
+## Files this story touches (additive — do not touch files outside this list unless strictly required by the test)
+
+${FILES_BLOCK}
+
+## Acceptance criteria (the story is "done" when all of these are true)
+
+${ACCEPT_BLOCK}
+
+## How to work
+
+1. Read `${REPO_ROOT}/.agents/plans/progress.txt` for cross-iteration learnings from prior stories.
+2. Read every skill listed above (in full) from `${REPO_ROOT}/.agents/skills/<name>/SKILL.md`.
+3. Read `${REPO_ROOT}/.agents/plans/M${MILESTONE_ID#M}-*.md` (the source plan) for the full milestone context.
+4. Implement the change. Do not edit the `M${MILESTONE_ID#M}-stories.json` file — `scripts/ralph.sh` does that after the test passes.
+5. Run the test target. If it fails, fix and re-run. Iterate until green.
+6. When the test target is green, return the unified diff of your changes in EXACTLY this format:
+
+\`\`\`diff
+--- a/<path>
++++ b/<path>
+@@ -<old-range> +<new-range> @@
+ <old-line>
+-<removed>
++<added>
+ \`\`\`
+
+The diff MUST apply cleanly with `git apply --check` from `${REPO_ROOT}`. Include all files you created or modified. Do not include any prose outside the \`\`\`diff fenced block.
+
+## Hard rules (AGENTS.md global boundaries)
+
+- NEVER add `Co-authored-by:` trailers to commits — but you are not committing in this story, `scripts/ralph.sh` will commit.
+- NEVER introduce code that exposes patient data (PHI) in any form.
+- NEVER modify `pom.xml` dependency versions.
+- NEVER add new Flyway migrations on V2+ — only V1 consolidations.
+- NEVER swap the AI provider away from OpenAI-compatible endpoints.
+- NEVER delete or archive modules or domain entities.
+- Stay within the files listed above. If you need to touch a file not in the list, prefer the minimum-diff approach: extend an existing helper, do not create a new abstraction.
+
+## Return format reminder
+
+The very last thing you output must be a single \`\`\`diff fenced block. Nothing else.

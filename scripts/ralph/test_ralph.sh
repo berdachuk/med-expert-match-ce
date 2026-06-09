@@ -53,6 +53,15 @@ else
     echo "SKIP: real M77-stories.json not present (test only runs in repos that have it)"
 fi
 
+# Test 5: --max 1 --agent openai without OPENAI_API_KEY exits 4 (M80: auth/missing-env)
+if [ -f "$REPO_ROOT/.agents/plans/M77-stories.json" ]; then
+    check "ralph.sh M77 --max 1 --agent openai without OPENAI_API_KEY exits 4" \
+        env -u OPENAI_API_KEY -u OPENAI_BASE_URL -u OPENAI_MODEL \
+            bash -c "cd '$REPO_ROOT' && '$RALPH' M77 --max 1 --agent openai >/dev/null 2>&1; [ \$? -eq 4 ]"
+else
+    echo "SKIP: M77-stories.json not present (test 5 only runs in repos that have it)"
+fi
+
 echo
 echo "Results: $pass passed, $fail failed"
 exit $fail

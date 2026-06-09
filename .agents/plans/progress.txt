@@ -7,7 +7,7 @@ produced by `scripts/ralph.sh` (see M78/M79). It is NOT a CHANGELOG.
 
 Each iteration of the loop appends one block in this exact format:
 
-    ## YYYY-MM-DD M{NN}-{storyId} ({storyTitle}) [GREEN|RED]
+    ## YYYY-MM-DD {storyId} ({storyTitle}) [GREEN|RED|RED-AGENT]
     - commit: <sha>            (green only)
     - test_target '<X>' green | failed (rc=N)
     - Discovered: <one-line gotcha, or "none">

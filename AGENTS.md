@@ -51,17 +51,47 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 ./scripts/build-test-container.sh    # Build custom Postgres+AGE+PgVector test image
 ./scripts/start-local-stack.sh       # Local stack: Postgres + mvn -Plocal + MkDocs
 ./scripts/restart-service-local.sh   # Restart local stack (stop + start)
-./scripts/ralph.sh M{NN} [--max N]   # Ralph-style autonomous loop over M{NN}-stories.json
+./scripts/ralph.sh M{NN} [--max N] [--agent stub|openai|<path>]   # Ralph-style autonomous loop over M{NN}-stories.json
 ```
 
 ## Ralph Workflow
 
-`scripts/ralph.sh` is the iteration driver described in M78/M79. It reads a
+`scripts/ralph.sh` is the iteration driver described in M78/M79/M80. It reads a
 machine-parseable milestone plan (`.agents/plans/M{NN}-stories.json`), picks
 the highest-priority unpassed story, runs its `test_target`, and on green
 commits + marks the story `passes: true` + writes a `commit_sha` + appends a
 block to `.agents/plans/progress.txt`. On red, it logs to `progress.txt` and
 exits non-zero.
+
+### Agent modes (`--agent`)
+
+The `--agent` flag picks how the loop implements each story. Three modes:
+
+- `--agent stub` (default, M79 behavior) — the loop assumes a human has
+  already implemented the story in the working tree; it just runs the test
+  and commits. Use for hand-driven milestones or for verifying the
+  harness itself.
+- `--agent openai` (M80) — the loop calls an OpenAI-compatible chat
+  endpoint to generate a unified-diff patch for the story, then applies
+  the patch. Requires env vars `OPENAI_API_KEY`, `OPENAI_BASE_URL`,
+  `OPENAI_MODEL`. `OPENAI_TIMEOUT` (default 600) and
+  `OPENAI_TEMPERATURE` (default 0.0) are optional. The endpoint is
+  whichever OpenAI-compatible service the project is already configured
+  for (CLINICAL_* or UTILITY_* per M67); the env vars are independent
+  from Spring AI's config so the loop can target a different model than
+  the application itself.
+- `--agent <path>` — run an external script that reads a story id and
+  prints a patch on stdout. Use to swap in a non-OpenAI agent while
+  reusing the rest of the loop.
+
+Pipeline (openai mode): `render_prompt.sh` → `call_openai.sh` →
+`extract_patch.sh` → `apply_patch.sh`. The renderer expands
+`.agents/templates/M{NN}-prompt.md.template` with the story's `accept[]`
+and `skills_to_load[]`; the LLM is told to return a single ```diff
+fenced block; the extractor pulls the first such block; `git apply
+--check` verifies it before applying.
+
+### Story contract and iteration log
 
 - **Story contract:** `.agents/plans/M{NN}-stories.json` — see `M77-stories.json`
   for the canonical 10-story shape. Each story has `id`, `title`,
@@ -72,8 +102,10 @@ exits non-zero.
   gotcha" tax that motivated the loop.
 - **Smoke test:** `./scripts/ralph.sh M77 --dry-run` prints the next story
   and exits 0 without invoking the agent. Full loop: `./scripts/ralph.sh M77
-  --max 10`. Sanity: `bash scripts/ralph/test_ralph.sh` runs 4 negative
-  tests and exits 0.
+  --max 10 --agent openai` (with `OPENAI_*` set). Sanity:
+  `bash scripts/ralph/test_ralph.sh` runs 5 negative tests and exits 0;
+  `bash scripts/ralph/test_render_prompt.sh` runs 6 prompt tests;
+  `bash scripts/ralph/test_extract_patch.sh` runs 3 patch-extraction tests.
 
 **Do NOT Ralph-ify** (per M78 non-goals + AGENTS.md global boundaries):
 
