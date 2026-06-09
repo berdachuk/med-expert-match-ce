@@ -62,6 +62,24 @@ else
     echo "SKIP: M77-stories.json not present (test 5 only runs in repos that have it)"
 fi
 
+# Test 6: --max-time 0 exits 1 (M81: validation rejects 0, same as --max 0)
+check "ralph.sh with --max-time 0 exits 1 (validation)" \
+    bash -c "! '$RALPH' M77 --max-time 0 >/dev/null 2>&1"
+
+# Test 7: --max-consecutive-failures 0 exits 1 (bad arg, like --max 0)
+check "ralph.sh with --max-consecutive-failures 0 exits 1" \
+    bash -c "! '$RALPH' M77 --max-consecutive-failures 0 >/dev/null 2>&1"
+
+# Test 8: --max-consecutive-failures N enables continue-on-red.
+# With --max 1 and an agent that fails, the loop should NOT exit 4
+# (the agent's rc) but should continue and exit 0 because --max 1 was
+# reached without a green commit. The [RED-AGENT] block is in progress.txt.
+# Note: this test mutates progress.txt (writes a [RED-AGENT] block). It is
+# the last test that runs, so the file ends with one new block from it.
+check "ralph.sh --max 1 --max-consecutive-failures 3 --agent openai (no key) exits 0 (continue-on-red)" \
+    env -u OPENAI_API_KEY -u OPENAI_BASE_URL -u OPENAI_MODEL \
+        bash -c "cd '$REPO_ROOT' && '$RALPH' M77 --max 1 --max-consecutive-failures 3 --agent openai >/dev/null 2>&1; [ \$? -eq 0 ]"
+
 echo
 echo "Results: $pass passed, $fail failed"
 exit $fail

@@ -131,3 +131,23 @@ Return format: the LLM is told (in the template) to return EXACTLY one
 none); `scripts/ralph/apply_patch.sh` runs `git apply --check` (exit 6
 on failure) then `git apply` from the repo root. Multiple ```diff
 blocks in one response are tolerated: only the first is applied.
+
+### Pilot results (M81 — pending)
+
+The M81 pilot run of the Ralph loop on M77 (10 stories, 6h wall-clock
+cap, `--max-consecutive-failures 3`, `--agent openai`) is the empirical
+test of this architecture. Outcomes get appended to this section when
+the pilot completes:
+
+- **End state A** (full green): 10 commits land on the pilot branch,
+  every story flips `passes: true`, and the M77 implementation is a side
+  effect of the pilot.
+- **End state B** (partial): some stories pass, some fail. Each failure
+  has a `[RED]` or `[RED-AGENT]` block in `progress.txt` with the rc
+  (4/5/6/3) and the failure classification. The remaining stories
+  stay `passes: false`. The pilot's data point ("Ralph was able to do
+  X of 10 stories") feeds M82/M83 as concrete loop gaps.
+
+Either way, the loop's stop conditions (`--max-time`, `--max-consecutive-
+failures`) write `[RED-TIMEOUT]` / `[RED-LOOP-GIVEUP]` blocks to
+`progress.txt` so a human can find the loop in a known state.

@@ -16,19 +16,23 @@ set -euo pipefail
 
 usage() {
     cat <<EOF
-Usage: $(basename "$0") M{NN} [--max N] [--agent stub|openai|<path>] [--dry-run]
+Usage: $(basename "$0") M{NN} [--max N] [--agent stub|openai|<path>] [--max-time SECONDS] [--max-consecutive-failures N] [--dry-run]
 
 Arguments:
   M{NN}          Milestone id (e.g. M77). Reads .agents/plans/M{NN}-stories.json.
 
 Options:
-  --max N        Run at most N stories (default: 999999 = run until done).
-  --agent MODE   Agent mode: stub (default, human-driven), openai (call the
-                 OpenAI-compatible chat endpoint with env vars OPENAI_API_KEY,
-                 OPENAI_BASE_URL, OPENAI_MODEL), or a path to an external
-                 script that reads a story id and prints a patch on stdout.
-  --dry-run      Print the chosen story and exit without invoking agent/tests.
-  -h, --help     Show this help.
+  --max N                       Run at most N stories (default: 999999 = run until done).
+  --agent MODE                  Agent mode: stub (default, human-driven), openai (call the
+                                OpenAI-compatible chat endpoint with env vars OPENAI_API_KEY,
+                                OPENAI_BASE_URL, OPENAI_MODEL), or a path to an external
+                                script that reads a story id and prints a patch on stdout.
+  --max-time SECONDS            Wall-clock cap. If elapsed time exceeds this, append a
+                                [RED-TIMEOUT] block to progress.txt and exit 8. Default: unset.
+  --max-consecutive-failures N  If N stories in a row fail with the same exit class (4/5/6/3),
+                                append [RED-LOOP-GIVEUP] and exit 7. Default: 3.
+  --dry-run                     Print the chosen story and exit without invoking agent/tests.
+  -h, --help                    Show this help.
 
 Exit codes:
   0   All stories passed (or --max reached without error).
@@ -38,6 +42,8 @@ Exit codes:
   4   Agent invocation failure (missing env, non-200, empty response, etc.).
   5   Agent returned no parseable patch.
   6   Patch did not apply cleanly.
+  7   Loop gave up: N consecutive same-class failures.
+  8   Wall-clock cap exceeded.
 EOF
 }
 
@@ -58,6 +64,11 @@ shift
 MAX=999999
 DRY_RUN=0
 AGENT_MODE="stub"
+MAX_TIME=""
+MAX_CONSECUTIVE_FAILURES=3
+# When --max-consecutive-failures is set, the loop continues past red stories
+# instead of exiting on the first one (M81). When unset, exit on first red (M80).
+CONTINUE_ON_RED=0
 while [ $# -gt 0 ]; do
     case "$1" in
         --max)
@@ -80,6 +91,24 @@ while [ $# -gt 0 ]; do
             AGENT_MODE="${1#--agent=}"
             shift
             ;;
+        --max-time)
+            MAX_TIME="${2:-}"
+            shift 2
+            ;;
+        --max-time=*)
+            MAX_TIME="${1#--max-time=}"
+            shift
+            ;;
+        --max-consecutive-failures)
+            MAX_CONSECUTIVE_FAILURES="${2:-}"
+            CONTINUE_ON_RED=1
+            shift 2
+            ;;
+        --max-consecutive-failures=*)
+            MAX_CONSECUTIVE_FAILURES="${1#--max-consecutive-failures=}"
+            CONTINUE_ON_RED=1
+            shift
+            ;;
         -h|--help)
             usage
             exit 0
@@ -96,6 +125,20 @@ if ! [[ "$MAX" =~ ^[0-9]+$ ]] || [ "$MAX" -eq 0 ]; then
     echo "ERROR: --max must be a positive integer (got: '$MAX')" >&2
     exit 1
 fi
+
+if [ -n "$MAX_TIME" ] && { ! [[ "$MAX_TIME" =~ ^[0-9]+$ ]] || [ "$MAX_TIME" -eq 0 ]; }; then
+    echo "ERROR: --max-time must be a positive integer (got: '$MAX_TIME')" >&2
+    exit 1
+fi
+
+if ! [[ "$MAX_CONSECUTIVE_FAILURES" =~ ^[0-9]+$ ]] || [ "$MAX_CONSECUTIVE_FAILURES" -eq 0 ]; then
+    echo "ERROR: --max-consecutive-failures must be a positive integer (got: '$MAX_CONSECUTIVE_FAILURES')" >&2
+    exit 1
+fi
+
+# Wall-clock start time for --max-time accounting. Use SECONDS so we get
+# monotonic integer seconds since the script started.
+LOOP_START_SECONDS="${SECONDS:-0}"
 
 # ---- locate repo and stories ----
 
@@ -247,11 +290,54 @@ run_test() {
 
 # ---- main loop ----
 
-log "ralph.sh start: milestone=$MILESTONE max=$MAX dry_run=$DRY_RUN agent=$AGENT_MODE"
+log "ralph.sh start: milestone=$MILESTONE max=$MAX dry_run=$DRY_RUN agent=$AGENT_MODE max_time=${MAX_TIME:-unset} max_consec_failures=$MAX_CONSECUTIVE_FAILURES"
+
+# Consecutive-failure tracking. last_fail_rc holds the rc of the previous
+# failure; consec_count counts how many in a row share that rc.
+last_fail_rc=""
+consec_count=0
+
+check_wall_clock() {
+    if [ -z "$MAX_TIME" ]; then
+        return 0
+    fi
+    local now="${SECONDS:-0}"
+    local elapsed=$((now - LOOP_START_SECONDS))
+    if [ "$elapsed" -ge "$MAX_TIME" ]; then
+        log "wall-clock cap exceeded: elapsed=${elapsed}s >= ${MAX_TIME}s"
+        return 1
+    fi
+    return 0
+}
+
+record_failure() {
+    local rc="$1"
+    if [ "$rc" = "$last_fail_rc" ]; then
+        consec_count=$((consec_count + 1))
+    else
+        last_fail_rc="$rc"
+        consec_count=1
+    fi
+    if [ "$consec_count" -ge "$MAX_CONSECUTIVE_FAILURES" ]; then
+        log "consecutive-failure cap: $consec_count stories in a row failed with rc=$rc"
+        return 1
+    fi
+    return 0
+}
 
 iter=0
 while [ "$iter" -lt "$MAX" ]; do
     iter=$((iter + 1))
+
+    if ! check_wall_clock; then
+        append_progress "## $(date -u +%Y-%m-%d) M81-LOOP [RED-TIMEOUT]
+- elapsed >= ${MAX_TIME}s wall-clock cap
+- iter=$iter story_id=$story_id (about to start)
+- Discovered: pilot timed out
+- Next: resume with a larger --max-time or fix the bottleneck"
+        log "wall-clock cap reached; appended [RED-TIMEOUT] block"
+        exit 8
+    fi
 
     story_id="$(pick_next_story)"
     if [ -z "$story_id" ] || [ "$story_id" = "null" ]; then
@@ -281,6 +367,18 @@ while [ "$iter" -lt "$MAX" ]; do
 - Discovered: agent invocation failed; see logs above
 - Next: fix agent config or re-run ralph.sh"
         log "agent failed (rc=$agent_rc); appended red-agent block to progress.txt"
+        if [ "$CONTINUE_ON_RED" -eq 1 ]; then
+            if ! record_failure "$agent_rc"; then
+                append_progress "## $(date -u +%Y-%m-%d) M81-LOOP [RED-LOOP-GIVEUP]
+- $MAX_CONSECUTIVE_FAILURES consecutive failures all with rc=$last_fail_rc
+- Last failed story: $story_id
+- Discovered: loop is in a rut; need a human to break out
+- Next: address the root cause, reset, and re-run ralph.sh"
+                log "consecutive-failure cap reached; appended [RED-LOOP-GIVEUP] block"
+                exit 7
+            fi
+            continue
+        fi
         exit "$agent_rc"
     fi
 
@@ -295,8 +393,24 @@ while [ "$iter" -lt "$MAX" ]; do
 - Discovered: $(cd "$REPO_ROOT" && mvn test -Dtest="$test_target" 2>&1 | tail -20 || true)
 - Next: fix and re-run ralph.sh"
         log "test failed; appended red block to progress.txt"
+        if [ "$CONTINUE_ON_RED" -eq 1 ]; then
+            if ! record_failure 3; then
+                append_progress "## $(date -u +%Y-%m-%d) M81-LOOP [RED-LOOP-GIVEUP]
+- $MAX_CONSECUTIVE_FAILURES consecutive failures all with rc=3
+- Last failed story: $story_id
+- Discovered: loop is in a rut; need a human to break out
+- Next: address the root cause, reset, and re-run ralph.sh"
+                log "consecutive-failure cap reached; appended [RED-LOOP-GIVEUP] block"
+                exit 7
+            fi
+            continue
+        fi
         exit 3
     fi
+
+    # Green path: reset failure tracking and proceed with commit.
+    last_fail_rc=""
+    consec_count=0
 
     # green: commit + mark
     commit_msg="${MILESTONE}-${story_id}: ${title}"

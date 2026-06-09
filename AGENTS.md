@@ -51,17 +51,17 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 ./scripts/build-test-container.sh    # Build custom Postgres+AGE+PgVector test image
 ./scripts/start-local-stack.sh       # Local stack: Postgres + mvn -Plocal + MkDocs
 ./scripts/restart-service-local.sh   # Restart local stack (stop + start)
-./scripts/ralph.sh M{NN} [--max N] [--agent stub|openai|<path>]   # Ralph-style autonomous loop over M{NN}-stories.json
+./scripts/ralph.sh M{NN} [--max N] [--agent stub|openai|<path>] [--max-time S] [--max-consecutive-failures N]   # Ralph-style autonomous loop over M{NN}-stories.json
 ```
 
 ## Ralph Workflow
 
-`scripts/ralph.sh` is the iteration driver described in M78/M79/M80. It reads a
-machine-parseable milestone plan (`.agents/plans/M{NN}-stories.json`), picks
-the highest-priority unpassed story, runs its `test_target`, and on green
-commits + marks the story `passes: true` + writes a `commit_sha` + appends a
-block to `.agents/plans/progress.txt`. On red, it logs to `progress.txt` and
-exits non-zero.
+`scripts/ralph.sh` is the iteration driver described in M78/M79/M80/M81. It
+reads a machine-parseable milestone plan (`.agents/plans/M{NN}-stories.json`),
+picks the highest-priority unpassed story, runs its `test_target`, and on
+green commits + marks the story `passes: true` + writes a `commit_sha` +
+appends a block to `.agents/plans/progress.txt`. On red, it logs to
+`progress.txt` and exits non-zero.
 
 ### Agent modes (`--agent`)
 
@@ -102,10 +102,17 @@ fenced block; the extractor pulls the first such block; `git apply
   gotcha" tax that motivated the loop.
 - **Smoke test:** `./scripts/ralph.sh M77 --dry-run` prints the next story
   and exits 0 without invoking the agent. Full loop: `./scripts/ralph.sh M77
-  --max 10 --agent openai` (with `OPENAI_*` set). Sanity:
-  `bash scripts/ralph/test_ralph.sh` runs 5 negative tests and exits 0;
-  `bash scripts/ralph/test_render_prompt.sh` runs 6 prompt tests;
-  `bash scripts/ralph/test_extract_patch.sh` runs 3 patch-extraction tests.
+  --max 10 --max-time 21600 --max-consecutive-failures 3 --agent openai`
+  (with `OPENAI_*` set). Sanity: `bash scripts/ralph/test_ralph.sh` runs
+  8 negative tests and exits 0; `bash scripts/ralph/test_render_prompt.sh`
+  runs 6 prompt tests; `bash scripts/ralph/test_extract_patch.sh` runs
+  3 patch-extraction tests.
+
+**M81 stop conditions** (when the pilot is running unattended): the
+loop appends `[RED-TIMEOUT]` to `progress.txt` and exits 8 when
+`--max-time S` elapses, or `[RED-LOOP-GIVEUP]` and exits 7 when
+`--max-consecutive-failures N` is exceeded. These blocks let a human
+find the loop in a known state.
 
 **Do NOT Ralph-ify** (per M78 non-goals + AGENTS.md global boundaries):
 
