@@ -45,14 +45,15 @@ theme:
 plugins:
   - search:
       lang: en
+  # Mermaid2 plugin: finds <pre class="mermaid"> blocks (produced by the
+  # pymdownx.superfences custom_fences below), converts to <div class="mermaid">
+  # and inlines the mermaid.js loader script. Renders in any modern browser.
+  - mermaid2
   # Browser presentations: Markdown + Reveal.js (see docs/presentations/)
   - revealjs:
       transition: slide
       controls: true
       progress: true
-      # Reveal parses slide markdown in the browser; use <div class="mermaid"> for diagrams (not ```mermaid fences).
-      mermaid:
-        activate: true
 
 # Extensions
 markdown_extensions:
@@ -66,7 +67,7 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+          format: !!python/name:mermaid2.fence_mermaid
   - plantuml_markdown:
       server: https://www.plantuml.com/plantuml
       cachedir: .plantuml-cache

@@ -4,6 +4,9 @@ mkdocs-material==9.7.1
 pymdown-extensions==10.21.2
 markdown-include==0.8.1
 
+# Mermaid diagram rendering (server-side plugin; loads mermaid.js from CDN in browser)
+mkdocs-mermaid2-plugin==1.1.0
+
 # PlantUML support - using plantuml-markdown extension
 plantuml-markdown==3.11.1
 
