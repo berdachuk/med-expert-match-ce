@@ -20,13 +20,3 @@ Read this file BEFORE starting any new milestone — it captures the
 "rediscovered-the-same-gotcha" tax that motivated the loop in the first place.
 
 ---
-
-## 2026-06-09 M77-01 (TDD: write SyntheticDataGenerationRunRepositoryTest (3 tests, all red)) [RED-AGENT]
-- agent mode=openai rc=4 (4=auth/llm, 5=no-patch, 6=apply-failed)
-- Discovered: agent invocation failed; see logs above
-- Next: fix agent config or re-run ralph.sh
-
-## 2026-06-09 M77-01 (TDD: write SyntheticDataGenerationRunRepositoryTest (3 tests, all red)) [RED-AGENT]
-- agent mode=openai rc=4 (4=auth/llm, 5=no-patch, 6=apply-failed)
-- Discovered: agent invocation failed; see logs above
-- Next: fix agent config or re-run ralph.sh

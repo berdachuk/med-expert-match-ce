@@ -38,65 +38,68 @@ The application runs **Spring AI** orchestration: a chain of services, prompt te
 
 ```mermaid
 flowchart TD
-    U[User message<br/>HTTP POST /api/v1/chats/{id}/messages/stream]
-    UC[UserContext<br/>userId, rateLimitTier]
-    RL[ChatRateLimitService<br/>tryAcquire per user]
-    CS[ChatController]
-    AS[ChatAssistantServiceImpl<br/>set OrchestrationContextHolder]
-    SA[ChatUserContentSanitizer<br/>strip PHI from pasted blocks]
-    CL[ChatLanguageServiceImpl<br/>detect lang → translate to EN if needed]
-    GC[GoalClassifier<br/>session rules → keywords → LLM fallback]
-    CE[ConversationGoalContext<br/>Caffeine 30min + chat_goal_context table]
+    U["User message (HTTP POST)"]
+    UC["UserContext: userId, rateLimitTier"]
+    RL["ChatRateLimitService: tryAcquire"]
+    CS["ChatController"]
+    AS["ChatAssistantServiceImpl: OrchestrationContextHolder"]
+    SA["ChatUserContentSanitizer: strip PHI"]
+    CL["ChatLanguageService: detect lang, translate to EN"]
+    GC["GoalClassifier: session rules, keywords, LLM fallback"]
+    CE["ConversationGoalContext: Caffeine 30min, chat-goal-context table"]
 
-    subgraph ROUTE[Routing decision]
-      PR[ChatPackagingSupport<br/>shouldUseHarness / shouldUseCaseAnalysisHarness]
+    subgraph ROUTE["Routing decision"]
+      PR["ChatPackagingSupport: shouldUseHarness"]
     end
 
-    subgraph HARNESS[Harness path — DoctorMatch / Routing / CaseAnalysis engines]
-      P[AgentPlannerService<br/>buildPlan → PlanReadyEvent]
-      CB[CaseContextBundleServiceImpl<br/>build(caseId, intent) → ContextReadyEvent]
-      MA[MedicalAgentLlmSupportService<br/>analyzeCaseWithMedGemma<br/>LlmClientType.CLINICAL]
-      MT[DoctorMatchingAgentTools<br/>matchDoctorsForHarness<br/>broadenSearch on retry]
-      RT[RoutingAgentTools<br/>match_facilities_for_case]
-      VR[AgentResponseVerifier<br/>minMatches, ranks, scores]
-      CP[MedicalConfidencePolicyService<br/>ANSWER / CLARIFY / ESCALATE / REFUSE]
-      HC{HUMAN_REVIEW?<br/>HumanAdjudicationSupport}
-      IN[interpretResultsWithMedGemma<br/>narrative over match JSON]
-      PG[MedicalAgentPolicyGateService<br/>PHI regex + disclaimer + safe fallback]
+    subgraph HARNESS["Harness path"]
+      P["AgentPlannerService: buildPlan"]
+      CB["CaseContextBundleService: build context"]
+      MA["MedicalAgentLlmSupportService: analyzeCaseWithMedGemma CLINICAL"]
+      MT["DoctorMatchingAgentTools: matchDoctorsForHarness"]
+      RT["RoutingAgentTools: match-facilities-for-case"]
+      VR["AgentResponseVerifier: minMatches, ranks, scores"]
+      CP["MedicalConfidencePolicyService: ANSWER CLARIFY ESCALATE REFUSE"]
+      HC{HUMAN-REVIEW}
+      HK["HarnessWorkflowRun: NEEDS-HUMAN"]
+      IN["Interpret: resultsWithMedGemma narrative"]
+      PG["MedicalAgentPolicyGateService: PHI regex, disclaimer, safe-fallback"]
     end
 
-    subgraph RET[Retrieval layer]
-      MS[MatchingServiceImpl]
-      SG[SemanticGraphRetrievalService<br/>vector + graph + history]
-      RK[RerankingService optional]
-      EV[EvidenceAgentTools<br/>search_clinical_guidelines + query_pubmed]
-      GR[GraphService<br/>Apache AGE Cypher parameterized]
+    subgraph RET["Retrieval layer"]
+      MS["MatchingServiceImpl"]
+      SG["SemanticGraphRetrievalService: vector, graph, history"]
+      RK["RerankingService optional"]
+      EV["EvidenceAgentTools: guidelines, pubmed"]
+      GR["GraphService: Apache AGE Cypher"]
     end
 
-    FB[chatClient.prompt().stream<br/>FunctionGemma + tools<br/>LlmClientType.TOOL_CALLING]
-    LO[ChatLanguageServiceImpl<br/>localizeReply translate EN → user lang]
-    EM[SseEmitter<br/>token / agent / pipeline_stage / activity / done]
-    CH[ChatService / SessionService<br/>persist messages + spring_ai_session_repository]
-    AM[AutoMemoryService<br/>long-term no-PHI memory]
-    ME[ChatTurnMetrics + PipelineMetricsService<br/>Micrometer /actuator/prometheus]
+    FB["ChatClient: FunctionGemma tool-calling TOOL-CALLING"]
+    LO["ChatLanguageService: localizeReply EN to user-lang"]
+    EM["SseEmitter: token, agent, pipeline-stage, activity, done"]
+    CH["ChatService SessionService: persist, spring-ai-session"]
+    AM["AutoMemoryService: long-term no-PHI memory"]
+    ME["Metrics: Micrometer actuator prometheus"]
 
     U --> UC --> RL --> CS --> AS
     AS --> SA --> CL --> GC
-    GC <--> CE
+    GC --> CE
+    CE --> GC
     GC --> ROUTE
     ROUTE -->|harness| HARNESS
     ROUTE -->|non-harness| FB
-    ROUTE -->|case analysis| HARNESS
+    ROUTE -->|case-analysis| HARNESS
 
     HARNESS --> P --> CB --> MA
     MA --> MT --> VR
     MA --> RT --> VR
-    VR -->|fail + iterations left| MT
-    VR -->|fail + last iteration| CP
+    VR -->|fail-iterations-left| MT
+    VR -->|fail-last-iteration| CP
     VR -->|pass| CP
     CP --> HC
-    HC -->|yes| HARNESS_CHECKPOINT[HarnessWorkflowRun<br/>NEEDS_HUMAN]
-    HC -->|no| IN --> PG
+    HC -->|yes| HK
+    HC -->|no| IN
+    IN --> PG
     MT --> RET
     RT --> RET
     EV --> RET
