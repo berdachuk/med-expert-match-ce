@@ -6,6 +6,7 @@
 |---|------|-------------|
 | M77 | [`M77-runtime-measured-estimates.md`](M77-runtime-measured-estimates.md) | Measure every actual synthetic-data run; persist in new `synthetic_data_generation_runs` table; surface "Last actual: X" in admin UI; nightly job auto-adjusts the static `estimated_time_minutes` in `data-sizes.csv` so the estimate never silently drifts from reality |
 | M78 | [`M78-ralph-autonomous-loop.md`](M78-ralph-autonomous-loop.md) | Ralph-style autonomous iteration loop: `scripts/ralph.sh` (bash) + `.agents/plans/progress.txt` (cross-iteration learnings) + `M{NN}-stories.json` (machine-parseable Phase list) + `.agents/templates/bootstrap-new-project.md` (sample MD for new repos); pilot on M77, then promote to `AGENTS.md` Commands |
+| M79 | [`M79-ralph-loop-pilot-m77.md`](M79-ralph-loop-pilot-m77.md) | Build the M78 infrastructure: `scripts/ralph.sh` (the bash loop) + `M77-stories.json` (10 atomic stories) + `progress.txt` (cross-iteration learnings) + AGENTS.md Commands entry + architecture note append. TDD-first, smoke-test with `--max 1`. Actual full M77 pilot is a separate, time-boxed effort. |
 
 ## Deferred
 

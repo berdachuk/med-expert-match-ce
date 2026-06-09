@@ -1,6 +1,6 @@
 # M78: Ralph-Style Autonomous Iteration Loop for MedExpertMatch
 
-**Status:** Active (planned 2026-06-09)
+**Status:** Active (planned 2026-06-09 — awaiting commitment to start implementation; see M78 phases for what M78 itself would do)
 **Created:** 2026-06-09
 **Depends on:** M77 (active — natural pilot target), M76 (done — provides the data-sizes plumbing Ralph will run), testing/SKILL.md:24-35 (already names the Ralph Loop vocabulary)
 
