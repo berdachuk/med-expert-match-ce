@@ -97,6 +97,10 @@ public class SyntheticDataGenerator {
         int doctorCount = config.doctorCount();
         int caseCount = config.caseCount();
 
+        // M77: start run tracking for timing measurement
+        syntheticDataPostProcessingService.startRunTracking(normalizedSize, doctorCount, caseCount);
+        String runError = null;
+
         if (progress != null) {
             progress.updateProgress(5, "ICD-10 Codes", "Generating ICD-10 codes...");
         }
@@ -207,6 +211,7 @@ public class SyntheticDataGenerator {
             generateMedicalCaseDescriptions(progress);
         } catch (Exception e) {
             log.error("Error during description generation - jobId: {} (continuing with partial results)", jobId, e);
+            runError = e.getMessage();
         }
         if (progress != null && progress.isCancelled()) {
             log.info("Generation cancelled during descriptions - jobId: {}", jobId);
@@ -220,6 +225,7 @@ public class SyntheticDataGenerator {
             generateEmbeddings(progress);
         } catch (Exception e) {
             log.error("Error during embedding generation - jobId: {} (continuing with partial results)", jobId, e);
+            if (runError == null) runError = e.getMessage();
         }
         if (progress != null && progress.isCancelled()) {
             log.info("Generation cancelled during embeddings - jobId: {}", jobId);
@@ -233,6 +239,7 @@ public class SyntheticDataGenerator {
             syntheticDataGenerationService.generateClinicalExperiences(doctorCount, caseCount, progress);
         } catch (Exception e) {
             log.error("Error during clinical experience generation - jobId: {} (continuing with partial results)", jobId, e);
+            if (runError == null) runError = e.getMessage();
         }
         if (progress != null && progress.isCancelled()) {
             log.info("Generation cancelled during clinical experiences - jobId: {}", jobId);
@@ -246,6 +253,7 @@ public class SyntheticDataGenerator {
             buildGraph();
         } catch (Exception e) {
             log.error("Error during graph building - jobId: {} (continuing - graph building is optional)", jobId, e);
+            if (runError == null) runError = e.getMessage();
         }
         if (progress != null && progress.isCancelled()) {
             log.info("Generation cancelled after graph building - jobId: {}", jobId);
@@ -255,11 +263,15 @@ public class SyntheticDataGenerator {
         if (progress != null) {
             if (progress.isCancelled()) {
                 log.info("Generation was cancelled - jobId: {}", jobId);
+                syntheticDataPostProcessingService.completeRunTracking("cancelled");
                 return;
             }
             progress.updateProgress(100, "Complete", "Synthetic data generation complete");
             progress.complete();
         }
+
+        // M77: complete run tracking
+        syntheticDataPostProcessingService.completeRunTracking(runError);
 
         log.info("Synthetic data generation complete - {} doctors, {} cases, {} facilities", doctorCount, caseCount, facilityCount);
     }

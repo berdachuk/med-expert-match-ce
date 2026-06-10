@@ -1,22 +1,25 @@
 package com.berdachuk.medexpertmatch.ingestion.service.impl;
 
 import com.berdachuk.medexpertmatch.clinicalexperience.repository.ClinicalExperienceRepository;
+import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.doctor.repository.DoctorRepository;
 import com.berdachuk.medexpertmatch.doctor.repository.MedicalSpecialtyRepository;
 import com.berdachuk.medexpertmatch.facility.repository.FacilityRepository;
 import com.berdachuk.medexpertmatch.graph.service.MedicalGraphBuilderService;
 import com.berdachuk.medexpertmatch.ingestion.service.*;
+import com.berdachuk.medexpertmatch.ingestion.syntheticdata.domain.SyntheticDataGenerationRun;
+import com.berdachuk.medexpertmatch.ingestion.syntheticdata.repository.SyntheticDataGenerationRunRepository;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
 import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +28,6 @@ import java.util.List;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPostProcessingService {
 
     private static final String DESCRIPTIONS_PROGRESS_LABEL = "Descriptions";
@@ -41,9 +43,97 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
     private final MedicalCaseDescriptionService medicalCaseDescriptionService;
     private final EmbeddingGeneratorService embeddingGeneratorService;
     private final SyntheticDataCatalogState catalogState;
+    private final SyntheticDataGenerationRunRepository runRepository;
 
     @Value("${medexpertmatch.synthetic-data.description.batch-commit-size:10}")
     private int descriptionBatchCommitSize;
+
+    private final ThreadLocal<String> currentRunId = new ThreadLocal<>();
+    private final ThreadLocal<Long> descriptionMsHolder = new ThreadLocal<>();
+    private final ThreadLocal<Long> embeddingMsHolder = new ThreadLocal<>();
+    private final ThreadLocal<Long> clinicalExperienceMsHolder = new ThreadLocal<>();
+    private final ThreadLocal<Long> graphBuildMsHolder = new ThreadLocal<>();
+    private final ThreadLocal<Long> runStartMsHolder = new ThreadLocal<>();
+    private final ThreadLocal<String> runSizeHolder = new ThreadLocal<>();
+    private final ThreadLocal<Integer> runDoctorCountHolder = new ThreadLocal<>();
+    private final ThreadLocal<Integer> runCaseCountHolder = new ThreadLocal<>();
+
+    public SyntheticDataPostProcessingServiceImpl(
+            ClinicalExperienceRepository clinicalExperienceRepository,
+            MedicalCaseRepository medicalCaseRepository,
+            DoctorRepository doctorRepository,
+            FacilityRepository facilityRepository,
+            MedicalSpecialtyRepository medicalSpecialtyRepository,
+            ICD10CodeRepository icd10CodeRepository,
+            ProcedureRepository procedureRepository,
+            MedicalGraphBuilderService graphBuilderService,
+            MedicalCaseDescriptionService medicalCaseDescriptionService,
+            EmbeddingGeneratorService embeddingGeneratorService,
+            SyntheticDataCatalogState catalogState,
+            SyntheticDataGenerationRunRepository runRepository) {
+        this.clinicalExperienceRepository = clinicalExperienceRepository;
+        this.medicalCaseRepository = medicalCaseRepository;
+        this.doctorRepository = doctorRepository;
+        this.facilityRepository = facilityRepository;
+        this.medicalSpecialtyRepository = medicalSpecialtyRepository;
+        this.icd10CodeRepository = icd10CodeRepository;
+        this.procedureRepository = procedureRepository;
+        this.graphBuilderService = graphBuilderService;
+        this.medicalCaseDescriptionService = medicalCaseDescriptionService;
+        this.embeddingGeneratorService = embeddingGeneratorService;
+        this.catalogState = catalogState;
+        this.runRepository = runRepository;
+    }
+
+    @Override
+    public void startRunTracking(String size, int doctorCount, int caseCount) {
+        String runId = IdGenerator.generateId();
+        currentRunId.set(runId);
+        runStartMsHolder.set(System.currentTimeMillis());
+        runSizeHolder.set(size);
+        runDoctorCountHolder.set(doctorCount);
+        runCaseCountHolder.set(caseCount);
+        descriptionMsHolder.set(0L);
+        embeddingMsHolder.set(0L);
+        clinicalExperienceMsHolder.set(0L);
+        graphBuildMsHolder.set(0L);
+
+        SyntheticDataGenerationRun run = new SyntheticDataGenerationRun(
+                runId, size, doctorCount, caseCount,
+                LocalDateTime.now(), null, null, null, null, null, null, null);
+        runRepository.insert(run);
+        log.info("M77: started run tracking id={} size={}", runId, size);
+    }
+
+    @Override
+    public void completeRunTracking(String errorMessage) {
+        String runId = currentRunId.get();
+        if (runId == null) {
+            return;
+        }
+        long totalDurationMs = System.currentTimeMillis() - runStartMsHolder.get();
+        SyntheticDataGenerationRun run = new SyntheticDataGenerationRun(
+                runId, runSizeHolder.get(), runDoctorCountHolder.get(), runCaseCountHolder.get(),
+                null, LocalDateTime.now(), totalDurationMs,
+                descriptionMsHolder.get(), embeddingMsHolder.get(),
+                clinicalExperienceMsHolder.get(), graphBuildMsHolder.get(),
+                errorMessage);
+        runRepository.update(run);
+        log.info("M77: completed run tracking id={} totalMs={}", runId, totalDurationMs);
+        clearRunTracking();
+    }
+
+    private void clearRunTracking() {
+        currentRunId.remove();
+        runStartMsHolder.remove();
+        runSizeHolder.remove();
+        runDoctorCountHolder.remove();
+        runCaseCountHolder.remove();
+        descriptionMsHolder.remove();
+        embeddingMsHolder.remove();
+        clinicalExperienceMsHolder.remove();
+        graphBuildMsHolder.remove();
+    }
 
     @Override
     @Transactional
@@ -153,6 +243,10 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
         log.info("Generating medical case descriptions: phase complete. processed={}, success={}, failed={}, duration={}s, rate={} cases/s",
                 processedCount, successCount, failedCount, totalElapsedTime / 1000.0,
                 String.format("%.2f", totalItemsPerSecond));
+
+        if (currentRunId.get() != null) {
+            descriptionMsHolder.set(descriptionMsHolder.get() + totalElapsedTime);
+        }
     }
 
     @Override
@@ -180,11 +274,17 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
 
     @Override
     public void generateEmbeddings(SyntheticDataGenerationProgress progress) {
+        long startMs = System.currentTimeMillis();
         embeddingGeneratorService.generateEmbeddings(progress);
+        long elapsedMs = System.currentTimeMillis() - startMs;
+        if (currentRunId.get() != null) {
+            embeddingMsHolder.set(elapsedMs);
+        }
     }
 
     @Override
     public void buildGraph() {
+        long startMs = System.currentTimeMillis();
         log.info("Building Apache AGE graph from generated data...");
         try {
             graphBuilderService.buildGraph();
@@ -207,6 +307,10 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
             log.error("Database error building graph: {}", e.getMessage(), e);
         } catch (RuntimeException e) {
             log.error("Unexpected error building graph: {}", e.getMessage(), e);
+        }
+        long elapsedMs = System.currentTimeMillis() - startMs;
+        if (currentRunId.get() != null) {
+            graphBuildMsHolder.set(elapsedMs);
         }
     }
 

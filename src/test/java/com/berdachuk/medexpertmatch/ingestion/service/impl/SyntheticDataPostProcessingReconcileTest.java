@@ -59,7 +59,8 @@ class SyntheticDataPostProcessingReconcileTest {
                 graphBuilderService,
                 null,                       // MedicalCaseDescriptionService
                 null,                       // EmbeddingGeneratorService
-                catalogState                // SyntheticDataCatalogState — now required by reconcile
+                catalogState,               // SyntheticDataCatalogState — now required by reconcile
+                null                        // SyntheticDataGenerationRunRepository — M77
         );
     }
 

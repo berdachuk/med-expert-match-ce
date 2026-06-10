@@ -44,6 +44,22 @@ public interface SyntheticDataPostProcessingService {
     void buildGraph();
 
     /**
+     * M77: starts a synthetic data generation run for timing tracking.
+     *
+     * @param size        data size label (e.g. "large")
+     * @param doctorCount number of doctors in this run
+     * @param caseCount   number of cases in this run
+     */
+    void startRunTracking(String size, int doctorCount, int caseCount);
+
+    /**
+     * M77: completes the current run tracking, writing final timing data.
+     *
+     * @param errorMessage error message if the run failed, null if successful
+     */
+    void completeRunTracking(String errorMessage);
+
+    /**
      * M73: walks the SQL doctor table and ensures every
      * {@code (d:Doctor)-[:SPECIALIZES_IN]->(s:MedicalSpecialty)}
      * edge implied by {@code d.specialties} exists in the graph.
