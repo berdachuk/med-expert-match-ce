@@ -1,4 +1,4 @@
-package com.berdachuk.medexpertmatch.llm.service;
+package com.berdachuk.medexpertmatch.medicalcase.service;
 
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 

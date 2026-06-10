@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
-import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.service.ChatCompletionTextClient;
 import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;

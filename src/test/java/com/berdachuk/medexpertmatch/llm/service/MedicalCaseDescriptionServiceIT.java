@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.service;
 
+import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
 import com.berdachuk.medexpertmatch.medicalcase.domain.CaseType;

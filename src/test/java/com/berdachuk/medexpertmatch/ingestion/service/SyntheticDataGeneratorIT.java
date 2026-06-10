@@ -7,7 +7,7 @@ import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import com.berdachuk.medexpertmatch.facility.repository.FacilityRepository;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
-import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;
 import org.junit.jupiter.api.BeforeEach;
