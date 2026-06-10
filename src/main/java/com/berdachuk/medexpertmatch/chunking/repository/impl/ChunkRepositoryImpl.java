@@ -38,6 +38,9 @@ public class ChunkRepositoryImpl implements ChunkRepository {
     @InjectSql("/sql/chunk/updateEmbedding.sql")
     private String updateEmbeddingSql;
 
+    @InjectSql("/sql/chunk/findByEmbeddingIsNull.sql")
+    private String findByEmbeddingIsNullSql;
+
     public ChunkRepositoryImpl(
             NamedParameterJdbcTemplate namedJdbcTemplate,
             ChunkMapper chunkMapper) {
@@ -90,6 +93,11 @@ public class ChunkRepositoryImpl implements ChunkRepository {
     @Override
     public int deleteAll() {
         return namedJdbcTemplate.update(deleteAllSql, Map.of());
+    }
+
+    @Override
+    public List<DocumentChunk> findByEmbeddingIsNull(int limit) {
+        return namedJdbcTemplate.query(findByEmbeddingIsNullSql, Map.of("limit", limit), chunkMapper);
     }
 
     public void updateEmbedding(String chunkId, float[] embedding) {

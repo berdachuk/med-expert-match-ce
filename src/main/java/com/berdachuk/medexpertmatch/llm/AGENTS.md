@@ -47,7 +47,7 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 ## Related Skills
 
 - `llm-prompts` — prompt template creation and management
-- `testing` — TDD and Ralph Loop for harness changes
+- `testing` — TDD for harness changes
 - `code-style` — service implementation patterns
 - `testing` — mocking AI providers in integration tests
 - `core-architecture` — cross-module orchestration boundaries

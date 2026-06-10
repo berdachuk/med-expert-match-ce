@@ -1,23 +1,20 @@
-# Ralph Loop Iteration Log
+# Iteration Log
 
-This is an append-only scrolling notebook of cross-iteration learnings
-produced by `scripts/ralph.sh` (see M78/M79). It is NOT a CHANGELOG.
+This is an append-only scrolling notebook of cross-iteration learnings.
+It is NOT a CHANGELOG.
 
 ## Format
 
-Each iteration of the loop appends one block in this exact format:
+Each iteration appends one block in this exact format:
 
-    ## YYYY-MM-DD {storyId} ({storyTitle}) [GREEN|RED|RED-AGENT|RED-TIMEOUT|RED-LOOP-GIVEUP]
+    ## YYYY-MM-DD {storyId} ({storyTitle}) [GREEN|RED]
     - commit: <sha>            (green only)
     - test_target '<X>' green | failed (rc=N)
     - Discovered: <one-line gotcha, or "none">
     - Next: <next story id, or "none">
 
-`[RED-TIMEOUT]` and `[RED-LOOP-GIVEUP]` are loop-level blocks (no story),
-appended when the M81 wall-clock cap or the consecutive-failure cap fires.
-
 Read this file BEFORE starting any new milestone — it captures the
-"rediscovered-the-same-gotcha" tax that motivated the loop in the first place.
+"rediscovered-the-same-gotcha" tax.
 
 ---
 
@@ -86,3 +83,11 @@ Read this file BEFORE starting any new milestone — it captures the
 - test_target '' green (post-merge, 24h manual verification)
 - Discovered: Automated tests prove the logic; 24h manual smoke deferred to post-merge
 - Next: none
+
+## 2026-06-10 M92 (Session Memory Compaction and Document RAG Pipeline) [GREEN]
+- commit: (pending commit)
+- test_target 'DocumentSearchServiceTest + mvn verify' green
+- Discovered: Session compaction wired in M91; SessionTurnSafetyIT already covers compaction;
+  DocumentSearchServiceImpl and DocumentEmbeddingPipeline existed but were not wired into
+  agent tools; NULL embedding backfill was missing from ChunkRepository.
+- Next: archive M92, create M93 plan

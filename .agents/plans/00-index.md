@@ -98,14 +98,9 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M75 | [`M75-find-specialist-case-specialty-reconcile.md`](archive/M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` + bidirectional substring match |
 | M76 | [`M76-update-data-sizes-and-add-very-large.md`](archive/M76-update-data-sizes-and-add-very-large.md) | Fix wrong time estimates in `data-sizes.csv`, add `very_large` size |
 | M77 | [`M77-runtime-measured-estimates.md`](archive/M77-runtime-measured-estimates.md) | Measure every actual run; persist in `synthetic_data_generation_runs` table; surface "Last actual" in admin UI; nightly job auto-adjusts estimates |
-| M78 | [`M78-ralph-autonomous-loop.md`](archive/M78-ralph-autonomous-loop.md) | Ralph-style autonomous iteration loop |
-| M79 | [`M79-ralph-loop-pilot-m77.md`](archive/M79-ralph-loop-pilot-m77.md) | Build the M78 infrastructure |
-| M80 | [`M80-wire-real-agent-invocation.md`](archive/M80-wire-real-agent-invocation.md) | Replace M79 `invoke_agent()` stub with real OpenAI-compatible pipeline |
-| M81 | [`M81-run-ralph-pilot-on-m77.md`](archive/M81-run-ralph-pilot-on-m77.md) | Run the Ralph loop unattended against M77 (superseded by M90) |
 | M83 | [`M83-harness-section-2-2-depth.md`](archive/M83-harness-section-2-2-depth.md) | Add depth to `HARNESS_AND_AGENT_USAGE` §2.2 |
 | M84 | [`M84-resolve-modulith-cycle.md`](archive/M84-resolve-modulith-cycle.md) | Resolve the pre-existing ModulithVerificationIT cycle |
 | M86 | [`M86-implement-m84-modulith-cycle.md`](archive/M86-implement-m84-modulith-cycle.md) | Execute the M84 spec |
-| M82 | [`M82-hand-implement-m77.md`](archive/M82-hand-implement-m77.md) | Hand-driven M77 implementation (superseded by M90) |
 | M90 | [`M90-implement-m77-feature.md`](archive/M90-implement-m77-feature.md) | Implement M77 runtime-measured synthetic data estimates (consolidated M81+M82) |
 | M91 | [`M91-m77-fixes-and-session-compaction.md`](archive/M91-m77-fixes-and-session-compaction.md) | Fix clinicalExperienceMs tracking gap, remove duplicate @EnableScheduling |
 

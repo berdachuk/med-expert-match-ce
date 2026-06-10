@@ -15,6 +15,7 @@ The Evidence Retriever skill helps you:
 1. **Search clinical guidelines** - Find relevant clinical practice guidelines
 2. **Query PubMed** - Search medical literature for evidence
 3. **Retrieve GRADE summaries** - Access evidence quality assessments
+4. **Search local documents** - Search ingested medical documents and guidelines via vector similarity
 
 ## When to Use This Skill
 
@@ -25,6 +26,7 @@ Use this skill when:
 - You need to search medical literature
 - You need evidence quality assessments
 - You need to support clinical recommendations with citations
+- You need to search locally ingested medical documents relevant to a condition
 
 ## Available Tools
 
@@ -89,13 +91,33 @@ Searches for GRADE evidence quality assessments:
 search_grade_evidence(condition: "Heart failure", intervention: "ACE inhibitors")
 ```
 
+### Search Local Documents: `search_local_documents`
+
+Searches ingested medical documents and guidelines via vector similarity:
+
+**Parameters:**
+
+- `query`: Search query string
+- `maxResults`: Maximum number of results (default: 10)
+
+**Returns:**
+
+- List of relevant document chunks with titles, categories, and relevance scores
+
+**Usage:**
+
+```
+search_local_documents(query: "heart failure treatment guidelines", maxResults: 10)
+```
+
 ## Workflow
 
 1. **Identify information need** - What evidence is required?
 2. **Search guidelines** for clinical practice recommendations
 3. **Query PubMed** for recent research and literature
 4. **Retrieve GRADE summaries** for evidence quality assessment
-5. **Synthesize evidence** to support recommendations
+5. **Search local documents** for ingested medical guidelines
+6. **Synthesize evidence** to support recommendations
 
 ## Output Format
 

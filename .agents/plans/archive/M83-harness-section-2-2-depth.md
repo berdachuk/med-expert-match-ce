@@ -10,7 +10,7 @@
 
 The actual runtime is a **ten-layer pipeline** with two goals, a hybrid 5-stage goal classifier, three workflow engines (doctor match / routing / case analysis), a state machine (`TASK_CREATED → … → POLICY_GATE → NEEDS_HUMAN / DONE / FAILED`), a verifier, a confidence-policy router (`ANSWER/CLARIFY/ESCALATE/REFUSE`), a no-PHI policy gate, a language normalizer, three distinct LLM endpoints (clinical / utility / tool-calling), an SSE event pipeline with `token / agent / pipeline_stage / activity / done` events, and Prometheus metrics. None of that is in the doc. A new engineer onboarding to the chat subsystem has to read `HARNESS.md` + `ChatAssistantServiceImpl` + `GoalClassifier` + `DoctorMatchWorkflowEngine` to assemble a mental model.
 
-§2.1 ("Coding agents") is also stale: it describes Cursor as the canonical coding agent, but the project has since added a Ralph-style autonomous loop (`scripts/ralph.sh`) that is a different kind of coding harness, and `.agents/skills/` is the canonical source of truth for coding-agent conventions. §2.1 is no longer the right pointer.
+§2.1 ("Coding agents") is also stale: it describes Cursor as the canonical coding agent, but the project has since added autonomous iteration capabilities that are a different kind of coding harness, and `.agents/skills/` is the canonical source of truth for coding-agent conventions. §2.1 is no longer the right pointer.
 
 ## Goal
 
@@ -66,7 +66,7 @@ The actual runtime is a **ten-layer pipeline** with two goals, a hybrid 5-stage 
 
 - Refactoring §3, §4, §5, §6 into the new §2.2 — those sections are correct summaries
 - Adding diagrams to other sections of the doc
-- Documenting the Ralph loop here (it lives in `AGENTS.md` Ralph workflow section and `docs/ai-context-strategy.md`)
+- Documenting the iteration loop here (it lives in `AGENTS.md` and `docs/ai-context-strategy.md`)
 - Documenting the M67/M68/M70/M71 sub-harnesses individually — they are referenced inline in §2.2.2
 
 ## References
@@ -83,4 +83,4 @@ The actual runtime is a **ten-layer pipeline** with two goals, a hybrid 5-stage 
 - `src/main/resources/policy/medical-confidence-policy.yml` — the confidence policy rules
 - `AGENTS.md` — the coding-agent contract that §2.1 used to point to
 - `.agents/skills/` — the canonical development-only skills directory
-- `docs/ai-context-strategy.md` — the Ralph loop architecture section
+- `docs/ai-context-strategy.md` — the iteration loop architecture section

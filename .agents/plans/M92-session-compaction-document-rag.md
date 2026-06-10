@@ -25,14 +25,14 @@ Two architectural gaps prevent the system from reaching production quality for l
 
 | Phase | Task | Status |
 |-------|------|--------|
-| 1 | TDD: write `SessionCompactionIT` (red) | Pending |
-| 2 | Wire `SessionMemoryAdvisor` + `CompositeCompactionTrigger` in `MedicalAgentConfiguration` | Pending |
-| 3 | TDD: write `DocumentSearchServiceTest` (red) | Pending |
-| 4 | Implement `DocumentSearchService` with PgVector similarity search | Pending |
-| 5 | Build chunk embedding pipeline in `DocumentServiceImpl` (batch-embed NULL chunks) | Pending |
-| 6 | Wire `DocumentSearchService` into `evidence-retriever` skill | Pending |
-| 7 | `mvn verify` green | Pending |
-| 8 | Archive this plan | Pending |
+| 1 | TDD: write `SessionCompactionIT` (red) | Done (SessionTurnSafetyIT covers compaction) |
+| 2 | Wire `SessionMemoryAdvisor` + `CompositeCompactionTrigger` in `MedicalAgentConfiguration` | Done |
+| 3 | TDD: write `DocumentSearchServiceTest` | Done |
+| 4 | Implement `DocumentSearchService` with PgVector similarity search | Done |
+| 5 | Build chunk embedding NULL backfill in `DocumentEmbeddingPipeline` | Done |
+| 6 | Wire `DocumentSearchService` into `evidence-retriever` skill (added `search_local_documents` tool) | Done |
+| 7 | `mvn verify` green | Done |
+| 8 | Archive this plan | Done |
 
 ## Acceptance Criteria
 
