@@ -20,3 +20,9 @@ Read this file BEFORE starting any new milestone — it captures the
 "rediscovered-the-same-gotcha" tax that motivated the loop in the first place.
 
 ---
+
+## 2026-06-10 M89 (Full Test Suite Hardening) [GREEN]
+- commit: (plan-only; no code changes needed)
+- test_target 'mvn verify' green (rc=0)
+- Discovered: 544 tests (unit + integration), 0 failures, 0 errors, 1 skipped — suite already green after M86 fix. ModulithVerificationIT stays green.
+- Next: determine remaining incomplete milestones (M81, M82) and next actionable plan

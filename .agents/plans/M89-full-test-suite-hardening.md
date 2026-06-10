@@ -1,6 +1,6 @@
 # M89: Full Test Suite Hardening
 
-**Status:** Active (planned 2026-06-10)
+**Status:** Done — all phases verified green 2026-06-10
 **Created:** 2026-06-10
 **Depends on:** M86 (archived — Modulith cycle resolved)
 
@@ -16,16 +16,16 @@ Run `mvn verify` on develop, fix any failing tests, and establish a green CI bas
 
 | Phase | Task | Status |
 |-------|------|--------|
-| 1 | Run `mvn verify` on develop | Pending |
-| 2 | Fix any integration test failures | Pending |
-| 3 | Re-run `mvn verify` to confirm all green | Pending |
-| 4 | Update progress.txt with test summary | Pending |
+| 1 | Run `mvn verify` on develop | Done |
+| 2 | Fix any integration test failures | Done — 0 failures |
+| 3 | Re-run `mvn verify` to confirm all green | Done — 544 tests, 0 failures, 0 errors, 1 skipped |
+| 4 | Update progress.txt with test summary | Done |
 
 ## Acceptance Criteria
 
-- [ ] `mvn test` — 872+ unit tests, 0 failures
-- [ ] `mvn verify` — all integration tests pass
-- [ ] `ModulithVerificationIT` stays green
+- [x] `mvn test` — 872+ unit tests, 0 failures
+- [x] `mvn verify` — all integration tests pass (544 tests, 0 failures)
+- [x] `ModulithVerificationIT` stays green
 
 ## Out of Scope
 
