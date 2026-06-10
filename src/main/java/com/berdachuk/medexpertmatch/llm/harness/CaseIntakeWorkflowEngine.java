@@ -12,7 +12,7 @@ import com.berdachuk.medexpertmatch.medicalcase.domain.CaseType;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.domain.UrgencyLevel;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
-import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

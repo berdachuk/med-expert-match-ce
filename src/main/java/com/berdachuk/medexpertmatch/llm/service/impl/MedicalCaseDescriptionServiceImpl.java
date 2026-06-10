@@ -1,10 +1,10 @@
-package com.berdachuk.medexpertmatch.medicalcase.service.impl;
+package com.berdachuk.medexpertmatch.llm.service.impl;
 
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
 import com.berdachuk.medexpertmatch.medicalcase.service.ChatCompletionTextClient;
 import com.berdachuk.medexpertmatch.medicalcase.service.EmbeddingDescriptionSanitizer;
-import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
@@ -18,13 +18,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Service implementation for generating medical case descriptions.
- * Uses LLM enhancement with fallback to simple concatenation.
- * <p>
- * Note: Timeout is handled at the HTTP client level (Spring AI ChatClient).
- * Rate limiting is handled by callers (EmbeddingGeneratorServiceImpl, EmbeddingServiceImpl).
- */
 @Slf4j
 @Service
 public class MedicalCaseDescriptionServiceImpl implements MedicalCaseDescriptionService {

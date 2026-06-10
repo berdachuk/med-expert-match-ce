@@ -2,7 +2,7 @@ package com.berdachuk.medexpertmatch.embedding.service.impl;
 
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.embedding.multiendpoint.EmbeddingEndpointPool;
-import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

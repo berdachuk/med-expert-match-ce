@@ -3,7 +3,7 @@ package com.berdachuk.medexpertmatch.embedding.service.impl;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
-import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
 
 import java.util.List;
 import java.util.function.Function;

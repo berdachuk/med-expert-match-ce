@@ -1,4 +1,4 @@
-package com.berdachuk.medexpertmatch.medicalcase.service;
+package com.berdachuk.medexpertmatch.llm.service;
 
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;

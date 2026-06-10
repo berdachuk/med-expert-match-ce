@@ -5,7 +5,7 @@ import com.berdachuk.medexpertmatch.embedding.exception.EmbeddingException;
 import com.berdachuk.medexpertmatch.embedding.multiendpoint.EmbeddingEndpointPool;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
-import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;

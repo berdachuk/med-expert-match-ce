@@ -4,7 +4,7 @@ import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.embedding.multiendpoint.EmbeddingEndpointPool;
 import com.berdachuk.medexpertmatch.embedding.service.EmbeddingService;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
-import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.embedding.EmbeddingResponse;

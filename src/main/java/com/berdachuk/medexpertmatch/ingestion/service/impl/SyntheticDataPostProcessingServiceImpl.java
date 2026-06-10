@@ -7,7 +7,7 @@ import com.berdachuk.medexpertmatch.facility.repository.FacilityRepository;
 import com.berdachuk.medexpertmatch.graph.service.MedicalGraphBuilderService;
 import com.berdachuk.medexpertmatch.ingestion.service.*;
 import com.berdachuk.medexpertmatch.medicalcase.repository.MedicalCaseRepository;
-import com.berdachuk.medexpertmatch.medicalcase.service.MedicalCaseDescriptionService;
+import com.berdachuk.medexpertmatch.llm.service.MedicalCaseDescriptionService;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ICD10CodeRepository;
 import com.berdachuk.medexpertmatch.medicalcoding.repository.ProcedureRepository;
 import lombok.RequiredArgsConstructor;
