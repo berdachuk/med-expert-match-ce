@@ -136,6 +136,14 @@ public class SyntheticDataPostProcessingServiceImpl implements SyntheticDataPost
     }
 
     @Override
+    public void recordClinicalExperienceDuration(long durationMs) {
+        if (currentRunId.get() != null) {
+            clinicalExperienceMsHolder.set(durationMs);
+            log.info("M77: recorded clinical experience duration={}ms", durationMs);
+        }
+    }
+
+    @Override
     @Transactional
     public void clearTestData() {
         log.info("Clearing all test data");

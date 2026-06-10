@@ -60,6 +60,13 @@ public interface SyntheticDataPostProcessingService {
     void completeRunTracking(String errorMessage);
 
     /**
+     * M77: records the clinical experience generation duration for the current run.
+     *
+     * @param durationMs elapsed time in milliseconds
+     */
+    void recordClinicalExperienceDuration(long durationMs);
+
+    /**
      * M73: walks the SQL doctor table and ensures every
      * {@code (d:Doctor)-[:SPECIALIZES_IN]->(s:MedicalSpecialty)}
      * edge implied by {@code d.specialties} exists in the graph.

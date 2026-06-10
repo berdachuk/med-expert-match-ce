@@ -72,4 +72,15 @@ class SyntheticDataPostProcessingServiceImplRunTrackingTest {
         verify(runRepository).update(captor.capture());
         assertEquals("test error", captor.getValue().errorMessage());
     }
+
+    @Test
+    void recordClinicalExperienceDuration_updatesClinicalExperienceMs() {
+        service.startRunTracking("large", 500, 10000);
+        service.recordClinicalExperienceDuration(5000L);
+        service.completeRunTracking(null);
+
+        ArgumentCaptor<SyntheticDataGenerationRun> captor = ArgumentCaptor.forClass(SyntheticDataGenerationRun.class);
+        verify(runRepository).update(captor.capture());
+        assertEquals(5000L, captor.getValue().clinicalExperienceMs());
+    }
 }

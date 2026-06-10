@@ -235,12 +235,14 @@ public class SyntheticDataGenerator {
         if (progress != null) {
             progress.updateProgress(90, "Clinical Experiences", "Linking doctors to cases...");
         }
+        long clinicalExpStartMs = System.currentTimeMillis();
         try {
             syntheticDataGenerationService.generateClinicalExperiences(doctorCount, caseCount, progress);
         } catch (Exception e) {
             log.error("Error during clinical experience generation - jobId: {} (continuing with partial results)", jobId, e);
             if (runError == null) runError = e.getMessage();
         }
+        syntheticDataPostProcessingService.recordClinicalExperienceDuration(System.currentTimeMillis() - clinicalExpStartMs);
         if (progress != null && progress.isCancelled()) {
             log.info("Generation cancelled during clinical experiences - jobId: {}", jobId);
             return;
