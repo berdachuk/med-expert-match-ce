@@ -6,8 +6,7 @@
 |---|------|-------------|
 | M81 | [`M81-run-ralph-pilot-on-m77.md`](M81-run-ralph-pilot-on-m77.md) | Run the Ralph loop unattended against M77 (10 stories) end-to-end. Validate that the M80 wiring (render → call → extract → apply → test → commit) actually produces green commits for every story in a single multi-hour run, or surface a real failure in `progress.txt` that a human can fix. Phases 1-9 done (in 611c017); Phases 10-12 (the actual pilot run) pending — needs `OPENAI_API_KEY` + 6h. |
 | M82 | [`M82-hand-implement-m77.md`](M82-hand-implement-m77.md) | Hand-driven fallback for M77: implement the 10 M77 stories (`M77-stories.json`) in the working tree on `feature/m82-hand-implement-m77`, with `./scripts/ralph.sh M77 --agent stub` doing the test+commit+mark+progress.txt bookkeeping. M82 is the path when the M81 pilot is not run, fails, or only partially completes. |
-| M84 | [`M84-resolve-modulith-cycle.md`](M84-resolve-modulith-cycle.md) | Resolve the pre-existing `ModulithVerificationIT` cycle (`medicalcase -> llm` via `MedicalCaseDescriptionService`'s `ChatClient` import). Move the service from `medicalcase` to `llm`; update 10 import sites; make `mvn verify` green for the first time since M57. Resurrects the orphaned `archive/M76-resolve-modulith-cycle.md` spec. |
-| M86 | [`M86-implement-m84-modulith-cycle.md`](M86-implement-m84-modulith-cycle.md) | Execute the M84 spec: create `feature/m86-implement-m84-modulith-cycle` from develop, do the move + 10 import updates, run `mvn verify` to confirm `ModulithVerificationIT` is green for the first time since M57, merge to develop. M86 is the implementation milestone; M84 stays Active as the design rationale. |
+| M89 | [`M89-full-test-suite-hardening.md`](M89-full-test-suite-hardening.md) | Run full `mvn verify` suite after Modulith cycle fix. Fix remaining test failures, ensure all 872+ unit tests and 6+ integration tests pass consistently. |
 
 ## Deferred
 
@@ -105,6 +104,8 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M79 | [`M79-ralph-loop-pilot-m77.md`](archive/M79-ralph-loop-pilot-m77.md) | Build the M78 infrastructure: `scripts/ralph.sh` (the bash loop) + `M77-stories.json` (10 atomic stories) + `progress.txt` (cross-iteration learnings) + AGENTS.md Commands entry + architecture note append. TDD-first, smoke-test with `--max 1`. Actual full M77 pilot is a separate, time-boxed effort (M80). |
 | M80 | [`M80-wire-real-agent-invocation.md`](archive/M80-wire-real-agent-invocation.md) | Replace the M79 `invoke_agent()` stub in `scripts/ralph.sh` with a real OpenAI-compatible agent pipeline: `render_prompt.sh` → `call_openai.sh` → `extract_patch.sh` → `apply_patch.sh`. Adds `--agent stub\|openai\|<path>` flag, `OPENAI_*` env contract, `.agents/templates/M{NN}-prompt.md.template`. 14 hermetic tests. The unattended M77 pilot run is M81. |
 | M83 | [`M83-harness-section-2-2-depth.md`](archive/M83-harness-section-2-2-depth.md) | Add depth to `HARNESS_AND_AGENT_USAGE` §2.2: Mermaid flowchart + 10-layer narrative + LLM endpoints / skills / configuration tables. Remove the stale §2.1 ("Coding agents") which misleads about Ralph and `.agents/skills/`. Docs-only. |
+| M84 | [`M84-resolve-modulith-cycle.md`](archive/M84-resolve-modulith-cycle.md) | Resolve the pre-existing `ModulithVerificationIT` cycle by moving `MedicalCaseDescriptionServiceImpl` from `medicalcase` to `llm`. Interface stays in `medicalcase.service`. |
+| M86 | [`M86-implement-m84-modulith-cycle.md`](archive/M86-implement-m84-modulith-cycle.md) | Execute the M84 spec: implement the service move, update 10+ import sites, adjust module deps, relocate IT test. `ModulithVerificationIT` green for the first time since M57. |
 
 ## Creating a New Plan
 
