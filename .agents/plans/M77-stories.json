@@ -25,11 +25,11 @@
         "Tests reference SyntheticDataGenerationRun which does not exist yet (compilation failure is acceptable for the red phase)",
         "Test class is in src/test/java and uses the *Test.java naming convention"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -58,11 +58,11 @@
         "Flyway V1 migration adds the table with index on (size, start_time DESC)",
         "M77-01 tests now green"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -87,11 +87,11 @@
         "Each phase (descriptions, embeddings, graph) records a SyntheticDataGenerationRun row with the elapsed ms",
         "Test asserts the repo was called with descriptionMs > 0 after the phase runs"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -115,11 +115,11 @@
         "Test compiles against EstimateAdjustmentService which does not exist yet (red phase)",
         "Test uses a temp CSV file for round-trip"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -148,11 +148,11 @@
         "@Scheduled annotation on a new bean, enabled flag respected",
         "M77-04 tests green"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -179,11 +179,11 @@
         "Service loads latest 5 runs per size on every getProgress call",
         "Unit test mocks the new repository and asserts the field is populated"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -206,11 +206,11 @@
         "IT inserts 2 run rows for size=large via repository, calls GET /api/v1/synthetic-data/state?jobId=... and asserts the response JSON contains recentRunsBySize.large with 2 rows newest-first",
         "Test extends BaseIntegrationTest (Testcontainers Postgres+AGE+PgVector)"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -232,11 +232,11 @@
         "Silent (no line) when no runs exist for the size",
         "Existing M77-07 IT still green (template change is additive, no API contract change)"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -256,11 +256,11 @@
         "No regressions in pre-existing 872+ unit tests",
         "No regressions in pre-existing ITs (except the pre-existing Modulith cycle, which is a known issue)"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": ""
     },
     {
@@ -279,11 +279,11 @@
         "Immediately after completion, the UI shows 'Last actual: <duration>' below the estimate",
         "After 24h, the nightly @Scheduled job has updated data-sizes.csv's estimated_time_minutes for that size"
       ],
-      "passes": false,
-      "commit_sha": null,
-      "started_at": null,
-      "finished_at": null,
-      "duration_min": null,
+      "passes": true,
+      "commit_sha": "3eb9c88",
+      "started_at": "2026-06-10T08:48:15.453193",
+      "finished_at": "2026-06-10T08:48:15.453193",
+      "duration_min": 1,
       "notes": "This is the only non-automated story; the 24h wait is acceptable because M77-09 already proves the logic works on a unit basis."
     }
   ]

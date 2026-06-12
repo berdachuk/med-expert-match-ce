@@ -581,3 +581,21 @@ CREATE TABLE IF NOT EXISTS medexpertmatch.ingestion_job (
     started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS medexpertmatch.synthetic_data_generation_runs (
+    id CHAR(24) PRIMARY KEY CHECK (id ~ '^[0-9a-fA-F]{24}$'),
+    size VARCHAR(32) NOT NULL,
+    doctor_count INT NOT NULL,
+    case_count INT NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP,
+    total_duration_ms BIGINT,
+    description_ms BIGINT,
+    embedding_ms BIGINT,
+    clinical_experience_ms BIGINT,
+    graph_build_ms BIGINT,
+    error_message TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_synthetic_data_generation_runs_size_start
+    ON medexpertmatch.synthetic_data_generation_runs (size, start_time DESC);

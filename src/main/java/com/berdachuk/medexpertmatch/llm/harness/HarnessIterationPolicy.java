@@ -1,7 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.harness;
 
 /**
- * Limits Ralph-style verify/fix loops in workflows.
+ * Limits verify/fix loops in workflows.
  */
 public record HarnessIterationPolicy(int maxIterations, boolean retryOnVerifyFail) {
 

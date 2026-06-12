@@ -42,6 +42,7 @@
                         </button>
                         <small class="text-muted ms-2" id="timeEstimate">This is a long-running operation and may take
                             1-2 minutes to complete.</small>
+                        <small class="text-muted ms-2 d-none" id="lastActual"></small>
                         <button class="btn btn-danger d-none ms-2" id="stopButton" type="button">
                             <span id="stopButtonText">Stop Generation</span>
                         </button>
@@ -122,10 +123,12 @@
         const toggleTraceIcon = document.getElementById('toggleTraceIcon');
         const toggleTraceText = document.getElementById('toggleTraceText');
         const timeEstimate = document.getElementById('timeEstimate');
+        const lastActual = document.getElementById('lastActual');
         const sizeSelect = document.getElementById('size');
         let traceExpanded = true;
         let currentJobId = null;
         let sizeConfigs = {};
+        let recentRunsBySize = {};
 
         // Load available sizes from API
         function loadAvailableSizes() {
@@ -158,6 +161,9 @@
 
                     // Update time estimate after loading
                     updateTimeEstimate();
+
+                    // M77: load recent runs to display "Last actual"
+                    loadRecentRuns();
                 })
                 .catch(error => {
                     console.error('Error loading sizes:', error);
@@ -218,6 +224,39 @@
         // Update time estimate when size changes
         if (sizeSelect) {
             sizeSelect.addEventListener('change', updateTimeEstimate);
+            sizeSelect.addEventListener('change', updateLastActual);
+        }
+
+        // M77: load recent runs from any active progress endpoint
+        function loadRecentRuns() {
+            // Poll a running job if available, or just use stored data
+            if (currentJobId) {
+                fetch('/api/v1/synthetic-data/progress/' + currentJobId)
+                    .then(response => response.ok ? response.json() : null)
+                    .then(data => {
+                        if (data && data.recentRunsBySize) {
+                            recentRunsBySize = data.recentRunsBySize;
+                            updateLastActual();
+                        }
+                    })
+                    .catch(() => {});
+            }
+        }
+
+        // M77: update the "Last actual" line
+        function updateLastActual() {
+            if (!lastActual) return;
+            const size = sizeSelect ? sizeSelect.value : '';
+            const runs = recentRunsBySize[size];
+            if (runs && runs.length > 0 && runs[0].totalDurationMs > 0) {
+                const ms = runs[0].totalDurationMs;
+                const minutes = Math.floor(ms / 60000);
+                const seconds = Math.floor((ms % 60000) / 1000);
+                lastActual.textContent = `Last actual: ${minutes} min ${seconds} s`;
+                lastActual.classList.remove('d-none');
+            } else {
+                lastActual.classList.add('d-none');
+            }
         }
 
         if (generateForm) {
@@ -316,6 +355,12 @@
                                         // Show panel if it's hidden
                                         executionTracePanel.classList.remove('d-none');
                                         updateTraceEntries(data.traceEntries);
+                                    }
+
+                                    // M77: update recent runs
+                                    if (data.recentRunsBySize) {
+                                        recentRunsBySize = data.recentRunsBySize;
+                                        updateLastActual();
                                     }
 
                                     // Check if completed, error, or cancelled

@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.llm.tools;
 
 import com.berdachuk.medexpertmatch.core.service.LogStreamService;
+import com.berdachuk.medexpertmatch.documents.DocumentSearchApi;
+import com.berdachuk.medexpertmatch.documents.domain.DocumentSearchResult;
 import com.berdachuk.medexpertmatch.evidence.domain.PubMedArticle;
 import com.berdachuk.medexpertmatch.evidence.service.PubMedService;
 import com.berdachuk.medexpertmatch.llm.tools.support.AgentToolSessionSupport;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Spring AI tools for clinical evidence retrieval (guidelines and PubMed).
@@ -28,16 +31,19 @@ public class EvidenceAgentTools {
     private final ChatClient medGemmaChatClient;
     private final LogStreamService logStreamService;
     private final PromptTemplate clinicalGuidelinesSearchPromptTemplate;
+    private final DocumentSearchApi documentSearchApi;
 
     public EvidenceAgentTools(
             PubMedService pubmedService,
             @Qualifier("caseAnalysisChatClient") @Lazy ChatClient medGemmaChatClient,
             LogStreamService logStreamService,
-            @Qualifier("clinicalGuidelinesSearchPromptTemplate") PromptTemplate clinicalGuidelinesSearchPromptTemplate) {
+            @Qualifier("clinicalGuidelinesSearchPromptTemplate") PromptTemplate clinicalGuidelinesSearchPromptTemplate,
+            DocumentSearchApi documentSearchApi) {
         this.pubmedService = pubmedService;
         this.medGemmaChatClient = medGemmaChatClient;
         this.logStreamService = logStreamService;
         this.clinicalGuidelinesSearchPromptTemplate = clinicalGuidelinesSearchPromptTemplate;
+        this.documentSearchApi = documentSearchApi;
     }
 
     @Tool(description = "Search clinical practice guidelines for a medical condition. Returns relevant guidelines with citations.")
@@ -193,6 +199,52 @@ public class EvidenceAgentTools {
             log.error("Error querying PubMed", e);
             logStreamService.logError(sessionId, "query_pubmed failed", e.getMessage());
             return List.of("Error querying PubMed: " + e.getMessage());
+        }
+    }
+
+    @Tool(description = "Search locally ingested medical documents and guidelines. Returns relevant document chunks with citations.")
+    public List<String> search_local_documents(
+            @ToolParam(description = "Search query string") String query,
+            @ToolParam(description = "Maximum number of results (default: 10)") Integer maxResults
+    ) {
+        log.info("search_local_documents() tool called - query: {}, maxResults: {}", query, maxResults);
+        String sessionId = AgentToolSessionSupport.getSessionId();
+        logStreamService.logToolCall(sessionId, "search_local_documents",
+                String.format("query: %s, maxResults: %s", query, maxResults));
+
+        try {
+            if (query == null || query.trim().isEmpty()) {
+                log.warn("Query string is required for search_local_documents");
+                logStreamService.logError(sessionId, "search_local_documents failed", "Query string is required");
+                return List.of("Error: Query string is required");
+            }
+
+            int limit = (maxResults != null && maxResults > 0) ? maxResults : 10;
+            List<DocumentSearchResult> results = documentSearchApi.searchChunks(query, limit);
+
+            if (results.isEmpty()) {
+                logStreamService.logToolResult(sessionId, "search_local_documents",
+                        "No local documents found for query: " + query);
+                return List.of("No local documents found for query: " + query);
+            }
+
+            List<String> summaries = results.stream().map(r -> {
+                StringBuilder sb = new StringBuilder();
+                sb.append("Title: ").append(r.documentTitle() != null ? r.documentTitle() : "N/A").append("\n");
+                sb.append("Category: ").append(r.category() != null ? r.category() : "N/A").append("\n");
+                sb.append("Source: ").append(r.sourceName() != null ? r.sourceName() : "N/A").append("\n");
+                sb.append("Relevance: ").append(String.format("%.3f", r.similarity())).append("\n");
+                sb.append("Excerpt: ").append(r.chunkText()).append("\n");
+                return sb.toString();
+            }).collect(Collectors.toList());
+
+            logStreamService.logToolResult(sessionId, "search_local_documents",
+                    String.format("Found %d local document chunks", summaries.size()));
+            return summaries;
+        } catch (Exception e) {
+            log.error("Error searching local documents", e);
+            logStreamService.logError(sessionId, "search_local_documents failed", e.getMessage());
+            return List.of("Error searching local documents: " + e.getMessage());
         }
     }
 }

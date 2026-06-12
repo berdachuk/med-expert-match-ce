@@ -61,7 +61,8 @@ class SyntheticDataPostProcessingReconcileCaseTest {
                 graphBuilderService,
                 null,                       // MedicalCaseDescriptionService
                 null,                       // EmbeddingGeneratorService
-                catalogState                // SyntheticDataCatalogState — M75 populates caseSpecialtyCoverage
+                catalogState,               // SyntheticDataCatalogState — M75 populates caseSpecialtyCoverage
+                null                        // SyntheticDataGenerationRunRepository — M77
         );
     }
 

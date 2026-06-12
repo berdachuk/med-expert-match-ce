@@ -170,7 +170,7 @@ no `Task` delegation for single-domain requests.
 | `policy-gate-enabled` | `true` | Harness workflow policy gate |
 | `policy-gate-chat-enabled` | `true` | Chat reply policy gate |
 | `max-iterations` | `2` | Verify/retry loop cap |
-| `retry-on-verify-fail` | `true` | Ralph-style retry on verify failure |
+| `retry-on-verify-fail` | `true` | Retry on verify failure |
 | `doctor-match-min-matches` | `1` | Minimum matches for verify pass |
 | `routing-match-min-matches` | `0` | Minimum facility matches |
 | `human-checkpoint-enabled` | `false` | `NEEDS_HUMAN` checkpoint UI |

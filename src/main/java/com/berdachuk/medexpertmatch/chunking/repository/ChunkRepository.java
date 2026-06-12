@@ -19,4 +19,6 @@ public interface ChunkRepository {
     void updateEmbedding(String chunkId, float[] embedding);
 
     void updateEmbeddings(List<DocumentChunk> chunks);
+
+    List<DocumentChunk> findByEmbeddingIsNull(int limit);
 }

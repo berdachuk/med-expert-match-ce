@@ -15,6 +15,8 @@ import java.util.List;
 @ConditionalOnProperty(name = "medexpertmatch.documents.enabled", havingValue = "true")
 public class DocumentEmbeddingPipeline {
 
+    private static final int BACKFILL_BATCH_SIZE = 50;
+
     private final EmbeddingService embeddingService;
     private final ChunkRepository chunkRepository;
 
@@ -68,5 +70,14 @@ public class DocumentEmbeddingPipeline {
         } catch (Exception e) {
             log.warn("Failed to embed chunk {}: {}", chunk.id(), e.getMessage());
         }
+    }
+
+    public void backfillNullEmbeddings() {
+        List<DocumentChunk> nullChunks = chunkRepository.findByEmbeddingIsNull(BACKFILL_BATCH_SIZE);
+        if (nullChunks.isEmpty()) {
+            return;
+        }
+        log.info("Backfilling {} chunks with NULL embeddings", nullChunks.size());
+        embedChunks(nullChunks);
     }
 }

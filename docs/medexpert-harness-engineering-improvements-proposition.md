@@ -43,7 +43,7 @@ The idea that “most of Claude Code is harness, not model” applies here: demo
 | Question | Owner | MedExpertMatch examples |
 |----------|--------|-------------------------|
 | *What should the model know, and how do we pack it?* | **Context engineering** | GraphRAG retrieval, embeddings, `src/main/resources/skills/`, prompt `.st` files |
-| *What process ensures a correct outcome step by step, even when the model errs?* | **Harness engineering** | Workflow services, tool guards, Ralph-style verify/fix loops, multi-agent routing |
+| *What process ensures a correct outcome step by step, even when the model errs?* | **Harness engineering** | Workflow services, tool guards, verify/fix loops, multi-agent routing |
 
 Both are required. MedExpertMatch is relatively strong on context (RAG, skills, prompts) and should deliberately strengthen **process harness** next.
 
@@ -100,73 +100,15 @@ Maintain a **harness improvement backlog** alongside the product backlog—class
 
 ## 4. Harness patterns and loops (detailed)
 
-### 4.1 Ralph Loop — primary coding-style iteration
+### 4.1 Iteration Loop — primary coding-style iteration
 
-Automated **Formulate → Change → Run → Observe → Fix → Stop/Repeat**:
+| Domain | Iteration loop analogue today | Proposed enhancement |
 
-1. **Formulate** — Small step with acceptance criteria and minimal context bundle.
-2. **Change** — Structured output (diff, file ops, tool calls)—not prose-only.
-3. **Run** — Apply in workspace; execute checks (`mvn test`, module-scoped verify, lint).
-4. **Observe** — Parse output to structured errors, e.g. `{ type, file, line, message }`.
-5. **Fix** — Model or critic receives errors + prior patch; generates corrective change.
-6. **Stop** — Green checks, iteration limit, or human checkpoint.
+| **Repo development** (Cursor / CI) | Manual: agent runs `mvn verify` | Document iteration loop in `.agents/skills/testing`; optional CI job that posts structured failures back to agent context |
 
-**MedExpertMatch application**
+Implement iteration loop as a **state machine in code**, not as "engineer copies build log into chat."
 
-| Domain | Ralph Loop analogue today | Proposed enhancement |
-|--------|---------------------------|----------------------|
-| **Repo development** (Cursor / CI) | Manual: agent runs `mvn verify` | Document Ralph Loop in `.agents/skills/testing`; optional CI job that posts structured failures back to agent context |
-| **Medical agent workflows** | LLM → tools → LLM interpret | Add **Verify** step: schema/contract check on tool JSON + heuristic eval before final user-facing answer |
-| **Prompt/skill changes** | Ad hoc | Eval module run (from `docs/improvements-plan-agentic-patterns.md`) as the **Run** step after every prompt change |
-
-Implement Ralph as a **state machine in code**, not as “engineer copies build log into chat.”
-
-### 4.2 Planner → Coder → Critic (single task)
-
-Three roles, optionally same model with different prompts:
-
-| Role | Input | Output |
-|------|-------|--------|
-| **Planner** | Issue, case text, retrieved context | Step list, touched modules, acceptance criteria |
-| **Coder** | One step + scoped context | Patches / tool invocations |
-| **Critic** | Patch + test results + policy checklist | Approve, reject with reasons, or request fix |
-
-**MedExpertMatch application**
-
-- **Chat:** After `ChatAgentProfile` selects skills, run a lightweight **Planner** pass for complex intents (“match from this narrative + explain rationale”) before tool-heavy **Coder** phase; **Critic** enforces disclaimer, no PHI, and “tool evidence cited.”
-- **Workflows:** `MedicalAgentDoctorMatchingWorkflowServiceImpl` already sequences steps; refactor toward explicit planner artefact (JSON plan stored in session) and critic gate before `AgentResponse` return.
-
-### 4.3 Context Builder (separate from “RAG in general”)
-
-Dedicated step/agent that only **finds, ranks, compresses** context—never generates final clinical recommendations.
-
-Steps:
-
-1. Candidate retrieval (semantic + symbolic: case ID, ICD, graph neighbors).
-2. Relevance ranking (`core` / `maybe` / `noise`).
-3. Compression (summaries, token budget).
-4. Handoff bundle to Planner/Coder.
-
-**MedExpertMatch application**
-
-- Align with `retrieval/` + `embedding/` + graph tools; expose a **`buildCaseContextBundle(caseId, intent)`** tool used by all workflows.
-- Chat: `ChatCasePromptSupport` is a start; generalize to intent-aware bundles per `ChatAgentProfile`.
-
-### 4.4 Guarded Patch / guarded tool scope
-
-- **Scope:** Only allowed modules/files/tools for this task (e.g. intake may call `matchFromText`, not arbitrary graph admin).
-- **Format:** Structured diffs or tool args, not free-form refactors.
-- **Validation:** Dry-run, diff policy (no Flyway without human), secret/config deny lists.
-- **Rollback:** Branch/PR per agent step; correlate with chat export bundles.
-
-**MedExpertMatch application**
-
-- Extend tool-level validators to **workflow-level scopes** (which `@Tool` methods each `ChatAgentProfile` may invoke).
-- A2A: agent card declares allowed skills/tools; server rejects out-of-scope calls (builds on earlier trust work).
-
-### 4.5 Error as training signal for harness
-
-Log each failed Ralph iteration:
+Log each failed iteration:
 
 - Task type, plan, patch/tool calls, commands, structured errors.
 - Classify: import/contract misunderstanding, scope violation, flaky test, retrieval miss, policy breach.
@@ -231,7 +173,7 @@ Policies: auto-continue for low-risk read-only queries; require approval for mat
 | Fixed pipelines, limited dynamic tool routing | Cannot adapt steps to case complexity | `docs/improvements-plan-agentic-patterns.md` |
 | No automated eval loop on prompt changes | Quality regressions undetected | Eval module proposal (same doc) |
 | No explicit Planner/Critic artefacts in chat/workflows | Hard to debug “why this answer” | This proposition §4.2 |
-| Ralph Loop not formalized for agents | Errors require manual retry | §4.1 |
+| Iteration loop not formalized for agents | Errors require manual retry | §4.1 |
 | Context bundling not a first-class agent step | Prompt bloat, inconsistent grounding | §4.3 |
 | Harness failure taxonomy not unified | Ops sees errors, not improvement signals | Chat admin observability |
 
@@ -251,27 +193,9 @@ Ordered by leverage and fit with existing modules. Effort is indicative (enginee
 | A4 | **Planner artefact** | Persist plan + acceptance criteria per chat/workflow session (DB or export bundle) | 3–5d |
 | A5 | **Tool scope by profile** | Enforce allowed tools per `ChatAgentProfile` / A2A agent card | 2–3d |
 
-### Phase B — Ralph Loop for quality
+### Phase B — Iteration Loop for quality
 
-| # | Initiative | Description | Effort |
-|---|------------|-------------|--------|
-| B1 | **Eval module** | YAML datasets + scorer + CI gate (from agentic improvements plan) | 5–8d |
-| B2 | **Workflow iteration cap** | Max tool/LLM rounds with structured stop reasons | 1–2d |
-| B3 | **Harness failure logging** | Reason codes on job status enums; admin metrics | 3–4d |
-
-### Phase C — Orchestration layer
-
-| # | Initiative | Description | Effort |
-|---|------------|-------------|--------|
-| C1 | **Workflow state machine** | Replace implicit scripts with explicit states/events for doctor match + intake | 8–12d |
-| C2 | **Event-driven handoffs** | Optional: Modulith events between analysis → match → recommend | 6–10d |
-| C3 | **Human checkpoints API** | Pause/resume workflow; attach clinician approval to case actions | 5–8d |
-
-### Phase D — Development harness (engineering productivity)
-
-| # | Initiative | Description | Effort |
-|---|------------|-------------|--------|
-| D1 | **Ralph Loop in `.agents/skills/testing`** | Standard: patch → `mvn test` → structured error feedback | 1d doc + templates |
+| D1 | **Iteration Loop in `.agents/skills/testing`** | Standard: patch → `mvn test` → structured error feedback | 1d doc + templates |
 | D2 | **Planner/Coder/Critic for Cursor** | Milestone plans as Planner output; PR checklist as Critic | 2d doc |
 | D3 | **Harness backlog template** | Link trace IDs to harness tickets | 0.5d |
 

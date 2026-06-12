@@ -125,6 +125,7 @@ public class SyntheticDataController {
         response.put("endTime", progress.getEndTime() != null ? progress.getEndTime().toString() : "");
         response.put("errorMessage", progress.getErrorMessage() != null ? progress.getErrorMessage() : "");
         response.put("traceEntries", progress.getTraceEntriesSnapshot());
+        response.put("recentRunsBySize", progressService.getRecentRunsBySize());
 
         return ResponseEntity.ok(response);
     }

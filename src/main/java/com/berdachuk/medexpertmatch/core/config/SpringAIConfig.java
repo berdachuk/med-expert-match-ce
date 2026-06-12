@@ -129,11 +129,11 @@ public class SpringAIConfig {
     }
 
     @Bean("descriptionGenerationChatClient")
+    @Lazy
     public ChatClient descriptionGenerationChatClient(
-            @Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel,
-            List<Advisor> advisors) {
+            @Qualifier("descriptionGenerationChatModel") ChatModel descriptionGenerationChatModel) {
         log.info("Creating descriptionGenerationChatClient");
-        return chatClientBuilder(descriptionGenerationChatModel, advisors).build();
+        return ChatClient.builder(descriptionGenerationChatModel).build();
     }
 
     private static ChatClient.Builder chatClientBuilder(ChatModel model, List<Advisor> advisors) {

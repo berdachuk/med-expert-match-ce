@@ -126,4 +126,40 @@ class ChunkRepositoryIT extends BaseIntegrationTest {
         List<DocumentChunk> chunks = chunkRepository.findByDocumentId(documentId);
         assertEquals(5, chunks.size());
     }
+
+    @Test
+    void shouldFindChunksWithNullEmbeddings() {
+        chunkRepository.insert(new DocumentChunk(IdGenerator.generateId(), documentId, 0, "No embedding", null));
+        chunkRepository.insert(new DocumentChunk(IdGenerator.generateId(), documentId, 1, "Also null", null));
+        chunkRepository.insert(new DocumentChunk(IdGenerator.generateId(), documentId, 2, "Also no embedding", null));
+
+        List<DocumentChunk> nullEmbeddingChunks = chunkRepository.findByEmbeddingIsNull(10);
+
+        assertEquals(3, nullEmbeddingChunks.size());
+        assertTrue(nullEmbeddingChunks.stream().allMatch(c -> c.embedding() == null));
+    }
+
+    @Test
+    void shouldRespectLimitWhenFindingChunksWithNullEmbeddings() {
+        chunkRepository.insert(new DocumentChunk(IdGenerator.generateId(), documentId, 0, "First", null));
+        chunkRepository.insert(new DocumentChunk(IdGenerator.generateId(), documentId, 1, "Second", null));
+        chunkRepository.insert(new DocumentChunk(IdGenerator.generateId(), documentId, 2, "Third", null));
+
+        List<DocumentChunk> limited = chunkRepository.findByEmbeddingIsNull(2);
+
+        assertEquals(2, limited.size());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenNoNullEmbeddings() {
+        DocumentChunk chunk = new DocumentChunk(IdGenerator.generateId(), documentId, 0, "Embedded", null);
+        chunkRepository.insert(chunk);
+        float[] embedding768 = new float[768];
+        embedding768[0] = 0.1f;
+        chunkRepository.updateEmbedding(chunk.id(), embedding768);
+
+        List<DocumentChunk> result = chunkRepository.findByEmbeddingIsNull(10);
+
+        assertTrue(result.isEmpty());
+    }
 }

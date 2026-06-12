@@ -33,6 +33,9 @@ dist/
 /target/
 /build/
 
+# Kilo IDE
+/.kilo/
+
 # IDE
 /.vscode/
 /.zed/
