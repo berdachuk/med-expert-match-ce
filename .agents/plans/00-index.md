@@ -2,9 +2,7 @@
 
 ## Active
 
-| # | Plan | Description |
-|---|------|-------------|
-| M95 | [`M95-llm-prompt-quality-and-response-reliability.md`](M95-llm-prompt-quality-and-response-reliability.md) | Improve LLM output quality: fix case analysis interpretation prompt, reduce hallucinated ICD-10 codes, improve medgemma1.5:4b response reliability |
+None — all milestones through M95 are complete. See Archive below.
 
 ## Deferred
 
@@ -106,6 +104,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M92 | [`M92-session-compaction-document-rag.md`](archive/M92-session-compaction-document-rag.md) | Wire DocumentSearch into evidence-retriever skill; add chunk NULL embedding backfill; add DocumentSearchServiceTest |
 | M93 | [`M93-production-readiness-and-doc-rag-closeout.md`](archive/M93-production-readiness-and-doc-rag-closeout.md) | Production-readiness close-out: document RAG embed scheduler, DocumentChunkRepositoryIT for findByEmbeddingIsNull, full-codebase security review, dependency-freshness pass, multi-module test-coverage infra closure |
 | M94 | [`M94-security-hardening-and-tool-surface-closeout.md`](archive/M94-security-hardening-and-tool-surface-closeout.md) | Security hardening: risk_assessment caseId validation, fix error disclosure in DocumentSearchController, sanitize tool log messages, explicit REST endpoint security posture |
+| M95 | [`M95-llm-prompt-quality-and-response-reliability.md`](archive/M95-llm-prompt-quality-and-response-reliability.md) | Simplify case analysis prompt, add ICD-10 validation to prevent hallucination, parallelize synthetic data description generation (5-10x speedup), add LlmCallLimiter |
 
 ## Creating a New Plan
 

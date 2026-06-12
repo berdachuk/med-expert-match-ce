@@ -95,3 +95,9 @@ Read this file BEFORE starting any new milestone — it captures the
 - test_target 'mvn verify' green (rc=0)
 - Discovered: EvidenceAgentTools and ClinicalAdvisorAgentTools called medGemmaChatClient.prompt() without setting SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, causing "No session ID found in advisor context" errors. Fixed by adding .advisors(a -> a.param(SessionMemoryAdvisor.SESSION_ID_CONTEXT_KEY, sessionId)) to all 4 prompt() calls across both files. SessionMemoryAdvisor lives in org.springframework.ai.session.advisor (not .chat.memory).
 - Next: M95 LLM prompt quality and response reliability
+
+## 2026-06-12 M95 (LLM Prompt Quality and Parallel Description Generation) [GREEN]
+- commit: 7a10086
+- test_target 'mvn verify' green (rc=0, 549 IT, 0 failures, 0 errors, 1 skipped)
+- Discovered: Case analysis user prompt didn't include icd10Codes variable; LLM hallucinated codes because it had no ground truth. Added icd10Codes to user prompt and system prompt with explicit "use ONLY codes from input" instruction. Interpretation prompt was too verbose (31 lines → 16 lines). Description generation was purely sequential — now uses Executors.newFixedThreadPool(descriptionThreadPoolSize) with LlmCallLimiter gating each call. Need to rebuild test Docker image after container cleanup.
+- Next: none — all milestones through M95 are complete
