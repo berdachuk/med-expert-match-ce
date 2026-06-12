@@ -39,7 +39,8 @@ public final class GoalIntentPatterns {
     static final Pattern ANALYZE_CASE_KEYWORDS = Pattern.compile(
             "\\b(?:analyze\\s+case|analyze\\s+this\\s+case|\\bicd\\b|diagnosis\\s+hint|"
                     + "clinical\\s+findings|case\\s+summary|clinical\\s+assessment|case\\s+workup|"
-                    + "coding\\s+suggestions?|urgency\\s+assessment|patient\\s+workup)\\b",
+                    + "coding\\s+suggestions?|urgency\\s+assessment|patient\\s+workup|"
+                    + "find\\s+case\\s+information|case\\s+details)\\b",
             Pattern.CASE_INSENSITIVE);
 
     static final Pattern ROUTE_CASE_KEYWORDS = Pattern.compile(
