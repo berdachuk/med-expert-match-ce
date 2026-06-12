@@ -42,13 +42,10 @@
                     <textarea class="form-control chat-composer-input" id="messageInput" placeholder="Ask a clinical question…" rows="3"></textarea>
                     <div class="chat-composer-footer">
                         <div class="chat-mode-group">
-                            <select aria-label="Chat mode" class="form-select form-select-sm chat-mode-picker" id="chatModePicker">
-                                <option selected value="quick" th:text="#{chat.mode.quick}">Quick question</option>
-                                <option value="expert_match" th:text="#{chat.mode.expert}">Expert match (harness)</option>
-                            </select>
+                            <input type="hidden" id="chatModePicker" value="expert_match"/>
+                            <span class="badge bg-info text-dark">Expert match (harness)</span>
                             <span class="text-muted chat-mode-cost-hint" id="chatModeCostHint"
-                                  th:attr="data-cost-quick=#{chat.mode.cost.quick},data-cost-expert=#{chat.mode.cost.expert}"
-                                  th:text="#{chat.mode.cost.quick}">~1× token budget</span>
+                                  th:text="#{chat.mode.cost.expert}">~2–3× token budget</span>
                         </div>
                         <select aria-label="Agent" class="form-select form-select-sm chat-agent-picker" id="agentPicker">
                             <option th:selected="${currentChat.agentId() == 'auto'}" value="auto" th:text="#{chat.agent.auto}">Auto</option>

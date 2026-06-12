@@ -480,18 +480,10 @@
     }
 
     function selectedChatMode() {
-        return document.getElementById('chatModePicker')?.value || 'quick';
+        return 'expert_match';
     }
 
     function updateChatModeCostHint() {
-        var hint = document.getElementById('chatModeCostHint');
-        if (!hint) return;
-        var mode = selectedChatMode();
-        if (mode === 'expert_match' && hint.dataset.costExpert) {
-            hint.textContent = hint.dataset.costExpert;
-        } else if (hint.dataset.costQuick) {
-            hint.textContent = hint.dataset.costQuick;
-        }
     }
 
     function renderExplainabilityPanel(parentBubble, payload) {
@@ -714,9 +706,6 @@
         input.value = '';
         sendMessageStream(chatId, text, document.getElementById('agentPicker')?.value || 'auto', btn);
     });
-
-    document.getElementById('chatModePicker')?.addEventListener('change', updateChatModeCostHint);
-    updateChatModeCostHint();
 
     document.getElementById('messageInput')?.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {

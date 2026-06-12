@@ -327,8 +327,8 @@ class ChatAssistantServiceImplTest {
     }
 
     @Test
-    @DisplayName("QUICK chat mode skips harness even when MATCH_DOCTORS has case ID")
-    void quickModeSkipsHarness() {
+    @DisplayName("EXPERT_MATCH mode uses harness for MATCH_DOCTORS with case ID")
+    void expertMatchUsesHarness() {
         String caseId = "6a23f05200155d711484cf64";
         Chat chat = new Chat("c1", "user-a", "Test", "auto", false,
                 Instant.now(), Instant.now(), Instant.now(), 0);
@@ -342,7 +342,6 @@ class ChatAssistantServiceImplTest {
         when(chatService.appendAssistantMessage(eq("c1"), eq("user-a"), any())).thenReturn(assistantMsg);
         when(promptSupport.loadSkill(any())).thenReturn("skill body");
         when(promptSupport.buildPrompt(any(), any(), any())).thenReturn("prompt");
-        when(chatAgentSystemTemplate.render(any())).thenReturn("system");
         when(chatUserMessageTemplate.render(any())).thenReturn("user prompt");
         when(chatCasePromptSupport.buildCaseToolHints(any(), any())).thenReturn("");
         when(chatClient.prompt()).thenReturn(requestSpec);
@@ -355,9 +354,8 @@ class ChatAssistantServiceImplTest {
                 .thenReturn(new MedicalAgentPolicyGateService.PolicyGateResult(true, "Quick reply", null, null));
 
         service.processMessage("c1", "user-a",
-                "Find Specialist Case Information Case ID: " + caseId, "auto", "quick");
+                "Find Specialist Case Information Case ID: " + caseId, "auto", "expert_match");
 
-        verify(medicalAgentService, never()).matchDoctors(any(), any());
-        verify(chatClient).prompt();
+        verify(medicalAgentService).matchDoctors(any(), any());
     }
 }

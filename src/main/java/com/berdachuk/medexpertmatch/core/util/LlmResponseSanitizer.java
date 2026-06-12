@@ -405,7 +405,9 @@ public final class LlmResponseSanitizer {
                 || lower.startsWith("recommendations: yes")
                 || lower.contains("summarize the case:")
                 || lower.contains("self-correction:")
-                || lower.startsWith("the user wants");
+                || lower.startsWith("the user wants")
+                || lower.contains("double check constraints")
+                || lower.contains("the analysis seems correct");
     }
 
     public static String toHumanReadable(String response) {

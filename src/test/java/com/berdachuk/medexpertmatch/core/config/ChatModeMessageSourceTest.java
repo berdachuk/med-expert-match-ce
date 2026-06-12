@@ -18,16 +18,9 @@ class ChatModeMessageSourceTest extends BaseIntegrationTest {
     private MessageSource messageSource;
 
     @Test
-    void shouldResolveChatModeLabelsInEnglish() {
-        assertLabel("chat.mode.quick", Locale.ENGLISH, "Quick question");
+    void shouldResolveChatModeLabelInEnglish() {
         assertLabel("chat.mode.expert", Locale.ENGLISH, "Expert match");
-        assertLabel("chat.mode.cost.quick", Locale.ENGLISH, "token budget");
-    }
-
-    @Test
-    void shouldResolveChatModeLabelsInRussian() {
-        assertLabel("chat.mode.quick", Locale.forLanguageTag("ru"), "Быстрый вопрос");
-        assertLabel("chat.mode.cost.expert", Locale.forLanguageTag("ru"), "бюджет токенов");
+        assertLabel("chat.mode.cost.expert", Locale.ENGLISH, "token budget");
     }
 
     private void assertLabel(String code, Locale locale, String expectedFragment) {
