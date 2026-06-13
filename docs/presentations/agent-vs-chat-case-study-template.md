@@ -12,25 +12,31 @@
 | Urgency | HIGH |
 | User ask | “Find an epilepsy specialist for this case.” |
 
-## Paths compared
+## Path compared
 
-| | Quick question (chat) | Expert match (harness) |
-|---|----------------------|-------------------------|
-| Routing | FunctionGemma + `match_doctors_from_text` tool | `DoctorMatchWorkflowEngine` + GraphRAG scoring |
-| Token tier | LIGHT (~2k budget) | FULL (~6k budget) |
-| Verification | Tool output only | Harness verify loop + confidence policy |
-| Explainability | Narrative only | Vector / graph / history signal table in UI |
-| Human gate | None by default | Optional `NEEDS_HUMAN` on ESCALATE (M65) |
+**Expert match (harness)** — the only chat mode since M96:
 
-## Synthetic outcomes (illustrative)
+| Aspect | Detail |
+|--------|--------|
+| Routing | `DoctorMatchWorkflowEngine` + GraphRAG scoring |
+| Token tier | FULL (~6k budget) |
+| Verification | Harness verify loop + confidence policy |
+| Explainability | Vector / graph / history signal table in UI |
+| Human gate | Optional `NEEDS_HUMAN` on ESCALATE (M65) |
 
-| Metric | Chat-only | Harness | Delta |
-|--------|-----------|---------|-------|
+*The "Quick question" mode was removed in M96 — Expert match is now the only path.*
+
+## Synthetic outcomes (pre-M96 comparison — Quick question mode removed)
+
+The lightweight "Quick question" mode was retired in M96 after this comparative study showed harness consistently outperformed it at acceptable cost.
+
+| Metric | Quick (removed) | Harness (current) | Delta |
+|--------|-----------------|-------------------|-------|
 | Top-1 match score (held-out) | 58 | 71 | **+22%** |
 | Policy-safe completion rate | 82% | 94% | +12 pp |
 | Est. tokens / turn | 1.8k | 3.4k | **1.9× cost** |
 
-**Verdict:** Meets go/no-go (**+22% quality**, **1.9× cost**) — harness justified for high-stakes specialist matching; quick mode retained for ICD-10 lookups and general questions.
+**Verdict:** Harness justified for high-stakes specialist matching — Expert match is now the only path.
 
 ## Signal breakdown (top match, non-PHI)
 

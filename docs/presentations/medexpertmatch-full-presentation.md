@@ -420,10 +420,10 @@ Note: `web` composes UI; core domain logic stays in domain modules.
 <div class="reveal-slide-text-col">
 
 - **`MedicalAgentService`** + workflow services  
-- **`MedicalAgentTools`** — Spring AI `@Tool` calls into domain services (no raw LLM -> DB)  
+- **9 tool classes** (27 `@Tool` methods) — `CaseAnalysisAgentTools`, `DoctorMatchingAgentTools`, `EvidenceAgentTools`, etc. — calls into domain services (no raw LLM → DB)
 - **`AutoMemoryTools`** — cross-session durable memory (LLM self-curates facts across sessions)
 - **Session memory** — `SessionMemoryAdvisor` compacts history after 15 turns (JDBC-backed)
-- **Prompts** — external `.st` templates, `PromptTemplate` beans (17 templates, StringTemplate4)  
+- **Prompts** — external `.st` templates, `PromptTemplate` beans (45 templates, StringTemplate4)  
 
 </div>
 
@@ -439,7 +439,7 @@ Note: Orchestration (Java) vs prompt text (Spring AI). This is the “harness”
 
 ---
 
-## Seven agent skills (documentation + tools)
+## Nine agent skills (documentation + tools)
 
 <div class="reveal-slide-row">
 
@@ -452,12 +452,14 @@ Note: Orchestration (Java) vs prompt text (Spring AI). This is the “harness”
 5. **clinical-advisor** — differential, risk  
 6. **network-analyzer** — graph analytics  
 7. **routing-planner** — facility routing  
+8. **clinical-guideline** — condition-specific guidelines  
+9. **triage** — urgency assessment, care level  
 
 </div>
 
 <div class="reveal-slide-image-col">
 
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-seven-skills.png" alt="Seven agent skills" />
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-agent-skills.png" alt="Nine agent skills" />
 
 </div>
 
@@ -651,11 +653,10 @@ Note: ~20 s. Walk the state line once; mention SSE in AI Chat. Details: [Harness
 
 <div class="reveal-slide-text-col">
 
-**Product packaging (M66)** — users choose before sending in AI Chat:
+**Product packaging (M66)** — single chat mode:
 
 | Mode | Path | Relative cost |
 |------|------|----------------|
-| **Quick question** | FunctionGemma + tools (LIGHT) | ~1× token budget |
 | **Expert match (harness)** | GraphRAG workflow + MedGemma interpretation (FULL) | ~2–3× token budget |
 
 **Four layers:** Chat (UX) → Harness (verify + tools) → Policy (ANSWER/CLARIFY/ESCALATE) → Data (outcomes flywheel)
@@ -695,7 +696,7 @@ Note: ~90 s. Demo the chat mode selector and match explainability panel (vector 
 
 **When harness routes** (match / route / analyze + case ID) → workflow engines — FunctionGemma **skipped**.
 
-**Otherwise** → Auto chat path: FunctionGemma + `MedicalAgentTools` (evidence, edge cases).
+**Otherwise** → Auto chat path: FunctionGemma + tool classes (evidence, edge cases).
 
 Config: `TOOL_CALLING_*` env vars → `functiongemma:270m` (Ollama OpenAI-compatible).
 

@@ -253,7 +253,7 @@ Note: Operators can trace a bad turn from goal log → engine → verify outcome
 | Verify, policy gate, retries | Case analysis narrative, interpretation |
 | Session memory, case bundles | Prompt text from `.st` templates |
 
-**Two models in chat:** MedGemma (`CHAT_*`) + FunctionGemma (`TOOL_CALLING_*`)
+**6 role-separated LLM endpoints:** clinical-high, clinical-low, utility, tool-calling, embedding, reranking
 
 </div>
 
