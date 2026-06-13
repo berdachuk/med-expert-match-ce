@@ -49,6 +49,25 @@ Generates clinical recommendations for a medical case:
 generate_recommendations(caseId: "abc123def456", recommendationType: "TREATMENT", includeEvidence: true)
 ```
 
+### Search Local Documents: `search_local_documents`
+
+Searches locally ingested medical documents and guidelines for relevant content. Use this **before** generating recommendations to ground them in local knowledge.
+
+**Parameters:**
+
+- `query`: Search query string describing the clinical topic
+- `maxResults`: Maximum number of results (default: 10)
+
+**Returns:**
+
+- List of document chunk summaries with citations
+
+**Usage:**
+
+```
+search_local_documents(query: "diabetic neuropathy treatment guidelines", maxResults: 5)
+```
+
 ### Suggest Diagnostic Workup: `suggest_diagnostic_workup`
 
 Suggests diagnostic tests and procedures:

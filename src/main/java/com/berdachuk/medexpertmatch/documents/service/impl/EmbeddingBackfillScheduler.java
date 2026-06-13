@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.documents.service.impl;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,6 +17,16 @@ public class EmbeddingBackfillScheduler {
 
     public EmbeddingBackfillScheduler(DocumentEmbeddingPipeline documentEmbeddingPipeline) {
         this.documentEmbeddingPipeline = documentEmbeddingPipeline;
+    }
+
+    @PostConstruct
+    public void backfillOnStartup() {
+        log.info("Running startup backfill of chunks with NULL embeddings");
+        try {
+            documentEmbeddingPipeline.backfillNullEmbeddings();
+        } catch (Exception e) {
+            log.warn("Startup embedding backfill failed (will retry via cron)", e);
+        }
     }
 
     @Scheduled(cron = BACKFILL_CRON)

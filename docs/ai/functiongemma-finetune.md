@@ -194,7 +194,7 @@ as in the demo cell (that omits the user turn).
 ## Phase 4 — Serving
 
 Sample profile: `src/main/resources/application-local-finetuned.yml.sample` (copy to
-`application-local-finetuned.yml`, activate `local,local-finetuned`).
+`application-local-finetuned.yml`, activate `local,local-finetuned`). Note: this sample file was removed in M100; recreate from the M58 plan if needed.
 
 ```yaml
 TOOL_CALLING_MODEL: functiongemma-medexpertmatch:270m
