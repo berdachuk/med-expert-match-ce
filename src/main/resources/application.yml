@@ -313,7 +313,7 @@ medexpertmatch:
       enabled: ${MEDEXPERTMATCH_DOCUMENTS_BACKFILL_ENABLED:true}
       cron: ${MEDEXPERTMATCH_DOCUMENTS_BACKFILL_CRON:0 0 2 * * *}
   auth:
-    enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:false}
+    enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:true}
     api-keys: ${MEDEXPERTMATCH_AUTH_API_KEYS:}
     session-tokens:
       enabled: ${MEDEXPERTMATCH_SESSION_TOKEN_AUTH:false}
