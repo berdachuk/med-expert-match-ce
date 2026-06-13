@@ -132,7 +132,7 @@ public void processBatch(List<MedicalCase> cases) {
     for (MedicalCase
     case :
     cases){
-        String description = llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+        String description = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
             return descriptionService.generateDescription(
             case);
         });
@@ -145,7 +145,7 @@ public void processBatch(List<MedicalCase> cases) {
 ```java
 // Service - wraps with limiter
 public String generateDescription(MedicalCase medicalCase) {
-    return llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+    return llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
         return chatClient.prompt(prompt).call().content();
     });
 }
@@ -155,7 +155,7 @@ public void processBatch(List<MedicalCase> cases) {
     for (MedicalCase
     case :
     cases){
-        String description = llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+        String description = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
             return descriptionService.generateDescription(
             case); // Already wrapped!
         });

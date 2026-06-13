@@ -53,7 +53,7 @@ flowchart TD
 |-------|---------|----------|
 | **1. Session continuation** | Reuse `ConversationGoalContext` (goal + caseId, 30 min TTL) | «детализируй случай» → `ANALYZE_CASE`; «найди еще докторов» → `MATCH_DOCTORS` |
 | **2. Keyword fast path** | English + Russian medical phrases | `detail the clinical case`, `suggest specialist`, `route to facility` |
-| **3. LLM fallback** | Ambiguous messages with session context | `goal-classification.st` + `goal-classification-user.st` via **MedGemma** (`LlmClientType.CHAT`) |
+| **3. LLM fallback** | Ambiguous messages with session context | `goal-classification.st` + `goal-classification-user.st` via **MedGemma** (`LlmClientType.CLINICAL`) |
 | **4. Post-override** | Safety net when LLM returns `GENERAL_QUESTION` but session has a case | Detail/more-doctors heuristics |
 | **5. inheritSessionCaseId** | Fill missing caseId from session | `ANALYZE_CASE`, `ROUTE_CASE`, `SEARCH_EVIDENCE`, routable match follow-ups |
 

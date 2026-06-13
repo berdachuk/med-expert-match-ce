@@ -164,7 +164,7 @@ UI -> User : Display matched doctors
 
 - **Model**: MedGemma (configured via `CHAT_MODEL`)
 - **Prompt Template**: `medgemma-case-analysis.st`
-- **Configuration**: Uses `primaryChatModel` from `SpringAIConfig` (configured via `CHAT_MODEL`)
+- **Configuration**: Uses `clinicalChatModel` from `SpringAIConfig` (configured via `CHAT_MODEL`)
 - **Purpose**: Extract medical information needed for expert matching
 - **Output**: JSON with:
     - Required medical specialty
@@ -1083,7 +1083,7 @@ RETURN d.id
 
 - **Model**: MedGemma (configured via `CHAT_MODEL`)
 - **Prompt Template**: `medgemma-result-interpretation.st`
-- **Configuration**: Uses `primaryChatModel` from `SpringAIConfig` (configured via `CHAT_MODEL`)
+- **Configuration**: Uses `clinicalChatModel` from `SpringAIConfig` (configured via `CHAT_MODEL`)
 - **Purpose**: Generate final response with medical reasoning
 - **Input**: Tool execution results + original case analysis
 - **Output**: Comprehensive response explaining matched doctors with medical context

@@ -9,7 +9,7 @@ MedExpertMatch uses **two LLM roles** in AI Chat:
 
 | Role | Model (typical local) | Bean / client | Used for |
 |------|----------------------|-------------|----------|
-| **Medical reasoning** | `medgemma1.5:4b` | `primaryChatModel` / `LlmClientType.CHAT` | Case analysis, interpretation, goal classification, translation |
+| **Medical reasoning** | `medgemma1.5:4b` | `clinicalChatModel` / `LlmClientType.CLINICAL` | Case analysis, interpretation, goal classification, translation |
 | **Tool calling** | `functiongemma:270m` | `toolCallingChatModel` / `LlmClientType.TOOL_CALLING` | Auto orchestrator: choose and invoke `@Tool` methods |
 
 **Why separate models?** MedGemma is strong at clinical text but does not reliably emit structured function calls.

@@ -344,7 +344,7 @@ TDD mandatory per project rules: test → verify requirement → implement → `
 - Harness tiers (operator view): [HARNESS.md — Cost-quality tiers](../HARNESS.md#cost-quality-tiers-m64)
 - FunctionGemma role: [FUNCTIONGEMMA.md](../FUNCTIONGEMMA.md)
 - Goal routing: [HARNESS.md — Goal classification](../HARNESS.md#goal-classification)
-- Fine-tuned tool model profile: `application-local-finetuned.yml.sample`
+- Fine-tuned tool model profile: `application.yml (local-finetuned profile)`
 - Related milestones: M57 (goal classifier), M67 (clinical/utility endpoints), M60 (FunctionGemma fine-tune, deferred), M61 (policy tiers), M62 (eval flywheel)
 - External inspiration: multi-tier agent token economics (read delegation, draft-and-refine, semantic routing)
 

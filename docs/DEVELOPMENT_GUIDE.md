@@ -544,7 +544,7 @@ public void processBatch(List<MedicalCase> cases) {
     for (MedicalCase
     case :
     cases){
-        String description = llmCallLimiter.execute(LlmClientType.CHAT, () -> {
+        String description = llmCallLimiter.execute(LlmClientType.CLINICAL, () -> {
             return descriptionService.generateDescription(
             case);
         });

@@ -152,7 +152,7 @@ vLLM, LiteLLM proxy) only.
 
 MedExpertMatch uses separate models for regular chat and tool calling:
 
-- **Primary Chat Model** (`primaryChatModel`): MedGemma for medical text understanding and case analysis
+- **Primary Chat Model** (`clinicalChatModel`): MedGemma for medical text understanding and case analysis
 - **Tool Calling Model** (`toolCallingChatModel`): FunctionGemma for tool/function calling operations
 
 **Why Separate Models?**

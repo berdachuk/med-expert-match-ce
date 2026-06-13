@@ -117,7 +117,7 @@ Concurrency: `MEDEXPERTMATCH_LLM_UTILITY_MAX_CONCURRENT_CALLS` (default `2`).
 
 ### Chat (legacy fallback)
 
-Deprecated alias path when role-specific vars are unset. `primaryChatModel` → `clinicalChatModel` (M67).
+Deprecated alias path when role-specific vars are unset. `clinicalChatModel` → `clinicalChatModel` (M67).
 
 ```bash
 CHAT_PROVIDER=openai

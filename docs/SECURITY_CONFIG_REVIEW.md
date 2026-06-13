@@ -121,7 +121,7 @@ actuator and /health protected; API permitAll).
 
 ### Recommendations
 
-- For production: use a profile (e.g. `application-prod.yml`) that sets:
+- For production: use a profile (e.g. `application.yml (docker profile)`) that sets:
     - `show-details: when-authorized` (or `when_authorized`) and `show-components: when-authorized`, and secure actuator
       with the same auth as the rest of the app; or
     - Expose only `health` (with minimal details) on a separate port/path and keep `info`/`metrics` behind auth or
