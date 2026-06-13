@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M108 | [`M108-code-quality-and-dependency-freshness.md`](M108-code-quality-and-dependency-freshness.md) | Dependency version check, remove remaining dead code, final doc sync |
+| M109 | [`M109-next-priorities-triage-and-define.md`](M109-next-priorities-triage-and-define.md) | Triage remaining improvement areas, define next set of milestones |
 
 ## Deferred
 
