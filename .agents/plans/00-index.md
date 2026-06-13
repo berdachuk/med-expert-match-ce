@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M97 | [`M97-document-rag-embedding-backfill-and-deprecation-cleanup.md`](M97-document-rag-embedding-backfill-and-deprecation-cleanup.md) | Fix document RAG embedding backfill, remove deprecated primaryChatModel() and LlmClientType.CHAT, extract inline prompts to .st files
+| M105 | [`M105-dependency-freshness-and-final-cleanup.md`](M105-dependency-freshness-and-final-cleanup.md) | Dependency version check, remove remaining dead code, final doc sync |
 
 ## Deferred
 
