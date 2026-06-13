@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M104 | [`M104-code-quality-and-dependency-freshness.md`](M104-code-quality-and-dependency-freshness.md) | Final documentation sync, remove dead code, dependency freshness check |
+| M105 | [`M105-dependency-freshness-and-final-cleanup.md`](M105-dependency-freshness-and-final-cleanup.md) | Dependency version check, remove remaining dead code, final doc sync |
 
 ## Deferred
 
