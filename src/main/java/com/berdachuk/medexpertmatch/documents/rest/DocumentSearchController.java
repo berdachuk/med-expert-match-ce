@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.documents.rest;
 
+import com.berdachuk.medexpertmatch.core.security.AdminAccessGuard;
 import com.berdachuk.medexpertmatch.documents.DocumentSearchApi;
 import com.berdachuk.medexpertmatch.documents.domain.DocumentSearchResult;
 import com.berdachuk.medexpertmatch.documents.service.impl.DocumentEmbeddingPipeline;
@@ -28,11 +29,14 @@ public class DocumentSearchController {
 
     private final DocumentSearchApi documentSearchApi;
     private final DocumentEmbeddingPipeline embeddingPipeline;
+    private final AdminAccessGuard adminAccessGuard;
 
     public DocumentSearchController(DocumentSearchApi documentSearchApi,
-                                    DocumentEmbeddingPipeline embeddingPipeline) {
+                                    DocumentEmbeddingPipeline embeddingPipeline,
+                                    AdminAccessGuard adminAccessGuard) {
         this.documentSearchApi = documentSearchApi;
         this.embeddingPipeline = embeddingPipeline;
+        this.adminAccessGuard = adminAccessGuard;
     }
 
     @Operation(summary = "Search document chunks by semantic similarity")
@@ -61,6 +65,7 @@ public class DocumentSearchController {
     @Operation(summary = "Trigger on-demand backfill of NULL embeddings for document chunks")
     @PostMapping("/backfill-embeddings")
     public ResponseEntity<Map<String, Object>> backfillEmbeddings() {
+        adminAccessGuard.requireAdmin();
         embeddingPipeline.backfillNullEmbeddings();
         return ResponseEntity.ok(Map.of("status", "accepted"));
     }

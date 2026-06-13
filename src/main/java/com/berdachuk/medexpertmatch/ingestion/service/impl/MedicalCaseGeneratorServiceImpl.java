@@ -168,7 +168,23 @@ public class MedicalCaseGeneratorServiceImpl implements MedicalCaseGeneratorServ
             Bundle bundle = bundles.get(i);
             try {
                 MedicalCase medicalCase = fhirBundleAdapter.convertBundleToMedicalCase(bundle);
-                medicalCases.add(medicalCase);
+                var caseWithCoords = new MedicalCase(
+                        medicalCase.id(),
+                        medicalCase.patientAge(),
+                        medicalCase.chiefComplaint(),
+                        medicalCase.symptoms(),
+                        medicalCase.currentDiagnosis(),
+                        medicalCase.icd10Codes(),
+                        medicalCase.snomedCodes(),
+                        medicalCase.urgencyLevel(),
+                        medicalCase.requiredSpecialty(),
+                        medicalCase.caseType(),
+                        medicalCase.additionalNotes(),
+                        medicalCase.abstractText(),
+                        randomCoordinate(24.0, 49.0),   // latitude: continental US
+                        randomCoordinate(-125.0, -66.0) // longitude: continental US
+                );
+                medicalCases.add(caseWithCoords);
             } catch (IllegalArgumentException e) {
                 log.warn("Invalid FHIR Bundle data, skipping case: {}", e.getMessage());
             } catch (RuntimeException e) {
@@ -344,5 +360,10 @@ public class MedicalCaseGeneratorServiceImpl implements MedicalCaseGeneratorServ
             updateBatch.accept(toUpdate);
             log.debug("Updated {} existing {}", toUpdate.size(), entityName);
         }
+    }
+
+    private java.math.BigDecimal randomCoordinate(double min, double max) {
+        return java.math.BigDecimal.valueOf(min + random.nextDouble() * (max - min))
+                .setScale(8, java.math.RoundingMode.HALF_UP);
     }
 }

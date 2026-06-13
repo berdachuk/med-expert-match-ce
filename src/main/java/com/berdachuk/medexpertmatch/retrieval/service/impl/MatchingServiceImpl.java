@@ -336,8 +336,8 @@ public class MatchingServiceImpl implements MatchingService {
         }
 
         if (medicalCase.locationLatitude() == null || medicalCase.locationLongitude() == null) {
-            throw new IllegalArgumentException(
-                    "maxDistanceKm requires medical case coordinates: " + medicalCase.id());
+            log.warn("maxDistanceKm filter skipped — case {} has no coordinates", medicalCase.id());
+            return;
         }
     }
 
