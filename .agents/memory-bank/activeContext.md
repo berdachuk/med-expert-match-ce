@@ -2,41 +2,38 @@
 
 ## Current Focus
 
-Aligning the new `.agents/memory-bank/` files with canonical documentation (`docs/ARCHITECTURE.md`, `docs/PRD.md`, `docs/decisions/`, `AGENTS.md`) to fix factual errors and structural misalignments.
+All milestones M97–M105 are complete. The codebase is in a clean state with no stale branches, no stale API references (`LlmClientType.CHAT`, `primaryChatModel` removed), auth enabled by default, document RAG wired into the recommendation-engine skill, and startup backfill trigger added.
 
 ## Current Milestone
 
-The active plan is **M97** (`M97-document-rag-embedding-backfill-and-deprecation-cleanup.md`) with 4 tasks:
-1. Document `medexpertmatch.documents.backfill.*` in `application.yml` — **pending**
-2. Add admin endpoint for on-demand embedding backfill — **pending**
-3. Remove `@Deprecated primaryChatModel()` and `LlmClientType.CHAT` — **pending**
-4. Extract inline summarization prompts to `.st` files — **pending**
+**M106** — next phase (to be defined). All prior milestones through M105 are archived.
 
 **Deferred:** M60 (FunctionGemma fine-tune — needs GPU capacity, stakeholder sign-off)
 
 ## Completed Recently
 
-- **M96** — Russian route-case keywords, chat mode cleanup, response sanitizer fixes
-- **M95** — Prompt simplification, ICD-10 validation, parallel description generation
-- **M94** — Session ID fix in advisor context, data-sizes.csv updates
-- **M93** — Production readiness: embed scheduler, backfill, 549 ITs green
+- **M105** — Final stale API reference cleanup, dependency freshness check
+- **M104** — Remaining dead config file references fixed in docs
+- **M103** — `LlmClientType.CHAT` → `CLINICAL`, `primaryChatModel` → `clinicalChatModel` in all docs
+- **M102** — Find Specialist explainability panel, chat context hardening, AskUserQuestionTool (all already implemented)
+- **M101** — Document RAG wired into recommendation-engine skill, startup backfill trigger
+- **M100** — Stale remote branches deleted, `main` synced with `develop`
+- **M99** — Case coordinates populated in synthetic data, graceful geo degradation
+- **M98** — Auth enabled by default, admin endpoints protected
+- **M97** — Document RAG backfill config + endpoint, deprecation cleanup
 
 ## Open Questions
 
 - When will GPU capacity become available for M60?
-- Should `main` branch be synced with `develop` (~10 commits behind)?
-- When should the `.agents/plans/M95-*.md` stale file be cleaned up? (Already in archive)
-- Is the Document RAG pipeline (NULL embeddings) blocking any user-facing feature?
+- What should M106 focus on? (All prior milestones are complete)
 
 ## Active Risks
 
 - **Integration tests fail locally** — requires `./scripts/build-test-container.sh` first; not a code regression
-- **Document RAG embeddings are NULL** — chunks lack vectors; backfill runs only at 2 AM; no on-demand trigger
-- **`main` branch is stale** — last synced at M93; subsequent M94/M95/M96/M97 work is only on `develop`
+- **No active plan** — all milestones through M105 are complete; M106 needs definition
 
 ## Next Steps
 
-1. Finish memory-bank alignment with canonical docs
-2. Implement M97 phases in order (backfill config → admin endpoint → deprecation removal → prompt extraction)
+1. Define M106 scope
+2. Implement M106
 3. Run `mvn verify` to ensure green suite
-4. Consider syncing `main` with `develop` after M97 completion
