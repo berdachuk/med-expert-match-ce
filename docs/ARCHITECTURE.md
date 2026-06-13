@@ -44,7 +44,7 @@ package "MedExpertMatch Service" <<Cloud>> {
         [MedGemma Integration\nSpring AI] as MedGemma
         [Agent Skills\n7 Medical Skills] as Skills
         note right of Skills
-          <b>7 Agent Skills:</b>
+          <b>9 Agent Skills:</b>
           • case-analyzer: Extract entities, ICD-10, classify urgency
           • doctor-matcher: Match doctors with Semantic Graph Retrieval
           • evidence-retriever: Search guidelines and PubMed
@@ -156,113 +156,150 @@ MedExpertMatch uses a modular structure organized by domain:
 
 - Service: `EmbeddingService` (generates embeddings; uses `EmbeddingModel` or, when configured, `EmbeddingEndpointPool`)
 - Optional **multi-endpoint pool** (`medexpertmatch.embedding.multi-endpoint`): multiple OpenAI-compatible embedding
-  URLs with worker threads, batching, and temporary skip on failure (same pattern as aist-expertmatch)
+  URLs with worker threads, batching, and temporary skip on failure
 - Supports single and batch embedding generation
-- Integrates with test data generation flow
 
 **retrieval** - Hybrid GraphRAG retrieval (vector + graph + keyword + reranking)
 
 - Domain: `DoctorMatch`, `FacilityMatch`, `MatchOptions`, `RoutingOptions`, `ScoreResult`, `RouteScoreResult`,
-  `PriorityScore`
-- Service: `MatchingService`, `SemanticGraphRetrievalService` (Semantic Graph Retrieval), `RerankingService`
+  `PriorityScore`, `ConsultationMatch`, `MatchOutcome`, `DoctorOutcomeAffinity`, `MatchSignalBreakdown`
+- Service: `MatchingService`, `SemanticGraphRetrievalService`, `RerankingService`, `MatchExplainabilityService`,
+  `MatchOutcomeService`, `MatchOutcomeCalibrationService`
 - **Scoring Components**:
-    - Vector similarity (configurable weight) — PgVector embeddings comparison using cosine distance
-    - Graph relationships (configurable weight) — Apache AGE graph traversal for relationship-based scoring
-    - Historical performance (configurable weight) — Past outcomes, ratings, and success rates
-    - **Reciprocal Rank Fusion** (configurable via `fusion-strategy`) — Rank-based fusion with k=60, alternative to weighted average
-- **Re-ranking**: Semantic re-ranking via `RerankingService` using existing `rerankingChatModel` bean (disabled by default)
-- **Used in Find Specialist Flow**: Graph relationships are actively used via
-  `SemanticGraphRetrievalService.calculateGraphRelationshipScore()` for doctor-case matching
+    - Vector similarity (configurable weight) — pgvector cosine distance on case embeddings
+    - Graph relationships (configurable weight) — Apache AGE graph traversal
+    - Historical performance (configurable weight) — ClinicalExperience outcomes, ratings, success rates
+    - **Reciprocal Rank Fusion** (configurable via `fusion-strategy`) — k=60, alternative to weighted average
+- **Re-ranking**: Semantic re-ranking via `RerankingService` (disabled by default)
 
-**llm** - LLM orchestration, Agent Skills integration, session memory, durable memory, and evaluation
+**llm** - LLM orchestration, Agent Skills integration, harness, session memory, durable memory, evaluation
 
 - Configuration: `MedicalAgentConfiguration` (ChatClient with SkillsTool, AutoMemoryTools, SessionMemoryAdvisor)
-- Services: `MedicalAgentService`, `MedicalAgentLlmSupportService`, `AutoMemoryService`
-- Workflow services: `MedicalAgentDoctorMatchingWorkflowService`, `MedicalAgentQueuePrioritizationWorkflowService`, etc.
-- Tools: `MedicalAgentTools` (18 tools), `AutoMemoryTools` (5 tools for cross-session durable memory)
+- **9 agent tool classes**: `CaseAnalysisAgentTools` (5 tools), `ClinicalAdvisorAgentTools` (3), `DoctorMatchingAgentTools` (4),
+  `EvidenceAgentTools` (3), `GraphAnalyticsAgentTools` (2), `RoutingAgentTools` (3), `ContextBuilderAgentTools` (1),
+  `DateTimeAgentTools` (1), `AutoMemoryTools` (5) — **27 tools total**
 - Agent infrastructure: `OrchestrationContextHolder` (ThreadLocal session ID propagation)
-- Evaluation: `EvaluationService` (4-metric: exact match, normalized, semantic similarity, semantic pass), `EvalScorer` (cosine similarity via EmbeddingService), `EvaluationJdbcRepository`, `EvaluationDatasetSeeder`, `EvaluationProgressTracker`, `EvalCliRunner` (@Profile("eval-cli"))
-- Rest: `MedicalAgentController` (agent API endpoints)
+- Evaluation: `EvaluationService` (4-metric: exact match, normalized, semantic similarity, semantic pass), 7 eval families (adjudication, goal-classifier, policy-confidence, scoring-weight, tool-selection, context-summarizer, match-outcomes)
+- Rest: `MedicalAgentController` (agent API), `EvaluationController`, A2A protocol controllers, harness controllers
 - Architecture note: `llm` is an intentional orchestration-heavy module and is allowed to depend on multiple domain
   modules to coordinate end-to-end medical workflows.
 
 **graph** - Graph relationship management using Apache AGE
 
-- Service: `GraphService` (Cypher queries on Apache AGE)
-- Service: `MedicalGraphBuilderService` (populates graph with vertices and edges from database data)
+- Service: `GraphService` (Cypher queries), `GraphQueryService`, `MedicalGraphBuilderService`
+- Repository: `GraphRepository`
 - Automatically builds graph after synthetic data generation
+
+### Domain / Edge Modules
+
+**chat** - Conversational chat agent orchestration and retention
+
+- Domain: `Chat`, `ChatMessage`
+- Repository: `ChatRepository`, `ChatMessageRepository`, `ChatGoalContextRepositoryImpl`
+- Service: `ChatService`, `ChatAssistantService`, `ChatRetentionService`, `ChatExportService`, `ChatRateLimitService`
+- REST: `ChatController` (REST API)
+
+**evidence** - PubMed clinical evidence retrieval
+
+- Domain: `PubMedArticle`
+- Service: `PubMedService`
+- REST: `EvidenceController`
+
+**system** - System health indicators
+
+- Health indicators: `AgeGraphHealthIndicator`, `EmbeddingPoolHealthIndicator`, `EvidenceHealthIndicator`,
+  `GraphQualityHealthIndicator`, `PgVectorHealthIndicator`, `RerankingHealthIndicator`
+- REST: `ComprehensiveHealthIndicator`
 
 ### Integration Modules
 
-**ingestion** - Data ingestion (medical cases, doctor profiles)
+**ingestion** - Data ingestion (medical cases, doctor profiles, synthetic data generation)
 
-- Adapters: FHIR adapters (`FhirBundleAdapter`, `FhirPatientAdapter`, `FhirConditionAdapter`, `FhirEncounterAdapter`,
+- Adapters: FHIR R5 adapters (`FhirBundleAdapter`, `FhirPatientAdapter`, `FhirConditionAdapter`, `FhirEncounterAdapter`,
   `FhirObservationAdapter`)
-- Service: `SyntheticDataGenerator` (includes automatic embedding generation and graph building)
-- REST: `SyntheticDataController` (ingestion API), `SyntheticDataWebController` (web UI)
+- Service: `SyntheticDataGenerator`, `SyntheticDataBootstrapService`, `SyntheticDataPostProcessingService`,
+  generators (Doctor, MedicalCase, Facility, ClinicalExperience, Embedding)
+- Synthetic data tracking: `SyntheticDataGenerationRunRepository`, `EstimateAdjustmentService` (M77)
+- REST: `SyntheticDataController`, `SyntheticDataAdminController`
 
-**documents** - Document ingestion (PDF, JSONL, JSON, CSV)
+**documents** - Document ingestion and search (PDF, JSONL, JSON, CSV)
 
 - Repository: `SourceDocumentRepository` (JDBC CRUD with SHA-256 dedup)
-- Service: `DocumentIngestServiceImpl`, `DocumentCatalogServiceImpl`
-- Extractors: `PdfTextExtractor` (PDFBox 3.0.3), `StructuredFileParser`, `ContentHasher`
-- Allowed dependencies: core, embedding
+- Domain: `SourceDocumentEntity`, `DocumentSearchResult`, `DocumentSearchFilters`
+- Service: `DocumentIngestServiceImpl`, `DocumentCatalogServiceImpl`, `DocumentSearchServiceImpl`,
+  `DocumentEmbeddingPipeline`, `EmbeddingBackfillScheduler`
+- Extractors: `PdfTextExtractor` (PDFBox 3.0.7), `StructuredFileParser`, `ContentHasher`
+- Allowed dependencies: core, embedding, chunking
 
 **chunking** - Adaptive text chunking strategies
 
-- Interface: `Chunker` (chunk with configurable size, overlap, min chars)
+- Interface: `Chunker` (configurable size, overlap, min chars)
+- Domain: `DocumentChunk`
 - Strategies: `AdaptiveChunker` (meta-chunker), `SemanticChunker` (sentence-boundary), `RecursiveCharacterChunker`
 - Factory: `ChunkerFactory` (strategy registry)
-- Repository: `ChunkRepository` (JDBC CRUD for document_chunk)
+- Repository: `ChunkRepository` (JDBC CRUD)
 - Allowed dependencies: core
 
-**web** - Web UI with Thymeleaf templates (server-side rendering)
+**web** - Web UI with Thymeleaf SSR
 
+- 16 page templates + 4 fragments (layout, header, footer, chat-sidebar)
 - Controllers: `HomeController`, `MatchController`, `QueueController`, `AnalyticsController`, `CaseAnalysisController`,
-  `RoutingController`, `DoctorController`, `TestDataWebController`, `LogStreamController`
-- Service: `LogStreamService` (for log streaming)
-- Architecture note: `web` is an intentional composition layer that coordinates UI flows across multiple modules rather
-  than owning core domain logic.
+  `RoutingController`, `DoctorController`, `ChatWebController`, `DocumentsWebController`, `SyntheticDataWebController`,
+  `AdminDashboardWebController`, `GraphVisualizationWebController`, `ChatExportsWebController`,
+  `HarnessChainsWebController`, `HarnessRunsWebController`, `SessionTokensWebController`
+- Architecture note: `web` is a composition layer coordinating UI flows; it does not own core domain logic.
 
 ## Data Model
 
 ### Core Entities
 
-**Doctor** (adapted from Employee)
+**Doctor** — Specialist profile
 
-- Medical specialties
-- Board certifications
-- Clinical experience
-- Facility affiliations
+- External system ID (VARCHAR 74), name, email, specialties array (TEXT[]), certifications (TEXT[]), facility IDs (TEXT[]), telehealth enabled, availability status
 
-**MedicalCase** (adapted from Project)
+**MedicalCase** — Anonymized patient case
 
-- Patient case (anonymized)
-- ICD-10 codes
-- SNOMED codes
-- Urgency level
-- Required specialty
-- Vector embedding (1536 dimensions, stored in PostgreSQL pgvector)
-- Embedding dimension metadata
+- Internal ID (CHAR 24), patient age, chief complaint, symptoms, current diagnosis, ICD-10 codes (TEXT[]), SNOMED codes (TEXT[]), urgency level, required specialty, case type, abstract text, GPS coordinates, 1536-dim vector embedding
 
-**ClinicalExperience** (adapted from WorkExperience)
+**ClinicalExperience** — Doctor-case outcome record
 
-- Doctor-case relationships
-- Case outcomes
-- Procedures performed
-- Complexity levels
+- Internal ID (CHAR 24), doctor ID → case ID link, procedures performed, complexity level, outcome, complications, time to resolution, rating
 
-**ICD10Code** (new)
+**Facility** — Hospital/clinic
 
-- ICD-10 code hierarchy
-- Descriptions
-- Related codes
+- External system ID, name, type, location (city/state/country/GPS), capabilities (TEXT[]), capacity, current occupancy
 
-**MedicalSpecialty** (adapted from Technology)
+**ICD10Code** — Diagnostic code reference
 
-- Specialty names
-- ICD-10 code ranges
-- Related specialties
+- Internal ID, code, description, category, parent code (hierarchical), related codes (TEXT[])
+
+**MedicalSpecialty** — Specialty taxonomy
+
+- Internal ID, name, ICD-10 code ranges (TEXT[]), related specialties (TEXT[])
+
+**Procedure** — Medical procedure reference
+
+- Internal ID, code, name, category
+
+### Edge / Integration Entities
+
+| Entity | Module | Purpose |
+|--------|--------|---------|
+| ConsultationMatch | retrieval | Match result with score, ranking, rationale, status |
+| MatchOutcome | retrieval | Labeled outcome for flywheel calibration |
+| DoctorOutcomeAffinity | retrieval | Weighted affinity per doctor per outcome label |
+| MatchSignalBreakdown | retrieval | Per-signal score breakdown (vector/graph/historical) |
+| PubMedArticle | evidence | External clinical evidence record |
+| Chat, ChatMessage | chat | Conversational session persistence |
+| SourceDocumentEntity | documents | Ingested document with SHA-256 content hash |
+| DocumentChunk | chunking | Text chunk with embedding and strategy metadata |
+| DocumentSearchResult | documents | Search result wrapper |
+| CaseAnalysisResult | caseanalysis | LLM analysis output |
+| ApiSessionToken | core | API authentication token |
+| AuditLog | core | PHI-safe access audit trail |
+| SyntheticDataGenerationRun | ingestion | Run tracking with timings (M77) |
+| Evaluation entities | llm | Dataset/case/run/result records |
+| Harness entities | llm | Workflow runs, chain events, plans, adjudication logs |
 
 ## Database ER Diagram
 
@@ -404,7 +441,7 @@ medical_case }o--|| doctor : treats
 
 **Database Schema Description:**
 
-The database schema consists of 9 main tables (7 domain + 2 AI session):
+The database schema has grown from the original 9 core tables to 29 tables covering domain entities, chat, evaluation, harness, documents, ingestion tracking, and audit. Key tables include:
 
 - **doctors** (external system IDs: VARCHAR(74)): Primary entity for doctor/expert information. Supports UUID strings,
   19-digit numeric strings, or other external system formats. Includes medical specialties (TEXT[] array), board
@@ -470,7 +507,7 @@ graph TB
 
 ## Agent Skills
 
-7 medical-specific Agent Skills:
+9 medical-specific Agent Skills:
 
 1. **case-analyzer**: Analyze cases, extract entities, ICD-10 codes, classify urgency and complexity
 2. **doctor-matcher**: Match doctors to cases, scoring and ranking using multiple signals
@@ -479,6 +516,8 @@ graph TB
 5. **clinical-advisor**: Differential diagnosis, risk assessment
 6. **network-analyzer**: Network expertise analytics, graph-based expert discovery, aggregate metrics
 7. **routing-planner**: Facility routing optimization, multi-facility scoring, geographic routing
+8. **clinical-guideline**: Search and retrieve condition-specific clinical guidelines
+9. **triage**: Assess urgency and acuity, recommend care level (critical/urgent/routine)
 
 ### Agent Skills Architecture
 
@@ -505,12 +544,12 @@ The `MedicalAgentService` orchestrates skills:
 
 ## Technology Stack
 
-- **Backend**: Spring Boot 4.0.2, Java 21
-- **Database**: PostgreSQL 17, PgVector 0.1.4 (client), Apache AGE 1.6.0
+- **Backend**: Spring Boot 4.0.6, Java 21
+- **Database**: PostgreSQL 17, PgVector 0.1.6 (client), Apache AGE 1.6.0
 - **AI Framework**: Spring AI 2.0.0-M8
-- **Session**: Spring AI Session JDBC 0.2.0 (conversation history compaction)
+- **Session**: Spring AI Session JDBC 0.3.0 (conversation history compaction)
 - **Medical AI**: MedGemma 1.5 4B, MedGemma 27B
-- **Testing**: JUnit 5, Testcontainers 2.0.3
+- **Testing**: JUnit 5, Testcontainers 2.0.5, WireMock 3.9.2, Playwright 1.60.0
 
 ## Service Layer
 
@@ -648,7 +687,7 @@ The initial UI is implemented using Thymeleaf for server-side rendering:
 
 ### UI Pages
 
-The system includes 8 main UI pages:
+The system includes 16 main UI pages:
 
 1. **Home Page** (`/`) - Dashboard with navigation and system overview
 2. **Find Specialist** (`/match`) - Specialist matching interface (Use Cases 1 & 2)
@@ -656,9 +695,16 @@ The system includes 8 main UI pages:
 4. **Network Analytics** (`/analytics`) - Expertise network analysis (Use Case 4)
 5. **Case Analysis** (`/analyze/{caseId}`) - AI-powered case analysis (Use Case 5)
 6. **Regional Routing** (`/routing`) - Multi-facility routing (Use Case 6)
-7. **Doctor Profile** (`/doctors/{doctorId}`) - Doctor details and history
-8. **Synthetic Data** (`/admin/synthetic-data`) - Admin synthetic data generation (Administrator only)
-9. **Graph Visualization** (`/admin/graph-visualization`) - Admin graph view (Administrator only)
+7. **AI Chat** (`/chat`) - Conversational AI agent (Expert match harness)
+8. **Documents** (`/documents`) - Document search and catalog
+9. **Doctor Profile** (`/doctors/{doctorId}`) - Doctor details and history
+10. **Admin Dashboard** (`/admin`) - System overview and navigation
+11. **Synthetic Data** (`/admin/synthetic-data`) - Data generation management
+12. **Graph Visualization** (`/admin/graph-visualization`) - Apache AGE graph view
+13. **Chat Exports** (`/admin/chat-exports`) - Chat transcript export
+14. **Harness Chains** (`/admin/harness-chains`) - Agent workflow chain traces
+15. **Harness Runs** (`/admin/harness-runs`) - Workflow run history
+16. **Session Tokens** (`/admin/session-tokens`) - API session token management
 
 **Role-based simulated security:** The header includes a user selector (Regular User, Administrator). Synthetic Data and
 Graph Visualization menu items and pages are visible only when Administrator is selected (`?user=admin`). Non-admin
@@ -817,7 +863,7 @@ Results flow back -> Agent formats response -> REST API returns JSON
 - **Services**: Retrieval, fusion, reranking with medical-specific logic (MatchingService,
   SemanticGraphRetrievalService, GraphService, MedicalGraphBuilderService, CaseAnalysisService, EmbeddingService)
 - **Repositories**: Efficient data access patterns with batch loading and vector embedding support
-- **Agent Skills**: 7 medical-specific skills for modular knowledge management
+- **Agent Skills**: 9 medical-specific skills and 9 separate tool classes (27 tools total) for modular knowledge management
 - **Session Memory**: `SessionMemoryAdvisor` with JDBC persistence compacts conversation history after 15 turns (sliding window, max 30 events)
 - **AutoMemory**: Cross-session durable memory via `AutoMemoryTools` (filesystem-backed Markdown, survives DB resets)
 - **OrchestrationContextHolder**: ThreadLocal session ID propagation decoupled from logging infrastructure

@@ -1,11 +1,11 @@
 # Medical Agent System: Skills, Tools, and Implementation
 
-**Last Updated:** 2026-06-08  
-**Status:** All tools implemented (19 MedicalAgentTools + 5 AutoMemoryTools)
+**Last Updated:** 2026-06-13  
+**Status:** All tools implemented (27 tools across 9 tool classes + 5 AutoMemory tools)
 
 ## Agent Skills Architecture
 
-The agent system is built around 7 core medical-specific Agent Skills stored in `src/main/resources/skills/{skill-name}/SKILL.md`
+The agent system is built around 9 core medical-specific Agent Skills stored in `src/main/resources/skills/{skill-name}/SKILL.md`
 files. These skills provide domain knowledge, tool invocation guidance, and output format specifications for the LLM
 agents.
 
@@ -216,20 +216,25 @@ medexpertmatch:
 
 ## Technical Implementation
 
-### MedicalAgentTools Component
+### Tool Classes
 
-The `MedicalAgentTools` class (1558 lines, 18 `@Tool` methods) serves as the bridge between agent skills and system services.
-The `AutoMemoryTools` class (5 `@Tool` methods) provides cross-session durable memory for the LLM orchestrator.
+The monolithic `MedicalAgentTools` class has been refactored into **9 separate tool classes** (27 `@Tool` methods total) serving as the bridge between agent skills and system services. `AutoMemoryTools` adds 5 additional cross-session memory tools.
 
-Both are registered as `defaultTools` on the `medicalAgentChatClient` in `MedicalAgentConfiguration`, along with
-`FileSystemTools` and `SkillsTool`.
+**Production tool classes:**
+| Class | @Tool count | Skill Area |
+|-------|------------|------------|
+| CaseAnalysisAgentTools | 5 | case-analyzer |
+| ClinicalAdvisorAgentTools | 3 | clinical-advisor |
+| DoctorMatchingAgentTools | 4 | doctor-matcher |
+| EvidenceAgentTools | 3 | evidence-retriever |
+| GraphAnalyticsAgentTools | 2 | network-analyzer |
+| RoutingAgentTools | 3 | routing-planner |
+| ContextBuilderAgentTools | 1 | auto (system) |
+| DateTimeAgentTools | 1 | auto (system) |
+| AutoMemoryTools | 5 | cross-session memory |
+| **Total** | **27** | covers all 9 skills |
 
-- Contains 18 `@Tool` annotated methods covering all 7 agent skills (case-analyzer 5, doctor-matcher 3,
-  evidence-retriever 2, recommendation-engine 1, clinical-advisor 2, network-analyzer 2, routing-planner 3)
-- Injects all necessary services and repositories
-- Implements comprehensive error handling and logging
-- Uses MedGemma chat client for LLM-based operations
-- Integrates with real-time log streaming for monitoring
+All tool classes are registered as `defaultTools` on the `medicalAgentChatClient` in `MedicalAgentConfiguration`, along with `SkillsTool`.
 
 ### AutoMemoryTools Component
 
@@ -274,20 +279,18 @@ All agents implement medical safety measures:
 
 ## Overview
 
-`MedicalAgentTools` is a Spring AI `@Component` that provides Java methods annotated with `@Tool` for LLM agents to
-invoke. These tools enable the medical agent to interact with the database, query graphs, retrieve evidence, and
-generate clinical recommendations.
+The tool classes provide Spring AI `@Tool` annotated methods for LLM agents to invoke. These tools enable the medical agent to interact with the database, query graphs, retrieve evidence, and generate clinical recommendations. The monolithic `MedicalAgentTools` class (formerly 1558 lines) was refactored into 9 focused classes in M29.
 
 **Graph Integration**: Several tools use Apache AGE **graph** for relationship-based discovery:
 
 - **Find Specialist Flow**: `match_doctors_to_case` uses `SemanticGraphRetrievalService` which includes graph
   relationship scoring (30% weight)
 - **Network Analytics**: `graph_query_top_experts` and `aggregate_metrics` use graph queries for expertise discovery
-- **Regional Routing**: `graph_query_candidate_centers` uses graph queries for facility discovery
+- **Regional Routing**: graph-based facility discovery for routing
 
 ## Implementation Status
 
-All tools have been fully implemented and tested. Integration tests are available in `MedicalAgentToolsIT.java`.
+All tools have been fully implemented and tested. Integration tests are available in `*AgentToolsIT.java` classes.
 
 ## Tool Categories
 
