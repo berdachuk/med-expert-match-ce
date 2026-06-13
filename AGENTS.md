@@ -27,6 +27,7 @@ src/main/java/.../medexpertmatch/
 ├── web/            # Thymeleaf SSR web UI (→core, llm + 6 modules)
 └── system/         # System health indicators
 .agents/
+├── memory-bank/    # Persistent agent memory for session continuity
 ├── skills/         # Domain skills (canonical; see Skills Index below)
 └── plans/          # Implementation plans: M{NN}-{goal-slug}.md (+ archive/)
 src/main/resources/
@@ -138,10 +139,27 @@ Always use TDD. Before implementing any functionality:
 5. **Re-run the test** (`mvn verify`) — fix problems and iterate until it passes.
 6. **Run security check again before commit** — review the final diff for secrets, missing auth, injection risks, vulnerable dependencies, or unsafe config.
 
+## Memory Bank (`.agents/memory-bank/`)
+
+Persistent repo-local agent memory for session continuity. Read at the start of substantial tasks.
+
+| File | Purpose |
+|------|--------|
+| `projectbrief.md` | Project identity, goals, scope |
+| `productContext.md` | User-facing capabilities, constraints |
+| `systemPatterns.md` | Architecture, module boundaries, domain ownership |
+| `techContext.md` | Stack, commands, infrastructure |
+| `activeContext.md` | Current focus, open questions, active risks |
+| `progress.md` | Timestamped log of completed work |
+| `decisions.md` | ADR-style decision log |
+
+Update after each task that changes code, tests, architecture, or docs.
+
 ## Layer Model
 
 ```
 .agents/
+├── memory-bank/    ← Persistent agent memory for session continuity
 ├── skills/         ← Single source of truth for domain skills
 └── plans/          ← Implementation plans (M{NN}-*.md; archive/ for completed)
 AGENTS.md             ← Root index (this file)
