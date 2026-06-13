@@ -45,7 +45,7 @@ MedExpertMatch uses a modern, scalable architecture:
 
 - **Hybrid GraphRAG**: Vector search + Graph traversal + Keyword search
 - **Spring AI Integration**: MedGemma models via Spring AI
-- **Agent Skills**: 7 medical-specific skills for modular knowledge
+- **Agent Skills**: 9 medical-specific skills for modular knowledge
 - **Session Memory**: Conversation history compaction via SessionMemoryAdvisor (JDBC-backed)
 - **AutoMemory**: Cross-session durable memory (LLM self-curated facts)
 - **PostgreSQL + PgVector + Apache AGE**: Unified database architecture
@@ -76,15 +76,19 @@ MedExpertMatch uses a modern, scalable architecture:
 
 ### 4. Agent Skills
 
-Seven medical-specific Agent Skills:
+Nine medical-specific Agent Skills — each loaded from `src/main/resources/skills/{name}/SKILL.md` and backed by `@Tool` methods:
 
-- **case-analyzer**: Analyze cases, extract entities, ICD-10 codes, classify urgency and complexity
-- **doctor-matcher**: Match doctors to cases, scoring and ranking using multiple signals
-- **evidence-retriever**: Search guidelines, PubMed, GRADE evidence summaries
-- **recommendation-engine**: Generate clinical recommendations, diagnostic workup, treatment options
-- **clinical-advisor**: Differential diagnosis, risk assessment
-- **network-analyzer**: Network expertise analytics, graph-based expert discovery, aggregate metrics
-- **routing-planner**: Facility routing optimization, multi-facility scoring, geographic routing
+| Skill | When | How |
+|-------|------|-----|
+| **case-analyzer** | Submit case (Find Specialist, Chat intake) | Clinical LLM → extracts entities, ICD-10/SNOMED, classifies urgency |
+| **doctor-matcher** | After case analysis complete | 3-signal pipeline: vector (40%) + graph (30%) + historical (30%) |
+| **evidence-retriever** | Case needs supporting evidence | PubMed E-utilities + local document vector search |
+| **recommendation-engine** | Matches found, synthesis needed | Clinical LLM → diagnostic workup, treatment options |
+| **clinical-advisor** | Differential diagnosis requested | History + LLM → risk assessment, differentials |
+| **network-analyzer** | Expertise network analytics | Apache AGE graph queries on doctor-case relationships |
+| **routing-planner** | Facility routing needed | Complexity + outcomes + capacity + proximity scoring |
+| **clinical-guideline** | Condition-specific evidence | Search guidelines, grade recommendation strength |
+| **triage** | New case enters system | Assess urgency → tier (CRITICAL/HIGH/MEDIUM/LOW) → route |
 
 ## Technology Stack
 
@@ -99,7 +103,7 @@ Seven medical-specific Agent Skills:
 
 - **Week 1-2**: Foundation (domain models, database schema)
 - **Week 3**: Core services (MedGemma integration, case analysis)
-- **Week 4**: Agent Skills implementation
+- **Week 4**: Agent Skills implementation (9 skills)
 - **Week 5-6**: Integration, testing, documentation, demo
 
 ## Important Disclaimers

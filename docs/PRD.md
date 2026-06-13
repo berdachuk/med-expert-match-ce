@@ -1404,7 +1404,7 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 - **Domain Models**: Doctor, MedicalCase, ClinicalExperience, ICD10Code, MedicalSpecialty, Facility
 - **Services**: MatchingService, SemanticGraphRetrievalService, GraphService, CaseAnalysisService, FHIR Adapters
 - **Repositories**: DoctorRepository, MedicalCaseRepository, ClinicalExperienceRepository, etc.
-- **Agent Skills**: 7 medical-specific skills in `src/main/resources/skills/` directory
+- **Agent Skills**: 9 medical-specific skills in `src/main/resources/skills/` directory
 
 ## 12. Open Questions
 

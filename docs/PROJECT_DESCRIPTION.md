@@ -60,7 +60,7 @@ For detailed workflows, see [Use Cases](USE_CASES.md).
 
 **Hybrid GraphRAG:** Match scoring and queue prioritization use vector similarity (PgVector: meaning-based search), graph relationships (Apache AGE: doctors, cases, conditions, and facilities modeled as a network), and keyword and historical performance signals.
 
-**Agent skills:** Modular skills (case-analyzer, doctor-matcher, evidence-retriever, clinical-advisor, recommendation-engine, network-analyzer, routing-planner) are orchestrated by an agent for the find-specialist and case-analysis flows.
+**Agent skills:** Modular skills (case-analyzer, doctor-matcher, evidence-retriever, clinical-advisor, recommendation-engine, network-analyzer, routing-planner, clinical-guideline, triage) are orchestrated by an agent for the find-specialist and case-analysis flows.
 
 **Stack:** Spring Boot 4, Java 21, PostgreSQL 17 with PgVector and Apache AGE, Spring AI 2. The full stack runs via Docker Compose (app, PostgreSQL, embedded docs). Local development uses Maven and the `local` profile; LLMs can be served locally (e.g. LM Studio with systemd) or via any OpenAI-compatible API.
 

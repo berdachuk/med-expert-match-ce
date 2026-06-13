@@ -76,8 +76,19 @@ See [Architecture](ARCHITECTURE.md) for detailed module descriptions.
 - ✅ Graph builder service (`MedicalGraphBuilderService`) for populating graph with vertices and edges
 - ✅ Automatic graph building after synthetic data generation
 - ✅ Medical agent service (`MedicalAgentService`) with Agent Skills integration
-- ✅ 7 Agent Skills (case-analyzer, doctor-matcher, evidence-retriever, recommendation-engine, clinical-advisor,
-  network-analyzer, routing-planner)
+- ✅ 9 Agent Skills:
+
+| Skill | When | How |
+|-------|------|-----|
+| case-analyzer | Submit case (Find Specialist, Chat intake) | Clinical LLM → extracts entities, ICD-10/SNOMED, classifies urgency |
+| doctor-matcher | After case analysis complete | 3-signal pipeline: vector similarity + graph proximity + historical outcomes |
+| evidence-retriever | Case needs supporting evidence | PubMed E-utilities API + local document vector search |
+| recommendation-engine | Matches found, final synthesis needed | Clinical LLM → diagnostic workup, treatment plan, referral rationale |
+| clinical-advisor | Differential diagnosis requested | ClinicalExperience history + LLM → risk assessment, differentials |
+| network-analyzer | Expertise network analytics requested | Apache AGE graph queries on doctor-specialty-case relationships |
+| routing-planner | "Where should this patient go?" | Facility scoring: complexity + outcomes + capacity + proximity |
+| clinical-guideline | Evidence needed for specific condition | Search published guidelines, grade strength of recommendation |
+| triage | New case enters system | Assess urgency → CRITICAL/HIGH/MEDIUM/LOW → route or hold |
 - ✅ Java @Tool methods (`MedicalAgentTools`)
 - ✅ FHIR adapters for data ingestion
 - ✅ Automatic embedding generation in test data flow

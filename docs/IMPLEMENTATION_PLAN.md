@@ -1173,8 +1173,8 @@ mvn test -Dtest=*IT
 
 ### Phase 3 Completion
 
-- ✅ All 7 agent skills created (case-analyzer, doctor-matcher, evidence-retriever, recommendation-engine,
-  clinical-advisor, network-analyzer, routing-planner)
+- ✅ All 9 agent skills created (case-analyzer, doctor-matcher, evidence-retriever, recommendation-engine,
+  clinical-advisor, network-analyzer, routing-planner, clinical-guideline, triage)
 - ✅ Java tools implemented (all `@Tool` methods)
 - ✅ Agent orchestration working (MedicalAgentService)
 - ✅ All 6 API endpoints implemented and tested

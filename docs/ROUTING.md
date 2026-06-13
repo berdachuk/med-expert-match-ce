@@ -1,6 +1,6 @@
 # Regional Routing
 
-**Last Updated:** 2026-05-19
+**Last Updated:** 2026-06-13
 
 ## Purpose
 
@@ -95,3 +95,35 @@ The `sessionId` in the request body is used to stream execution logs to the clie
 - [Use Cases](USE_CASES.md) – Use Case 6: Cross-Organization / Regional Routing
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) – case-analyzer and routing-planner tools
 - [Architecture](ARCHITECTURE.md) – API and pages
+
+## Geographic Position (How It Works)
+
+The routing pipeline uses a 4-component weighted score for each facility (defaults from `RetrievalScoringProperties`):
+
+| Component | Weight | Source |
+|-----------|--------|--------|
+| Complexity match | 30% | Facility capabilities vs case requirements |
+| Historical outcomes | 30% | Aggregated doctor success rates at facility |
+| Capacity | 20% | `1.0 - occupancy/capacity` |
+| Geographic proximity | 20% | Haversine distance via `GeoDistance.java` |
+
+### Geo Score Tiers
+
+Geo score is computed as a cascade (see `SemanticGraphRetrievalServiceImpl.calculateGeographicScore()`):
+
+```
+Case + Facility have coords → Haversine distance → max(0, 1.0 - km/500)
+  (0km = 1.0, 250km = 0.5, 500km+ = 0.0)
+
+Facility has city+state → 0.75  (fallback — uniform for all facilities)
+Facility has country    → 0.60
+Nothing                 → 0.30
+```
+
+### Known Gap (M99)
+
+**Case coordinates are not populated.** The `MedicalCase.locationLatitude`/`locationLongitude` fields exist in the schema and scoring pipeline but are never set by synthetic data generators or case intake. All synthetic cases have `null` coordinates, so geo scoring falls through to the uniform city/state fallback (0.75 for all facilities).
+
+The `maxDistanceKm` filter parameter on `match_facilities_for_case()` throws an `IllegalArgumentException` when case coords are null — see `MatchingServiceImpl.validateGeographicFilteringSupport()`.
+
+**Fix planned:** M99 will populate case coordinates during synthetic data generation and make the filter degrade gracefully instead of throwing.

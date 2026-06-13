@@ -730,7 +730,7 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 `POST /api/v1/agent/route-case/{caseId}` - Regional routing (case-analyzer, routing-planner)
 
 - **Use Case**: Use Case 6 (Regional Routing)
-- **Skills**: case-analyzer, routing-planner
+- **Skills**: case-analyzer, routing-planner, clinical-guideline, triage
 - **UI Page**: `/routing`
 
 **Reference**: See [Use Cases](USE_CASES.md) for detailed sequence diagrams and workflows for each endpoint.

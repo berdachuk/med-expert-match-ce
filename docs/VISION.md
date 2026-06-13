@@ -37,7 +37,7 @@ Combines vector, graph, and keyword search for optimal matching accuracy via Gra
 
 ### 3. Agent Skills Pattern
 
-Modular, extensible knowledge management through Spring AI Agent Skills (7 medical-specific skills).
+Modular, extensible knowledge management through Spring AI Agent Skills (9 medical-specific skills).
 
 ### 4. Evidence-Based Approach
 
