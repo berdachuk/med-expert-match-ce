@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M105 | [`M105-dependency-freshness-and-final-cleanup.md`](M105-dependency-freshness-and-final-cleanup.md) | Dependency version check, remove remaining dead code, final doc sync |
+None — all milestones through M105 are complete. See Archive below.
 
 ## Deferred
 
