@@ -102,17 +102,8 @@ public class SpringAIConfig {
     }
 
     /**
-     * @deprecated Use {@link #clinicalChatModel()}; retained for one release cycle (M67).
+     * Clinical model — used for case analysis, interpretation, and high-quality clinical reasoning.
      */
-    @Bean
-    @Primary
-    @Lazy
-    @Deprecated
-    public ChatModel primaryChatModel(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
-        log.warn("primaryChatModel is deprecated; inject clinicalChatModel instead (M67)");
-        return clinicalChatModel;
-    }
-
     @Bean("descriptionGenerationChatModel")
     @Lazy
     public ChatModel descriptionGenerationChatModel(@Qualifier("utilityChatModel") ChatModel utilityChatModel) {

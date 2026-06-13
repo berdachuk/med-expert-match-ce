@@ -36,7 +36,7 @@ public class LlmUsageTelemetryService {
         }
         RoutingTier tier = parseRoutingTier(snapshot.routingTier());
         GoalType goalType = parseGoalType(snapshot.goalType());
-        LlmClientType clientType = snapshot.clientType().normalized();
+        LlmClientType clientType = snapshot.clientType();
 
         llmRoutingMetrics.recordLatency(clientType, snapshot.operation(), snapshot.latencyMs());
         if (snapshot.cacheHit()) {

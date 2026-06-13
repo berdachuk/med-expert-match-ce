@@ -17,13 +17,4 @@ class LlmCallLimiterRoleTest {
         assertEquals(1, limiter.getMaxConcurrentCalls(LlmClientType.EMBEDDING));
         assertEquals(3, limiter.getMaxConcurrentCalls(LlmClientType.TOOL_CALLING));
     }
-
-    @Test
-    @DisplayName("deprecated CHAT maps to clinical semaphore")
-    void chatMapsToClinical() {
-        LlmCallLimiter limiter = new LlmCallLimiter(5, 2, 1, 1, 1, null);
-
-        assertEquals(5, limiter.getMaxConcurrentCalls(LlmClientType.CHAT));
-        assertEquals(5, limiter.getMaxConcurrentCalls(LlmClientType.CLINICAL));
-    }
 }

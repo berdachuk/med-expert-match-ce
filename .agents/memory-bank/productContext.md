@@ -14,31 +14,33 @@
 
 6. **Regional Routing (UC-6)** — Multi-facility routing optimization: match case complexity to facility capability, geographic proximity scoring, capacity-aware recommendations.
 
-## 7 Agent Skills
+## 9 Agent Skills
 
-| Skill | Purpose |
-|-------|---------|
-| case-analyzer | Extract entities, ICD-10/SNOMED codes, classify urgency and complexity |
-| doctor-matcher | Score and rank doctors using vector + graph + historical signals |
-| evidence-retriever | Search PubMed, clinical guidelines, GRADE evidence summaries |
-| recommendation-engine | Generate clinical recommendations, diagnostic workup, treatment options |
-| clinical-advisor | Differential diagnosis, risk assessment |
-| network-analyzer | Expertise network analytics, graph-based expert discovery, aggregate metrics |
-| routing-planner | Facility routing optimization, multi-facility scoring, geographic routing |
+| Skill                 | Purpose                                                                      |
+|-----------------------|------------------------------------------------------------------------------|
+| case-analyzer         | Extract entities, ICD-10/SNOMED codes, classify urgency and complexity       |
+| doctor-matcher        | Score and rank doctors using vector + graph + historical signals             |
+| evidence-retriever    | Search PubMed, clinical guidelines, GRADE evidence summaries                 |
+| recommendation-engine | Generate clinical recommendations, diagnostic workup, treatment options      |
+| clinical-advisor      | Differential diagnosis, risk assessment                                      |
+| network-analyzer      | Expertise network analytics, graph-based expert discovery, aggregate metrics |
+| routing-planner       | Facility routing optimization, multi-facility scoring, geographic routing    |
+| clinical-guideline    | Retrieve condition-specific clinical practice guidelines                     |
+| triage                | Assess urgency and acuity, recommend care level routing                      |
 
 ## Constraints
 
-| Area | Constraint |
-|------|------------|
-| Model | MedGemma 1.5 4B (primary), MedGemma 27B (heavy analysis), FunctionGemma (tool-calling) |
-| API | OpenAI-compatible only; no Ollama |
+| Area          | Constraint                                                                              |
+|---------------|-----------------------------------------------------------------------------------------|
+| Model         | MedGemma 1.5 4B (primary), MedGemma 27B (heavy analysis), FunctionGemma (tool-calling)  |
+| API           | OpenAI-compatible only; no Ollama                                                       |
 | LLM endpoints | 6 role-separated: CLINICAL_HIGH, CLINICAL_LOW, UTILITY, TOOL_CALLING, EMBEDDING, RERANK |
-| Privacy | No PHI in logs/errors/tests; all patient data anonymized |
-| DB | PostgreSQL 17 with pgvector (1536-dim vectors) + Apache AGE 1.6.0 (graph) |
-| Architecture | Strict modulith tiers enforced at compile time |
-| Sessions | Spring AI Session JDBC — compaction after 15 turns, max 30 events |
-| AutoMemory | Filesystem-backed durable facts at `~/.medexpertmatch/automemory/` |
-| Deployment | Local-first (Docker Compose); no cloud dependency |
+| Privacy       | No PHI in logs/errors/tests; all patient data anonymized                                |
+| DB            | PostgreSQL 17 with pgvector (1536-dim vectors) + Apache AGE 1.6.0 (graph)               |
+| Architecture  | Strict modulith tiers enforced at compile time                                          |
+| Sessions      | Spring AI Session JDBC — compaction after 15 turns, max 30 events                       |
+| AutoMemory    | Filesystem-backed durable facts at `~/.medexpertmatch/automemory/`                      |
+| Deployment    | Local-first (Docker Compose); no cloud dependency                                       |
 
 ## Retrieval Scoring
 

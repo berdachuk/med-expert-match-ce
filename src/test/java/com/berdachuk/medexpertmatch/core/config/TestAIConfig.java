@@ -889,6 +889,7 @@ public class TestAIConfig {
      * Returns valid JSON responses for extraction calls.
      */
     @Bean("clinicalChatModel")
+    @Primary
     public ChatModel clinicalChatModel() {
         return createMockChatModel();
     }
@@ -906,13 +907,6 @@ public class TestAIConfig {
     @Bean("rerankingChatClient")
     public ChatClient rerankingChatClient(@Qualifier("rerankingChatModel") ChatModel rerankingChatModel) {
         return ChatClient.builder(rerankingChatModel).build();
-    }
-
-    @Bean("primaryChatModel")
-    @Primary
-    @Deprecated
-    public ChatModel primaryChatModel(@Qualifier("clinicalChatModel") ChatModel clinicalChatModel) {
-        return clinicalChatModel;
     }
 
     /**

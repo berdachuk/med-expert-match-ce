@@ -60,17 +60,17 @@ class LlmRoutingMetricsTest {
     @Test
     @DisplayName("recordTokens increments llm.tokens.total by input and output amounts")
     void recordsTokenUsage() {
-        metrics.recordTokens(LlmClientType.CHAT, RoutingTier.FULL, GoalType.ANALYZE_CASE, 1200, 300);
+        metrics.recordTokens(LlmClientType.CLINICAL, RoutingTier.FULL, GoalType.ANALYZE_CASE, 1200, 300);
 
         assertEquals(1200.0, registry.get("llm.tokens.total")
-                .tag("client_type", "CHAT")
+                .tag("client_type", "CLINICAL")
                 .tag("tier", "FULL")
                 .tag("goal_type", "ANALYZE_CASE")
                 .tag("direction", "input")
                 .counter()
                 .count());
         assertEquals(300.0, registry.get("llm.tokens.total")
-                .tag("client_type", "CHAT")
+                .tag("client_type", "CLINICAL")
                 .tag("tier", "FULL")
                 .tag("goal_type", "ANALYZE_CASE")
                 .tag("direction", "output")

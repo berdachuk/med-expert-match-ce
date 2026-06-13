@@ -309,6 +309,9 @@ medexpertmatch:
       default-strategy: ${MEDEXPERTMATCH_DOCUMENTS_CHUNKING_STRATEGY:adaptive}
       chunk-size: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_SIZE:512}
       chunk-overlap: ${MEDEXPERTMATCH_DOCUMENTS_CHUNK_OVERLAP:64}
+    backfill:
+      enabled: ${MEDEXPERTMATCH_DOCUMENTS_BACKFILL_ENABLED:true}
+      cron: ${MEDEXPERTMATCH_DOCUMENTS_BACKFILL_CRON:0 0 2 * * *}
   auth:
     enabled: ${MEDEXPERTMATCH_AUTH_ENABLED:false}
     api-keys: ${MEDEXPERTMATCH_AUTH_API_KEYS:}

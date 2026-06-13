@@ -67,11 +67,11 @@ public class LlmCallLimiter {
         this.maxConcurrentCalls = new EnumMap<>(LlmClientType.class);
 
         putSemaphore(LlmClientType.CLINICAL, clinicalMaxConcurrentCalls);
+        putSemaphore(LlmClientType.CLINICAL, clinicalMaxConcurrentCalls);
         putSemaphore(LlmClientType.UTILITY, utilityMaxConcurrentCalls);
         putSemaphore(LlmClientType.EMBEDDING, embeddingMaxConcurrentCalls);
         putSemaphore(LlmClientType.RERANKING, rerankingMaxConcurrentCalls);
         putSemaphore(LlmClientType.TOOL_CALLING, toolCallingMaxConcurrentCalls);
-        putSemaphore(LlmClientType.CHAT, clinicalMaxConcurrentCalls);
 
         log.info("LlmCallLimiter initialized - CLINICAL: {}, UTILITY: {}, EMBEDDING: {}, RERANKING: {}, "
                         + "TOOL_CALLING: {}, acquireTimeoutSeconds: {}",
@@ -93,8 +93,7 @@ public class LlmCallLimiter {
     }
 
     public <T> T execute(LlmClientType clientType, Supplier<T> supplier) {
-        LlmClientType normalized = clientType.normalized();
-        Semaphore semaphore = semaphores.get(normalized);
+        Semaphore semaphore = semaphores.get(clientType);
         if (semaphore == null) {
             throw new IllegalArgumentException("No semaphore for client type: " + clientType);
         }
@@ -104,25 +103,25 @@ public class LlmCallLimiter {
             acquired = semaphore.tryAcquire(acquireTimeoutSeconds, TimeUnit.SECONDS);
             long waitMs = (System.nanoTime() - waitStart) / 1_000_000L;
             if (limiterMetrics != null && waitMs > 0) {
-                limiterMetrics.recordWait(normalized, waitMs);
+                limiterMetrics.recordWait(clientType, waitMs);
             }
             if (!acquired) {
                 if (limiterMetrics != null) {
-                    limiterMetrics.recordTimeout(normalized);
+                    limiterMetrics.recordTimeout(clientType);
                 }
                 throw new LlmCallLimiterTimeoutException(
-                        "Timed out after " + acquireTimeoutSeconds + "s waiting for LLM permit (" + normalized + ")");
+                        "Timed out after " + acquireTimeoutSeconds + "s waiting for LLM permit (" + clientType + ")");
             }
-            log.trace("Acquired permit for {} client type. Available permits: {}", normalized, semaphore.availablePermits());
+            log.trace("Acquired permit for {} client type. Available permits: {}", clientType, semaphore.availablePermits());
             return supplier.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Interrupted while waiting for LLM call permit", e);
         } finally {
-            recordCall(normalized);
+            recordCall(clientType);
             if (acquired) {
                 semaphore.release();
-                log.trace("Released permit for {} client type. Available permits: {}", normalized, semaphore.availablePermits());
+                log.trace("Released permit for {} client type. Available permits: {}", clientType, semaphore.availablePermits());
             }
         }
     }
@@ -134,6 +133,6 @@ public class LlmCallLimiter {
     }
 
     public int getMaxConcurrentCalls(LlmClientType clientType) {
-        return maxConcurrentCalls.getOrDefault(clientType.normalized(), 10);
+        return maxConcurrentCalls.getOrDefault(clientType, 10);
     }
 }
