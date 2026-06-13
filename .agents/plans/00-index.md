@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M107 | [`M107-code-quality-and-dependency-freshness.md`](M107-code-quality-and-dependency-freshness.md) | Dependency version check, remove remaining dead code, final doc sync |
+| M108 | [`M108-code-quality-and-dependency-freshness.md`](M108-code-quality-and-dependency-freshness.md) | Dependency version check, remove remaining dead code, final doc sync |
 
 ## Deferred
 
