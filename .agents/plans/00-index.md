@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-None — all milestones through M105 are complete. See Archive below.
+| M106 | [`M106-local-dev-experience-and-test-infrastructure.md`](M106-local-dev-experience-and-test-infrastructure.md) | Add Makefile for test image build, document test setup, ensure .gitignore consistency |
 
 ## Deferred
 
