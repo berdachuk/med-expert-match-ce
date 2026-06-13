@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M97 | [`M97-document-rag-embedding-backfill-and-deprecation-cleanup.md`](M97-document-rag-embedding-backfill-and-deprecation-cleanup.md) | Fix document RAG embedding backfill, remove deprecated primaryChatModel() and LlmClientType.CHAT, extract inline prompts to .st files
+| M100 | [`M100-hardening-roundout-and-next-priorities.md`](M100-hardening-roundout-and-next-priorities.md) | Finalize security hardening (DockerSecurityConfig), remaining code-quality fixes, sync main branch |
 
 ## Deferred
 
