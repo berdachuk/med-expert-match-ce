@@ -4,6 +4,13 @@ revealjs:
   height: 800
 ---
 
+<!-- .slide: class="title-image-slide" -->
+
+<img class="title-image" src="../images/spring-ai-agent-skills-medical.png" alt="Spring AI Agent Skills Medical" />
+<p style="text-align:center;font-size:0.7rem;margin-top:0.3rem;opacity:0.7;">by Siarhei Berdachuk</p>
+
+---
+
 ## Why this project
 
 <div class="reveal-slide-row">
@@ -16,7 +23,10 @@ revealjs:
 
 **Question:** Do relational data, vectors, graph, LLM, and agent orchestration hold together in **one** stack?
 
-**Code:** [github.com/berdachuk/med-expert-match-ce](https://github.com/berdachuk/med-expert-match-ce)
+<div style="display:flex;align-items:center;gap:0.5rem;">
+<div><b>Code:</b><br/><a href="https://github.com/berdachuk/med-expert-match-ce" target="_blank">github.com/berdachuk/med-expert-match-ce</a></div>
+<img class="reveal-slide-qr" src="../images/qr-github-repo.png" alt="QR: GitHub repository" style="max-width:220px;max-height:220px;" />
+</div>
 
 </div>
 
@@ -230,31 +240,6 @@ Note: Regional routing; web UI `/routing`.
 
 ---
 
-## Problems to product (summary)
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-| Problem | MedExpertMatch response |
-|---------|-------------------------|
-| Delays | Match + queue priority |
-| Hidden expertise | Graph + network analytics |
-| Fragmented support | Agent: analysis + evidence + recommendations |
-| Resources | Facility routing with capabilities |
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-problems-summary.png" alt="Problems mapped to product responses" />
-
-</div>
-
-</div>
-
----
-
 ## Six core scenarios
 
 <div class="reveal-slide-row">
@@ -308,66 +293,10 @@ Note: Walk this once slowly; it anchors the rest of the architecture section.
 
 <!-- .slide: class="system-overview-slide" -->
 
-<pre class="mermaid">
-graph TB
-    TITLE["System Overview"]
-    style TITLE font-size:1.4rem,font-weight:bold,fill:none,stroke:none
+<h3 style="margin:0.1em 0 0.3em 0;font-size:1.1rem;">System Overview</h3>
 
-    subgraph "Web Layer"
-        UI[Thymeleaf SSR]
-        REST[REST Controllers]
-    end
+<img src="../images/system-overview-medexpertmach.png" alt="System Overview" style="max-width:100%;max-height:700px;width:auto;height:auto;border:none;box-shadow:none;" />
 
-    subgraph "LLM Module"
-        CA[ChatClient + SkillsTool]
-        PA[PlannerAgent]
-        CBA[ContextBuilderAgent]
-        EA[ExecutionAgent]
-        LCA[LlmUsageCaptureAdvisor]
-        AM[AutoMemoryTools]
-        SM[SessionMemoryAdvisor]
-    end
-
-    subgraph "Retrieval Module"
-        DR[DoctorMatchService]
-        SR[SemanticGraphRetrievalService]
-        RR[RerankingService]
-    end
-
-    subgraph "Domain Modules"
-        MC[medicalcase]
-        DOC[doctor]
-        CE[clinicalexperience]
-        FAC[facility]
-        EV[evidence / PubMed]
-    end
-
-    subgraph "Infrastructure"
-        PG[(PostgreSQL 17)]
-        VEC[(pgvector 1536-dim)]
-        AGE[(Apache AGE graph)]
-    end
-
-    UI --> CA
-    REST --> CA
-    CA --> PA
-    PA -->|PlanReadyEvent| CBA
-    CBA -->|ContextReadyEvent| EA
-    EA --> DR
-    DR --> SR
-    SR --> VEC
-    SR --> AGE
-    SR --> CE
-    DR --> RR
-    CA --> LCA
-    CA --> SM
-    CA --> AM
-    DR --> MC
-    DR --> DOC
-    DR --> FAC
-    PG --> VEC
-    PG --> AGE
-</pre>
 
 Note: The LLM module uses event-driven agent orchestration (PlanReadyEvent → ContextReadyEvent). The retrieval module fuses vector, graph, and history signals. All domain data lives in PostgreSQL 17 with pgvector and Apache AGE extensions.
 
@@ -580,6 +509,38 @@ Note: Skills map to `skills/*/SKILL.md` and tool groups in the `llm` module.
 
 ---
 
+## How Skills Work: Architecture and Execution Flow
+
+Spring AI describes the skill lifecycle in three stages: **discovery**, **activation**, and **execution**. The flow is:
+
+<pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant SkillsTool as SkillsTool<br/>(registry)
+    participant LLM
+    participant Skill as SKILL.md<br/>(loaded on demand)
+    participant Tool as @Tool method
+    participant Service as Domain Service
+
+    User->>SkillsTool: User message
+    SkillsTool->>LLM: Registry (names + descriptions only)
+    LLM-->>SkillsTool: Semantic match: "triage" skill identified
+    SkillsTool->>Skill: Load full SKILL.md into context
+    Skill->>Tool: Model calls tool function
+    Tool->>Service: Tool invokes Spring service
+    Service-->>Tool: Structured result
+    Tool-->>Skill: Tool response in context
+    Skill-->>User: Generated response with rationale
+</pre>
+
+1. **Discovery** — At startup, `SkillsTool` scans `src/main/resources/skills/` directories and extracts only `name` and `description` from each `SKILL.md` frontmatter. This lightweight registry is sent to the LLM.
+2. **Activation** — When a user message semantically matches a skill, the model invokes `Skill("skill-name")`. Only then is the full `SKILL.md` content loaded into the context window.
+3. **Execution** — Inside the skill's instructions, the model decides which `@Tool` methods to call. Tools execute in the local environment and return results into the skill's context.
+
+> **Important**: Scripts referenced by a skill execute directly in the local environment without sandboxing. This is fine for read-only operations but requires careful scoping for anything that modifies state.
+
+---
+
 ## Data access: graph and SQL
 
 <div class="reveal-slide-row">
@@ -588,6 +549,19 @@ Note: Skills map to `skills/*/SKILL.md` and tool groups in the `llm` module.
 
 - **Graph:** all Cypher via **`GraphService`** (parameter embedding, consistent policy)  
 - **SQL:** JDBC repositories, queries in **`.sql`** files, dedicated mappers  
+
+**Example Cypher query** — scoring relationship depth (30% graph weight):
+
+```cypher
+MATCH (d:Doctor {id: $doctorId})
+      -[:TREATED]->
+      (c:MedicalCase)
+      -[:HAS_CONDITION]->
+      (i:ICD10Code {code: $icd10Code})
+RETURN count(*)
+```
+
+Same pattern for `SPECIALIZES_IN`, `TREATS_CONDITION`, `AFFILIATED_WITH` — each returns a **normalized 0–1** score.
 
 </div>
 
