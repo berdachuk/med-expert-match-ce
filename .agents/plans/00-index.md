@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-None — all milestones through M110 are complete. See Archive below.
+| M111 | [`M111-upgrade-spring-ai-to-2.0.0.md`](M111-upgrade-spring-ai-to-2.0.0.md) | Upgrade Spring AI 2.0.0-M8 → 2.0.0 GA (ToolCallAdvisor rename, internalToolExecutionEnabled removal, session BOM) |
 
 ## Deferred
 

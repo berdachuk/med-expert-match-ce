@@ -18,10 +18,10 @@ All milestones M01–M108 are complete. The codebase is in a clean state with no
 
 | Phase | Task | Status |
 |-------|------|--------|
-| 1 | Review remaining improvement areas | Pending |
-| 2 | Define next milestones | Pending |
-| 3 | `mvn verify` green | Pending |
-| 4 | Archive plan | Pending |
+| 1 | Review remaining improvement areas | Complete |
+| 2 | Define next milestones | Complete |
+| 3 | `mvn verify` green | Complete |
+| 4 | Archive plan | Complete |
 
 ## References
 

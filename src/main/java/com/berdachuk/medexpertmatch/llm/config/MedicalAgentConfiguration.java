@@ -18,7 +18,7 @@ import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentType;
 import org.springaicommunity.agent.tools.task.repository.DefaultTaskRepository;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
-import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
+import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -308,8 +308,8 @@ public class MedicalAgentConfiguration {
      * persist via the session advisor without duplicate internal history (Part 3 guidance).
      */
     @Bean
-    ToolCallAdvisor agentToolCallAdvisor(ToolCallingManager toolCallingManager) {
-        return ToolCallAdvisor.builder()
+    ToolCallingAdvisor agentToolCallAdvisor(ToolCallingManager toolCallingManager) {
+        return ToolCallingAdvisor.builder()
                 .toolCallingManager(toolCallingManager)
                 .conversationHistoryEnabled(false)
                 .build();
@@ -342,7 +342,7 @@ public class MedicalAgentConfiguration {
             TodoWriteTool todoWriteTool,
             AskUserQuestionTool askUserQuestionTool,
             DateTimeAgentTools dateTimeAgentTools,
-            ToolCallAdvisor agentToolCallAdvisor,
+            ToolCallingAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
             DateTimeContextAdvisor dateTimeContextAdvisor,
             AgentMemoryProperties agentMemoryProperties,

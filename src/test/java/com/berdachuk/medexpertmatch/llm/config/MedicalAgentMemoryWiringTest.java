@@ -11,7 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springaicommunity.agent.tools.AskUserQuestionTool;
 import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
+import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.tool.ToolCallingManager;
@@ -56,7 +56,7 @@ class MedicalAgentMemoryWiringTest {
                 .build();
         TodoWriteTool todoWriteTool = config.todoWriteTool(mock(AgentTodoTrackingService.class));
         AskUserQuestionTool askUserQuestionTool = config.askUserQuestionTool(mock(AgentQuestionService.class));
-        ToolCallAdvisor toolCallAdvisor = config.agentToolCallAdvisor(mock(ToolCallingManager.class));
+        ToolCallingAdvisor toolCallAdvisor = config.agentToolCallAdvisor(mock(ToolCallingManager.class));
         ToolCallback taskTool = config.taskTool(mock(ChatModel.class), new DefaultResourceLoader(),
                 mock(CaseAnalysisAgentTools.class),
                 mock(DoctorMatchingAgentTools.class),

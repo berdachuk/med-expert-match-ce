@@ -87,7 +87,6 @@ public class ToolSelectionLiveEvalService {
         String userPrompt = promptBuilder.buildUserPrompt(goldenCase);
         OpenAiChatOptions options = OpenAiChatOptions.builder()
                 .toolCallbacks(evalToolCallbacks)
-                .internalToolExecutionEnabled(false)
                 .build();
         Prompt prompt = new Prompt(List.of(
                 new SystemMessage(systemPrompt),

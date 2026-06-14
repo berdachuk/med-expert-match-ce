@@ -4,7 +4,7 @@ import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springaicommunity.agent.tools.TodoWriteTool;
-import org.springframework.ai.chat.client.advisor.ToolCallAdvisor;
+import org.springframework.ai.chat.client.advisor.ToolCallingAdvisor;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.core.io.DefaultResourceLoader;
 
@@ -35,7 +35,7 @@ class MedicalAgentTodoWiringTest {
     void toolCallAdvisorDisablesConversationHistory() {
         ToolCallingManager manager = mock(ToolCallingManager.class);
 
-        ToolCallAdvisor advisor = config.agentToolCallAdvisor(manager);
+        ToolCallingAdvisor advisor = config.agentToolCallAdvisor(manager);
 
         assertNotNull(advisor);
     }

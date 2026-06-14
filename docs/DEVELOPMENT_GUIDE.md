@@ -1,6 +1,6 @@
 # MedExpertMatch Development Guide
 
-**Last Updated:** 2026-05-19  
+**Last Updated:** 2026-06-13  
 **Status:** MVP complete with agentic improvements and DocuRAG improvements
 
 ## Overview
@@ -191,7 +191,8 @@ mvn test
 mvn verify
 
 # Build test container first (required for integration tests)
-./scripts/build-test-container.sh
+make test-image
+# or: ./scripts/build-test-container.sh
 
 # Run embedding-specific tests
 mvn test -Dtest=EmbeddingServiceIT,MedicalCaseRepositoryEmbeddingIT,TestDataGeneratorEmbeddingIT

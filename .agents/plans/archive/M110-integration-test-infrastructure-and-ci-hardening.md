@@ -21,11 +21,11 @@
 
 | Phase | Task | Status |
 |-------|------|--------|
-| 1 | Add test image build to CI workflow or Makefile | Pending |
-| 2 | Document test image build in DEVELOPMENT_GUIDE.md | Pending |
-| 3 | Ensure `.gitignore` consistency | Pending |
-| 4 | `mvn verify` green | Pending |
-| 5 | Archive plan | Pending |
+| 1 | Add test image build to CI workflow or Makefile | Complete |
+| 2 | Document test image build in DEVELOPMENT_GUIDE.md | Complete |
+| 3 | Ensure `.gitignore` consistency | Complete |
+| 4 | `mvn verify` green | Complete |
+| 5 | Archive plan | Complete |
 
 ## References
 
