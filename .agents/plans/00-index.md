@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M111 | [`M111-upgrade-spring-ai-to-2.0.0.md`](M111-upgrade-spring-ai-to-2.0.0.md) | Upgrade Spring AI 2.0.0-M8 → 2.0.0 GA (ToolCallAdvisor rename, internalToolExecutionEnabled removal, session BOM) |
+| M112 | [`M112-post-upgrade-stabilization.md`](M112-post-upgrade-stabilization.md) | Post-upgrade code quality, security review, documentation alignment with Spring AI 2.0.0 GA |
 
 ## Deferred
 
@@ -108,6 +108,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M94 | [`M94-security-hardening-and-tool-surface-closeout.md`](archive/M94-security-hardening-and-tool-surface-closeout.md) | Security hardening: risk_assessment caseId validation, fix error disclosure in DocumentSearchController, sanitize tool log messages, explicit REST endpoint security posture |
 | M95 | [`M95-llm-prompt-quality-and-response-reliability.md`](archive/M95-llm-prompt-quality-and-response-reliability.md) | Simplify case analysis prompt, add ICD-10 validation to prevent hallucination, parallelize synthetic data description generation (5-10x speedup), add LlmCallLimiter |
 | M96 | [`M96-route-case-keywords-and-chat-mode-cleanup.md`](archive/M96-route-case-keywords-and-chat-mode-cleanup.md) | Russian route-case keyword patterns, finalize chat mode cleanup, LLM response sanitizer fixes |
+| M111 | [`archive/M111-upgrade-spring-ai-to-2.0.0.md`](archive/M111-upgrade-spring-ai-to-2.0.0.md) | Upgrade Spring AI 2.0.0-M8 → 2.0.0 GA (ToolCallAdvisor rename, internalToolExecutionEnabled removal, session BOM) |
 
 ## Creating a New Plan
 

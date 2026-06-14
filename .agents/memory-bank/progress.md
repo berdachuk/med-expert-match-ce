@@ -60,6 +60,17 @@ Timestamped log of completed work. This is a summary derived from `.agents/plans
 
 - Resolve pre-existing `ModulithVerificationIT` cycle
 
+## 2026-06-14: M111 Complete — Core Framework Upgrades
+
+- Upgraded Spring Boot 4.0.6 → 4.1.0
+- Upgraded Spring AI 2.0.0-M8 → 2.0.0 GA
+- Upgraded Spring Modulith 2.0.7 → 2.1.0
+- Upgraded spring-ai-agent-utils 0.8.0 → 0.9.0
+- Fixed `ToolCallAdvisor` → `ToolCallingAdvisor` rename (2 source files + 2 test files)
+- Fixed `internalToolExecutionEnabled` removal in `ToolSelectionLiveEvalService.java`
+- 885 tests pass, 0 failures, 0 errors (unit tests)
+- Published as feat/m111 → merged to develop → archived
+
 ## Historical (M01–M83)
 
 All milestones M01–M83 are complete and archived. See `.agents/plans/archive/` for full history (90+ plans) and `.agents/plans/progress.txt` for detailed per-story iteration log.
