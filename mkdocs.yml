@@ -54,6 +54,8 @@ plugins:
       transition: slide
       controls: true
       progress: true
+      mermaid:
+        activate: true
 
 # Extensions
 markdown_extensions:

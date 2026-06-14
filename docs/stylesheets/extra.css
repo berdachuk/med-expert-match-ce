@@ -115,12 +115,17 @@
     width: 100%;
 }
 
-/* Mermaid inside Reveal decks (mkdocs-revealjs + mermaid.activate) */
+/* Mermaid inside Reveal decks (mkdocs-revealjs) */
 #mkdocs-revealjs .reveal .mermaid.reveal-graph-slide,
 .md-typeset .mkdocs-revealjs-wrapper .reveal .mermaid.reveal-graph-slide {
     margin: 0.5rem auto;
     max-width: 100%;
     text-align: center;
+    background: none;
+    border: none;
+    font-size: inherit;
+    line-height: normal;
+    box-shadow: none;
 }
 
 #mkdocs-revealjs .reveal .mermaid.reveal-graph-slide svg,
@@ -128,6 +133,28 @@
     max-height: min(58vh, 30rem);
     max-width: 100%;
     height: auto;
+}
+
+/* System Overview slide — full diagram */
+#mkdocs-revealjs .reveal section.system-overview-slide {
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+#mkdocs-revealjs .reveal .system-overview-slide .mermaid {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+}
+
+#mkdocs-revealjs .reveal .system-overview-slide .mermaid svg {
+    max-width: 100% !important;
+    max-height: 600px !important;
+    width: auto !important;
+    height: auto !important;
 }
 
 /* Navigation toggle buttons */

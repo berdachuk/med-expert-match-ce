@@ -10,7 +10,7 @@ revealjs:
 
 <div class="reveal-slide-text-col">
 
-**Validate end-to-end:** PostgreSQL + PgVector + Apache AGE + AI + **agents**
+**Validate end-to-end:** PostgreSQL + PgVector + Apache AGE + Spring AI + **agents**
 
 **How:** A full application with **realistic, demanding workflows** (medical domain)
 
@@ -306,6 +306,73 @@ Note: Walk this once slowly; it anchors the rest of the architecture section.
 
 ---
 
+<!-- .slide: class="system-overview-slide" -->
+
+<pre class="mermaid">
+graph TB
+    TITLE["System Overview"]
+    style TITLE font-size:1.4rem,font-weight:bold,fill:none,stroke:none
+
+    subgraph "Web Layer"
+        UI[Thymeleaf SSR]
+        REST[REST Controllers]
+    end
+
+    subgraph "LLM Module"
+        CA[ChatClient + SkillsTool]
+        PA[PlannerAgent]
+        CBA[ContextBuilderAgent]
+        EA[ExecutionAgent]
+        LCA[LlmUsageCaptureAdvisor]
+        AM[AutoMemoryTools]
+        SM[SessionMemoryAdvisor]
+    end
+
+    subgraph "Retrieval Module"
+        DR[DoctorMatchService]
+        SR[SemanticGraphRetrievalService]
+        RR[RerankingService]
+    end
+
+    subgraph "Domain Modules"
+        MC[medicalcase]
+        DOC[doctor]
+        CE[clinicalexperience]
+        FAC[facility]
+        EV[evidence / PubMed]
+    end
+
+    subgraph "Infrastructure"
+        PG[(PostgreSQL 17)]
+        VEC[(pgvector 1536-dim)]
+        AGE[(Apache AGE graph)]
+    end
+
+    UI --> CA
+    REST --> CA
+    CA --> PA
+    PA -->|PlanReadyEvent| CBA
+    CBA -->|ContextReadyEvent| EA
+    EA --> DR
+    DR --> SR
+    SR --> VEC
+    SR --> AGE
+    SR --> CE
+    DR --> RR
+    CA --> LCA
+    CA --> SM
+    CA --> AM
+    DR --> MC
+    DR --> DOC
+    DR --> FAC
+    PG --> VEC
+    PG --> AGE
+</pre>
+
+Note: The LLM module uses event-driven agent orchestration (PlanReadyEvent → ContextReadyEvent). The retrieval module fuses vector, graph, and history signals. All domain data lives in PostgreSQL 17 with pgvector and Apache AGE extensions.
+
+---
+
 ## Hybrid retrieval (GraphRAG)
 
 <div class="reveal-slide-row">
@@ -334,7 +401,7 @@ Note: Deeper question: each hit earns **1 / (k + rank)** from every list where i
 
 ## Graph structure diagram
 
-<div class="mermaid reveal-graph-slide">
+<pre class="mermaid reveal-graph-slide">
 graph TB
     subgraph Vertices["Graph vertices"]
         D[Doctor]
@@ -355,7 +422,7 @@ graph TB
     style I fill:#f3e5f5
     style S fill:#e8f5e9
     style F fill:#fce4ec
-</div>
+</pre>
 
 Note: Built with `MedicalGraphBuilderService`; Cypher via `GraphService`. Same model as [Apache AGE graph analysis](../APACHE_AGE_GRAPH_ANALYSIS.md).
 
@@ -386,6 +453,50 @@ Note: Built with `MedicalGraphBuilderService`; Cypher via `GraphService`. Same m
 </div>
 
 Note: Same ideas feed network-analyzer and routing where applicable.
+
+---
+
+## The Three-Signal Scorer
+
+Doctor-to-case matching blends three independent signals into a single score in the 0–100 range.
+
+<pre class="mermaid">
+flowchart LR
+    subgraph Inputs
+        C[MedicalCase<br/>embedding]
+        D[Doctor<br/>profile]
+    end
+
+    subgraph "Signal 1 — Vector (40%)"
+        VEC[pgvector cosine<br/>similarity]
+    end
+
+    subgraph "Signal 2 — Graph (30%)"
+        GR[Apache AGE<br/>Cypher traversal]
+    end
+
+    subgraph "Signal 3 — History (30%)"
+        HI[ClinicalExperience<br/>outcomes]
+    end
+
+    subgraph Fusion
+        WA["Weighted Average<br/>or RRF (k=60)"]
+        RERANK[Semantic<br/>Re-ranker]
+    end
+
+    C --> VEC
+    D --> VEC
+    C --> GR
+    D --> GR
+    D --> HI
+    VEC -->|0.4| WA
+    GR  -->|0.3| WA
+    HI  -->|0.3| WA
+    WA --> RERANK
+    RERANK --> Score["Score 0–100<br/>+ rationale"]
+</pre>
+
+Note: Weights are configurable per deployment. RRF (k=60) is an alternative to weighted average when signal calibration is uncertain.
 
 ---
 
