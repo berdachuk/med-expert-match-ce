@@ -4,83 +4,10 @@ revealjs:
   height: 800
 ---
 
-## Why this project
+<!-- .slide: class="title-image-slide" -->
 
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-**Validate end-to-end:** PostgreSQL + PgVector + Apache AGE + Spring AI + **agents**
-
-**How:** A full application with **realistic, demanding workflows** (medical domain)
-
-**Question:** Do relational data, vectors, graph, LLM, and agent orchestration hold together in **one** stack?
-
-**Code:** [github.com/berdachuk/med-expert-match-ce](https://github.com/berdachuk/med-expert-match-ce)
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-intro-why.png" alt="End-to-end stack validation concept" />
-
-</div>
-
-</div>
-
-Note: Not a toy benchmark. MedExpertMatch must be a credible applied scenario.
-
----
-
-## PostgreSQL as a unified data platform
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-**MedExpertMatch** POC
-
-Specialist matching and clinical decision support — network data, hybrid retrieval, LLM orchestration
-
-The medical domain as a stress test for PostgreSQL, PgVector, Apache AGE, and the agent layer
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-postgresql-unified.png" alt="Unified PostgreSQL data platform" />
-
-</div>
-
-</div>
-
-Note: Evidence from data, not only intuition. Support tool; clinicians and policy own decisions.
-
----
-
-## Agenda (about 45 minutes)
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-1. **Problems and value**
-2. **Architecture** 
-3. **Live demo**
-4. **Secret BONUS**
-5. **Q&A**
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-agenda.png" alt="Talk agenda overview" />
-
-</div>
-
-</div>
-
-Note: Architecture follows the problem framing. Demo uses the same stack described here.
+<img class="title-image" src="../images/spring-ai-agent-skills-medical.png" alt="Spring AI Agent Skills Medical" style="max-height:768px;"  />
+<p style="text-align:center;font-size:0.7rem;margin-top:0.3rem;opacity:0.7;">by Siarhei Berdachuk</p>
 
 ---
 
@@ -112,27 +39,68 @@ Note: Keep employer or affiliation out unless your venue requires it; add one li
 
 ---
 
-## Prototype and privacy
+## Why this project
 
 <div class="reveal-slide-row">
 
 <div class="reveal-slide-text-col">
 
-- **Scenarios:** Inpatient match, queue, second opinion, routing, case analysis
-- **Demo data:** Synthetic / anonymized; **no PHI in logs** in public demos
-- **Stack:** Spring Boot, PostgreSQL 17, PgVector, Apache AGE, Thymeleaf UI, OpenAI-compatible LLM APIs
+**Ouestion:** How to improve the quality of RAG systems
+
+**Garbage in — garbage out**
+
+**Validate end-to-end:** PostgreSQL + PgVector + Apache AGE + Spring AI + **agents**. 
+
+<span style="font-size:1rem;">Do relational data, vectors, graph, LLM, and agent orchestration hold together in **one** stack?</span>
+
+**How:** POC with **realistic, demanding workflows**
+<span style="font-size:1rem;">(medical domain)</span>
+
+<div style="display:flex;align-items:center;gap:0.4rem;">
+<div style="font-size:1.6rem;">
+<b>Code:</b>
+</br>
+<a href="https://github.com/berdachuk/med-expert-match-ce"  target="_blank">github.com/berdachuk/med-expert-match-ce</a>
+</div>
+<img class="reveal-slide-qr" src="../images/qr-github-repo.png" alt="QR: GitHub repository" style="max-width:220px;max-height:220px;" />
+</div>
 
 </div>
 
 <div class="reveal-slide-image-col">
 
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-prototype-privacy.png" alt="Prototype demo and privacy safeguards" />
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-intro-why.png" alt="End-to-end stack validation concept" />
 
 </div>
 
 </div>
 
-Note: Reproducible demo profile; see Demo Guide. Do not claim certifications you do not have.
+Note: Not a toy benchmark. MedExpertMatch must be a credible applied scenario.
+
+---
+
+## Agenda (about 45 minutes)
+
+<div class="reveal-slide-row">
+
+<div class="reveal-slide-text-col">
+
+1. **Problems and value**
+2. **Architecture** 
+3. **Live demo**
+4. **Q&A**
+
+</div>
+
+<div class="reveal-slide-image-col">
+
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-agenda.png" alt="Talk agenda overview" />
+
+</div>
+
+</div>
+
+Note: Architecture follows the problem framing. Demo uses the same stack described here.
 
 ---
 
@@ -230,31 +198,6 @@ Note: Regional routing; web UI `/routing`.
 
 ---
 
-## Problems to product (summary)
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-| Problem | MedExpertMatch response |
-|---------|-------------------------|
-| Delays | Match + queue priority |
-| Hidden expertise | Graph + network analytics |
-| Fragmented support | Agent: analysis + evidence + recommendations |
-| Resources | Facility routing with capabilities |
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-problems-summary.png" alt="Problems mapped to product responses" />
-
-</div>
-
-</div>
-
----
-
 ## Six core scenarios
 
 <div class="reveal-slide-row">
@@ -290,7 +233,18 @@ Note: Typical inputs: **FHIR bundle** or **text** (`match-from-text`) depending 
 
 <div class="reveal-slide-text-col">
 
-**One thread:** `MedicalCase` stored and embedded (PgVector) → **Agent API** → **case-analyzer** → **doctor-matcher** → **SemanticGraphRetrievalService** scores candidates → ranked list + rationale in UI/API
+**One straight line — every step feeds the next:**
+
+| Step | What happens | Tech |
+|------|-------------|------|
+| 1 | Case text → numbers that carry meaning | PgVector embedding |
+| 2 | Single entry point for agents | Agent API (`POST /agent/match`) |
+| 3 | AI fills gaps: ICD-10, urgency, specialty | case-analyzer |
+| 4 | AI searches across **three signals at once** | doctor-matcher |
+| 5 | Weighted fusion: 40% vector + 30% graph + 30% history | SGR scorer |
+| 6 | Sorted list with a human-readable "why" per doctor | API / UI |
+
+> This one flow anchors the entire architecture.
 
 </div>
 
@@ -306,68 +260,41 @@ Note: Walk this once slowly; it anchors the rest of the architecture section.
 
 ---
 
+## Find Specialist flow (steps)
+
+<div class="reveal-slide-row">
+
+<div class="reveal-slide-text-col">
+
+<table>
+<tr><th>#</th><th>What happens</th><th>How</th></tr>
+<tr><td>1</td><td>Case enters the system</td><td>FHIR bundle or UI form → <b>MedicalCase</b></td></tr>
+<tr><td>2</td><td>Text becomes a searchable fingerprint</td><td>Embedding → <b>PgVector</b></td></tr>
+<tr><td>3</td><td>Agent pipeline starts</td><td><b>POST /agent/match/{caseId}</b> or <b>match-from-text</b></td></tr>
+<tr><td>4</td><td>AI fills in the blanks</td><td><b>case-analyzer</b> → ICD-10, urgency, specialty</td></tr>
+<tr><td>5</td><td>AI scores every doctor</td><td><b>doctor-matcher</b> + <b>SGR</b> (vector + graph + keywords)</td></tr>
+<tr><td>6</td><td>User sees the answer</td><td>Ranked list with scores + <b>human-readable rationale</b></td></tr>
+</table>
+
+</div>
+
+<div class="reveal-slide-image-col">
+
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-flow-steps.png" alt="Find Specialist flow steps" />
+
+</div>
+
+</div>
+
+Note: USE_CASES §1 has the full sequence diagram.
+
+---
+
 <!-- .slide: class="system-overview-slide" -->
 
-<pre class="mermaid">
-graph TB
-    TITLE["System Overview"]
-    style TITLE font-size:1.4rem,font-weight:bold,fill:none,stroke:none
+<h3 style="margin:0.1em 0 0.3em 0;font-size:1.1rem;">System Overview</h3>
 
-    subgraph "Web Layer"
-        UI[Thymeleaf SSR]
-        REST[REST Controllers]
-    end
-
-    subgraph "LLM Module"
-        CA[ChatClient + SkillsTool]
-        PA[PlannerAgent]
-        CBA[ContextBuilderAgent]
-        EA[ExecutionAgent]
-        LCA[LlmUsageCaptureAdvisor]
-        AM[AutoMemoryTools]
-        SM[SessionMemoryAdvisor]
-    end
-
-    subgraph "Retrieval Module"
-        DR[DoctorMatchService]
-        SR[SemanticGraphRetrievalService]
-        RR[RerankingService]
-    end
-
-    subgraph "Domain Modules"
-        MC[medicalcase]
-        DOC[doctor]
-        CE[clinicalexperience]
-        FAC[facility]
-        EV[evidence / PubMed]
-    end
-
-    subgraph "Infrastructure"
-        PG[(PostgreSQL 17)]
-        VEC[(pgvector 1536-dim)]
-        AGE[(Apache AGE graph)]
-    end
-
-    UI --> CA
-    REST --> CA
-    CA --> PA
-    PA -->|PlanReadyEvent| CBA
-    CBA -->|ContextReadyEvent| EA
-    EA --> DR
-    DR --> SR
-    SR --> VEC
-    SR --> AGE
-    SR --> CE
-    DR --> RR
-    CA --> LCA
-    CA --> SM
-    CA --> AM
-    DR --> MC
-    DR --> DOC
-    DR --> FAC
-    PG --> VEC
-    PG --> AGE
-</pre>
+<img src="../images/system-overview-medexpertmach.png" alt="System Overview" style="max-width:100%;max-height:700px;width:auto;height:auto;border:none;box-shadow:none;" />
 
 Note: The LLM module uses event-driven agent orchestration (PlanReadyEvent → ContextReadyEvent). The retrieval module fuses vector, graph, and history signals. All domain data lives in PostgreSQL 17 with pgvector and Apache AGE extensions.
 
@@ -580,6 +507,38 @@ Note: Skills map to `skills/*/SKILL.md` and tool groups in the `llm` module.
 
 ---
 
+## How Skills Work: Architecture and Execution Flow
+
+Spring AI describes the skill lifecycle in three stages: **discovery**, **activation**, and **execution**. The flow is:
+
+<pre class="mermaid">
+sequenceDiagram
+    actor User
+    participant SkillsTool as SkillsTool<br/>(registry)
+    participant LLM
+    participant Skill as SKILL.md<br/>(loaded on demand)
+    participant Tool as @Tool method
+    participant Service as Domain Service
+
+    User->>SkillsTool: User message
+    SkillsTool->>LLM: Registry (names + descriptions only)
+    LLM-->>SkillsTool: Semantic match: "triage" skill identified
+    SkillsTool->>Skill: Load full SKILL.md into context
+    Skill->>Tool: Model calls tool function
+    Tool->>Service: Tool invokes Spring service
+    Service-->>Tool: Structured result
+    Tool-->>Skill: Tool response in context
+    Skill-->>User: Generated response with rationale
+</pre>
+
+1. **Discovery** — At startup, `SkillsTool` scans `src/main/resources/skills/` directories and extracts only `name` and `description` from each `SKILL.md` frontmatter. This lightweight registry is sent to the LLM.
+2. **Activation** — When a user message semantically matches a skill, the model invokes `Skill("skill-name")`. Only then is the full `SKILL.md` content loaded into the context window.
+3. **Execution** — Inside the skill's instructions, the model decides which `@Tool` methods to call. Tools execute in the local environment and return results into the skill's context.
+
+> **Important**: Scripts referenced by a skill execute directly in the local environment without sandboxing. This is fine for read-only operations but requires careful scoping for anything that modifies state.
+
+---
+
 ## Data access: graph and SQL
 
 <div class="reveal-slide-row">
@@ -588,6 +547,19 @@ Note: Skills map to `skills/*/SKILL.md` and tool groups in the `llm` module.
 
 - **Graph:** all Cypher via **`GraphService`** (parameter embedding, consistent policy)  
 - **SQL:** JDBC repositories, queries in **`.sql`** files, dedicated mappers  
+
+**Example Cypher query** — scoring relationship depth (30% graph weight):
+
+```cypher
+MATCH (d:Doctor {id: $doctorId})
+      -[:TREATED]->
+      (c:MedicalCase)
+      -[:HAS_CONDITION]->
+      (i:ICD10Code {code: $icd10Code})
+RETURN count(*)
+```
+
+Same pattern for `SPECIALIZES_IN`, `TREATS_CONDITION`, `AFFILIATED_WITH` — each returns a **normalized 0–1** score.
 
 </div>
 
@@ -626,12 +598,15 @@ Note: Deepen only if time; otherwise one slide is enough.
 
 ---
 
-## Privacy and deployment
+## Privacy, deployment & data
 
 <div class="reveal-slide-row">
 
 <div class="reveal-slide-text-col">
 
+- **Scenarios:** Inpatient match, queue, second opinion, routing, case analysis  
+- **Demo data:** Synthetic / anonymized; **no PHI in logs** in public demos  
+- **Stack:** Spring Boot, PostgreSQL 17, PgVector, Apache AGE, Thymeleaf UI, OpenAI-compatible LLM APIs  
 - Minimize PHI; anonymized test and demo data  
 - Medical disclaimers in LLM-facing outputs (project policy)  
 - **OpenAI-compatible** chat/embedding endpoints; profiles (`local`, `demo`, …)
@@ -646,58 +621,7 @@ Note: Deepen only if time; otherwise one slide is enough.
 
 </div>
 
-Note: Principles and architecture readiness, not a legal “HIPAA certified” claim without evidence.
-
----
-
-## Find Specialist flow (steps)
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-1. Create / ingest case (FHIR or UI) → **`MedicalCase`**  
-2. Generate **embedding** → PgVector  
-3. Call agent match — **`POST /api/v1/agent/match/{caseId}`** (or `match-from-text`)  
-4. **case-analyzer** refines case  
-5. **doctor-matcher** + **`score(case, doctor)`** loop via SGR  
-6. Return ranked doctors with scores and rationale  
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-flow-steps.png" alt="Find Specialist flow steps" />
-
-</div>
-
-</div>
-
-Note: USE_CASES §1 has the full sequence diagram.
-
----
-
-## Demo: preparation
-
-<div class="reveal-slide-row">
-
-<div class="reveal-slide-text-col">
-
-- PostgreSQL 17 + PgVector + AGE; profile **`demo`**  
-- Docker: `postgres-demo` per **Demo Guide**  
-- Generate **medium** dataset (e.g. hundreds of doctors / cases)  
-
-</div>
-
-<div class="reveal-slide-image-col">
-
-<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-prep.png" alt="Demo environment preparation" />
-
-</div>
-
-</div>
-
-Note: If live fails, fall back to screenshots or recorded video.
+Note: Principles and architecture readiness, not a legal "HIPAA certified" claim without evidence. Reproducible demo profile; see Demo Guide.
 
 ---
 
@@ -709,7 +633,7 @@ Note: If live fails, fall back to screenshots or recorded video.
 
 **Idea:** The **model proposes**; the **harness constrains and executes**.
 
-Java orchestration around the LLM — routing, context, tools, verify — not “hope the prompt picks the right action.”
+Java orchestration around the LLM — routing, context, tools, verify — not "hope the prompt picks the right action."
 
 **Benefit:** **Reliable** medical chat workflows — correct goal and case, observable progress, fewer dead-end replies.
 
@@ -764,15 +688,14 @@ Note: ~20 s. Walk the state line once; mention SSE in AI Chat. Details: [Harness
 
 <div class="reveal-slide-text-col">
 
-**Product packaging (M66)** — single chat mode:
+**One chat — two paths under the hood:**
 
-| Mode | Path | Relative cost |
-|------|------|----------------|
-| **Expert match (harness)** | GraphRAG workflow + MedGemma interpretation (FULL) | ~2–3× token budget |
+| Path | What runs | Cost |
+|------|-----------|------|
+| Chat (simple) | LLM answers directly | 1× |
+| Agent (expert) | GraphRAG + MedGemma + verify loop | ~2–3× |
 
-**Four layers:** Chat (UX) → Harness (verify + tools) → Policy (ANSWER/CLARIFY/ESCALATE) → Data (outcomes flywheel)
-
-**Go / no-go rule for paying for the agent:** harness must deliver **≥20% quality uplift** at **≤2× cost** vs chat-only on held-out eval (see [cost model](../eval/cost-model.md)).
+**When to pay extra:** agent path makes sense only if it delivers **≥20% better results** at **≤2× the cost** (measured on held-out eval).
 
 Case study template: [agent-vs-chat-case-study-template.md](agent-vs-chat-case-study-template.md)
 
@@ -796,20 +719,14 @@ Note: ~90 s. Demo the chat mode selector and match explainability panel (vector 
 
 <div class="reveal-slide-text-col">
 
-**Two models in AI Chat:**
+**Two specialized models:**
 
-| Role | Model | Job |
-|------|-------|-----|
-| Medical reasoning | **MedGemma** `1.5:4b` | Analysis, interpretation, goals, translation |
-| Tool calling | **FunctionGemma** `270m` | Auto orchestrator — pick and invoke `@Tool` methods |
+| Model | Does |
+|-------|------|
+| **MedGemma** | Clinical reasoning |
+| **FunctionGemma** | Tool calling |
 
-**Why split?** MedGemma excels at clinical text; FunctionGemma is fine-tuned for **structured function calls**.
-
-**When harness routes** (match / route / analyze + case ID) → workflow engines — FunctionGemma **skipped**.
-
-**Otherwise** → Auto chat path: FunctionGemma + tool classes (evidence, edge cases).
-
-Config: `TOOL_CALLING_*` env vars → `functiongemma:270m` (Ollama OpenAI-compatible).
+**MedGemma can't call tools reliably, so FunctionGemma handles that.** Harness flows skip it; chat flows use it.
 
 </div>
 
@@ -822,6 +739,30 @@ Config: `TOOL_CALLING_*` env vars → `functiongemma:270m` (Ollama OpenAI-compat
 </div>
 
 Note: ~25 s. Harness handles high-value flows; FunctionGemma covers the long tail. Details: [FunctionGemma Tool Calling](../FUNCTIONGEMMA.md).
+
+---
+
+## Demo: preparation
+
+<div class="reveal-slide-row">
+
+<div class="reveal-slide-text-col">
+
+- PostgreSQL 17 + PgVector + AGE; profile **`demo`**  
+- Docker: `postgres-demo` per **Demo Guide**  
+- Generate **medium** dataset (e.g. hundreds of doctors / cases)  
+
+</div>
+
+<div class="reveal-slide-image-col">
+
+<img class="reveal-slide-image" width="768" height="1024" src="../images/slide-demo-prep.png" alt="Demo environment preparation" />
+
+</div>
+
+</div>
+
+Note: If live fails, fall back to screenshots or recorded video.
 
 ---
 

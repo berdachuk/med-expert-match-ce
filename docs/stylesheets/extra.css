@@ -69,7 +69,7 @@
     align-items: flex-start;
     gap: 1.5rem;
     text-align: left;
-    padding: 0.75rem 1.25rem 0.75rem 1.5rem;
+    padding: 0.25rem 1.25rem 0.25rem 1.5rem;
     box-sizing: border-box;
     flex-wrap: wrap;
     width: 100%;
@@ -135,26 +135,147 @@
     height: auto;
 }
 
-/* System Overview slide — full diagram */
-#mkdocs-revealjs .reveal section.system-overview-slide {
+/* Title image slide — full-bleed centered image */
+#mkdocs-revealjs .reveal section.title-image-slide {
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
-#mkdocs-revealjs .reveal .system-overview-slide .mermaid {
+#mkdocs-revealjs .reveal .title-image-slide .title-image {
+    max-width: 95% !important;
+    max-height: 85vh !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+}
+
+/* System Overview slide — fit image to slide */
+#mkdocs-revealjs .reveal .system-overview-slide h3 {
+    margin: 0 0 0.2em 0 !important;
+}
+
+#mkdocs-revealjs .reveal .system-overview-slide img.system-overview-image {
+    max-width: 98% !important;
+    max-height: 500px !important;
+    width: auto !important;
+    height: auto !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Global reveal slide: reduce top padding/margin */
+#mkdocs-revealjs .reveal {
+    --r-block-margin: 8px !important;
+    --r-heading-margin: 0 0 6px 0 !important;
+    --r-heading1-size: 1.8em !important;
+    --r-heading2-size: 1.3em !important;
+    --r-heading3-size: 1.1em !important;
+}
+
+#mkdocs-revealjs .reveal .slides section {
+    padding: 0.2rem 1rem 0.2rem 2.5rem !important;
+    margin: 0 !important;
+}
+
+#mkdocs-revealjs .reveal .system-overview-slide h3 {
+    margin: 0 0 0.1em 0 !important;
+}
+
+/* System Overview slide — image */
+#mkdocs-revealjs .reveal section.system-overview-slide {
+    padding: 0 !important;
+    text-align: center !important;
+}
+
+#mkdocs-revealjs .reveal .system-overview-slide h3 {
+    margin: 0 0 0.1em 0 !important;
+}
+
+#mkdocs-revealjs .reveal .system-overview-slide img.title-image {
+    display: block !important;
+    margin: 0 auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: auto !important;
+    max-height: 700px !important;
+}
+
+/* Title image slide — full-bleed centered image */
+#mkdocs-revealjs .reveal section.title-image-slide {
+    padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 100% !important;
 }
 
-#mkdocs-revealjs .reveal .system-overview-slide .mermaid svg {
-    max-width: 100% !important;
-    max-height: 600px !important;
+/* Global reveal slide: reduce top padding/margin */
+#mkdocs-revealjs .reveal {
+    --r-block-margin: 8px !important;
+    --r-heading-margin: 0 0 6px 0 !important;
+    --r-heading1-size: 1.8em !important;
+    --r-heading2-size: 1.3em !important;
+    --r-heading3-size: 1.1em !important;
+}
+
+#mkdocs-revealjs .reveal .slides section {
+    padding: 0.2rem 1rem 0.2rem 2.5rem !important;
+    margin: 0 !important;
+}
+
+#mkdocs-revealjs .reveal h1 { margin: 0.05em 0 0.1em 0 !important; }
+#mkdocs-revealjs .reveal h2 { margin: 0.05em 0 0.15em 0 !important; }
+#mkdocs-revealjs .reveal h3 { margin: 0.05em 0 0.1em 0 !important; }
+#mkdocs-revealjs .reveal h4 { margin: 0.05em 0 0.1em 0 !important; }
+
+#mkdocs-revealjs .reveal .slides section > *:first-child {
+    margin-top: 0 !important;
+}
+
+#mkdocs-revealjs .reveal p {
+    margin: 0.1em 0;
+}
+
+#mkdocs-revealjs .reveal ul, #mkdocs-revealjs .reveal ol {
+    margin: 0.1em 0;
+}
+
+#mkdocs-revealjs .reveal .slides {
+    height: 100% !important;
+    top: 0 !important;
+}
+
+#mkdocs-revealjs .reveal .slides section {
+    position: relative !important;
+    top: 0 !important;
+    transform: none !important;
+    height: auto !important;
+    min-height: auto !important;
+    padding: 0.2rem 0.5rem !important;
+}
+
+#mkdocs-revealjs .reveal .slides > section,
+#mkdocs-revealjs .reveal .slides > section > section {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 0.2rem 1rem 0.2rem 2.5rem !important;
+}
+
+#mkdocs-revealjs .reveal .title-image-slide .title-image {
+    max-width: 95% !important;
+    max-height: 85vh !important;
     width: auto !important;
     height: auto !important;
+    object-fit: contain !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin: 0 !important;
 }
 
 /* Navigation toggle buttons */

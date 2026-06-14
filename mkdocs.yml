@@ -115,6 +115,7 @@ nav:
       - Evidence Retrieval: EVIDENCE_RETRIEVAL.md
       - Medical Agent Tools: MEDICAL_AGENT_TOOLS.md
   - AI & LLM:
+      - Agent Skills (Spring AI): ai/spring-ai-agent-skills-medical.md
       - Harness Architecture: HARNESS.md
       - FunctionGemma Tool Calling: FUNCTIONGEMMA.md
       - Harness & Agent Patterns: HARNESS_AND_AGENT_USAGE.md

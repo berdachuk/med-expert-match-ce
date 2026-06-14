@@ -2,7 +2,9 @@
 
 ## Active
 
-No active plans.
+| # | Plan | Description |
+|---|------|-------------|
+| M115 | [`M115-dependency-freshness-and-ci-optimization.md`](M115-dependency-freshness-and-ci-optimization.md) | Update safe deps (jackson 2.22.0, spring-ai-agent-utils 0.10.0, wiremock 3.9.2→4.0), optimize CI build parallelism, document CI workflow |
 
 ## Deferred
 
@@ -108,6 +110,14 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M96 | [`M96-route-case-keywords-and-chat-mode-cleanup.md`](archive/M96-route-case-keywords-and-chat-mode-cleanup.md) | Russian route-case keyword patterns, finalize chat mode cleanup, LLM response sanitizer fixes |
 | M111 | [`archive/M111-upgrade-spring-ai-to-2.0.0.md`](archive/M111-upgrade-spring-ai-to-2.0.0.md) | Upgrade Spring AI 2.0.0-M8 → 2.0.0 GA (ToolCallAdvisor rename, internalToolExecutionEnabled removal, session BOM) |
 | M112 | [`archive/M112-post-upgrade-stabilization.md`](archive/M112-post-upgrade-stabilization.md) | Post-upgrade code quality, presentation slides, local dev auth fix |
+| M113 | [`archive/M113-presentation-slides-finalize.md`](archive/M113-presentation-slides-finalize.md) | Reorder slides, add System Overview/Three-Signal Scorer/How Skills Work slides, align speaker script and OPML mindmap |
+| M114 | [`archive/M114-integration-test-hardening-and-ci.md`](archive/M114-integration-test-hardening-and-ci.md) | Fix integration test failures, harden CI pipeline, close stability gaps |
+
+## Active
+
+| # | Plan | Description |
+|---|------|-------------|
+| M114 | [`M114-integration-test-hardening-and-ci.md`](M114-integration-test-hardening-and-ci.md) | Fix integration test infrastructure, harden CI pipeline, close stability gaps |
 
 ## Creating a New Plan
 
