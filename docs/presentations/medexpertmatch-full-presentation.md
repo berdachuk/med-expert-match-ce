@@ -693,8 +693,6 @@ Note: ~20 s. Walk the state line once; mention SSE in AI Chat. Details: [Harness
 
 **When to pay extra:** agent path makes sense only if it delivers **≥20% better results** at **≤2× the cost** (measured on held-out eval).
 
-Case study template: [agent-vs-chat-case-study-template.md](agent-vs-chat-case-study-template.md)
-
 </div>
 
 <div class="reveal-slide-image-col">
