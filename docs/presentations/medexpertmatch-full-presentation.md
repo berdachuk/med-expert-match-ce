@@ -233,7 +233,18 @@ Note: Typical inputs: **FHIR bundle** or **text** (`match-from-text`) depending 
 
 <div class="reveal-slide-text-col">
 
-**One thread:** `MedicalCase` stored and embedded (PgVector) → **Agent API** → **case-analyzer** → **doctor-matcher** → **SemanticGraphRetrievalService** scores candidates → ranked list + rationale in UI/API
+**One straight line — every step feeds the next:**
+
+| Step | What happens | Tech |
+|------|-------------|------|
+| 1 | Case text → numbers that carry meaning | PgVector embedding |
+| 2 | Single entry point for agents | Agent API (`POST /agent/match`) |
+| 3 | AI fills gaps: ICD-10, urgency, specialty | case-analyzer |
+| 4 | AI searches across **three signals at once** | doctor-matcher |
+| 5 | Weighted fusion: 40% vector + 30% graph + 30% history | SGR scorer |
+| 6 | Sorted list with a human-readable "why" per doctor | API / UI |
+
+> This one flow anchors the entire architecture.
 
 </div>
 
@@ -255,12 +266,15 @@ Note: Walk this once slowly; it anchors the rest of the architecture section.
 
 <div class="reveal-slide-text-col">
 
-1. Create / ingest case (FHIR or UI) → **`MedicalCase`**  
-2. Generate **embedding** → PgVector  
-3. Call agent match — **`POST /api/v1/agent/match/{caseId}`** (or `match-from-text`)  
-4. **case-analyzer** refines case  
-5. **doctor-matcher** + **`score(case, doctor)`** loop via SGR  
-6. Return ranked doctors with scores and rationale  
+<table>
+<tr><th>#</th><th>What happens</th><th>How</th></tr>
+<tr><td>1</td><td>Case enters the system</td><td>FHIR bundle or UI form → <b>MedicalCase</b></td></tr>
+<tr><td>2</td><td>Text becomes a searchable fingerprint</td><td>Embedding → <b>PgVector</b></td></tr>
+<tr><td>3</td><td>Agent pipeline starts</td><td><b>POST /agent/match/{caseId}</b> or <b>match-from-text</b></td></tr>
+<tr><td>4</td><td>AI fills in the blanks</td><td><b>case-analyzer</b> → ICD-10, urgency, specialty</td></tr>
+<tr><td>5</td><td>AI scores every doctor</td><td><b>doctor-matcher</b> + <b>SGR</b> (vector + graph + keywords)</td></tr>
+<tr><td>6</td><td>User sees the answer</td><td>Ranked list with scores + <b>human-readable rationale</b></td></tr>
+</table>
 
 </div>
 
@@ -674,15 +688,14 @@ Note: ~20 s. Walk the state line once; mention SSE in AI Chat. Details: [Harness
 
 <div class="reveal-slide-text-col">
 
-**Product packaging (M66)** — single chat mode:
+**One chat — two paths under the hood:**
 
-| Mode | Path | Relative cost |
-|------|------|----------------|
-| **Expert match (harness)** | GraphRAG workflow + MedGemma interpretation (FULL) | ~2–3× token budget |
+| Path | What runs | Cost |
+|------|-----------|------|
+| Chat (simple) | LLM answers directly | 1× |
+| Agent (expert) | GraphRAG + MedGemma + verify loop | ~2–3× |
 
-**Four layers:** Chat (UX) → Harness (verify + tools) → Policy (ANSWER/CLARIFY/ESCALATE) → Data (outcomes flywheel)
-
-**Go / no-go rule for paying for the agent:** harness must deliver **≥20% quality uplift** at **≤2× cost** vs chat-only on held-out eval (see [cost model](../eval/cost-model.md)).
+**When to pay extra:** agent path makes sense only if it delivers **≥20% better results** at **≤2× the cost** (measured on held-out eval).
 
 Case study template: [agent-vs-chat-case-study-template.md](agent-vs-chat-case-study-template.md)
 
@@ -706,20 +719,14 @@ Note: ~90 s. Demo the chat mode selector and match explainability panel (vector 
 
 <div class="reveal-slide-text-col">
 
-**Two models in AI Chat:**
+**Two specialized models:**
 
-| Role | Model | Job |
-|------|-------|-----|
-| Medical reasoning | **MedGemma** `1.5:4b` | Analysis, interpretation, goals, translation |
-| Tool calling | **FunctionGemma** `270m` | Auto orchestrator — pick and invoke `@Tool` methods |
+| Model | Does |
+|-------|------|
+| **MedGemma** | Clinical reasoning |
+| **FunctionGemma** | Tool calling |
 
-**Why split?** MedGemma excels at clinical text; FunctionGemma is fine-tuned for **structured function calls**.
-
-**When harness routes** (match / route / analyze + case ID) → workflow engines — FunctionGemma **skipped**.
-
-**Otherwise** → Auto chat path: FunctionGemma + tool classes (evidence, edge cases).
-
-Config: `TOOL_CALLING_*` env vars → `functiongemma:270m` (Ollama OpenAI-compatible).
+**MedGemma can't call tools reliably, so FunctionGemma handles that.** Harness flows skip it; chat flows use it.
 
 </div>
 
