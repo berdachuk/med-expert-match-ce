@@ -47,7 +47,7 @@ class ChatWebControllerIT extends BaseIntegrationTest {
         mockMvc.perform(get("/chat")
                         .header(HeaderBasedUserContext.USER_ID_HEADER, "chat-mode-i18n-user"))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Expert match")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("expert_match")))
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("??chat.mode."))));
     }
 }

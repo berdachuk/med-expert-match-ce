@@ -6,7 +6,7 @@ revealjs:
 
 <!-- .slide: class="title-image-slide" -->
 
-<img class="title-image" src="../images/spring-ai-agent-skills-medical.png" alt="Spring AI Agent Skills Medical" />
+<img class="title-image" src="../images/spring-ai-agent-skills-medical.png" alt="Spring AI Agent Skills Medical" style="max-height:768px;"  />
 <p style="text-align:center;font-size:0.7rem;margin-top:0.3rem;opacity:0.7;">by Siarhei Berdachuk</p>
 
 ---
@@ -45,14 +45,23 @@ Note: Keep employer or affiliation out unless your venue requires it; add one li
 
 <div class="reveal-slide-text-col">
 
-**Validate end-to-end:** PostgreSQL + PgVector + Apache AGE + Spring AI + **agents**
+**Ouestion:** How to improve the quality of RAG systems
 
-**How:** A full application with **realistic, demanding workflows** (medical domain)
+**Garbage in — garbage out**
 
-**Question:** Do relational data, vectors, graph, LLM, and agent orchestration hold together in **one** stack?
+**Validate end-to-end:** PostgreSQL + PgVector + Apache AGE + Spring AI + **agents**. 
 
-<div style="display:flex;align-items:center;gap:0.5rem;">
-<div><b>Code:</b><br/><a href="https://github.com/berdachuk/med-expert-match-ce" target="_blank">github.com/berdachuk/med-expert-match-ce</a></div>
+<span style="font-size:1rem;">Do relational data, vectors, graph, LLM, and agent orchestration hold together in **one** stack?</span>
+
+**How:** POC with **realistic, demanding workflows**
+<span style="font-size:1rem;">(medical domain)</span>
+
+<div style="display:flex;align-items:center;gap:0.4rem;">
+<div style="font-size:1.6rem;">
+<b>Code:</b>
+</br>
+<a href="https://github.com/berdachuk/med-expert-match-ce"  target="_blank">github.com/berdachuk/med-expert-match-ce</a>
+</div>
 <img class="reveal-slide-qr" src="../images/qr-github-repo.png" alt="QR: GitHub repository" style="max-width:220px;max-height:220px;" />
 </div>
 
@@ -79,8 +88,7 @@ Note: Not a toy benchmark. MedExpertMatch must be a credible applied scenario.
 1. **Problems and value**
 2. **Architecture** 
 3. **Live demo**
-4. **Secret BONUS**
-5. **Q&A**
+4. **Q&A**
 
 </div>
 

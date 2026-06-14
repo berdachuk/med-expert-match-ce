@@ -144,5 +144,4 @@ When matching doctors, provide:
 
 ## Medical Disclaimer
 
-**IMPORTANT**: Doctor matching is for research and educational purposes only. All matches should be reviewed by
-qualified medical professionals before making clinical decisions.
+**IMPORTANT**: Doctor matching is for research and educational purposes only. All matches should be reviewed by qualified medical professionals before making clinical decisions.

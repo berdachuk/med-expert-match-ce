@@ -52,7 +52,9 @@ public class TestAIConfig {
         log.info("Creating MOCK ChatModel for tests - NO real LLM calls will be made");
         ChatModel mockModel = mock(ChatModel.class);
 
-        when(mockModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        ChatOptions emptyOptions = ChatOptions.builder().build();
+        when(mockModel.getDefaultOptions()).thenReturn(emptyOptions);
+        when(mockModel.getOptions()).thenReturn(emptyOptions);
 
         AtomicInteger callCount = new AtomicInteger(0);
 
@@ -1099,7 +1101,9 @@ public class TestAIConfig {
         log.info("Creating MOCK rerankingChatModel for tests - NO real LLM calls will be made");
         ChatModel mockModel = mock(ChatModel.class);
 
-        when(mockModel.getDefaultOptions()).thenReturn(ChatOptions.builder().build());
+        ChatOptions emptyOptions = ChatOptions.builder().build();
+        when(mockModel.getDefaultOptions()).thenReturn(emptyOptions);
+        when(mockModel.getOptions()).thenReturn(emptyOptions);
 
         when(mockModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             log.info("MOCK rerankingChatModel.call() invoked - using MOCK, NOT real LLM");

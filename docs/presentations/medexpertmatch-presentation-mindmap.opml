@@ -11,32 +11,33 @@
     </outline>
     <outline text="2. Siarhei Berdachuk">
       <outline text="30+ лет в IT, архитектор, разработчик"/>
-      <outline text="Фокус: Java, данные, AI, качество, облачные решения"/>
+      <outline text="Фокус: Java, базы данных, построение решений с исользовинием ИИ"/>
       <outline text="Сайт: berdachuk.com"/>
       <outline text="TDD, микросервисы, рефакторинг, управление командами"/>
     </outline>
     <outline text="3. Why this project">
-      <outline text="Сквозная проверка стека PostgreSQL + PgVector + Apache AGE + Spring AI + агенты"/>
-      <outline text="Не бенчмарк, а полноценное приложение в медицинском домене"/>
-      <outline text="Главный вопрос: держатся ли вместе реляция, векторы, граф, LLM и агенты в одном стеке?"/>
+      <outline text="Изначально был вопрос, как улучшить качество RAG систем"/>
+      <outline text="Мусор на входе, мусор на выходе"/>
+      <outline text="Проверка стека PostgreSQL + PgVector + Apache AGE + Spring AI + агенты"/>
+      <outline text="Создать полноценное приложение в медицинском домене"/>
+      <outline text="Главный вопрос: можно ли совместить вместе реляциионные данные, векторы, граф, LLM и агенты в одном стеке?"/>
       <outline text="Код: github.com/berdachuk/med-expert-match-ce"/>
     </outline>
     <outline text="4. Agenda (~45 минут)">
       <outline text="1) Проблемы и ценность"/>
       <outline text="2) Архитектура"/>
-      <outline text="3) Живое демо"/>
-      <outline text="4) Secret BONUS"/>
-      <outline text="5) Q&amp;A"/>
+      <outline text="3) Демонстрация прототипа"/>
+      <outline text="6) Вопросы и ответы Q&amp;A"/>
       <outline text="Архитектура привязана к тем же сценариям, что в демо"/>
     </outline>
     <outline text="5. Problem 1: Consultation delays">
-      <outline text="Симптом: дни и недели ожидания нужного специалиста"/>
+      <outline text="Дни и недели ожидания нужного специалиста"/>
       <outline text="Последствия: рост рисков, длительность госпитализации"/>
       <outline text="Ответ продукта: очередь с приоритизацией на данных"/>
       <outline text="Результат: подбор специалиста за минуты, а не за дни"/>
     </outline>
     <outline text="6. Problem 2: Invisible expertise">
-      <outline text="Симптом: «Кто лучший в X?» — знание в головах, не в системе"/>
+      <outline text="Нет понимания «Кто лучший в X?» — знание в головах, не в системе"/>
       <outline text="Ответ: граф врач–кейс–контекст + сетевая аналитика"/>
       <outline text="Последствия без решения: неверная маршрутизация, неравномерная нагрузка"/>
     </outline>
