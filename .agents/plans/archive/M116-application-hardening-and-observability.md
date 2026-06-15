@@ -1,6 +1,6 @@
 # M116: Application Hardening and Observability
 
-**Status:** Active  
+**Status:** Superseded by M121 (2026-06-15)
 **Priority:** Medium  
 
 ## Goal

@@ -5,7 +5,6 @@
 | # | Plan | Description |
 |---|------|-------------|
 | M116 | [`M116-application-hardening-and-observability.md`](M116-application-hardening-and-observability.md) | Application hardening: health endpoint enhancements, startup readiness probe, graceful shutdown, structured logging, Prometheus metrics review |
-| M120 | [`M120-cucumber-coverage-expansion.md`](M120-cucumber-coverage-expansion.md) | Extend Cucumber BDD coverage to remaining 6 agent skills (evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, clinical-guideline, triage) |
 
 ## Deferred
 
@@ -117,6 +116,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M117 | [`archive/M117-semantic-markup-and-traceability-foundation.md`](archive/M117-semantic-markup-and-traceability-foundation.md) | Semantic markup + traceability foundation: stable IDs (`REQ-###`/`SCN-###`/`DEC-###`/`TEST-###`/`RISK-###`), new `bdd-traceability` skill, seed traceability table, `D-###` ↔ `DEC-###` alias convention |
 | M118 | [`archive/M118-traceability-coverage-closeout.md`](archive/M118-traceability-coverage-closeout.md) | Close traceability gaps: secondOpinion test, PriorityScore/RouteScore verification, DEC-014 (graph-ops-only), SCN-### annotations on 9 agent-skill test classes |
 | M119 | [`archive/M119-bdd-cucumber-adoption.md`](archive/M119-bdd-cucumber-adoption.md) | Adopt Cucumber JVM + Gherkin: 3 .feature files (case-analyzer, doctor-matcher, routing-planner), thin step definitions, CucumberIT runner, 6 scenarios pass |
+| M120 | [`archive/M120-cucumber-coverage-expansion.md`](archive/M120-cucumber-coverage-expansion.md) | Extend Cucumber BDD coverage to remaining 6 agent skills (evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, clinical-guideline, triage); 18 total scenarios |
 
 ## Creating a New Plan
 
