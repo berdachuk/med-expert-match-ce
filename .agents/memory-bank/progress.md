@@ -2,6 +2,17 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-15: M117 Active — Semantic Markup & Traceability Foundation
+
+- New plan `.agents/plans/M117-semantic-markup-and-traceability-foundation.md` (docs + skill scaffolding only)
+- New skill `.agents/skills/bdd-traceability/SKILL.md` (Description, When to use, Instructions, Boundaries, Java Cucumber rule, anti-patterns)
+- Adopted stable ID scheme: `REQ-###`, `NFR-###`, `SCN-###`, `STEP-###`, `TEST-###`, `DEC-###`, `RISK-###`, `TASK-###`
+- `decisions.md` header documents `D-###` ↔ `DEC-###` alias convention (historical ADRs stay immutable)
+- `productContext.md` now carries a seed traceability table for 6 use cases + 9 agent skills
+- `activeContext.md` adds "Traceability Gaps" subsection + open question
+- `00-index.md` Active table will be updated separately by the plan implementation
+- `mvn verify` is still green (this entry is docs/skill scaffolding only; no production code changed)
+
 ## 2026-06-13: Memory Bank Alignment
 
 - Fixed factual errors in memory bank files against canonical docs

@@ -5,6 +5,7 @@
 | # | Plan | Description |
 |---|------|-------------|
 | M116 | [`M116-application-hardening-and-observability.md`](M116-application-hardening-and-observability.md) | Application hardening: health endpoint enhancements, startup readiness probe, graceful shutdown, structured logging, Prometheus metrics review |
+| M117 | [`M117-semantic-markup-and-traceability-foundation.md`](M117-semantic-markup-and-traceability-foundation.md) | Semantic markup + traceability foundation: stable IDs (`REQ-###`/`SCN-###`/`DEC-###`/`TEST-###`/`RISK-###`), new `bdd-traceability` skill, seed traceability table, `D-###` ↔ `DEC-###` alias convention |
 
 ## Deferred
 
