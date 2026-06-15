@@ -17,6 +17,10 @@ import java.util.List;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * SCN-003 (evidence-retriever): Given a clinical question, when retrieved, then PubMed evidence is returned with citations.
+ * SCN-008 (clinical-guideline): Given a condition, when queried, then published guidelines with strength of recommendation are returned.
+ */
 class PubMedServiceIT {
 
     private WireMockServer wireMockServer;

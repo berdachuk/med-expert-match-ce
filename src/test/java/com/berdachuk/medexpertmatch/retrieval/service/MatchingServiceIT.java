@@ -27,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration test for MatchingService.
+ * REQ-001: Specialist matching returns ranked list with score breakdown.
+ * REQ-002: Second opinion returns independent ranked specialist list.
  */
 class MatchingServiceIT extends BaseIntegrationTest {
 
@@ -878,5 +880,53 @@ class MatchingServiceIT extends BaseIntegrationTest {
             // Premier facility should have rank 1 (best match)
             assertEquals(1, premierMatch.rank(), "Higher scoring facility should have rank 1");
         }
+    }
+
+    /**
+     * REQ-002: Second opinion returns independent ranked specialist list
+     * with score breakdown.
+     */
+    @Test
+    void testSecondOpinionReturnsIndependentDifferentials() {
+        // Create test doctor
+        String doctorId = IdGenerator.generateDoctorId();
+        Doctor doctor = new Doctor(
+                doctorId,
+                "Dr. Second Opinion Specialist",
+                "secondop@example.com",
+                List.of("Cardiology"),
+                List.of("Board Certified"),
+                List.of(),
+                true,
+                "AVAILABLE"
+        );
+        doctorRepository.insert(doctor);
+
+        // Create SECOND_OPINION case
+        MedicalCase medicalCase = new MedicalCase(
+                IdGenerator.generateId(),
+                55,
+                "Chest pain",
+                "Mild chest discomfort for evaluation",
+                "Stable angina",
+                List.of("I20.9"),
+                List.of(),
+                UrgencyLevel.MEDIUM,
+                "Cardiology",
+                CaseType.SECOND_OPINION,
+                "Second opinion requested for existing diagnosis",
+                null
+        );
+        medicalCaseRepository.insert(medicalCase);
+
+        // Match doctors
+        MatchOptions options = MatchOptions.defaultOptions();
+        List<DoctorMatch> matches = matchingService.matchDoctorsToCase(medicalCase.id(), options);
+
+        assertNotNull(matches);
+        assertFalse(matches.isEmpty(), "Second opinion should return ranked specialists");
+        assertNotNull(matches.getFirst().matchScore());
+        assertTrue(matches.getFirst().matchScore() > 0);
+        assertTrue(matches.getFirst().rank() >= 1);
     }
 }

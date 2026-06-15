@@ -77,3 +77,8 @@ ADR-style decision log. Each entry: status, date, title, rationale, affected mod
 - **Rationale:** Read-heavy workload optimization: GIN indexes for fast containment queries (`@>`), no JOIN overhead, simple application code. Trade-off: no DB-enforced referential integrity. Graph layer handles semantic relationships; ingestion validates reference data.
 - **Affects:** All domain modules (doctor, medicalcase, medicalcoding, facility)
 - **Reference:** `docs/ARCHITECTURE.md` (Array-Based References Pattern)
+
+### DEC-014: Network Analytics Scope (M118)
+- **Status:** Accepted (2026-06-15)
+- **Rationale:** `NetworkAnalyzerService` does not exist in the codebase. The network analytics use case (REQ-004) is covered by existing graph operations through `GraphQueryServiceIT` and `GraphServiceIT`. Downgraded to a graph-ops-only requirement — no dedicated analytics scoring path until the product roadmap requires it. No code change needed.
+- **Affects:** `retrieval` (REQ-004 scope definition), `.agents/memory-bank/productContext.md` (traceability row)

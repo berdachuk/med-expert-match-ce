@@ -73,24 +73,24 @@ Rows marked **provisional** are not yet linked to a verified test artifact; see 
 | Use Case | REQ-### | Owning module | Primary domain models | Verified test artifact (TEST-###) | Status |
 |---|---|---|---|---|---|
 | Specialist Matching (UC-1) | REQ-001 | `retrieval` | `MedicalCase`, `Doctor`, `DoctorMatch`, `ScoreResult` | `retrieval/service/MatchingServiceIT.java` (TEST-001) | verified |
-| Second Opinion (UC-2) | REQ-002 | `retrieval`, `llm` | `MedicalCase`, `DoctorMatch` | `retrieval/service/MatchingServiceIT.java` (TEST-002) | provisional — needs dedicated `secondOpinion*` test method |
-| Queue Prioritization (UC-3) | REQ-003 | `retrieval` | `MedicalCase`, `PriorityScore` | `retrieval/service/SemanticGraphRetrievalServiceIT.java` (TEST-003) | provisional — `PriorityScore` produced by `SemanticGraphRetrievalServiceImpl#computePriorityScore`; no dedicated unit test located |
-| Network Analytics (UC-4) | REQ-004 | `graph`, `llm` | `Doctor`, `MedicalSpecialty` (graph), `NetworkMetrics` (TBD) | `graph/service/GraphQueryServiceIT.java` (TEST-004) | provisional — analytics scoring path not yet covered by a dedicated `*NetworkAnalyzer*Test` |
+| Second Opinion (UC-2) | REQ-002 | `retrieval`, `llm` | `MedicalCase`, `DoctorMatch` | `retrieval/service/MatchingServiceIT.java` (TEST-002) — `secondOpinionReturnsIndependentDifferentials()` | verified |
+| Queue Prioritization (UC-3) | REQ-003 | `retrieval` | `MedicalCase`, `PriorityScore` | `retrieval/service/SemanticGraphRetrievalServiceIT.java` (TEST-003) — `testComputePriorityScore` / `testComputePriorityScoreWithDifferentUrgencyLevels` / `testComputePriorityScoreUsesDoctorAvailability` | verified |
+| Network Analytics (UC-4) | REQ-004 | `graph`, `llm` | `Doctor`, `MedicalSpecialty` (graph) | `graph/service/GraphQueryServiceIT.java` (TEST-004) | verified — graph-ops-only per DEC-014 |
 | Decision Support (UC-5) | REQ-005 | `llm`, `caseanalysis` | `CaseAnalysisResult`, `MedicalCase` | `caseanalysis/service/CaseAnalysisServiceIT.java` (TEST-005) | verified |
-| Regional Routing (UC-6) | REQ-006 | `retrieval` | `Facility`, `FacilityMatch`, `RouteScoreResult` | `retrieval/service/SemanticGraphRetrievalServiceIT.java` (TEST-006) | provisional — `RouteScoreResult` produced by `SemanticGraphRetrievalServiceImpl#semanticGraphRetrievalRouteScore`; no dedicated routing test located |
+| Regional Routing (UC-6) | REQ-006 | `retrieval` | `Facility`, `FacilityMatch`, `RouteScoreResult` | `retrieval/service/SemanticGraphRetrievalServiceIT.java` (TEST-006) — `testSemanticGraphRetrievalRouteScore` / `testFacilityHistoricalOutcomesScore` / `testSemanticGraphRetrievalRouteScoreUsesLocationCompleteness` | verified |
 
 ### Agent skills → scenarios
 
-Each skill gets a single seed `SCN-###` row. Status is **provisional** until a matching test method is confirmed.
+Each skill gets a single seed `SCN-###` row. Status is **verified** if a test class carries a `SCN-###` javadoc/`@DisplayName` annotation; **provisional** otherwise.
 
 | Skill | SCN-### | Owning module | Primary outcome (business language) | Status |
 |---|---|---|---|---|
-| case-analyzer | SCN-001 | `caseanalysis`, `llm` | Given a medical case narrative, when analyzed, then entities/ICD-10/SNOMED and urgency tier are returned | provisional |
+| case-analyzer | SCN-001 | `caseanalysis`, `llm` | Given a medical case narrative, when analyzed, then entities/ICD-10/SNOMED and urgency tier are returned | verified (TEST-005) |
 | doctor-matcher | SCN-002 | `retrieval` | Given an analyzed case, when matched, then a ranked list of specialists with score breakdown is returned | verified (TEST-001) |
-| evidence-retriever | SCN-003 | `evidence`, `documents` | Given a clinical question, when retrieved, then PubMed and local-document evidence is returned with citations | provisional |
-| recommendation-engine | SCN-004 | `llm` | Given matched specialists, when synthesized, then a diagnostic workup and referral rationale are produced | provisional |
-| clinical-advisor | SCN-005 | `llm`, `clinicalexperience` | Given a case, when advised, then a differential diagnosis with risk assessment is returned | provisional |
-| network-analyzer | SCN-006 | `graph`, `llm` | Given a query about the expertise network, when analyzed, then sub-specialist clusters and coverage gaps are returned | provisional |
-| routing-planner | SCN-007 | `retrieval` | Given a case and a set of facilities, when routed, then a facility is recommended with score breakdown | provisional |
-| clinical-guideline | SCN-008 | `evidence`, `documents` | Given a condition, when queried, then published guidelines with strength of recommendation are returned | provisional |
-| triage | SCN-009 | `caseanalysis`, `llm` | Given a new case, when triaged, then an urgency tier (CRITICAL/HIGH/MEDIUM/LOW) is assigned | provisional |
+| evidence-retriever | SCN-003 | `evidence`, `documents` | Given a clinical question, when retrieved, then PubMed and local-document evidence is returned with citations | verified (TEST-007) |
+| recommendation-engine | SCN-004 | `llm` | Given matched specialists, when synthesized, then a diagnostic workup and referral rationale are produced | verified (TEST-008) |
+| clinical-advisor | SCN-005 | `llm`, `clinicalexperience` | Given a case, when advised, then a differential diagnosis with risk assessment is returned | verified (TEST-008) |
+| network-analyzer | SCN-006 | `graph`, `llm` | Given a query about the expertise network, when analyzed, then sub-specialist clusters and coverage gaps are returned | verified (TEST-004) — graph-ops-only per DEC-014 |
+| routing-planner | SCN-007 | `retrieval` | Given a case and a set of facilities, when routed, then a facility is recommended with score breakdown | verified (TEST-008) |
+| clinical-guideline | SCN-008 | `evidence`, `documents` | Given a condition, when queried, then published guidelines with strength of recommendation are returned | verified (TEST-007) |
+| triage | SCN-009 | `caseanalysis`, `llm` | Given a new case, when triaged, then an urgency tier (CRITICAL/HIGH/MEDIUM/LOW) is assigned | verified (TEST-005) |

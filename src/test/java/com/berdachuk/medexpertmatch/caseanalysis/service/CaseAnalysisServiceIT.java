@@ -15,6 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration test for CaseAnalysisService.
+ * SCN-001 (case-analyzer): Given a medical case narrative, when analyzed, then entities/ICD-10/SNOMED and urgency tier are returned.
+ * SCN-009 (triage): Given a new case, when triaged, then an urgency tier (CRITICAL/HIGH/MEDIUM/LOW) is assigned.
  */
 class CaseAnalysisServiceIT extends BaseIntegrationTest {
 

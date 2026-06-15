@@ -26,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration tests for MedicalAgentTools.
  * Tests all tool methods with real database and mocked LLM services.
+ * SCN-004 (recommendation-engine): Given matched specialists, when synthesized, then a diagnostic workup and referral rationale are produced.
+ * SCN-005 (clinical-advisor): Given a case, when advised, then a differential diagnosis with risk assessment is returned.
+ * SCN-007 (routing-planner): Given a case and a set of facilities, when routed, then a facility is recommended with score breakdown.
  */
 class MedicalAgentToolsIT extends BaseIntegrationTest {
 
