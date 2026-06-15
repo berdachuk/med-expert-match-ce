@@ -6,7 +6,9 @@ All milestones M01–M114 are complete. M114 fixed the integration test suite: 5
 
 M115 (dependency freshness, CI optimization) and M116 (application hardening, observability) carry over as active infrastructure work.
 
-**M117** (active, 2026-06-15) introduces the semantic markup and traceability foundation: stable ID scheme (`REQ-###`, `SCN-###`, `TEST-###`, `DEC-###`, `RISK-###`), new `bdd-traceability` skill, and a seed traceability table in `productContext.md`. This plan is documentation + skill scaffolding only; no production code change is required.
+**M117** (completed, 2026-06-15) introduced the semantic markup and traceability foundation: stable ID scheme (`REQ-###`, `SCN-###`, `TEST-###`, `DEC-###`, `RISK-###`), new `bdd-traceability` skill, and a seed traceability table in `productContext.md`. Documentation + skill scaffolding only; no production code change required.
+
+**M118** (active, 2026-06-15) closes the traceability coverage gaps identified in M117: dedicated tests for REQ-002/003/006, `DEC-014` decision on REQ-004 scope, and `SCN-###` annotations on the 9 agent-skill test classes.
 
 ## Current Milestone
 
@@ -27,17 +29,17 @@ M115 (dependency freshness, CI optimization) and M116 (application hardening, ob
 - Is WireMock 4.0.0-beta.36 API-compatible with current test fixtures?
 - **M117 traceability:** Which `REQ-###` rows still lack a verified `TEST-###` link? (See "Traceability gaps" below.)
 
-## Traceability Gaps (M117)
+## Traceability Gaps (M118 follow-up)
 
-Seed traceability for the 6 use cases lives in `.agents/memory-bank/productContext.md`. Rows below need a follow-up M-plan (likely a sub-plan under M117) to add the missing test artifacts and upgrade **provisional** rows to **verified**.
+M117 closed the foundation work; M118 is the **active** follow-up. The rows below are the open gaps to close in M118. As M118 progresses, the matching rows in `productContext.md` will be flipped from **provisional** to **verified**.
 
-| Gap | REQ-### | Reason | Suggested follow-up |
+| Gap | REQ-### / SCN-### | Reason | M118 task |
 |---|---|---|---|
-| No dedicated `secondOpinion*` test method | REQ-002 | `MatchingServiceIT` covers UC-1 only | Add `secondOpinionReturnsIndependentDifferentials()` to `MatchingServiceIT` |
-| No dedicated `PriorityScore` test | REQ-003 | `PriorityScore` produced by `SemanticGraphRetrievalServiceImpl#computePriorityScore`; no focused unit test | Add `SemanticGraphRetrievalServicePriorityScoreTest` |
-| No dedicated `NetworkAnalyzer*Test` | REQ-004 | `GraphQueryServiceIT` covers graph ops, not the analytics scoring path | Add `NetworkAnalyzerServiceTest` once `NetworkAnalyzerService` is introduced |
-| No dedicated `RouteScore` / routing test | REQ-006 | `RouteScoreResult` produced by `SemanticGraphRetrievalServiceImpl#semanticGraphRetrievalRouteScore`; no focused test | Add `RoutingScoreServiceTest` |
-| 8 of 9 agent skills have only provisional scenarios | SCN-001, SCN-003..SCN-009 | No Gherkin runtime; test methods not annotated with `REQ-###` / `SCN-###` | Adopt the `bdd-traceability` skill in next plan that touches an LLM workflow |
+| No dedicated `secondOpinion*` test method | REQ-002 | `MatchingServiceIT` covers UC-1 only | Task 1: add `secondOpinionReturnsIndependentDifferentials()` to `MatchingServiceIT` |
+| No dedicated `PriorityScore` test | REQ-003 | `PriorityScore` produced by `SemanticGraphRetrievalServiceImpl#computePriorityScore`; no focused unit test | Task 2: add `SemanticGraphRetrievalServicePriorityScoreTest` |
+| No dedicated `NetworkAnalyzer*Test` | REQ-004 | `GraphQueryServiceIT` covers graph ops, not the analytics scoring path | Task 3: `DEC-014` decision — graph-ops-only OR introduce `NetworkAnalyzerService` |
+| No dedicated `RouteScore` / routing test | REQ-006 | `RouteScoreResult` produced by `SemanticGraphRetrievalServiceImpl#semanticGraphRetrievalRouteScore`; no focused test | Task 4: add `RoutingScoreServiceTest` |
+| 8 of 9 agent skills have only provisional scenarios | SCN-001, SCN-003..SCN-009 | No Gherkin runtime; test methods not annotated with `REQ-###` / `SCN-###` | Task 5: annotate JUnit tests with `SCN-###` (no Cucumber required) |
 
 ## Risks
 
@@ -46,8 +48,6 @@ Seed traceability for the 6 use cases lives in `.agents/memory-bank/productConte
 
 ## Next Steps
 
-1. Implement M115: dependency freshness and CI optimization
-2. Update safe dependencies (jackson, spring-ai-agent-utils, spring-retry)
-3. Optimize CI with parallel Maven builds
-4. Create CONTRIBUTING.md with CI workflow docs
-5. **M117 follow-ups:** close the Traceability Gaps above (dedicated tests for REQ-002/003/004/006 + `SCN-###` annotations on LLM workflow tests)
+1. **M118** — close the Traceability Gaps: dedicated tests for REQ-002/003/006, `DEC-014` decision on REQ-004, `SCN-###` annotations on the 9 agent-skill test classes.
+2. M115 follow-ups (CONTRIBUTING.md, parallel CI) — already merged; close any open work in this branch.
+3. **M116** — application hardening and observability (still active, in flight).

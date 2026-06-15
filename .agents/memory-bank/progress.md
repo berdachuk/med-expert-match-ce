@@ -2,6 +2,14 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-15: M117 Archived + M118 Active — Traceability Coverage Closeout
+
+- **M117 archived** — `feat/m117-semantic-markup-and-traceability-foundation` merged to `develop`, branch deleted (local + remote)
+- **M118 plan created** — `.agents/plans/M118-traceability-coverage-closeout.md` (active); closes the 5 traceability gaps M117 identified
+- `00-index.md` — M117 moved to Archive table; M118 added to Active table
+- `activeContext.md` — "Traceability Gaps (M118 follow-up)" replaces the M117 section; M117 marked Completed
+- `progress.md` — 2026-06-15 entry added
+
 ## 2026-06-15: M117 Active — Semantic Markup & Traceability Foundation
 
 - New plan `.agents/plans/M117-semantic-markup-and-traceability-foundation.md` (docs + skill scaffolding only)
