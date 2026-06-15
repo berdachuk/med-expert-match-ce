@@ -107,3 +107,9 @@ Read this file BEFORE starting any new milestone — it captures the
 - test_target 'mvn compile' green (rc=0)
 - Discovered: feature branch from main caused merge conflict in chat.html (develop already had prior M96 cleanup). Resolved by keeping the simpler hidden-input-only version. Added bun.lock and package.json to .gitignore.
 - Next: none — all milestones through M96 are complete
+
+## 2026-06-15 M115 (Dependency Freshness and CI Optimization) [GREEN]
+- commit: 1d5602c
+- test_target 'mvn compile' green (rc=0)
+- Discovered: wiremock 3.9.2 held due to com.github.tomakehurst package path (4.x uses org.wiremock); jackson 2.22.0 overridden via jackson-2-bom.version property; JaCoCo report moved from test phase to none (CI runtime only); -T 2 parallel flag added to all CI mvn commands; CONTRIBUTING.md created with CI pipeline and test container docs
+- Next: M116 application hardening and observability
