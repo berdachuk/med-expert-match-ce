@@ -26,6 +26,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Integration test for SemanticGraphRetrievalService.
+ * REQ-003: Queue Prioritization — computes PriorityScore with urgency/complexity/availability.
+ * REQ-006: Regional Routing — computes RouteScoreResult with complexity/outcomes/capacity/geography.
  */
 class SemanticGraphRetrievalServiceIT extends BaseIntegrationTest {
 

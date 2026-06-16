@@ -13,6 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * Integration test for GraphQueryService.
  * Uses Testcontainers PostgreSQL with Apache AGE to verify real graph database operations.
+ * SCN-006 (network-analyzer): Covers graph operations for doctor-specialty-case relationships.
+ * REQ-004: Network analytics via graph ops.
  */
 class GraphQueryServiceIT extends BaseIntegrationTest {
 

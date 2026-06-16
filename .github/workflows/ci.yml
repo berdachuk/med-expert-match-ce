@@ -28,19 +28,19 @@ jobs:
           DOCKER_BUILDKIT: 1
 
       - name: Compile
-        run: mvn compile test-compile --no-transfer-progress
+        run: mvn compile test-compile -T 2 --no-transfer-progress
 
       - name: Run unit tests
-        run: mvn test --no-transfer-progress
+        run: mvn test -T 2 --no-transfer-progress
 
       - name: Eval harness gate
         run: bash ./scripts/run-eval-harness.sh
 
       - name: Eval pass rate IT
-        run: mvn test -Dtest=EvaluationServicePassRateIT --no-transfer-progress
+        run: mvn test -Dtest=EvaluationServicePassRateIT -T 2 --no-transfer-progress
 
       - name: Run integration tests
-        run: mvn verify --no-transfer-progress
+        run: mvn verify -T 2 --no-transfer-progress
 
       - name: Generate coverage report
         if: always()

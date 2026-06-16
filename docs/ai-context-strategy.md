@@ -57,6 +57,8 @@ AGENTS.md                ← Root index: repo overview, commands, boundaries, sk
 | Code/test/arch change | `activeContext.md`, `progress.md` (append dated entry) |
 | Stack/toolchain change | `techContext.md`, root `AGENTS.md` (Commands section) |
 | New Kilo command/agent | `.kilo/command/{name}.md` or `.kilo/agent/{name}.md`; reference from `.agents/skills/` if canonical |
+| New / changed `REQ-###`, `SCN-###`, `TEST-###`, `DEC-###`, `RISK-###` | `bdd-traceability/SKILL.md`; `productContext.md` (seed table); `activeContext.md` (gaps); `decisions.md` (ADRs) |
+| New `.feature` file | `bdd-traceability/SKILL.md` (Java Cucumber rule); `productContext.md` (Feature file column); `src/test/resources/features/` |
 
 ### Memory Bank Maintenance
 

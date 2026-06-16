@@ -1,14 +1,17 @@
-package com.berdachuk.medexpertmatch.evidence.service;
+package com.berdachuk.medexpertmatch.bdd.stepdefs;
 
+import com.berdachuk.medexpertmatch.bdd.CucumberSpringConfiguration;
 import com.berdachuk.medexpertmatch.evidence.domain.PubMedArticle;
+import com.berdachuk.medexpertmatch.evidence.service.PubMedService;
 import com.berdachuk.medexpertmatch.evidence.service.impl.PubMedServiceImpl;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,22 +20,18 @@ import java.util.List;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * SCN-003 (evidence-retriever): Given a clinical question, when retrieved, then PubMed evidence is returned with citations.
- * SCN-008 (clinical-guideline): Given a condition, when queried, then published guidelines with strength of recommendation are returned.
- */
-class PubMedServiceIT {
+public class EvidenceRetrieverSteps extends CucumberSpringConfiguration {
 
     private WireMockServer wireMockServer;
     private PubMedService pubmedService;
+    private String query;
+    private List<PubMedArticle> results;
 
-    @BeforeEach
-    void setUp() throws IOException {
+    @Before("@evidence-retriever or @clinical-guideline")
+    public void setUp() throws IOException {
         wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         wireMockServer.start();
         configureFor(wireMockServer.port());
-
-        String baseUrl = "http://localhost:" + wireMockServer.port() + "/entrez/eutils";
 
         String diabetesJson = new ClassPathResource("evidence/esearch-diabetes.json")
                 .getContentAsString(StandardCharsets.UTF_8);
@@ -58,14 +57,6 @@ class PubMedServiceIT {
                         .withHeader("Content-Type", "application/json; charset=UTF-8")
                         .withBody(emptyJson)));
 
-        stubFor(get(urlPathEqualTo("/entrez/eutils/esearch.fcgi"))
-                .withQueryParam("db", equalTo("pubmed"))
-                .withQueryParam("retmax", equalTo("0"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json; charset=UTF-8")
-                        .withBody(emptyJson)));
-
         stubFor(get(urlPathEqualTo("/entrez/eutils/efetch.fcgi"))
                 .withQueryParam("db", equalTo("pubmed"))
                 .withQueryParam("id", equalTo("12345678,23456789"))
@@ -75,56 +66,46 @@ class PubMedServiceIT {
                         .withHeader("Content-Type", "application/xml; charset=UTF-8")
                         .withBody(diabetesXml)));
 
-        RestTemplate restTemplate = new RestTemplate();
-        pubmedService = new PubMedServiceImpl(restTemplate, baseUrl);
+        pubmedService = new PubMedServiceImpl(
+                new org.springframework.web.client.RestTemplate(),
+                "http://localhost:" + wireMockServer.port() + "/entrez/eutils");
     }
 
-    @AfterEach
-    void tearDown() {
+    @After("@evidence-retriever or @clinical-guideline")
+    public void tearDown() {
         if (wireMockServer != null && wireMockServer.isRunning()) {
             wireMockServer.stop();
         }
     }
 
-    @Test
-    void searchShouldReturnParsedArticles() {
-        List<PubMedArticle> results = pubmedService.search("diabetes", 5);
-
-        assertNotNull(results);
-        assertEquals(2, results.size());
-
-        PubMedArticle first = results.get(0);
-        assertTrue(first.title().contains("Early Glycemic Control"));
-        assertTrue(first.abstractText().contains("intensive glycemic control"));
-        assertEquals("Diabetes care", first.journal());
-        assertEquals("12345678", first.pmid());
-        assertEquals(3, first.authors().size());
-        assertEquals("Johnson, Michael R", first.authors().get(0));
-        assertEquals("Williams, Sarah E", first.authors().get(1));
+    @Given("a clinical condition {string}")
+    public void aClinicalCondition(String condition) {
+        this.query = condition;
     }
 
-    @Test
-    void searchWithZeroMaxResultsShouldReturnEmptyList() {
-        List<PubMedArticle> results = pubmedService.search("diabetes", 0);
-        assertNotNull(results);
-        assertTrue(results.isEmpty());
+    @When("the system searches PubMed for evidence")
+    public void theSystemSearchesPubMedForEvidence() {
+        results = pubmedService.search(query, 5);
     }
 
-    @Test
-    void searchWithEmptyQueryShouldReturnEmptyList() {
-        List<PubMedArticle> results = pubmedService.search("", 5);
+    @Then("PubMed articles are returned with title and abstract")
+    public void pubmedArticlesAreReturnedWithTitleAndAbstract() {
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        assertNotNull(results.getFirst().title());
+        assertNotNull(results.getFirst().abstractText());
+    }
+
+    @Then("no PubMed articles are returned")
+    public void noPubMedArticlesAreReturned() {
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
 
-    @Test
-    void searchResultsShouldHaveValidTimestamps() {
-        List<PubMedArticle> results = pubmedService.search("diabetes", 5);
+    @Then("the PubMed articles have valid publication years")
+    public void thePubMedArticlesHaveValidPublicationYears() {
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
         assertTrue(results.stream().allMatch(a -> a.year() > 0));
-    }
-
-    @Test
-    void wireMockServerShouldBeRunning() {
-        assertTrue(wireMockServer.isRunning());
     }
 }

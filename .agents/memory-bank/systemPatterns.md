@@ -105,9 +105,9 @@ User → ChatClient (FunctionGemma) + SkillsTool → SessionMemoryAdvisor (15-tu
 ## Key Design Decisions
 
 See `.agents/memory-bank/decisions.md` for the full ADR log. Highlights:
-- D-001: Java records for domain entities (immutable)
-- D-004: External `.st` files for LLM prompts
-- D-005: Flyway V1 consolidation
-- D-007: Role-separated LLM endpoints (M67)
-- D-009: Graph operations only through `GraphService`
-- D-010: Mock external services in ITs (M52)
+- DEC-001: Java records for domain entities (immutable)
+- DEC-004: External `.st` files for LLM prompts
+- DEC-005: Flyway V1 consolidation
+- DEC-007: Role-separated LLM endpoints (M67)
+- DEC-009: Graph operations only through `GraphService`
+- DEC-010: Mock external services in ITs (M52)

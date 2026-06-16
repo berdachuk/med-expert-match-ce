@@ -80,6 +80,7 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 | api-design | `api-design/SKILL.md` | Designing or changing REST/RPC/A2A endpoints, versioning, error contracts |
 | write-less-code | `write-less-code/SKILL.md` | Before non-trivial implementation and before commit — push back on bloat, prefer minimum diff and reuse |
 | security-check | `security-check/SKILL.md` | Before/after any work touching auth, APIs, DB, secrets, external input, infra, or new dependencies; review final diff for vulnerabilities |
+| bdd-traceability | `bdd-traceability/SKILL.md` | New/changed functional requirements, Gherkin or executable scenarios, TDD with acceptance, coverage-gap review, refactors that may break requirement-to-test links |
 
 ## Global Boundaries
 
@@ -146,14 +147,29 @@ Persistent repo-local agent memory for session continuity. Read at the start of 
 | File | Purpose |
 |------|--------|
 | `projectbrief.md` | Project identity, goals, scope |
-| `productContext.md` | User-facing capabilities, constraints |
+| `productContext.md` | User-facing capabilities, constraints, **seed traceability table** |
 | `systemPatterns.md` | Architecture, module boundaries, domain ownership |
 | `techContext.md` | Stack, commands, infrastructure |
-| `activeContext.md` | Current focus, open questions, active risks |
+| `activeContext.md` | Current focus, open questions, active risks, **traceability gaps** |
 | `progress.md` | Timestamped log of completed work |
-| `decisions.md` | ADR-style decision log |
+| `decisions.md` | ADR-style decision log (`DEC-###`; historical `D-001`…`D-013` are immutable aliases) |
 
 Update after each task that changes code, tests, architecture, or docs.
+
+## Traceability
+
+Stable ID scheme (full rules in `.agents/skills/bdd-traceability/SKILL.md`):
+
+- `REQ-###` functional requirement, `NFR-###` non-functional requirement
+- `SCN-###` executable behavior scenario, `TEST-###` test artifact
+- `DEC-###` decision (legacy `D-###` ADRs are immutable aliases), `RISK-###` known risk, `TASK-###` plan task
+
+Rules:
+
+- Every functional change must reference at least one `REQ-###` (reuse from `.agents/memory-bank/productContext.md` or create the next ID).
+- Test classes/methods that exercise a behavior should carry the `REQ-###` or `SCN-###` in javadoc / `@DisplayName`.
+- Memory bank and plan files must link `REQ-###` → owning module → domain models → test artifact explicitly (table or structured section, not prose).
+- Load `.agents/skills/bdd-traceability/SKILL.md` for any new/changed requirement, executable scenario, TDD task with acceptance, or coverage-gap review.
 
 ## Layer Model
 

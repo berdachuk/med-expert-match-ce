@@ -2,6 +2,34 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-16: M121 Complete — Application Hardening and Observability
+
+- **M121 plan created** — `.agents/plans/M121-application-hardening-and-observability.md` (active)
+- **Kubernetes probes enabled** — `management.endpoint.health.probes.enabled=true` in `application.yml`
+- **ReadinessStateHealthIndicator** — new class in `system/health/` that tracks `AvailabilityChangeEvent<ReadinessState>` and reports UP/DOWN accordingly
+- **Dev Docker health check** — added `healthcheck` block to app service in `docker-compose.yml`
+- **885 unit tests, 568 integration tests, 0 failures, BUILD SUCCESS**
+- Merged via `feat/m121-application-hardening` → develop → archived
+
+## 2026-06-15: M117 Archived + M118 Active — Traceability Coverage Closeout
+
+- **M117 archived** — `feat/m117-semantic-markup-and-traceability-foundation` merged to `develop`, branch deleted (local + remote)
+- **M118 plan created** — `.agents/plans/M118-traceability-coverage-closeout.md` (active); closes the 5 traceability gaps M117 identified
+- `00-index.md` — M117 moved to Archive table; M118 added to Active table
+- `activeContext.md` — "Traceability Gaps (M118 follow-up)" replaces the M117 section; M117 marked Completed
+- `progress.md` — 2026-06-15 entry added
+
+## 2026-06-15: M117 Active — Semantic Markup & Traceability Foundation
+
+- New plan `.agents/plans/M117-semantic-markup-and-traceability-foundation.md` (docs + skill scaffolding only)
+- New skill `.agents/skills/bdd-traceability/SKILL.md` (Description, When to use, Instructions, Boundaries, Java Cucumber rule, anti-patterns)
+- Adopted stable ID scheme: `REQ-###`, `NFR-###`, `SCN-###`, `STEP-###`, `TEST-###`, `DEC-###`, `RISK-###`, `TASK-###`
+- `decisions.md` header documents `D-###` ↔ `DEC-###` alias convention (historical ADRs stay immutable)
+- `productContext.md` now carries a seed traceability table for 6 use cases + 9 agent skills
+- `activeContext.md` adds "Traceability Gaps" subsection + open question
+- `00-index.md` Active table will be updated separately by the plan implementation
+- `mvn verify` is still green (this entry is docs/skill scaffolding only; no production code changed)
+
 ## 2026-06-13: Memory Bank Alignment
 
 - Fixed factual errors in memory bank files against canonical docs

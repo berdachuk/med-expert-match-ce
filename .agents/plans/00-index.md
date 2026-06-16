@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M115 | [`M115-dependency-freshness-and-ci-optimization.md`](M115-dependency-freshness-and-ci-optimization.md) | Update safe deps (jackson 2.22.0, spring-ai-agent-utils 0.10.0, wiremock 3.9.2→4.0), optimize CI build parallelism, document CI workflow |
+| M122 | [`M122-security-hardening-and-test-coverage.md`](M122-security-hardening-and-test-coverage.md) | Security hardening: @Valid on 8 controllers, unit tests for zero-coverage modules, BDD step definitions for 3 feature files, CORS/CSRF audit |
 
 ## Deferred
 
@@ -112,12 +112,12 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M112 | [`archive/M112-post-upgrade-stabilization.md`](archive/M112-post-upgrade-stabilization.md) | Post-upgrade code quality, presentation slides, local dev auth fix |
 | M113 | [`archive/M113-presentation-slides-finalize.md`](archive/M113-presentation-slides-finalize.md) | Reorder slides, add System Overview/Three-Signal Scorer/How Skills Work slides, align speaker script and OPML mindmap |
 | M114 | [`archive/M114-integration-test-hardening-and-ci.md`](archive/M114-integration-test-hardening-and-ci.md) | Fix integration test failures, harden CI pipeline, close stability gaps |
-
-## Active
-
-| # | Plan | Description |
-|---|------|-------------|
-| M114 | [`M114-integration-test-hardening-and-ci.md`](M114-integration-test-hardening-and-ci.md) | Fix integration test infrastructure, harden CI pipeline, close stability gaps |
+| M115 | [`archive/M115-dependency-freshness-and-ci-optimization.md`](archive/M115-dependency-freshness-and-ci-optimization.md) | Update safe deps (jackson 2.22.0, spring-ai-agent-utils 0.10.0, wiremock held at 3.9.2), optimize CI build parallelism, document CI workflow |
+| M117 | [`archive/M117-semantic-markup-and-traceability-foundation.md`](archive/M117-semantic-markup-and-traceability-foundation.md) | Semantic markup + traceability foundation: stable IDs (`REQ-###`/`SCN-###`/`DEC-###`/`TEST-###`/`RISK-###`), new `bdd-traceability` skill, seed traceability table, `D-###` ↔ `DEC-###` alias convention |
+| M118 | [`archive/M118-traceability-coverage-closeout.md`](archive/M118-traceability-coverage-closeout.md) | Close traceability gaps: secondOpinion test, PriorityScore/RouteScore verification, DEC-014 (graph-ops-only), SCN-### annotations on 9 agent-skill test classes |
+| M119 | [`archive/M119-bdd-cucumber-adoption.md`](archive/M119-bdd-cucumber-adoption.md) | Adopt Cucumber JVM + Gherkin: 3 .feature files (case-analyzer, doctor-matcher, routing-planner), thin step definitions, CucumberIT runner, 6 scenarios pass |
+| M120 | [`archive/M120-cucumber-coverage-expansion.md`](archive/M120-cucumber-coverage-expansion.md) | Extend Cucumber BDD coverage to remaining 6 agent skills (evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, clinical-guideline, triage); 18 total scenarios |
+| M121 | [`archive/M121-application-hardening-and-observability.md`](archive/M121-application-hardening-and-observability.md) | Application hardening: Kubernetes probes, ReadinessStateHealthIndicator, dev Docker health check |
 
 ## Creating a New Plan
 

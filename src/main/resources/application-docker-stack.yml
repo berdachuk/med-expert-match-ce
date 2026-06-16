@@ -1,7 +1,10 @@
 # Docker Compose stack overrides (profile: docker-stack).
 # Disables dev-only multi-endpoint pool baked from local YAML; use OLLAMA_BASE_URL / EMBEDDING_* env instead.
+# Auth is disabled by default in the Docker stack; override via MEDEXPERTMATCH_AUTH_ENABLED env or .env.
 
 medexpertmatch:
+  auth:
+    enabled: false
   embedding:
     multi-endpoint:
       endpoints: []
