@@ -2,6 +2,15 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-16: M121 Complete — Application Hardening and Observability
+
+- **M121 plan created** — `.agents/plans/M121-application-hardening-and-observability.md` (active)
+- **Kubernetes probes enabled** — `management.endpoint.health.probes.enabled=true` in `application.yml`
+- **ReadinessStateHealthIndicator** — new class in `system/health/` that tracks `AvailabilityChangeEvent<ReadinessState>` and reports UP/DOWN accordingly
+- **Dev Docker health check** — added `healthcheck` block to app service in `docker-compose.yml`
+- **885 unit tests, 568 integration tests, 0 failures, BUILD SUCCESS**
+- Merged via `feat/m121-application-hardening` → develop → archived
+
 ## 2026-06-15: M117 Archived + M118 Active — Traceability Coverage Closeout
 
 - **M117 archived** — `feat/m117-semantic-markup-and-traceability-foundation` merged to `develop`, branch deleted (local + remote)

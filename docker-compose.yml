@@ -99,6 +99,12 @@ services:
       MEDEXPERTMATCH_SKILLS_EXTRA_DIRECTORY: "/app/skills"
       # Writable path in container (default user.home may be missing or read-only under host network)
       AGENT_MEMORY_DIR: /tmp/medexpertmatch/memory
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${SERVER_PORT:-8094}/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
