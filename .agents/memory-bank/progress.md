@@ -2,6 +2,17 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-16: M122 Complete — Security Hardening and Test Coverage
+
+- **@Valid/@Validated** added to all 8 REST controllers (MatchOutcomeRestController, AdminController, ChatController, WorkflowCheckpointController, AgentQuestionController, A2AMessageController, MedicalAgentController, A2aJsonRpcController)
+- **DTO validation** — `@NotBlank`/`@NotNull` on `MatchOutcomeRecordRequest` and `CheckpointRequestBody`
+- **CORS configuration** — added to `LocalSecurityConfig` and `DockerSecurityConfig` (localhost origins, standard methods, credentials)
+- **53 new unit tests** across 12 test classes:
+  - Zero-coverage modules: `CaseAnalysisServiceImplTest`, `RecursiveCharacterChunkerTest`, `SemanticChunkerTest`, `AdaptiveChunkerTest`, `ClinicalExperienceTest`, `FacilityTest`, `ICD10CodeRestControllerTest`
+  - Low-coverage modules: `GraphQueryServiceTest`, `MatchingServiceTest`, `MedicalCaseTest`, `PubMedArticleTest`, `DoctorTest`
+- **938 unit tests, 568 integration tests, 0 failures, BUILD SUCCESS**
+- Merged via `feat/m122-security-hardening-and-test-coverage` → develop → archived
+
 ## 2026-06-16: M121 Complete — Application Hardening and Observability
 
 - **M121 plan created** — `.agents/plans/M121-application-hardening-and-observability.md` (active)

@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M122 | [`M122-security-hardening-and-test-coverage.md`](M122-security-hardening-and-test-coverage.md) | Security hardening: @Valid on 8 controllers, unit tests for zero-coverage modules, BDD step definitions for 3 feature files, CORS/CSRF audit |
+| M123 | [`M123-code-quality-and-dependency-freshness.md`](M123-code-quality-and-dependency-freshness.md) | Code quality pass, dependency freshness, flaky test fixes, documentation alignment |
 
 ## Deferred
 

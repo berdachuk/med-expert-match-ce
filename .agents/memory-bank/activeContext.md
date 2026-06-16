@@ -2,14 +2,15 @@
 
 ## Current Focus
 
-All milestones M01–M120 are complete. M121 (Application Hardening and Observability) is now active.
+All milestones M01–M122 are complete. M123 (Code Quality and Dependency Freshness) is now active.
 
 ## Current Milestone
 
-**M121** — Application Hardening and Observability: Kubernetes probes enabled (`management.endpoint.health.probes.enabled=true`), `ReadinessStateHealthIndicator` created, dev Docker health check added to app service. 885 unit + 568 integration tests pass.
+**M123** — Code Quality and Dependency Freshness: flaky test fixes, dependency freshness pass, documentation alignment, code quality improvements.
 
 ## Completed Recently
 
+- **M122** — Security hardening: @Valid on 8 controllers, CORS config, 53 new unit tests (938 unit + 568 IT, 0 failures)
 - **M121** — Application hardening closeout: probes, readiness indicator, dev Docker health check
 - **M120** — Cucumber coverage expansion to 6 agent skills (18 scenarios)
 - **M119** — BDD Cucumber adoption (3 feature files, 6 scenarios)
@@ -30,8 +31,8 @@ No remaining traceability gaps. All 15 rows in `productContext.md` verified.
 
 ## Risks
 
-None active.
+- `SessionTokenApiKeyAuthFilterIT.allowsValidKey` is flaky (500 instead of 200 on some runs). Needs investigation in M123.
 
 ## Next Steps
 
-1. **M122** — Next implementation phase (TBD).
+1. **M123** — Code quality pass, dependency freshness, flaky test fixes, documentation alignment
