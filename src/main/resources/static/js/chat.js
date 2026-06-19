@@ -767,11 +767,11 @@
     pollAgenticState();
     setInterval(pollAgenticState, 5000);
 
-    // Responsive sidebar: hamburger toggle
+    // Responsive sidebar: hamburger toggle in header
     var offcanvasEl = document.getElementById('chatSidebarOffcanvas');
     if (offcanvasEl && typeof bootstrap !== 'undefined') {
         var offcanvas = new bootstrap.Offcanvas(offcanvasEl, { backdrop: true, scroll: true });
-        document.getElementById('chatHamburgerBtn')?.addEventListener('click', function () {
+        document.getElementById('chatSidebarToggleBtn')?.addEventListener('click', function () {
             offcanvas.toggle();
         });
         // Auto-close on chat selection
@@ -781,6 +781,5 @@
                 offcanvas.hide();
             }
         });
-        // Close on backdrop click (Bootstrap handles this via backdrop: true)
     }
 })();

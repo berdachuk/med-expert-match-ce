@@ -27,6 +27,11 @@
     <nav class="navbar navbar-expand-lg navbar-dark py-2 px-4" style="background-color: #1a5490;" role="navigation" aria-label="Main navigation">
         <div class="container-fluid">
             <div class="d-flex align-items-center gap-4">
+                <button class="btn btn-outline-light btn-sm chat-sidebar-mobile" id="chatSidebarToggleBtn"
+                        th:if="${currentPage == 'chat'}" type="button"
+                        aria-label="Toggle chat list">
+                    <span aria-hidden="true">&#9776;</span>
+                </button>
                 <a class="text-white text-decoration-none" style="color: #FFFFFF !important;"
                    th:href="@{/}" th:if="${currentPage != 'chat' and !isAdmin}" aria-label="Back to home">
                     <i class="bi bi-arrow-left" aria-hidden="true"></i>

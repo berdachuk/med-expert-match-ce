@@ -339,6 +339,24 @@
     background-color: rgba(13, 110, 253, 0.1);
 }
 
+.chat-sidebar-desktop {
+    display: none;
+}
+
+.chat-sidebar-mobile {
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .chat-sidebar-desktop {
+        display: block;
+    }
+
+    .chat-sidebar-mobile {
+        display: none;
+    }
+}
+
 #chatSidebarOffcanvas .offcanvas-body {
     padding: 0;
 }
