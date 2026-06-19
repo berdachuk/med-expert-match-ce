@@ -530,6 +530,7 @@
             var parsed = JSON.parse(rawData);
             if (parsed && typeof parsed.content === 'string') {
                 currentMarkdownBuffer = parsed.content;
+                updateAssistantBubble();
             }
             if (currentAssistantBubble) {
                 renderExplainabilityPanel(currentAssistantBubble, parsed);
