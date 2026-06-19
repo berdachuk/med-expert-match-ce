@@ -2,7 +2,9 @@
 
 ## Active
 
-*No active plans.*
+| # | Plan | Description |
+|---|------|-------------|
+| M127 | [`M127-token-efficient-format-implementation.md`](M127-token-efficient-format-implementation.md) | Token-efficient format implementation — ultra-compact JSON + line-based prompts |
 
 ## Deferred
 
