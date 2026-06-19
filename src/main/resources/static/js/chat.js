@@ -766,4 +766,21 @@
     initHistoricalMarkdown();
     pollAgenticState();
     setInterval(pollAgenticState, 5000);
+
+    // Responsive sidebar: hamburger toggle
+    var offcanvasEl = document.getElementById('chatSidebarOffcanvas');
+    if (offcanvasEl && typeof bootstrap !== 'undefined') {
+        var offcanvas = new bootstrap.Offcanvas(offcanvasEl, { backdrop: true, scroll: true });
+        document.getElementById('chatHamburgerBtn')?.addEventListener('click', function () {
+            offcanvas.toggle();
+        });
+        // Auto-close on chat selection
+        offcanvasEl.addEventListener('click', function (e) {
+            var chatItem = e.target.closest('.chat-item');
+            if (chatItem) {
+                offcanvas.hide();
+            }
+        });
+        // Close on backdrop click (Bootstrap handles this via backdrop: true)
+    }
 })();

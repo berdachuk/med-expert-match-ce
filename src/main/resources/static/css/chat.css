@@ -324,3 +324,30 @@
 .chat-item .chat-select-area:hover {
     color: #0d6efd;
 }
+
+.chat-hamburger-btn {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    z-index: 1020;
+    padding: 0.25rem 0.5rem;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.chat-hamburger-btn:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+#chatSidebarOffcanvas .offcanvas-body {
+    padding: 0;
+}
+
+#chatSidebarOffcanvas .offcanvas-body .p-3 {
+    height: 100%;
+}
+
+#chatSidebarOffcanvas .chat-list {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
