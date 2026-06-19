@@ -314,9 +314,9 @@ The `MedicalAgentService` orchestrates skills:
 
 ## Technology Stack
 
-- **Backend**: Spring Boot 4.0.6, Java 21
+- **Backend**: Spring Boot 4.1.0, Java 21
 - **Database**: PostgreSQL 17, PgVector 0.1.6 (client), Apache AGE 1.6.0
-- **AI Framework**: Spring AI 2.0.0-M8
+- **AI Framework**: Spring AI 2.0.0 GA
 - **Session**: Spring AI Session JDBC 0.3.0 (conversation history compaction)
 - **Medical AI**: MedGemma 1.5 4B, MedGemma 27B
 - **Testing**: JUnit 5, Testcontainers 2.0.5, WireMock 3.9.2, Playwright 1.60.0

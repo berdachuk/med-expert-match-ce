@@ -496,7 +496,7 @@ consistent, and measurable.
 - **NFR-5.1**: System shall support [FHIR R5 standard (v5.0.0)](https://www.hl7.org/fhir/)
 - **NFR-5.2**: System shall use OpenAI-compatible AI providers only
 - **NFR-5.3**: System shall support PostgreSQL 17+ with PgVector and Apache AGE
-- **NFR-5.4**: System shall run on Java 21+ and Spring Boot 4.0.6+
+- **NFR-5.4**: System shall run on Java 21+ and Spring Boot 4.1.0+
 
 ## 6. Technical Architecture
 
@@ -516,9 +516,9 @@ MedExpertMatch uses a modular, domain-driven architecture with clear separation 
 
 ### 6.2 Technology Stack
 
-- **Backend**: Spring Boot 4.0.6, Java 21
+- **Backend**: Spring Boot 4.1.0, Java 21
 - **Database**: PostgreSQL 17, PgVector 0.1.6 (client), Apache AGE 1.6.0
-- **AI Framework**: Spring AI 2.0.0-M8
+- **AI Framework**: Spring AI 2.0.0 GA
 - **Session**: Spring AI Session JDBC 0.3.0
 - **Testing**: JUnit 5, Testcontainers 2.0.5, WireMock 3.9.2
 - **UI**: Thymeleaf (server-side rendering)
@@ -1396,7 +1396,7 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 
 - **MedGemma Models**: MedGemma 1.5 4B, MedGemma 27B (via OpenAI-compatible providers)
 - **PostgreSQL**: PostgreSQL 17 with PgVector and Apache AGE 1.6.0 extensions
-- **Spring AI**: Spring AI 2.0.0-M6 framework
+- **Spring AI**: Spring AI 2.0.0 GA framework
 - **Datafaker**: Library for synthetic test data generation
 
 ### 11.2 Internal Dependencies

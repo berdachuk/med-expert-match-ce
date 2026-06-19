@@ -2,14 +2,20 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-19: M123 Complete — Code Quality and Dependency Freshness
+
+- **Fixed flaky test** — `SessionTokenApiKeyAuthFilterIT.allowsValidKey`: mocked `PubMedService` to prevent real HTTP calls causing 500 errors; enabled auth in test properties
+- **Dependency freshness pass** — All deps current (Spring Boot 4.1.0, Spring AI 2.0.0 GA, Spring Modulith 2.1.0, Testcontainers 2.0.5, Jackson 2.22.0, WireMock 3.9.2)
+- **Documentation alignment** — Updated 6 docs (PRD.md, MedExpertMatch.md, IMPLEMENTATION_PLAN.md, ARCHITECTURE.md, README.md) with correct version numbers
+- **Code quality scan** — No violations: 0 hardcoded prompts, 0 @Deprecated usage, 0 TODO/FIXME/HACK, 5 System.out/err (all in CLI main classes)
+- Merged via `feat/m123-code-quality-and-dependency-freshness` → develop → archived
+
 ## 2026-06-16: M122 Complete — Security Hardening and Test Coverage
 
-- **@Valid/@Validated** added to all 8 REST controllers (MatchOutcomeRestController, AdminController, ChatController, WorkflowCheckpointController, AgentQuestionController, A2AMessageController, MedicalAgentController, A2aJsonRpcController)
+- **@Valid/@Validated** added to all 8 REST controllers
 - **DTO validation** — `@NotBlank`/`@NotNull` on `MatchOutcomeRecordRequest` and `CheckpointRequestBody`
-- **CORS configuration** — added to `LocalSecurityConfig` and `DockerSecurityConfig` (localhost origins, standard methods, credentials)
-- **53 new unit tests** across 12 test classes:
-  - Zero-coverage modules: `CaseAnalysisServiceImplTest`, `RecursiveCharacterChunkerTest`, `SemanticChunkerTest`, `AdaptiveChunkerTest`, `ClinicalExperienceTest`, `FacilityTest`, `ICD10CodeRestControllerTest`
-  - Low-coverage modules: `GraphQueryServiceTest`, `MatchingServiceTest`, `MedicalCaseTest`, `PubMedArticleTest`, `DoctorTest`
+- **CORS configuration** — added to `LocalSecurityConfig` and `DockerSecurityConfig`
+- **53 new unit tests** across 12 test classes
 - **938 unit tests, 568 integration tests, 0 failures, BUILD SUCCESS**
 - Merged via `feat/m122-security-hardening-and-test-coverage` → develop → archived
 
@@ -17,7 +23,7 @@ Timestamped log of completed work. This is a summary derived from `.agents/plans
 
 - **M121 plan created** — `.agents/plans/M121-application-hardening-and-observability.md` (active)
 - **Kubernetes probes enabled** — `management.endpoint.health.probes.enabled=true` in `application.yml`
-- **ReadinessStateHealthIndicator** — new class in `system/health/` that tracks `AvailabilityChangeEvent<ReadinessState>` and reports UP/DOWN accordingly
+- **ReadinessStateHealthIndicator** — new class in `system/health/`
 - **Dev Docker health check** — added `healthcheck` block to app service in `docker-compose.yml`
 - **885 unit tests, 568 integration tests, 0 failures, BUILD SUCCESS**
 - Merged via `feat/m121-application-hardening` → develop → archived

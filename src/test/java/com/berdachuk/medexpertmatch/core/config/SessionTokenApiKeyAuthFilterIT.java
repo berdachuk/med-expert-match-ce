@@ -4,19 +4,25 @@ import com.berdachuk.medexpertmatch.core.domain.ApiSessionToken;
 import com.berdachuk.medexpertmatch.core.domain.RateLimitTier;
 import com.berdachuk.medexpertmatch.core.repository.ApiSessionTokenRepository;
 import com.berdachuk.medexpertmatch.core.util.IdGenerator;
+import com.berdachuk.medexpertmatch.evidence.service.PubMedService;
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
+import java.util.List;
 
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -24,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
         "medexpertmatch.auth.session-tokens.enabled=true",
-        "medexpertmatch.auth.enabled=false"
+        "medexpertmatch.auth.enabled=true"
 })
 class SessionTokenApiKeyAuthFilterIT extends BaseIntegrationTest {
 
@@ -37,9 +43,13 @@ class SessionTokenApiKeyAuthFilterIT extends BaseIntegrationTest {
     @Autowired
     private NamedParameterJdbcTemplate namedJdbcTemplate;
 
+    @MockBean
+    private PubMedService pubmedService;
+
     @BeforeEach
     void setUp() {
         namedJdbcTemplate.getJdbcTemplate().execute("DELETE FROM api_session_token");
+        when(pubmedService.search(anyString(), anyInt())).thenReturn(List.of());
     }
 
     @Test

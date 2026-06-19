@@ -2,14 +2,15 @@
 
 ## Current Focus
 
-All milestones M01–M122 are complete. M123 (Code Quality and Dependency Freshness) is now active.
+All milestones M01–M123 are complete. M124 (Next Implementation Phase) is now active.
 
 ## Current Milestone
 
-**M123** — Code Quality and Dependency Freshness: flaky test fixes, dependency freshness pass, documentation alignment, code quality improvements.
+**M124** — Next implementation phase (TBD).
 
 ## Completed Recently
 
+- **M123** — Code quality and dependency freshness: fixed flaky `SessionTokenApiKeyAuthFilterIT` (mocked `PubMedService`), dependency freshness pass (all deps current), documentation alignment (6 docs updated with correct Spring Boot 4.1.0 / Spring AI 2.0.0 GA versions), code quality scan (no violations found)
 - **M122** — Security hardening: @Valid on 8 controllers, CORS config, 53 new unit tests (938 unit + 568 IT, 0 failures)
 - **M121** — Application hardening closeout: probes, readiness indicator, dev Docker health check
 - **M120** — Cucumber coverage expansion to 6 agent skills (18 scenarios)
@@ -31,8 +32,8 @@ No remaining traceability gaps. All 15 rows in `productContext.md` verified.
 
 ## Risks
 
-- `SessionTokenApiKeyAuthFilterIT.allowsValidKey` is flaky (500 instead of 200 on some runs). Needs investigation in M123.
+None active.
 
 ## Next Steps
 
-1. **M123** — Code quality pass, dependency freshness, flaky test fixes, documentation alignment
+1. **M124** — Next implementation phase (TBD).
