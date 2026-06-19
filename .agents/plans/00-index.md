@@ -2,9 +2,7 @@
 
 ## Active
 
-| # | Plan | Description |
-|---|------|-------------|
-| M129 | [`M129-responsive-chat-sidebar.md`](M129-responsive-chat-sidebar.md) | Responsive chat sidebar — hide on small/medium, hamburger menu toggle |
+None — all plans archived.
 
 ## Deferred
 
@@ -125,6 +123,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M126 | [`archive/M126-next-implementation-phase.md`](archive/M126-next-implementation-phase.md) | Next implementation phase — GraphRAG profiling, monitoring, ops docs |
 | M127 | [`archive/M127-token-efficient-format-implementation.md`](archive/M127-token-efficient-format-implementation.md) | Token-efficient format implementation — ultra-compact JSON + line-based prompts |
 | M128 | [`archive/M128-markdown-rendering-fix.md`](archive/M128-markdown-rendering-fix.md) | Fix markdown rendering in chat — bold/italic/lists, content before reasoning block |
+| M129 | [`archive/M129-responsive-chat-sidebar.md`](archive/M129-responsive-chat-sidebar.md) | Responsive chat sidebar — hide on small/medium, hamburger menu toggle |
 
 ## Creating a New Plan
 

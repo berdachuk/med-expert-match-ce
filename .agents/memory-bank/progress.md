@@ -2,6 +2,18 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-19: M129 Complete — Responsive Chat Sidebar
+
+- **M129** — Responsive chat sidebar (REQ-129):
+  - Sidebar hidden on screens <992px (`d-none d-lg-block` on sidebar column)
+  - Hamburger button (☰) with `d-lg-none` in top-left of chat area
+  - Bootstrap offcanvas (`offcanvas-start`) wraps sidebar for slide-in overlay
+  - JS wires hamburger click to toggle, auto-closes on chat selection
+  - CSS for hamburger positioning, offcanvas body padding, chat list max-height
+  - 948 unit tests pass (1 pre-existing failure: `ChatMarkdownRendererTest.allowsHttpsLinks`)
+- Merged via `feat/m129-responsive-chat-sidebar` → develop → branch deleted
+- Archived M129 plan to `.agents/plans/archive/`
+
 ## 2026-06-19: M127 Complete — Token-Efficient Format Implementation
 
 - **M127** — Token-efficient format implementation (REQ-127):
