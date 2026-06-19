@@ -2,9 +2,7 @@
 
 ## Active
 
-| # | Plan | Description |
-|---|------|-------------|
-| M126 | [`M126-next-implementation-phase.md`](M126-next-implementation-phase.md) | Next implementation phase — GraphRAG profiling, monitoring, ops docs |
+*No active plans.*
 
 ## Deferred
 
@@ -122,6 +120,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M123 | [`archive/M123-code-quality-and-dependency-freshness.md`](archive/M123-code-quality-and-dependency-freshness.md) | Code quality pass, dependency freshness, flaky test fixes, documentation alignment |
 | M124 | [`archive/M124-performance-optimization-and-monitoring-enhancement.md`](archive/M124-performance-optimization-and-monitoring-enhancement.md) | Performance optimization and monitoring enhancement |
 | M125 | [`archive/M125-main-menu-restructure.md`](archive/M125-main-menu-restructure.md) | Main menu restructure — AI Chat as primary entry point |
+| M126 | [`archive/M126-next-implementation-phase.md`](archive/M126-next-implementation-phase.md) | Next implementation phase — GraphRAG profiling, monitoring, ops docs |
 
 ## Creating a New Plan
 

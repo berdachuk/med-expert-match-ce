@@ -10,6 +10,13 @@ Timestamped log of completed work. This is a summary derived from `.agents/plans
 - Merged via `feat/m124-m125-main-menu-restructure-and-perf` → develop → archived.
 - Created M126 plan: GraphRAG profiling, monitoring enhancements, ops docs.
 
+## 2026-06-19: Code Review Fix + M126 Archive
+
+- **Code review fixes**: Fixed 3 issues (empty catch blocks in `IdGenerator` → added `@Slf4j` + meaningful warn log; unused `newlineCount` variable in `AdaptiveChunker`; NPE-unsafe `equals` in `ChatAssistantServiceImpl` → added null check).
+- All 938 tests pass, 0 failures, 0 errors.
+- Merged via `feat/code-review-fixes` → develop → deleted branch.
+- Archived M126 plan to `.agents/plans/archive/`.
+
 ## 2026-06-19: M123 Complete — Code Quality and Dependency Freshness
 
 - **Fixed flaky test** — `SessionTokenApiKeyAuthFilterIT.allowsValidKey`: mocked `PubMedService` to prevent real HTTP calls causing 500 errors; enabled auth in test properties
