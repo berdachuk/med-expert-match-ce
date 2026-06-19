@@ -25,7 +25,6 @@ public class AdaptiveChunker implements com.berdachuk.medexpertmatch.chunking.ap
 
         int paragraphCount = countOccurrences(text, "\n\n");
         int sentenceCount = countSentenceBoundaries(text);
-        int newlineCount = countOccurrences(text, "\n");
 
         if ((paragraphCount > 2 && sentenceCount > 2)
                 || sentenceCount > 10
