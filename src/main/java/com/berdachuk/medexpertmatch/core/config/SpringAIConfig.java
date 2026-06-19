@@ -102,7 +102,7 @@ public class SpringAIConfig {
     }
 
     /**
-     * Clinical model — used for case analysis, interpretation, and high-quality clinical reasoning.
+     * Description generation model — uses clinical endpoint for medical domain accuracy.
      */
     @Bean("descriptionGenerationChatModel")
     @Lazy
@@ -111,7 +111,7 @@ public class SpringAIConfig {
                 "medexpertmatch.synthetic-data.description.llm.max-tokens", "1024");
         try {
             int maxTokens = Integer.parseInt(descriptionMaxTokens);
-            LlmRoleEndpointResolver.ResolvedEndpoint endpoint = LlmRoleEndpointResolver.resolveUtility(environment);
+            LlmRoleEndpointResolver.ResolvedEndpoint endpoint = LlmRoleEndpointResolver.resolveClinical(environment);
             return OpenAiChatModelFactory.createWithMaxTokens(endpoint, "description-generation", maxTokens);
         } catch (NumberFormatException e) {
             log.warn("Invalid description max-tokens: {}. Using utilityChatModel bean.", descriptionMaxTokens);
