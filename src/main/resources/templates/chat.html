@@ -7,10 +7,23 @@
 <header th:replace="~{fragments/header :: header}"></header>
 <main class="container-fluid p-0" style="min-height: calc(100vh - 120px);">
     <div class="row g-0 h-100">
-        <div class="col-md-3 col-lg-2 border-end">
+        <div class="col-md-3 col-lg-2 border-end d-none d-lg-block">
             <div th:replace="~{fragments/chat-sidebar :: chat-sidebar}"></div>
         </div>
-        <div class="col-md-9 col-lg-10 d-flex flex-column">
+        <div class="col-md-9 col-lg-10 d-flex flex-column position-relative">
+            <button class="btn btn-outline-secondary d-lg-none chat-hamburger-btn" id="chatHamburgerBtn" type="button">
+                <span aria-hidden="true">&#9776;</span>
+                <span class="visually-hidden">Toggle chat list</span>
+            </button>
+            <div aria-hidden="true" class="offcanvas offcanvas-start d-lg-none" id="chatSidebarOffcanvas" tabindex="-1">
+                <div class="offcanvas-header">
+                    <h5 class="offcanvas-title" th:text="#{chat.sidebar.title}">Chats</h5>
+                    <button class="btn-close" data-bs-dismiss="offcanvas" type="button"></button>
+                </div>
+                <div class="offcanvas-body p-0">
+                    <div th:replace="~{fragments/chat-sidebar :: chat-sidebar}"></div>
+                </div>
+            </div>
             <div class="flex-grow-1 overflow-auto p-3" id="messagePanel">
                 <div th:if="${messages == null or messages.isEmpty()}" class="text-muted" id="chatEmptyState" th:text="#{chat.empty}">
                     Start a conversation…
