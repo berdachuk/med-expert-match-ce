@@ -2,6 +2,14 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-19: M124+M125 Complete — Main Menu Restructure + Pre-existing Fix
+
+- **M125** — Main Menu Restructure: AI Chat is now the primary entry point at `/`. Removed `HomeController`, `index.html`, dashboard stats. Rewrote header nav: sub-page links always visible, Home→AI Chat at root, back arrow gates on `currentPage != 'chat'`. i18n: `nav.home=AI Chat`, removed `nav.chat`. Deleted `HomeControllerIT`, added root page test to `ChatWebControllerIT`.
+- **Fix** — `SessionTokenApiKeyAuthFilterIT` pre-existing compilation error: replaced `@MockBean` (removed in Spring Boot 4.x) with `@TestConfiguration` + `mock()`.
+- **Test count**: 938 unit + 567 integration tests, 0 failures, BUILD SUCCESS.
+- Merged via `feat/m124-m125-main-menu-restructure-and-perf` → develop → archived.
+- Created M126 plan: GraphRAG profiling, monitoring enhancements, ops docs.
+
 ## 2026-06-19: M123 Complete — Code Quality and Dependency Freshness
 
 - **Fixed flaky test** — `SessionTokenApiKeyAuthFilterIT.allowsValidKey`: mocked `PubMedService` to prevent real HTTP calls causing 500 errors; enabled auth in test properties
