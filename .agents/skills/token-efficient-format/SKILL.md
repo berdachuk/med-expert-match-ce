@@ -47,7 +47,13 @@ In Spring AI keep internal DTOs verbose and have a "wire DTO" with compact keys 
 
 ### 2. When to use TOON format
 
-Use **TOON (Token-Oriented Object Notation)** when:
+> **STATUS: UNIMPLEMENTED — DO NOT SELECT.**
+> No TOON→JSON adapter exists in this codebase; the M127 plan explicitly deferred it.
+> Selecting TOON produces output no Java parser can read. For nested structure without a
+> schema, use **ultra-compact JSON** (§3) instead. TOON is retained here as a future option
+> pending the adapter; it must not be chosen until that adapter lands.
+
+Use **TOON (Token-Oriented Object Notation)** when (all of the below, **plus** the TOON→JSON adapter exists):
 
 - You need structured output with hierarchy (nested objects, arrays).
 - You do **not** need strict JSON schema validation or BeanOutputConverter.
@@ -91,7 +97,7 @@ patient:
     onset: 2022-06
 ```
 
-**Java-side parsing**: write a lightweight TOON parser (indentation-stack + line-split) or convert TOON → JSON via a pre-processing step before Jackson deserialization. TOON is not a Jackson format, so it requires a thin adapter layer.
+**Java-side parsing**: write a lightweight TOON parser (indentation-stack + line-split) or convert TOON → JSON via a pre-processing step before Jackson deserialization. TOON is not a Jackson format, so it requires a thin adapter layer. **This adapter does not exist yet** — see the STATUS banner above.
 
 ### 3. When to use ultra-compact JSON
 
@@ -106,6 +112,9 @@ Guidelines:
 - No pretty printing or line breaks (model usually follows if you show a single-line example).
 - Keys ≤ 3–4 chars where feasible.
 - Represent booleans and enums as single characters or digits where safe (`"s":"H"` instead of `"severity":"HIGH"`).
+- This is the **recommended** format for nested structure consumed by `Map.class` parsing (no BeanOutputConverter / JSON schema), since TOON has no adapter.
+
+**Sanitizer coupling (critical):** if you change the keys of a JSON prompt to short keys, you **must** update `LlmResponseSanitizer.FIELD_LABELS` and `LlmResponseSanitizer.JSON_BLOCK_PATTERN` (currently at `core/util/LlmResponseSanitizer.java:34,62`) in the same change — both hardcode the long key names (`requiredSpecialty`, `urgencyLevel`, `clinicalFindings`, `icd10Codes`, `caseSummary`). A short-key prompt without a matching sanitizer update silently breaks JSON-block → prose rendering. Any non-standard (non-JSON) format must also round-trip through `LlmResponseSanitizer.extractJson` so sanitization, PHI stripping, and JSON-block rendering stay consistent.
 
 ### 4. When to use CSV / TSV / minimal tabular format
 
@@ -161,14 +170,15 @@ In those cases, focus token reduction on **input** (shorter instructions, less c
 
 ## Decision table (quick reference)
 
-| Need                                 | Recommended format         | Why tokens are good enough                                |
-|--------------------------------------|----------------------------|-----------------------------------------------------------|
-| Strict schema + Java DTO mapping     | JSON (structured output)   | Provider-native support, robust parsing.                  |
-| Nested structure, no schema required | TOON                       | ~60% token reduction vs JSON, indentation-based hierarchy. |
-| Large arrays, still need JSON        | Ultra-compact JSON         | Keys and whitespace minimized.                            |
-| Flat tables, high volume             | CSV/TSV/tabular            | Minimal syntax overhead per row.                          |
-| Simple lists or pairs                | Line-based / delimited     | Cheapest possible overhead.                               |
-| Human-readable analysis, low volume  | Semi-structured text       | Dev convenience > token savings.                          |
+| Need                                          | Recommended format         | Why                                                       |
+|-----------------------------------------------|----------------------------|-----------------------------------------------------------|
+| DTO via BeanOutputConverter / provider schema | JSON (structured output)   | Provider-native support, robust parsing.                  |
+| Map-parsed, no schema, nested structure       | Ultra-compact JSON         | Implemented; Jackson-safe; keys/whitespace minimized.     |
+| Nested structure, no schema (TOON adapter)    | TOON (future)              | ~60% token reduction — **blocked: no adapter exists**.   |
+| Large arrays, still need JSON                 | Ultra-compact JSON         | Keys and whitespace minimized.                            |
+| Flat tables, high volume                       | CSV/TSV/tabular            | Minimal syntax overhead per row.                          |
+| Simple lists or pairs                          | Line-based / delimited     | Cheapest possible overhead.                               |
+| Human-readable analysis, low volume            | Semi-structured text       | Dev convenience > token savings.                          |
 
 ## Skill instructions (for AGENTS.md)
 
@@ -177,10 +187,20 @@ Embed this as a concise policy in root or module AGENTS:
 - Before defining response format, classify the output as:
   - `type=object_deep`, `object_flat`, `table`, or `list`.
 - If `type in {object_deep, object_flat}` and result is consumed by Spring AI structured output / JSON schema, choose JSON with short keys and no extra commentary.
-- If `type in {object_deep, object_flat}` and no JSON schema validation is required, prefer TOON for ~60% token savings; write a thin TOON→JSON adapter on the Java side.
+- If `type in {object_deep, object_flat}` and no JSON schema validation is required, prefer **ultra-compact JSON** with short keys (it is Jackson-parseable via `Map.class`). Do NOT choose TOON — no TOON→JSON adapter exists.
 - If `type=table` and many rows are expected, choose CSV/TSV with short headers.
 - If `type=list` and items are atomic, choose `|`-delimited or line-delimited output.
 - Always:
   - Remove greetings, explanations, and markdown wrappers from model output.
   - Prefer compact keys and values over verbose ones.
   - Keep the chosen format stable per endpoint so Java-side parsing is trivial.
+  - When changing JSON prompt keys, update `LlmResponseSanitizer` field labels / patterns in lockstep (see §3 coupling note).
+
+## 7. Input-side token reduction
+
+Output format is only half the cost. Reduce **input** tokens for frequently called prompts:
+
+- **Shared boilerplate**: the medical disclaimer is duplicated verbatim across ~10 `.st` files and the `CRITICAL OUTPUT LIMITS` block across 4 prose prompts. Extract these into a single shared fragment and include it via Spring AI resource composition, or hoist them into a once-per-conversation system prompt so per-call prompts shrink.
+- **Shorten repeated limits**: prefer one compact line (`Output: 1 JSON object, ≤3000 chars, then stop.`) over the multi-bullet `CRITICAL OUTPUT LIMITS` block; the model obeys single-line constraints as well or better.
+- **Summarize context**: when injecting case context / evidence, pass a compact summary reference instead of the full payload where the downstream step only needs key fields.
+- **Trim verbose keys in input payloads too**: the same short-key discipline applies to any structured input you compose for the model.

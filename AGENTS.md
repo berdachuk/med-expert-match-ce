@@ -81,7 +81,7 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 | write-less-code | `write-less-code/SKILL.md` | Before non-trivial implementation and before commit — push back on bloat, prefer minimum diff and reuse |
 | security-check | `security-check/SKILL.md` | Before/after any work touching auth, APIs, DB, secrets, external input, infra, or new dependencies; review final diff for vulnerabilities |
 | bdd-traceability | `bdd-traceability/SKILL.md` | New/changed functional requirements, Gherkin or executable scenarios, TDD with acceptance, coverage-gap review, refactors that may break requirement-to-test links |
-| token-efficient-format | `token-efficient-format/SKILL.md` | Choosing output format (JSON, ultra-compact JSON, CSV/TSV, line-based) per call to minimize tokens while preserving safe parsing |
+| token-efficient-format | `token-efficient-format/SKILL.md` | Choosing output format (JSON, ultra-compact JSON, CSV/TSV, line-based) per call to minimize tokens while preserving safe parsing. TOON is documented but unimplemented (no adapter) — not selectable |
 
 ## Global Boundaries
 

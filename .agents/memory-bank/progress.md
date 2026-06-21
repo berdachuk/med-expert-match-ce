@@ -2,6 +2,19 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-21: M130 Complete — Token-Efficient Format Skill Hardening
+
+- **M130** — Token-efficient-format skill hardening (REQ-130):
+  - Gated TOON as unimplemented (`STATUS: UNIMPLEMENTED — DO NOT SELECT`); no TOON→JSON adapter exists, M127 deferred it
+  - Promoted ultra-compact JSON to the recommended non-schema format for Map-parsed nested structure
+  - Split decision table: DTO-via-BeanOutputConverter row vs Map-parsed-no-schema row
+  - Added sanitizer-coupling note: prompt short-key changes must update `LlmResponseSanitizer.FIELD_LABELS` + `JSON_BLOCK_PATTERN` (`core/util/LlmResponseSanitizer.java:34,62`) in lockstep
+  - Added §7 input-side token reduction (shared disclaimers, compact limits, summarized context)
+  - `AGENTS.md` skill row aligned: TOON documented but unimplemented — not selectable
+  - Docs-only change; no production code or prompts modified
+- Merged via `feat/m130-token-efficient-format-skill-hardening` → develop → branch deleted
+- Archived M130 plan to `.agents/plans/archive/`
+
 ## 2026-06-19: M129 Complete — Responsive Chat Sidebar
 
 - **M129** — Responsive chat sidebar (REQ-129):
