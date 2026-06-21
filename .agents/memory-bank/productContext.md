@@ -72,12 +72,18 @@ Rows marked **provisional** are not yet linked to a verified test artifact; see 
 
 | Use Case | REQ-### | Owning module | Primary domain models | Verified test artifact (TEST-###) | Status |
 |---|---|---|---|---|---|
-| Specialist Matching (UC-1) | REQ-001 | `retrieval` | `MedicalCase`, `Doctor`, `DoctorMatch`, `ScoreResult` | `retrieval/service/MatchingServiceIT.java` (TEST-001) | verified |
-| Second Opinion (UC-2) | REQ-002 | `retrieval`, `llm` | `MedicalCase`, `DoctorMatch` | `retrieval/service/MatchingServiceIT.java` (TEST-002) — `secondOpinionReturnsIndependentDifferentials()` | verified |
-| Queue Prioritization (UC-3) | REQ-003 | `retrieval` | `MedicalCase`, `PriorityScore` | `retrieval/service/SemanticGraphRetrievalServiceIT.java` (TEST-003) — `testComputePriorityScore` / `testComputePriorityScoreWithDifferentUrgencyLevels` / `testComputePriorityScoreUsesDoctorAvailability` | verified |
-| Network Analytics (UC-4) | REQ-004 | `graph`, `llm` | `Doctor`, `MedicalSpecialty` (graph) | `graph/service/GraphQueryServiceIT.java` (TEST-004) | verified — graph-ops-only per DEC-014 |
-| Decision Support (UC-5) | REQ-005 | `llm`, `caseanalysis` | `CaseAnalysisResult`, `MedicalCase` | `caseanalysis/service/CaseAnalysisServiceIT.java` (TEST-005) | verified |
-| Regional Routing (UC-6) | REQ-006 | `retrieval` | `Facility`, `FacilityMatch`, `RouteScoreResult` | `retrieval/service/SemanticGraphRetrievalServiceIT.java` (TEST-006) — `testSemanticGraphRetrievalRouteScore` / `testFacilityHistoricalOutcomesScore` / `testSemanticGraphRetrievalRouteScoreUsesLocationCompleteness` | verified |
+| Specialist Matching | REQ-001 | retrieval | MedicalCase, Doctor, DoctorMatch, ScoreResult | retrieval/service/MatchingServiceIT | active |
+| Second Opinion | REQ-002 | retrieval | MedicalCase, DoctorMatch |  | active |
+| Queue Prioritization | REQ-003 | retrieval | MedicalCase, PriorityScore |  | active |
+| Network Analytics | REQ-004 | graph | Doctor, MedicalSpecialty | graph/service/GraphQueryServiceIT | active |
+| Decision Support | REQ-005 | llm | CaseAnalysisResult, MedicalCase | caseanalysis/service/CaseAnalysisServiceIT; evidence/service/EvidenceRetrievalServiceIT; llm/service/RecommendationServiceIT | active |
+| Regional Routing | REQ-006 | retrieval | Facility, FacilityMatch, RouteScoreResult | llm/service/RecommendationServiceIT | active |
+| Main Menu Restructure | REQ-125 | web |  |  | active |
+| Token-Efficient Format Implementation | REQ-127 | llm |  |  | active |
+| Responsive Chat Sidebar | REQ-129 | web |  |  | active |
+| Token-Efficient Format Skill Hardening | REQ-130 | .agents |  |  | active |
+| Case-Analysis Prompt Ultra-Compact JSON | REQ-131 | caseanalysis |  |  | active |
+| MedGemma Case-Analysis Prompt Ultra-Compact JSON | REQ-132 | caseanalysis |  |  | active |
 
 ### Agent skills → scenarios
 
@@ -85,12 +91,12 @@ Each skill gets a single seed `SCN-###` row. Status is **verified** if a test cl
 
 | Skill | SCN-### | Owning module | Primary outcome (business language) | Status | Feature file |
 |---|---|---|---|---|---|---|
-| case-analyzer | SCN-001 | `caseanalysis`, `llm` | Given a medical case narrative, when analyzed, then entities/ICD-10/SNOMED and urgency tier are returned | verified (TEST-005) | `features/case-analyzer.feature` |
-| doctor-matcher | SCN-002 | `retrieval` | Given an analyzed case, when matched, then a ranked list of specialists with score breakdown is returned | verified (TEST-001) | `features/doctor-matcher.feature` |
-| evidence-retriever | SCN-003 | `evidence`, `documents` | Given a clinical question, when retrieved, then PubMed and local-document evidence is returned with citations | verified (TEST-007) | `features/evidence-retriever.feature` |
-| recommendation-engine | SCN-004 | `llm` | Given matched specialists, when synthesized, then a diagnostic workup and referral rationale are produced | verified (TEST-008) | `features/recommendation-engine.feature` |
-| clinical-advisor | SCN-005 | `llm`, `clinicalexperience` | Given a case, when advised, then a differential diagnosis with risk assessment is returned | verified (TEST-008) | `features/clinical-advisor.feature` |
-| network-analyzer | SCN-006 | `graph`, `llm` | Given a query about the expertise network, when analyzed, then sub-specialist clusters and coverage gaps are returned | verified (TEST-004) — graph-ops-only per DEC-014 | `features/network-analyzer.feature` |
-| routing-planner | SCN-007 | `retrieval` | Given a case and a set of facilities, when routed, then a facility is recommended with score breakdown | verified (TEST-008) | `features/routing-planner.feature` |
-| clinical-guideline | SCN-008 | `evidence`, `documents` | Given a condition, when queried, then published guidelines with strength of recommendation are returned | verified (TEST-007) | `features/clinical-guideline.feature` |
-| triage | SCN-009 | `caseanalysis`, `llm` | Given a new case, when triaged, then an urgency tier (CRITICAL/HIGH/MEDIUM/LOW) is assigned | verified (TEST-005) | `features/triage.feature` |
+| case-analyzer | SCN-001 | caseanalysis | case-analyzer extracts entities and urgency | verified | features/case-analyzer.feature |
+| doctor-matcher | SCN-002 | retrieval | doctor-matcher returns ranked specialists with score breakdown | verified | features/doctor-matcher.feature |
+| evidence-retriever | SCN-003 | evidence | evidence-retriever returns PubMed and local-document evidence | verified | features/evidence-retriever.feature |
+| recommendation-engine | SCN-004 | llm | recommendation-engine synthesizes workup and referral rationale | verified | features/recommendation-engine.feature |
+| clinical-advisor | SCN-005 | llm | clinical-advisor returns differential diagnosis with risk assessment | verified | features/clinical-advisor.feature |
+| network-analyzer | SCN-006 | graph | network-analyzer returns sub-specialist clusters and coverage gaps | verified | features/network-analyzer.feature |
+| routing-planner | SCN-007 | retrieval | routing-planner recommends facility with score breakdown | verified | features/routing-planner.feature |
+| clinical-guideline | SCN-008 | evidence | clinical-guideline returns guidelines with strength of recommendation | verified | features/clinical-guideline.feature |
+| triage | SCN-009 | caseanalysis | triage assigns urgency tier | verified | features/triage.feature |

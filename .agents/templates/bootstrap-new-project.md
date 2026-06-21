@@ -79,16 +79,34 @@ Show the planned tree in text form, for example:
 ├── AGENTS.md
 ├── .agents/
 │   ├── memory-bank/
-│   │   ├── projectbrief.md
-│   │   ├── productContext.md
-│   │   ├── systemPatterns.md
-│   │   ├── techContext.md
-│   │   ├── activeContext.md
-│   │   ├── progress.md
-│   │   └── decisions.md
+│   │   ├── projectbrief.md            # reference (hand-edited, low-frequency)
+│   │   ├── systemPatterns.md          # reference (hand-edited, low-frequency)
+│   │   ├── techContext.md             # reference (hand-edited, low-frequency)
+│   │   ├── activeContext.md           # GENERATED — do not hand-edit
+│   │   ├── progress.md                # GENERATED — do not hand-edit
+│   │   ├── decisions.md               # GENERATED — do not hand-edit
+│   │   ├── productContext.md          # prose hand-edited; traceability tables GENERATED
+│   │   ├── registry/                  # append-only JSONL — source of truth for IDs
+│   │   │   ├── SCHEMA.md
+│   │   │   ├── req.jsonl
+│   │   │   ├── nfr.jsonl
+│   │   │   ├── scn.jsonl
+│   │   │   ├── test.jsonl
+│   │   │   ├── dec.jsonl
+│   │   │   ├── risk.jsonl
+│   │   │   └── task.jsonl
+│   │   ├── records/                   # one file per record (append-only)
+│   │   │   ├── progress/M{NN}.md      # one file per completed milestone
+│   │   │   ├── active/M{NN}.md        # one file per active milestone
+│   │   │   ├── deferred/M{NN}.md      # deferred milestones
+│   │   │   └── decisions/DEC-###.md   # long-form decision body
+│   │   ├── locks/                     # per-module ownership claims
+│   │   │   └── README.md
+│   │   └── worktrees/                 # per-worktree scratchpads (git-ignored)
 │   ├── plans/
-│   │   ├── 00-index.md
-│   │   └── M-01-ai-context-foundation.md
+│   │   ├── 00-index.md                # GENERATED — do not hand-edit
+│   │   ├── archive/
+│   │   └── progress.txt               # optional canonical iteration log
 │   └── skills/
 │       ├── core-architecture/
 │       │   └── SKILL.md
@@ -96,8 +114,21 @@ Show the planned tree in text form, for example:
 │       │   └── SKILL.md
 │       └── testing/
 │           └── SKILL.md
+├── scripts/
+│   └── sync-memory-index.sh           # regenerates GENERATED files; --check for CI
 └── src/...
 ```
+
+### Multi-agent design rationale
+
+The memory bank is partitioned so that **parallel agents working in separate worktrees never edit the same file**:
+
+- **Reference files** (`projectbrief.md`, `systemPatterns.md`, `techContext.md`) are hand-edited but change rarely — conflict probability is low.
+- **Generated index files** (`activeContext.md`, `progress.md`, `decisions.md`, `productContext.md` tables, `plans/00-index.md`) are regenerated deterministically by `scripts/sync-memory-index.sh` from registries and record files. Two agents running the script produce identical output, so regeneration never causes a merge conflict.
+- **Append-only registries** (`registry/*.jsonl`) hold stable IDs (`REQ-###`, `DEC-###`, `SCN-###`, `TEST-###`, `RISK-###`, `TASK-###`). One JSON object per line. Merging is trivial: the only conflict possible is on the last appended line, which the losing agent re-reads and recomputes `max+1`.
+- **Per-record files** (`records/progress/M{NN}.md`, `records/active/M{NN}.md`, `records/decisions/DEC-###.md`) mean two agents completing different milestones create distinct files — zero merge conflict.
+- **Module locks** (`locks/<module>.md`) record which agent/branch currently owns a module. They turn silent semantic breakages (e.g. a prompt `.st` change that must update a coupled sanitizer in lockstep) into a textual conflict the second agent can detect and serialize on.
+- **Worktree scratchpads** (`worktrees/<branch-slug>/`, git-ignored) hold per-agent "Current Focus" drafts and open questions that should never merge to the main branch.
 
 Design this structure so that it aligns with the real module relationships and domain model ownership discovered in step 1.
 
@@ -124,17 +155,64 @@ It must summarize and link to canonical sources in `docs/` and code, not duplica
 
 ### Required files
 
-Create the following files under `.agents/memory-bank/`:
+Create the following structure under `.agents/memory-bank/`. Files are split into three tiers by edit frequency and conflict risk.
+
+#### Reference files (hand-edited, low-frequency)
 
 - `projectbrief.md` — stable project identity, goals, stakeholders, scope.
-- `productContext.md` — product intent, user-facing capabilities, constraints, non-goals.
 - `systemPatterns.md` — architecture, module boundaries, domain ownership, integration patterns.
 - `techContext.md` — languages, frameworks, build/test commands, infra/runtime constraints.
-- `activeContext.md` — current focus, open questions, immediate next steps, active risks.
-- `progress.md` — timestamped log of completed work, major decisions, milestones reached.
-- `decisions.md` — short ADR-style decision log with status, rationale, and affected modules.
 
-The core file set above extends the standard Memory Bank file structure documented by Tweag, which recommends keeping the files concise, Markdown-based, and read at the start of each session.
+These change rarely; edit them directly when architecture or stack shifts.
+
+#### Generated index files (do NOT hand-edit)
+
+These are regenerated by `scripts/sync-memory-index.sh` from the registries and record files below. `scripts/sync-memory-index.sh --check` is a CI assertion that they are in sync. To change their content, edit the source registries/records and re-run the script.
+
+| File | Source |
+|------|--------|
+| `activeContext.md` | `records/active/M*.md` + `registry/risk.jsonl` + `registry/scn.jsonl` |
+| `progress.md` | `records/progress/M*.md` (sorted by milestone) |
+| `decisions.md` | `registry/dec.jsonl` |
+| `productContext.md` (traceability tables only) | `registry/req.jsonl` + `registry/scn.jsonl` + `registry/test.jsonl` |
+| `plans/00-index.md` | `records/active/`, `records/deferred/`, `records/progress/` |
+
+The prose sections of `productContext.md` (capabilities, constraints, non-goals) are hand-edited; only the traceability tables are generated.
+
+#### Append-only registries (multi-agent safe ID allocation)
+
+`registry/` holds one JSONL file per stable-ID kind. Schemas are defined in `registry/SCHEMA.md`.
+
+| File | ID kind |
+|------|---------|
+| `req.jsonl` | `REQ-###` functional requirements |
+| `nfr.jsonl` | `NFR-###` non-functional requirements |
+| `scn.jsonl` | `SCN-###` executable behavior scenarios |
+| `test.jsonl` | `TEST-###` test artifacts (class#method) |
+| `dec.jsonl` | `DEC-###` decisions (legacy `D-###` are immutable aliases) |
+| `risk.jsonl` | `RISK-###` known risks |
+| `task.jsonl` | `TASK-###` plan tasks |
+
+**To mint a new ID:** read the registry, take `max+1`, append exactly one line. If a merge conflict occurs on the last line, re-read and recompute — conflicts collapse to "who owns the last line" and are trivially resolvable. Never edit an existing line.
+
+#### Per-record files (append-only, one file per record)
+
+| Dir | Purpose |
+|-----|---------|
+| `records/progress/M{NN}.md` | One file per completed milestone (replaces rewrites of `progress.md`) |
+| `records/active/M{NN}.md` | One file per active milestone (replaces rewrites of `activeContext.md`) |
+| `records/decisions/DEC-###.md` | Long-form decision body; `dec.jsonl` carries the index row |
+| `records/deferred/M{NN}.md` | Deferred-but-not-archived milestones |
+
+Two agents completing M131 and M132 each create their own `records/progress/M{NN}.md` — distinct files, zero merge conflict.
+
+#### Module locks
+
+`locks/<module>.md` records which agent/branch currently owns a module. Before editing any coupled file pair (e.g. a prompt template and the code that parses it — the "lockstep" risk), an agent MUST hold that module's lock. See `locks/README.md` for format, the coupled-file-pair table, and acquisition rules. Locks are advisory but enforced by the `code-style` and `security-check` skills.
+
+#### Worktree scratchpads (git-ignored)
+
+`worktrees/<branch-slug>/` is a per-worktree scratchpad for "Current Focus" drafts and open questions that should never merge to the main branch. Add `.agents/memory-bank/worktrees/` to `.gitignore`. On merge, promote only the `records/` and `registry/` files into the canonical memory bank.
 
 ### Memory bank authoring rules
 
@@ -145,6 +223,8 @@ The core file set above extends the standard Memory Bank file structure document
 - Do not duplicate large sections from `docs/`; summarize and link instead.
 - Reflect the actual module relationships and domain ownership discovered during analysis.
 - If the repo already contains meaningful documentation, derive the memory bank from it before inventing new structure.
+- **Never hand-edit a generated index file.** Edit the source registry/record file and re-run `scripts/sync-memory-index.sh`.
+- **Append, never rewrite.** Registries and record files are append-only; editing an existing line breaks ID stability and forces manual merge resolution.
 
 ### What must not be stored in the memory bank
 
@@ -156,15 +236,15 @@ Do **not** store the following in `.agents/memory-bank/`:
 - speculative architecture that is not yet validated,
 - duplicated copies of canonical documentation already maintained in `docs/`.
 
-This follows the standard Memory Bank guidance that the bank should contain high-value structured context, while excluding secrets, large code snippets, and clutter.
-
 ### Sync rules
 
-- When architecture or module boundaries change, update `systemPatterns.md` and `decisions.md`.
-- When stack, build, deployment, or toolchain expectations change, update `techContext.md`.
-- When the current task changes, update `activeContext.md`.
-- After each meaningful completed task, append a dated entry to `progress.md`.
-- When a canonical document in `docs/` becomes outdated relative to the memory bank, note the mismatch in `activeContext.md` and flag it for human review.
+- **Architecture or module boundaries change** → update `systemPatterns.md` (reference file) and append a `DEC-###` row to `registry/dec.jsonl` + `records/decisions/DEC-###.md`.
+- **Stack, build, deployment, or toolchain changes** → update `techContext.md` (reference file).
+- **A milestone starts** → create `records/active/M{NN}.md`; acquire `locks/<module>.md` for any module you will edit coupled files in.
+- **A milestone completes** → create `records/progress/M{NN}.md`; release the module lock (delete `locks/<module>.md` or set `held-by: released`).
+- **A new requirement, scenario, test, risk, or task is introduced** → append one line to the matching `registry/*.jsonl`.
+- **A canonical document in `docs/` becomes outdated** → note the mismatch in the relevant `records/active/M{NN}.md` and flag it for human review.
+- **After any registry or record change** → run `scripts/sync-memory-index.sh` to regenerate the index files. Run `--check` in CI to assert no hand-edits leaked in.
 
 ### Session workflow (mandatory)
 
@@ -183,19 +263,22 @@ During implementation:
 - keep memory bank notes aligned with discovered reality.
 
 At the end of every task that changes code, tests, architecture, or docs:
-- update `activeContext.md`,
-- append to `progress.md`,
-- update `decisions.md` if a design decision was made,
+- create/update `records/active/M{NN}.md` (or move it to `records/progress/` if complete),
+- append a `DEC-###`/`REQ-###`/`RISK-###` row to the matching `registry/*.jsonl` if a decision/requirement/risk was made,
 - update `systemPatterns.md` if architecture changed,
+- run `scripts/sync-memory-index.sh` to regenerate index files,
 - ensure links to canonical `docs/` still point to the best source of truth.
-
-The rationale for mandatory read/write session flow is to preserve continuity between sessions and reduce rework, which is the core purpose of the Memory Bank pattern.
 
 ### Output requirement
 
 In the final output, include:
-- the full directory tree including `.agents/memory-bank/`,
-- the full contents of every initial memory-bank file,
+- the full directory tree including `.agents/memory-bank/` (reference files, `registry/`, `records/`, `locks/`, `worktrees/`),
+- the full contents of every initial memory-bank file:
+  - reference files (`projectbrief.md`, `systemPatterns.md`, `techContext.md`, `productContext.md` prose),
+  - seed registry files (`registry/SCHEMA.md` + one row each in `req.jsonl`, `dec.jsonl`, `scn.jsonl`, `test.jsonl`, `risk.jsonl`),
+  - `locks/README.md` (lock format + coupled-file-pair table),
+  - `scripts/sync-memory-index.sh` (the index regenerator, executable),
+  - the `.gitignore` entry for `.agents/memory-bank/worktrees/`,
 - content that is ready to be written directly into the repository.
 
 ---
@@ -746,13 +829,19 @@ At the end, you must output:
 2. The proposed directory tree, including:
    - root `AGENTS.md` (should be compact)
    - all nested module-level `AGENTS.md` files
-   - `.agents/memory-bank/**`
+   - `.agents/memory-bank/**` (reference files, `registry/`, `records/`, `locks/`, `worktrees/`)
    - `.agents/skills/**/SKILL.md`
+   - `scripts/sync-memory-index.sh`
    - `docs/ai-context-strategy.md`
 3. The full content for:
-   - `AGENTS.md` (root)
+   - `AGENTS.md` (root) — must include the Memory Bank section describing reference files, generated index files, registries, per-record files, module locks, and worktree scratchpads
    - each nested module-level `AGENTS.md` you created
-   - each initial `.agents/memory-bank/**` file
+   - reference memory-bank files: `projectbrief.md`, `systemPatterns.md`, `techContext.md`, `productContext.md` (prose + seed traceability rows in `registry/`)
+   - `registry/SCHEMA.md`
+   - seed rows for `registry/req.jsonl`, `registry/dec.jsonl`, `registry/scn.jsonl`, `registry/test.jsonl`, `registry/risk.jsonl`
+   - `locks/README.md`
+   - `scripts/sync-memory-index.sh` (executable)
+   - `.gitignore` entry for `.agents/memory-bank/worktrees/`
    - each initial `.agents/skills/**/SKILL.md`
    - `docs/ai-context-strategy.md`
 
@@ -795,32 +884,40 @@ If the answers are weak or unknown, record the gap in `activeContext.md` before 
 
 After implementation is complete and tests pass:
 
-1. Update `.agents/memory-bank/activeContext.md` with:
+1. **Update the active-milestone record** `records/active/M{NN}.md` (or create it if this is the first task of the milestone) with:
    - what changed,
    - current known risks,
    - next recommended steps.
+   On milestone completion, move the file to `records/progress/M{NN}.md`.
 
-2. Append a dated entry to `.agents/memory-bank/progress.md` with:
-   - completed work,
-   - tests run,
-   - affected modules,
-   - related docs updated.
+2. **Append registry rows** for any new stable IDs:
+   - `DEC-###` → `registry/dec.jsonl` + `records/decisions/DEC-###.md` (long-form body)
+   - `REQ-###` / `NFR-###` → `registry/req.jsonl` / `registry/nfr.jsonl`
+   - `SCN-###` → `registry/scn.jsonl`
+   - `TEST-###` → `registry/test.jsonl`
+   - `RISK-###` → `registry/risk.jsonl`
+   - `TASK-###` → `registry/task.jsonl`
+   Each row is one JSON line appended at the end; never edit an existing line.
 
 3. If architecture, boundaries, or technical decisions changed:
-   - update `.agents/memory-bank/systemPatterns.md`,
-   - update `.agents/memory-bank/techContext.md` if relevant,
-   - append an ADR-style entry to `.agents/memory-bank/decisions.md`.
+   - update `.agents/memory-bank/systemPatterns.md` (reference file),
+   - update `.agents/memory-bank/techContext.md` if relevant (reference file),
+   - append the `DEC-###` index row + long-form `records/decisions/DEC-###.md` as above.
 
 4. If the task changed canonical documentation:
    - update the relevant files in `docs/`,
    - ensure the memory bank links still point to the best canonical source.
 
 5. If documentation and code diverge:
-   - record the mismatch in `activeContext.md`,
+   - record the mismatch in `records/active/M{NN}.md`,
    - flag it for human review,
    - do not silently rewrite architecture history.
 
-3.5. If requirements, scenarios, or test mappings changed, update the corresponding traceability notes in `systemPatterns.md`, `activeContext.md`, and any plan or skill documentation that depends on them.
+6. **Acquire/release module locks** as needed:
+   - before editing coupled file pairs, acquire `locks/<module>.md`,
+   - on merge, release the lock.
+
+7. **Regenerate index files** by running `scripts/sync-memory-index.sh`. Verify with `scripts/sync-memory-index.sh --check` (CI gate).
 
 ### Traceability expectations in memory bank
 
@@ -831,7 +928,7 @@ Add:
 - how requirements map to tests,
 - and any known gaps in traceability.
 
-#### `activeContext.md`
+#### `records/active/M{NN}.md`
 Add:
 - active requirement IDs in progress,
 - scenarios added or changed,
@@ -839,15 +936,15 @@ Add:
 - ambiguity notes,
 - and mismatches between docs, code, and tests.
 
-#### `progress.md`
-Each meaningful implementation log entry should include, where relevant:
+#### `records/progress/M{NN}.md`
+Each completed-milestone record should include, where relevant:
 - affected requirement IDs,
 - affected scenario IDs,
 - test artifacts added or updated,
 - modules touched,
 - and whether traceability was improved or regressed.
 
-#### `decisions.md`
+#### `registry/dec.jsonl` + `records/decisions/DEC-###.md`
 For BDD or traceability design decisions, record:
 - decision ID,
 - status,
@@ -872,8 +969,17 @@ Do not skip memory-bank updates for code, test, architecture, or documentation c
 - If unsure whether something belongs in memory bank or docs: put summaries in memory bank, full explanation in docs.
 - Preserve stable traceability between requirements, scenarios, tests, and implementation artifacts.
 - Prefer explicit semantic links over implicit prose when documenting behavior and coverage.
-- If the repository lacks enough evidence to assign ownership or traceability, mark the item as provisional, explain what evidence is missing, and record the uncertainty in `activeContext.md`.
+- If the repository lacks enough evidence to assign ownership or traceability, mark the item as provisional, explain what evidence is missing, and record the uncertainty in `records/active/M{NN}.md`.
 - Do not present guessed traceability as confirmed architecture.
+
+### Multi-agent conflict-prevention principles (mandatory)
+
+- **Append, never rewrite.** Registries (`registry/*.jsonl`) and record files (`records/**/*.md`) are append-only. Editing an existing line breaks ID stability and forces manual merge resolution. To mint an ID, read the registry, take `max+1`, append one line; on last-line conflict, re-read and recompute.
+- **One record per file.** Two agents completing different milestones create distinct `records/progress/M{NN}.md` files — zero merge conflict. Never bundle multiple milestones into one record file.
+- **Generated indexes are read-only to agents.** `activeContext.md`, `progress.md`, `decisions.md`, `productContext.md` tables, and `plans/00-index.md` are regenerated by `scripts/sync-memory-index.sh`. Never hand-edit them. CI runs `sync-memory-index.sh --check` to assert they are in sync.
+- **Acquire a module lock before editing coupled files.** Before touching a prompt template + its coupled parser/sanitizer, or any pair of files that must change in lockstep, create/overwrite `locks/<module>.md`. If a non-expired lock already exists for a different branch, pick a different module or wait. Release the lock on merge.
+- **Use worktree scratchpads for transient state.** Per-branch "Current Focus" drafts and open questions live in `.agents/memory-bank/worktrees/<branch-slug>/` (git-ignored). Never merge them to the main branch; promote only `records/` and `registry/` files.
+- **Serialize, don't race.** If two agents need the same module, the second agent must wait or coordinate — the lock file makes this explicit rather than producing a green-but-broken merge.
 
 ---
 
@@ -905,3 +1011,12 @@ The generated guidance should explicitly warn against these anti-patterns:
 - traceability is stored only in chat output and not in repo files,
 - memory bank contains stale mappings after refactoring,
 - nested `AGENTS.md` duplicate root guidance instead of adding module-specific boundaries.
+
+### Multi-agent anti-patterns
+
+- **Hand-editing a generated index file** (`activeContext.md`, `progress.md`, `decisions.md`, `productContext.md` tables, `plans/00-index.md`) instead of editing the source registry/record and re-running `sync-memory-index.sh`.
+- **Editing an existing registry line** instead of appending — breaks ID stability and forces manual merge resolution.
+- **Bundling multiple milestones into one record file** — reintroduces the single-file rewrite conflict that per-record files exist to prevent.
+- **Editing coupled files (prompt + sanitizer/parser) without holding the module lock** — produces a green merge that silently breaks the lockstep (the M130-class risk).
+- **Merging a worktree scratchpad** (`worktrees/<branch-slug>/`) into the main branch — leaks transient agent state into canonical memory.
+- **Two agents racing on the same module without lock coordination** — the lock file exists to make this explicit; ignoring it recreates silent semantic conflicts.

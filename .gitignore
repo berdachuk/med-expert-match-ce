@@ -38,6 +38,11 @@ package.json
 # Kilo IDE
 /.kilo/
 
+# Memory-bank: per-worktree agent scratchpads (never merged)
+/.agents/memory-bank/worktrees/
+# Memory-bank: sync-script temp output (regenerated, never committed)
+/.agents/memory-bank/tmp/
+
 # IDE
 /.vscode/
 /.zed/

@@ -1,0 +1,1 @@
+{"id":"RISK-132","title":"Short-key/long-key drift in LlmResponseSanitizer","status":"mitigated","module":"core","mitigation":"dual-key fallback + parity tests","created":"2026-06-21","decRefs":["DEC-015"]}

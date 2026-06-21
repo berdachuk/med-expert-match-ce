@@ -1,0 +1,8 @@
+{"id":"TEST-001","class":"retrieval/service/MatchingServiceIT","method":null,"module":"retrieval","scnRefs":["SCN-002"],"reqRefs":["REQ-001"],"added":"2026-06-13"}
+{"id":"TEST-002","class":"retrieval/service/MatchingServiceIT","method":"secondOpinionReturnsIndependentDifferentials","module":"retrieval","scnRefs":[],"reqRefs":["REQ-002"],"added":"2026-06-13"}
+{"id":"TEST-003","class":"retrieval/service/SemanticGraphRetrievalServiceIT","method":"testComputePriorityScore","module":"retrieval","scnRefs":[],"reqRefs":["REQ-003"],"added":"2026-06-13"}
+{"id":"TEST-004","class":"graph/service/GraphQueryServiceIT","method":null,"module":"graph","scnRefs":["SCN-006"],"reqRefs":["REQ-004"],"added":"2026-06-13"}
+{"id":"TEST-005","class":"caseanalysis/service/CaseAnalysisServiceIT","method":null,"module":"caseanalysis","scnRefs":["SCN-001","SCN-009"],"reqRefs":["REQ-005"],"added":"2026-06-13"}
+{"id":"TEST-006","class":"retrieval/service/SemanticGraphRetrievalServiceIT","method":"testSemanticGraphRetrievalRouteScore","module":"retrieval","scnRefs":[],"reqRefs":["REQ-006"],"added":"2026-06-13"}
+{"id":"TEST-007","class":"evidence/service/EvidenceRetrievalServiceIT","method":null,"module":"evidence","scnRefs":["SCN-003","SCN-008"],"reqRefs":["REQ-005"],"added":"2026-06-13"}
+{"id":"TEST-008","class":"llm/service/RecommendationServiceIT","method":null,"module":"llm","scnRefs":["SCN-004","SCN-005","SCN-007"],"reqRefs":["REQ-005","REQ-006"],"added":"2026-06-13"}

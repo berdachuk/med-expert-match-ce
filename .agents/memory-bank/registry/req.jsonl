@@ -1,0 +1,12 @@
+{"id":"REQ-001","title":"Specialist Matching","module":"retrieval","status":"active","domainModels":["MedicalCase","Doctor","DoctorMatch","ScoreResult"],"created":"2026-06-13","supersededBy":null}
+{"id":"REQ-002","title":"Second Opinion","module":"retrieval","status":"active","domainModels":["MedicalCase","DoctorMatch"],"created":"2026-06-13","supersededBy":null}
+{"id":"REQ-003","title":"Queue Prioritization","module":"retrieval","status":"active","domainModels":["MedicalCase","PriorityScore"],"created":"2026-06-13","supersededBy":null}
+{"id":"REQ-004","title":"Network Analytics","module":"graph","status":"active","domainModels":["Doctor","MedicalSpecialty"],"created":"2026-06-13","supersededBy":null}
+{"id":"REQ-005","title":"Decision Support","module":"llm","status":"active","domainModels":["CaseAnalysisResult","MedicalCase"],"created":"2026-06-13","supersededBy":null}
+{"id":"REQ-006","title":"Regional Routing","module":"retrieval","status":"active","domainModels":["Facility","FacilityMatch","RouteScoreResult"],"created":"2026-06-13","supersededBy":null}
+{"id":"REQ-125","title":"Main Menu Restructure","module":"web","status":"active","domainModels":[],"created":"2026-06-19","supersededBy":null}
+{"id":"REQ-127","title":"Token-Efficient Format Implementation","module":"llm","status":"active","domainModels":[],"created":"2026-06-19","supersededBy":null}
+{"id":"REQ-129","title":"Responsive Chat Sidebar","module":"web","status":"active","domainModels":[],"created":"2026-06-19","supersededBy":null}
+{"id":"REQ-130","title":"Token-Efficient Format Skill Hardening","module":".agents","status":"active","domainModels":[],"created":"2026-06-20","supersededBy":null}
+{"id":"REQ-131","title":"Case-Analysis Prompt Ultra-Compact JSON","module":"caseanalysis","status":"active","domainModels":[],"created":"2026-06-21","supersededBy":null}
+{"id":"REQ-132","title":"MedGemma Case-Analysis Prompt Ultra-Compact JSON","module":"caseanalysis","status":"active","domainModels":[],"created":"2026-06-21","supersededBy":null}
