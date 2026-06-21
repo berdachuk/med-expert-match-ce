@@ -34,9 +34,9 @@ cleanup() { rm -rf "$MB/tmp"; }
 trap cleanup EXIT
 
 # Sort glob results safely descending (filenames are M###.md, no spaces).
-sorted_glob_desc() { # glob
+sorted_glob_desc() { # glob (already expanded by caller)
   local f files=()
-  for f in "$1"; do [[ -e "$f" ]] && files+=("$f"); done
+  for f in "$@"; do [[ -e "$f" ]] && files+=("$f"); done
   printf '%s\n' "${files[@]}" | sort -r
 }
 
