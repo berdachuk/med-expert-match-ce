@@ -1,0 +1,16 @@
+{"id":"TASK-001","milestone":"M133","title":"Analyze memory-bank structure, propose changes","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-002","milestone":"M133","title":"Create registry/SCHEMA.md + seeded JSONL files","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-003","milestone":"M133","title":"Create locks/README.md","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-004","milestone":"M133","title":"Create scripts/sync-memory-index.sh","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-005","milestone":"M133","title":"Update AGENTS.md Memory Bank section","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-006","milestone":"M133","title":"Update .gitignore for worktrees/ and tmp/","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-007","milestone":"M133","title":"Update bootstrap-new-project.md template","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-008","milestone":"M133","title":"Fix sync-memory-index.sh bugs (idempotency, path resolution, dead code, splicing, substring match, trap cleanup)","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-009","milestone":"M133","title":"Create records/decisions/DEC-001..014.md","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-010","milestone":"M133","title":"Create records/progress/ seed files for recent milestones","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-011","milestone":"M133","title":"Regenerate index files, verify --check passes and is idempotent","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-012","milestone":"M134","title":"Add sync-memory-index.sh --check step to .github/workflows/ci.yml","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-013","milestone":"M134","title":"Migrate archive plans M01-M128 to records/progress/ stubs","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-014","milestone":"M134","title":"Seed registry/nfr.jsonl from docs NFRs","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-015","milestone":"M134","title":"Seed registry/task.jsonl from M133 completed tasks","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-016","milestone":"M134","title":"Update docs/ai-context-strategy.md with partitioned layer model","module":"core","status":"in_progress","plan":"records/active/M134.md","assignedTo":null}

@@ -1,0 +1,22 @@
+{"id":"NFR-001","title":"Sub-second matching response","legacyAlias":"NFR-1.1","category":"performance","module":"retrieval","status":"active","created":"2026-06-13"}
+{"id":"NFR-002","title":"Concurrent request support","legacyAlias":"NFR-1.2","category":"performance","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-003","title":"Scale to large healthcare networks","legacyAlias":"NFR-1.3","category":"performance","module":"retrieval","status":"active","created":"2026-06-13"}
+{"id":"NFR-004","title":"Vector search < 100ms","legacyAlias":"NFR-1.4","category":"performance","module":"embedding","status":"active","created":"2026-06-13"}
+{"id":"NFR-005","title":"Graph traversal < 500ms","legacyAlias":"NFR-1.5","category":"performance","module":"graph","status":"active","created":"2026-06-13"}
+{"id":"NFR-006","title":"99.9% uptime for matching","legacyAlias":"NFR-2.1","category":"reliability","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-007","title":"Graceful failure without data loss","legacyAlias":"NFR-2.2","category":"reliability","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-008","title":"Transaction rollback on errors","legacyAlias":"NFR-2.3","category":"reliability","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-009","title":"Error logging for debugging","legacyAlias":"NFR-2.4","category":"reliability","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-010","title":"HIPAA compliance","legacyAlias":"NFR-3.1","category":"security","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-011","title":"Patient data anonymization","legacyAlias":"NFR-3.2","category":"security","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-012","title":"No PHI in logs","legacyAlias":"NFR-3.3","category":"security","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-013","title":"Local deployment for privacy","legacyAlias":"NFR-3.4","category":"security","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-014","title":"Encryption in transit and at rest","legacyAlias":"NFR-3.5","category":"security","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-015","title":"Clear actionable recommendations","legacyAlias":"NFR-4.1","category":"usability","module":"llm","status":"active","created":"2026-06-13"}
+{"id":"NFR-016","title":"Explain match scores and rationales","legacyAlias":"NFR-4.2","category":"usability","module":"retrieval","status":"active","created":"2026-06-13"}
+{"id":"NFR-017","title":"EMR integration via FHIR","legacyAlias":"NFR-4.3","category":"usability","module":"ingestion","status":"active","created":"2026-06-13"}
+{"id":"NFR-018","title":"REST API for integration","legacyAlias":"NFR-4.4","category":"usability","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-019","title":"FHIR R5 standard support","legacyAlias":"NFR-5.1","category":"compatibility","module":"ingestion","status":"active","created":"2026-06-13"}
+{"id":"NFR-020","title":"OpenAI-compatible providers only","legacyAlias":"NFR-5.2","category":"compatibility","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-021","title":"PostgreSQL 17+ with PgVector and AGE","legacyAlias":"NFR-5.3","category":"compatibility","module":"core","status":"active","created":"2026-06-13"}
+{"id":"NFR-022","title":"Java 21+ and Spring Boot 4.1.0+","legacyAlias":"NFR-5.4","category":"compatibility","module":"core","status":"active","created":"2026-06-13"}
