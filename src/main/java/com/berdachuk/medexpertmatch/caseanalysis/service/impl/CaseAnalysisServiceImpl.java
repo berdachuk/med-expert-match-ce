@@ -276,10 +276,10 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             Map<String, Object> parsed = objectMapper.readValue(jsonText, new TypeReference<Map<String, Object>>() {
             });
 
-            List<String> clinicalFindings = extractList(parsed, "clinicalFindings");
+            List<String> clinicalFindings = extractList(parsed, "cf", "clinicalFindings");
             List<CaseAnalysisResult.PotentialDiagnosis> potentialDiagnoses = extractPotentialDiagnoses(parsed);
-            List<String> recommendedNextSteps = extractList(parsed, "recommendedNextSteps");
-            List<String> urgentConcerns = extractList(parsed, "urgentConcerns");
+            List<String> recommendedNextSteps = extractList(parsed, "rns", "recommendedNextSteps");
+            List<String> urgentConcerns = extractList(parsed, "uc", "urgentConcerns");
 
             return new CaseAnalysisResult(clinicalFindings, potentialDiagnoses, recommendedNextSteps, urgentConcerns);
         } catch (Exception e) {
@@ -324,11 +324,15 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
     }
 
     /**
-     * Extracts list from parsed JSON map.
+     * Extracts list from parsed JSON map. Tries the primary (short) key first, then falls
+     * back to the legacy (long) key for backward compatibility with cached/older responses.
      */
     @SuppressWarnings("unchecked")
-    private List<String> extractList(Map<String, Object> map, String key) {
+    private List<String> extractList(Map<String, Object> map, String key, String legacyKey) {
         Object value = map.get(key);
+        if (value == null && legacyKey != null) {
+            value = map.get(legacyKey);
+        }
         if (value == null) {
             return List.of();
         }
@@ -339,11 +343,15 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
     }
 
     /**
-     * Extracts potential diagnoses from parsed JSON map.
+     * Extracts potential diagnoses from parsed JSON map. Supports short keys
+     * (`pd`/`d`/`c`) with fallback to legacy keys (`potentialDiagnoses`/`diagnosis`/`confidence`).
      */
     @SuppressWarnings("unchecked")
     private List<CaseAnalysisResult.PotentialDiagnosis> extractPotentialDiagnoses(Map<String, Object> map) {
-        Object value = map.get("potentialDiagnoses");
+        Object value = map.get("pd");
+        if (value == null) {
+            value = map.get("potentialDiagnoses");
+        }
         if (value == null) {
             return List.of();
         }
@@ -351,8 +359,8 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
             List<Map<String, Object>> diagnosesList = (List<Map<String, Object>>) value;
             return diagnosesList.stream()
                     .map(diagnosisMap -> {
-                        String diagnosis = (String) diagnosisMap.get("diagnosis");
-                        Object confidenceObj = diagnosisMap.get("confidence");
+                        String diagnosis = (String) diagnosisMap.getOrDefault("d", diagnosisMap.get("diagnosis"));
+                        Object confidenceObj = diagnosisMap.getOrDefault("c", diagnosisMap.get("confidence"));
                         Double confidence = confidenceObj instanceof Number
                                 ? ((Number) confidenceObj).doubleValue()
                                 : 0.5;

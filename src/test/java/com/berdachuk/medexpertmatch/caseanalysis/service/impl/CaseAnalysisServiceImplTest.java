@@ -141,4 +141,69 @@ class CaseAnalysisServiceImplTest {
         List<String> result = (List<String>) field.invoke(createService(), "");
         assertEquals(List.of(), result);
     }
+
+    // --- REQ-131: ultra-compact JSON short-key parsing (case-analysis-system.st) ---
+
+    /**
+     * REQ-131: case-analysis LLM output in ultra-compact JSON with short keys parses to the
+     * same CaseAnalysisResult as the legacy verbose JSON.
+     */
+    @Test
+    @DisplayName("REQ-131: parseCaseAnalysisResult parses ultra-compact short-key JSON")
+    void parseCaseAnalysisResultShortKeys() throws Exception {
+        String shortJson = "{\"cf\":[\"Chest pain\"],"
+                + "\"pd\":[{\"d\":\"Acute MI\",\"c\":0.8}],"
+                + "\"rns\":[\"Consult cardiology\"],"
+                + "\"uc\":[\"Critical\"]}";
+        var method = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseCaseAnalysisResult", String.class);
+        method.setAccessible(true);
+        CaseAnalysisResult result = (CaseAnalysisResult) method.invoke(createService(), shortJson);
+
+        assertEquals(List.of("Chest pain"), result.clinicalFindings());
+        assertEquals(1, result.potentialDiagnoses().size());
+        assertEquals("Acute MI", result.potentialDiagnoses().get(0).diagnosis());
+        assertEquals(0.8, result.potentialDiagnoses().get(0).confidence());
+        assertEquals(List.of("Consult cardiology"), result.recommendedNextSteps());
+        assertEquals(List.of("Critical"), result.urgentConcerns());
+    }
+
+    /**
+     * REQ-131: legacy verbose long-key JSON still parses (backward compatibility fallback).
+     */
+    @Test
+    @DisplayName("REQ-131: parseCaseAnalysisResult parses legacy long-key JSON (fallback)")
+    void parseCaseAnalysisResultLegacyKeys() throws Exception {
+        String legacyJson = "{\"clinicalFindings\":[\"Chest pain\"],"
+                + "\"potentialDiagnoses\":[{\"diagnosis\":\"Acute MI\",\"confidence\":0.8}],"
+                + "\"recommendedNextSteps\":[\"Consult cardiology\"],"
+                + "\"urgentConcerns\":[\"Critical\"]}";
+        var method = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseCaseAnalysisResult", String.class);
+        method.setAccessible(true);
+        CaseAnalysisResult result = (CaseAnalysisResult) method.invoke(createService(), legacyJson);
+
+        assertEquals(List.of("Chest pain"), result.clinicalFindings());
+        assertEquals(1, result.potentialDiagnoses().size());
+        assertEquals("Acute MI", result.potentialDiagnoses().get(0).diagnosis());
+        assertEquals(0.8, result.potentialDiagnoses().get(0).confidence());
+        assertEquals(List.of("Consult cardiology"), result.recommendedNextSteps());
+        assertEquals(List.of("Critical"), result.urgentConcerns());
+    }
+
+    /**
+     * REQ-131: short-key and legacy-key JSON produce identical results (parity check).
+     */
+    @Test
+    @DisplayName("REQ-131: short-key and legacy-key JSON produce identical CaseAnalysisResult")
+    void parseCaseAnalysisResultShortAndLegacyParity() throws Exception {
+        String shortJson = "{\"cf\":[\"F1\"],\"pd\":[{\"d\":\"D1\",\"c\":0.5}],\"rns\":[\"S1\"],\"uc\":[\"U1\"]}";
+        String legacyJson = "{\"clinicalFindings\":[\"F1\"],"
+                + "\"potentialDiagnoses\":[{\"diagnosis\":\"D1\",\"confidence\":0.5}],"
+                + "\"recommendedNextSteps\":[\"S1\"],\"urgentConcerns\":[\"U1\"]}";
+        var method = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseCaseAnalysisResult", String.class);
+        method.setAccessible(true);
+        CaseAnalysisResult shortResult = (CaseAnalysisResult) method.invoke(createService(), shortJson);
+        CaseAnalysisResult legacyResult = (CaseAnalysisResult) method.invoke(createService(), legacyJson);
+
+        assertEquals(legacyResult, shortResult);
+    }
 }

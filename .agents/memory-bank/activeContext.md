@@ -2,14 +2,15 @@
 
 ## Current Focus
 
-All milestones M01–M130 are complete. The `token-efficient-format` skill is hardened: TOON gated as unimplemented, ultra-compact JSON promoted to the recommended non-schema format, sanitizer coupling documented. Next phase (M131) will apply short-key conversion to the two remaining verbose case-analysis prompts.
+All milestones M01–M131 are complete (M131 scoped: `case-analysis-system.st` converted; medgemma prompt deferred to M132). The `token-efficient-format` skill is hardened and partially applied. Next: M132 converts `medgemma-case-analysis-system.st` with sanitizer + URGENCY_PATTERN coupling.
 
 ## Current Milestone
 
-None — all plans archived. M131 next-phase plan pending creation (prompt short-key conversion).
+M132 (active) — convert `medgemma-case-analysis-system.st` to ultra-compact JSON; update `LlmResponseSanitizer` + `URGENCY_PATTERN` + test stubs in lockstep.
 
 ## Completed Recently
 
+- **M131** — Case-analysis prompt ultra-compact JSON (REQ-131, scoped): converted `case-analysis-system.st` to short keys (`cf`/`pd`/`d`/`c`/`rns`/`uc`); updated `CaseAnalysisServiceImpl.extractList` (now `key`+`legacyKey`) and `extractPotentialDiagnoses` with long-key fallback; 3 new unit tests (short, legacy, parity) green. TDD red→green. MedGemma prompt + sanitizer/URGENCY_PATTERN coupling deferred to M132.
 - **M130** — Token-efficient-format skill hardening (REQ-130): gated TOON as unimplemented (no adapter exists; M127 deferred it), promoted ultra-compact JSON to the recommended non-schema format, split decision table (DTO-via-BeanOutputConverter vs Map-parsed), added sanitizer-coupling note (`LlmResponseSanitizer.FIELD_LABELS`/`JSON_BLOCK_PATTERN` must change in lockstep with prompt key changes), added §7 input-side token reduction. Docs-only; AGENTS.md skill row aligned with TOON status.
 - **M129** — Responsive chat sidebar (REQ-129). Sidebar hidden on screens <992px (`d-none d-lg-block`). Hamburger button (☰) appears in top-left of chat area on small screens. Bootstrap offcanvas wraps sidebar for slide-in overlay. JS wires hamburger click to toggle, auto-closes on chat selection. CSS for hamburger positioning, offcanvas body padding, chat list max-height. 948 unit tests pass (1 pre-existing failure: `ChatMarkdownRendererTest.allowsHttpsLinks`).
 - **M125** — Main Menu Restructure: AI Chat is now the primary entry point at `/` (REQ-125). Removed `HomeController`, `index.html`, dashboard stats. Rewrote header nav: sub-page links always visible, Home→AI Chat at root, back arrow now gates on `currentPage != 'chat'`. Deleted `HomeControllerIT`, added root page test to `ChatWebControllerIT`. Fixed pre-existing `@MockBean` compilation error in `SessionTokenApiKeyAuthFilterIT` (replaced with `@TestConfiguration` + `mock()`). 938 unit + 567 IT tests pass.
@@ -40,4 +41,4 @@ None active.
 
 ## Next Steps
 
-1. **M131** — Apply ultra-compact JSON short keys to `case-analysis-system.st` and `medgemma-case-analysis-system.st`; update `CaseAnalysisServiceImpl` extractors + `LlmResponseSanitizer.FIELD_LABELS`/`JSON_BLOCK_PATTERN` in lockstep; TDD with integration tests.
+1. **M132** — Convert `medgemma-case-analysis-system.st` to ultra-compact JSON short keys; update `LlmResponseSanitizer.FIELD_LABELS`/`JSON_BLOCK_PATTERN` + `MedicalAgentQueuePrioritizationWorkflowServiceImpl.URGENCY_PATTERN` + test stubs in lockstep (TDD).

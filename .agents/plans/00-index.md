@@ -4,7 +4,7 @@
 
 | # | Plan | Description |
 |---|------|-------------|
-| M131 | [`M131-case-analysis-prompts-ultra-compact-json.md`](M131-case-analysis-prompts-ultra-compact-json.md) | Convert `case-analysis-system.st` + `medgemma-case-analysis-system.st` to ultra-compact JSON short keys; update `CaseAnalysisServiceImpl`, `LlmResponseSanitizer` (`FIELD_LABELS`/`JSON_BLOCK_PATTERN`), `URGENCY_PATTERN`, and test stubs in lockstep (TDD) |
+| M132 | [`M132-medgemma-case-analysis-ultra-compact-json.md`](M132-medgemma-case-analysis-ultra-compact-json.md) | Convert `medgemma-case-analysis-system.st` to ultra-compact JSON short keys; update `LlmResponseSanitizer` (`FIELD_LABELS`/`JSON_BLOCK_PATTERN`) + `URGENCY_PATTERN` + test stubs in lockstep (TDD) |
 
 ## Deferred
 
@@ -127,6 +127,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M128 | [`archive/M128-markdown-rendering-fix.md`](archive/M128-markdown-rendering-fix.md) | Fix markdown rendering in chat — bold/italic/lists, content before reasoning block |
 | M129 | [`archive/M129-responsive-chat-sidebar.md`](archive/M129-responsive-chat-sidebar.md) | Responsive chat sidebar — hide on small/medium, hamburger menu toggle |
 | M130 | [`archive/M130-token-efficient-format-skill-hardening.md`](archive/M130-token-efficient-format-skill-hardening.md) | Token-efficient-format skill hardening — gate TOON as unimplemented, promote ultra-compact JSON, sanitizer coupling note, input-side reduction |
+| M131 | [`archive/M131-case-analysis-prompts-ultra-compact-json.md`](archive/M131-case-analysis-prompts-ultra-compact-json.md) | Case-analysis prompt ultra-compact JSON (scoped) — `case-analysis-system.st` short keys + parser fallback; medgemma deferred to M132 |
 
 ## Creating a New Plan
 

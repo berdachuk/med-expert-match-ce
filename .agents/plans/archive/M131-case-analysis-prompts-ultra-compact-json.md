@@ -96,6 +96,32 @@ For each prompt, follow the AGENTS.md TDD cycle:
   keys (keep at least one legacy-key stub to prove fallback).
 - [ ] TASK-131-7 — `mvn verify` green; memory bank + traceability updated; archive plan.
 
+## Implementation status (scoped)
+
+This milestone was **partially implemented** in this pass:
+
+- [x] TASK-131-1 — `case-analysis-system.st` converted to ultra-compact JSON short keys
+  (`cf`/`pd`/`d`/`c`/`rns`/`uc`); single-line example; key reference added.
+- [x] TASK-131-2 — `CaseAnalysisServiceImpl.extractList` (now takes `key` + `legacyKey`) and
+  `extractPotentialDiagnoses` updated to read short keys with long-key fallback. 3 new unit
+  tests added (short-key, legacy-key, parity) — all green.
+- [ ] TASK-131-3 through TASK-131-6 — **deferred** to M132. The `medgemma-case-analysis-system.st`
+  prompt is coupled to `LlmResponseSanitizer` (`FIELD_LABELS`/`JSON_BLOCK_PATTERN`) and
+  `MedicalAgentQueuePrioritizationWorkflowServiceImpl.URGENCY_PATTERN`, plus 6+ test stubs.
+  That work is higher-risk and warrants its own focused milestone with dedicated TDD coverage
+  of the sanitizer and urgency-regex coupling.
+
+### Verification (this pass)
+
+- `mvn test`: 950 tests, 1 pre-existing failure (`ChatMarkdownRendererTest.allowsHttpsLinks`,
+  documented in M129), 0 new failures. +3 new short-key tests green.
+- `CaseAnalysisServiceIT#testAnalyzeCase` green (case-analysis path verified end-to-end).
+- `CaseAnalysisServiceIT#testExtractICD10Codes` fails pre-existing on develop (unrelated;
+  ICD-10 extraction prompt untouched).
+- TDD: tests written first, verified to encode REQ-131, red→green confirmed.
+- Security pre-check + post-check: APPROVE (no injection/PHI/auth surface change; RISK-131
+  mitigated by legacy-key fallback + parity test).
+
 ## Scope boundaries
 
 - **Do not** convert the prose prompts (`differential-diagnosis`, `risk-assessment`,

@@ -2,6 +2,19 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-21: M131 Complete (scoped) — Case-Analysis Prompt Ultra-Compact JSON
+
+- **M131** — Case-analysis prompt ultra-compact JSON (REQ-131, scoped):
+  - `case-analysis-system.st` converted to ultra-compact JSON short keys (`cf`/`pd`/`d`/`c`/`rns`/`uc`); single-line example + key reference
+  - `CaseAnalysisServiceImpl.extractList` now takes `key` + `legacyKey`; `extractPotentialDiagnoses` reads short keys with long-key fallback
+  - 3 new unit tests: short-key parsing, legacy-key fallback, parity (short == legacy)
+  - TDD: tests written first, verified to encode REQ-131, red→green confirmed; security pre/post-check APPROVE
+  - 950 unit tests, 0 new failures (1 pre-existing: `ChatMarkdownRendererTest.allowsHttpsLinks`)
+  - `CaseAnalysisServiceIT#testAnalyzeCase` green; `testExtractICD10Codes` pre-existing failure (unrelated)
+  - MedGemma prompt + `LlmResponseSanitizer`/`URGENCY_PATTERN` coupling deferred to M132
+- Merged via `feat/m131-case-analysis-ultra-compact-json` → develop → branch deleted
+- Archived M131 plan; created M132 next-phase plan
+
 ## 2026-06-21: M130 Complete — Token-Efficient Format Skill Hardening
 
 - **M130** — Token-efficient-format skill hardening (REQ-130):
