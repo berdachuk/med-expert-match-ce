@@ -31,13 +31,20 @@ public final class LlmResponseSanitizer {
     private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
 
     // Public label map — fixed order so the output is deterministic.
+    // Short keys (M132 ultra-compact JSON) are paired with their legacy long-key alias so
+    // both forms render to identical prose; unknown-field suppression checks both.
     private static final Map<String, String> FIELD_LABELS = new LinkedHashMap<>();
     static {
         FIELD_LABELS.put("requiredSpecialty", "Recommended specialty");
+        FIELD_LABELS.put("sp",               "Recommended specialty");
         FIELD_LABELS.put("urgencyLevel",       "Urgency");
+        FIELD_LABELS.put("u",                 "Urgency");
         FIELD_LABELS.put("clinicalFindings",   "Key findings");
+        FIELD_LABELS.put("cf",                "Key findings");
         FIELD_LABELS.put("icd10Codes",         "ICD-10 codes");
+        FIELD_LABELS.put("icd",               "ICD-10 codes");
         FIELD_LABELS.put("caseSummary",        "Summary");
+        FIELD_LABELS.put("sm",                "Summary");
         FIELD_LABELS.put("recommendations",    "Recommendations");
         FIELD_LABELS.put("urgencyRationale",   "Urgency rationale");
     }
@@ -59,7 +66,7 @@ public final class LlmResponseSanitizer {
             Pattern.MULTILINE);
 
     private static final Pattern JSON_BLOCK_PATTERN = Pattern.compile(
-            "\\{[^}]*\"(requiredSpecialty|urgencyLevel|clinicalFindings|icd10Codes|caseSummary)\"[^}]*\\}",
+            "\\{[^}]*\"(requiredSpecialty|urgencyLevel|clinicalFindings|icd10Codes|caseSummary|sp|u|cf|icd|sm)\"[^}]*\\}",
             Pattern.DOTALL);
 
     private static final int MIN_REASONING_CHARS = 40;

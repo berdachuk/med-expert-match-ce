@@ -64,21 +64,26 @@ coupling). The medgemma path remains verbose and is more coupled:
 
 ## Tasks
 
-- [ ] TASK-132-1 — `medgemma-case-analysis-system.st`: ultra-compact JSON short keys.
-- [ ] TASK-132-2 — `LlmResponseSanitizer`: add short keys to `FIELD_LABELS` + `JSON_BLOCK_PATTERN`
-  (alternation includes both short and long for transition). Update `LlmResponseSanitizerTest`.
-- [ ] TASK-132-3 — `URGENCY_PATTERN`: accept short key `u` (keep `urgencyLevel` fallback).
-  Add unit test.
-- [ ] TASK-132-4 — Update test stubs (`MedicalAgentRecommendationWorkflowSessionTest`,
-  `DoctorMatchWorkflowEngineTest`, `DoctorMatchWorkflowEngineFollowUpTest`,
-  `RoutingWorkflowEngineTest`, `MedicalAgentWorkflowServicesIT`, `TestAIConfig`).
-- [ ] TASK-132-5 — `mvn verify` green; memory bank updated; archive plan.
+- [x] TASK-132-1 — `medgemma-case-analysis-system.st`: ultra-compact JSON short keys (`sp`/`u`/`cf`/`icd`/`sm`).
+- [x] TASK-132-2 — `LlmResponseSanitizer`: short keys added to `FIELD_LABELS` + `JSON_BLOCK_PATTERN`
+  (alternation includes both short and long for transition). `LlmResponseSanitizerTest` extended
+  with 3 short-key tests (render, parity, data-path passthrough).
+- [x] TASK-132-3 — `URGENCY_PATTERN` + `SPECIALTY_PATTERN`: accept short keys `u`/`sp`
+  (keep `urgencyLevel`/`requiredSpecialty` fallback via non-capturing alternation). 3 new unit
+  tests in `MedicalAgentQueuePrioritizationWorkflowServiceImplTest` (short Map, legacy Map,
+  malformed regex fallback).
+- [x] TASK-132-4 — Updated `MedicalAgentRecommendationWorkflowSessionTest` stub to short key;
+  `TestAIConfig` mock fixtures converted to short keys. Harness stubs using `{}` unchanged
+  (empty JSON, key-agnostic).
+- [x] TASK-132-5 — `mvn test`: 956 tests, 0 new failures (1 pre-existing `ChatMarkdownRendererTest`).
+  `CaseAnalysisServiceIT#testAnalyzeCase` green. Memory bank updated; archive plan.
 
-## Verification
+### Verification
 
-- `mvn verify` green (excluding documented pre-existing failures).
-- New tests prove short-key JSON-block→prose rendering and urgency extraction.
-- Legacy-key fallback retained for one release.
+- 956 unit tests, 0 new failures (+6 new M132 tests).
+- TDD red→green confirmed: 4 short-key tests failed before implementation, all pass after.
+- Legacy-key fallback retained and proven (parity test, legacy Map-path test).
+- Security pre/post-check: APPROVE.
 
 ## Traceability
 

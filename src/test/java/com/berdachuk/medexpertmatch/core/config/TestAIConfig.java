@@ -412,12 +412,7 @@ public class TestAIConfig {
                         promptText.contains("analyze") && promptText.contains("case")) {
                     // Case analysis - return structured JSON (not plain text)
                     responseText = """
-                            {
-                              "clinicalFindings": ["Critical symptoms requiring immediate attention"],
-                              "potentialDiagnoses": [{"diagnosis": "Acute condition", "confidence": 0.8}],
-                              "recommendedNextSteps": ["Consult with cardiology specialist immediately"],
-                              "urgentConcerns": ["Critical symptoms"]
-                            }
+                            {"cf":["Critical symptoms requiring immediate attention"],"pd":[{"d":"Acute condition","c":0.8}],"rns":["Consult with cardiology specialist immediately"],"uc":["Critical symptoms"]}
                             """;
                 } else {
                     // Default agent response - always include keywords
@@ -653,12 +648,7 @@ public class TestAIConfig {
                     promptText.contains("recommended next steps") || promptText.contains("case analysis")) {
                 // Case analysis - return structured JSON
                 responseText = """
-                        {
-                          "clinicalFindings": ["Test clinical finding"],
-                          "potentialDiagnoses": [{"diagnosis": "Test diagnosis", "confidence": 0.8}],
-                          "recommendedNextSteps": ["Test next step"],
-                          "urgentConcerns": []
-                        }
+                        {"cf":["Test clinical finding"],"pd":[{"d":"Test diagnosis","c":0.8}],"rns":["Test next step"],"uc":[]}
                         """;
             } else if (promptText.contains("match") && (promptText.contains("doctor") || promptText.contains("specialist"))) {
                 // Agent doctor matching - extract case ID and specialty, return appropriate response

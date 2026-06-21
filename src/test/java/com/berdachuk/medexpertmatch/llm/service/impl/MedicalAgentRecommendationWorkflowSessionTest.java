@@ -60,7 +60,7 @@ class MedicalAgentRecommendationWorkflowSessionTest {
         when(promptSupport.buildPrompt(any(), anyString(), any())).thenReturn("PROMPT");
 
         MedicalAgentLlmSupportService llmSupport = mock(MedicalAgentLlmSupportService.class);
-        when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{\"urgencyLevel\":\"HIGH\"}");
+        when(llmSupport.analyzeCaseWithMedGemma(anyString())).thenReturn("{\"u\":\"HIGH\"}");
         when(llmSupport.interpretResultsWithMedGemma(anyString(), anyString(), any()))
                 .thenReturn("Final anonymized recommendation");
 

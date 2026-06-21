@@ -237,4 +237,77 @@ class LlmResponseSanitizerTest {
         assertEquals(null, LlmResponseSanitizer.formatForChatDisplay(null));
         assertEquals("", LlmResponseSanitizer.formatForChatDisplay(""));
     }
+
+    // ==================================================================
+    // 3. REQ-132 — ultra-compact JSON short-key support. The medgemma
+    //    case-analysis prompt now emits short keys (sp/u/cf/icd/sm).
+    //    The UI renderer must produce the same prose labels as legacy
+    //    long keys, and the data path must keep the raw JSON intact.
+    // ==================================================================
+
+    /**
+     * REQ-132: ultra-compact short-key JSON renders to the same prose as legacy long-key JSON.
+     */
+    @Test
+    void formatForChatDisplay_rendersShortKeyJsonAsProse() {
+        String shortKeyJson = """
+                {
+                  "sp": "Urologic Oncology / Renal Cancer",
+                  "u": "HIGH",
+                  "cf": ["Malignant neoplasm of kidney except renal pelvis unspecified"],
+                  "icd": ["C64.20"],
+                  "sm": "A 64-year-old patient has a diagnosis of malignant neoplasm of kidney."
+                }
+                """;
+
+        String result = LlmResponseSanitizer.formatForChatDisplay(shortKeyJson);
+
+        assertNotNull(result);
+        assertFalse(result.contains("\"sp\""), "raw short JSON field name should be stripped");
+        assertFalse(result.contains("\"icd\""), "raw short JSON field name should be stripped");
+        assertTrue(result.contains("Recommended specialty: Urologic Oncology / Renal Cancer"),
+                "short key sp must render with the same label as requiredSpecialty");
+        assertTrue(result.contains("Urgency: HIGH"),
+                "short key u must render with the same label as urgencyLevel");
+        assertTrue(result.contains("Key findings: Malignant neoplasm of kidney"),
+                "short key cf must render with the same label as clinicalFindings");
+        assertTrue(result.contains("ICD-10 codes: C64.20"),
+                "short key icd must render with the same label as icd10Codes");
+        assertTrue(result.contains("Summary: A 64-year-old patient"),
+                "short key sm must render with the same label as caseSummary");
+    }
+
+    /**
+     * REQ-132: short-key and legacy-key pure-JSON responses produce equivalent prose.
+     */
+    @Test
+    void formatForChatDisplay_shortAndLegacyKeysProduceEquivalentProse() {
+        String shortKeyJson = "{\"sp\":\"Cardiology\",\"u\":\"MEDIUM\",\"sm\":\"Chest pain workup.\"}";
+        String legacyJson = "{\"requiredSpecialty\":\"Cardiology\",\"urgencyLevel\":\"MEDIUM\",\"caseSummary\":\"Chest pain workup.\"}";
+
+        String shortResult = LlmResponseSanitizer.formatForChatDisplay(shortKeyJson);
+        String legacyResult = LlmResponseSanitizer.formatForChatDisplay(legacyJson);
+
+        assertEquals(legacyResult, shortResult,
+                "short-key and legacy-key JSON must render to identical prose");
+    }
+
+    /**
+     * REQ-132: short-key JSON in the data path (toHumanReadable) stays raw.
+     */
+    @Test
+    void toHumanReadable_leavesShortKeyEmbeddedJsonUntouched() {
+        String llmOutput = """
+                **Matching Rationale:** borderline.
+
+                Response
+                {"sp":"Urologic Oncology","u":"HIGH"}
+                """;
+
+        String result = LlmResponseSanitizer.toHumanReadable(llmOutput);
+
+        assertTrue(result.contains("\"sp\""),
+                "toHumanReadable must NOT render short-key JSON; the data path keeps the original");
+        assertTrue(result.contains("\"u\""));
+    }
 }

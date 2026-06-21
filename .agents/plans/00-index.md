@@ -2,9 +2,7 @@
 
 ## Active
 
-| # | Plan | Description |
-|---|------|-------------|
-| M132 | [`M132-medgemma-case-analysis-ultra-compact-json.md`](M132-medgemma-case-analysis-ultra-compact-json.md) | Convert `medgemma-case-analysis-system.st` to ultra-compact JSON short keys; update `LlmResponseSanitizer` (`FIELD_LABELS`/`JSON_BLOCK_PATTERN`) + `URGENCY_PATTERN` + test stubs in lockstep (TDD) |
+None — all plans archived.
 
 ## Deferred
 
@@ -128,6 +126,7 @@ Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU 
 | M129 | [`archive/M129-responsive-chat-sidebar.md`](archive/M129-responsive-chat-sidebar.md) | Responsive chat sidebar — hide on small/medium, hamburger menu toggle |
 | M130 | [`archive/M130-token-efficient-format-skill-hardening.md`](archive/M130-token-efficient-format-skill-hardening.md) | Token-efficient-format skill hardening — gate TOON as unimplemented, promote ultra-compact JSON, sanitizer coupling note, input-side reduction |
 | M131 | [`archive/M131-case-analysis-prompts-ultra-compact-json.md`](archive/M131-case-analysis-prompts-ultra-compact-json.md) | Case-analysis prompt ultra-compact JSON (scoped) — `case-analysis-system.st` short keys + parser fallback; medgemma deferred to M132 |
+| M132 | [`archive/M132-medgemma-case-analysis-ultra-compact-json.md`](archive/M132-medgemma-case-analysis-ultra-compact-json.md) | MedGemma case-analysis prompt ultra-compact JSON — short keys + `LlmResponseSanitizer` (`FIELD_LABELS`/`JSON_BLOCK_PATTERN`) + `URGENCY_PATTERN`/`SPECIALTY_PATTERN` + test stubs in lockstep |
 
 ## Creating a New Plan
 

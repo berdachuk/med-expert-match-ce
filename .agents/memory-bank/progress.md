@@ -2,6 +2,20 @@
 
 Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
 
+## 2026-06-21: M132 Complete — MedGemma Case-Analysis Prompt Ultra-Compact JSON
+
+- **M132** — MedGemma case-analysis prompt ultra-compact JSON (REQ-132):
+  - `medgemma-case-analysis-system.st` converted to short keys (`sp`/`u`/`cf`/`icd`/`sm`); single-line example + key reference
+  - `LlmResponseSanitizer.FIELD_LABELS` + `JSON_BLOCK_PATTERN`: both short and long keys (transition)
+  - `URGENCY_PATTERN` + `SPECIALTY_PATTERN`: non-capturing alternation `(?:u|urgencyLevel)` / `(?:sp|requiredSpecialty)`
+  - Map-path reads in `MedicalAgentQueuePrioritizationWorkflowServiceImpl`: `getOrDefault` with legacy fallback
+  - `TestAIConfig` mock fixtures + `MedicalAgentRecommendationWorkflowSessionTest` stub converted to short keys
+  - 6 new tests: sanitizer render/parity/data-path (3), urgency/specialty Map+regex (3); TDD red→green
+  - 956 unit tests, 0 new failures (1 pre-existing `ChatMarkdownRendererTest`); `CaseAnalysisServiceIT#testAnalyzeCase` green
+  - Security pre/post-check: APPROVE (RISK-132 mitigated by dual-key fallback + parity tests)
+- Merged via `feat/m132-medgemma-ultra-compact-json` → develop → branch deleted
+- Archived M132 plan; `token-efficient-format` skill fully applied (M130–M132)
+
 ## 2026-06-21: M131 Complete (scoped) — Case-Analysis Prompt Ultra-Compact JSON
 
 - **M131** — Case-analysis prompt ultra-compact JSON (REQ-131, scoped):

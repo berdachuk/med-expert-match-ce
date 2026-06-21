@@ -2,14 +2,15 @@
 
 ## Current Focus
 
-All milestones M01–M131 are complete (M131 scoped: `case-analysis-system.st` converted; medgemma prompt deferred to M132). The `token-efficient-format` skill is hardened and partially applied. Next: M132 converts `medgemma-case-analysis-system.st` with sanitizer + URGENCY_PATTERN coupling.
+All milestones M01–M132 are complete. The `token-efficient-format` skill is fully applied: both case-analysis prompts (`case-analysis-system.st` M131, `medgemma-case-analysis-system.st` M132) use ultra-compact JSON short keys with lockstep sanitizer + regex updates and legacy-key fallback.
 
 ## Current Milestone
 
-M132 (active) — convert `medgemma-case-analysis-system.st` to ultra-compact JSON; update `LlmResponseSanitizer` + `URGENCY_PATTERN` + test stubs in lockstep.
+None — all plans archived.
 
 ## Completed Recently
 
+- **M132** — MedGemma case-analysis prompt ultra-compact JSON (REQ-132): converted `medgemma-case-analysis-system.st` to short keys (`sp`/`u`/`cf`/`icd`/`sm`); updated `LlmResponseSanitizer.FIELD_LABELS` + `JSON_BLOCK_PATTERN` (both short and long keys); updated `URGENCY_PATTERN` + `SPECIALTY_PATTERN` (non-capturing alternation); updated Map-path reads with legacy fallback; 6 new tests (sanitizer render/parity/data-path, urgency/specialty Map+regex). TDD red→green. 956 unit tests, 0 new failures.
 - **M131** — Case-analysis prompt ultra-compact JSON (REQ-131, scoped): converted `case-analysis-system.st` to short keys (`cf`/`pd`/`d`/`c`/`rns`/`uc`); updated `CaseAnalysisServiceImpl.extractList` (now `key`+`legacyKey`) and `extractPotentialDiagnoses` with long-key fallback; 3 new unit tests (short, legacy, parity) green. TDD red→green. MedGemma prompt + sanitizer/URGENCY_PATTERN coupling deferred to M132.
 - **M130** — Token-efficient-format skill hardening (REQ-130): gated TOON as unimplemented (no adapter exists; M127 deferred it), promoted ultra-compact JSON to the recommended non-schema format, split decision table (DTO-via-BeanOutputConverter vs Map-parsed), added sanitizer-coupling note (`LlmResponseSanitizer.FIELD_LABELS`/`JSON_BLOCK_PATTERN` must change in lockstep with prompt key changes), added §7 input-side token reduction. Docs-only; AGENTS.md skill row aligned with TOON status.
 - **M129** — Responsive chat sidebar (REQ-129). Sidebar hidden on screens <992px (`d-none d-lg-block`). Hamburger button (☰) appears in top-left of chat area on small screens. Bootstrap offcanvas wraps sidebar for slide-in overlay. JS wires hamburger click to toggle, auto-closes on chat selection. CSS for hamburger positioning, offcanvas body padding, chat list max-height. 948 unit tests pass (1 pre-existing failure: `ChatMarkdownRendererTest.allowsHttpsLinks`).
@@ -41,4 +42,4 @@ None active.
 
 ## Next Steps
 
-1. **M132** — Convert `medgemma-case-analysis-system.st` to ultra-compact JSON short keys; update `LlmResponseSanitizer.FIELD_LABELS`/`JSON_BLOCK_PATTERN` + `MedicalAgentQueuePrioritizationWorkflowServiceImpl.URGENCY_PATTERN` + test stubs in lockstep (TDD).
+1. **Next implementation phase** — TBD.
