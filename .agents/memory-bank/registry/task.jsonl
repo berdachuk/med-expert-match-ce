@@ -20,3 +20,15 @@
 {"id":"TASK-021","milestone":"M135","title":"Mine test classes and append to test.jsonl","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
 {"id":"TASK-022","milestone":"M135","title":"Cross-check req.jsonl against docs FRs","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
 {"id":"TASK-023","milestone":"M135","title":"Validate module lock flow end-to-end","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-024","milestone":"M136","title":"Create LenientJsonOutputConverter in core/util","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-025","milestone":"M136","title":"Create structured output records (CaseAnalysisJson, GoalClassificationJson)","module":"caseanalysis","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-026","milestone":"M136","title":"Migrate CaseAnalysisServiceImpl 4 call sites to .entity() with validateSchema()","module":"caseanalysis","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-027","milestone":"M136","title":"Migrate GoalClassifier.classifyByLlm() to .entity() with validateSchema()","module":"llm","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-028","milestone":"M136","title":"Strip JSON format instructions from prompt templates","module":"llm","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-029","milestone":"M136","title":"Deprecate LlmResponseSanitizer.extractJson()","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-030","milestone":"M136","title":"Write unit tests for LenientJsonOutputConverter","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-031","milestone":"M136","title":"Update CaseAnalysisServiceIT for new .entity() path","module":"caseanalysis","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-032","milestone":"M136","title":"Run mvn verify, fix failures","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-033","milestone":"M136","title":"Security review","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-034","milestone":"M136","title":"Run sync-memory-index.sh --check","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-035","milestone":"M136","title":"Commit + merge to develop","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}

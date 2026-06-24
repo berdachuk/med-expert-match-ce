@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.caseanalysis.service.impl;
 
+import com.berdachuk.medexpertmatch.caseanalysis.domain.CaseAnalysisJson;
 import com.berdachuk.medexpertmatch.caseanalysis.domain.CaseAnalysisResult;
 import com.berdachuk.medexpertmatch.caseanalysis.exception.CaseAnalysisException;
 import com.berdachuk.medexpertmatch.caseanalysis.service.CaseAnalysisService;
@@ -98,17 +99,16 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
                     medGemmaModelName, caseId, responseText != null ? responseText.length() : 0);
             log.debug("Case analysis response: {}", responseText);
 
-            // Check if response is empty or null
             if (responseText == null || responseText.trim().isEmpty()) {
                 log.warn("Empty response from LLM for case: {}", caseId);
-                // Return default empty result instead of throwing exception
                 return new CaseAnalysisResult(List.of(), List.of(), List.of(), List.of());
             }
 
-            return parseCaseAnalysisResult(responseText);
+            var converter = new LenientJsonOutputConverter<>(CaseAnalysisJson.class);
+            CaseAnalysisJson parsed = converter.convert(responseText);
+            return parsed.toResult();
         } catch (Exception e) {
             log.error("Error analyzing medical case: {}", caseId, e);
-            // Return default empty result instead of throwing exception to allow flow to continue
             log.warn("Returning empty analysis result due to error");
             return new CaseAnalysisResult(List.of(), List.of(), List.of(), List.of());
         }
@@ -257,45 +257,11 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
     }
 
     /**
-     * Parses case analysis result from LLM response.
-     */
-    private CaseAnalysisResult parseCaseAnalysisResult(String responseText) {
-        try {
-            if (responseText == null || responseText.trim().isEmpty()) {
-                log.warn("Empty response text, returning default empty result");
-                return new CaseAnalysisResult(List.of(), List.of(), List.of(), List.of());
-            }
-
-            String jsonText = extractJsonFromResponse(responseText);
-
-            if (jsonText == null || jsonText.trim().isEmpty()) {
-                log.warn("No JSON found in response, returning default empty result. Response: {}", responseText);
-                return new CaseAnalysisResult(List.of(), List.of(), List.of(), List.of());
-            }
-
-            Map<String, Object> parsed = objectMapper.readValue(jsonText, new TypeReference<Map<String, Object>>() {
-            });
-
-            List<String> clinicalFindings = extractList(parsed, "cf", "clinicalFindings");
-            List<CaseAnalysisResult.PotentialDiagnosis> potentialDiagnoses = extractPotentialDiagnoses(parsed);
-            List<String> recommendedNextSteps = extractList(parsed, "rns", "recommendedNextSteps");
-            List<String> urgentConcerns = extractList(parsed, "uc", "urgentConcerns");
-
-            return new CaseAnalysisResult(clinicalFindings, potentialDiagnoses, recommendedNextSteps, urgentConcerns);
-        } catch (Exception e) {
-            log.error("Failed to parse case analysis result. Response: {}", responseText, e);
-            // Return default empty result instead of throwing exception to allow flow to continue
-            log.warn("Returning default empty result due to parsing error");
-            return new CaseAnalysisResult(List.of(), List.of(), List.of(), List.of());
-        }
-    }
-
-    /**
      * Parses JSON array from LLM response.
      */
     private List<String> parseJsonArray(String responseText) {
         try {
-            String jsonText = extractJsonFromResponse(responseText);
+            String jsonText = LlmResponseSanitizer.extractJson(responseText);
             if (jsonText != null && !jsonText.isBlank() && jsonText.startsWith("[")) {
                 return objectMapper.readValue(jsonText, new TypeReference<List<String>>() {});
             }
@@ -314,60 +280,5 @@ public class CaseAnalysisServiceImpl implements CaseAnalysisService {
                 .map(String::trim)
                 .filter(line -> !line.isEmpty())
                 .toList();
-    }
-
-    /**
-     * Extracts JSON from response text, handling markdown code blocks.
-     */
-    private String extractJsonFromResponse(String responseText) {
-        return LlmResponseSanitizer.extractJson(responseText);
-    }
-
-    /**
-     * Extracts list from parsed JSON map. Tries the primary (short) key first, then falls
-     * back to the legacy (long) key for backward compatibility with cached/older responses.
-     */
-    @SuppressWarnings("unchecked")
-    private List<String> extractList(Map<String, Object> map, String key, String legacyKey) {
-        Object value = map.get(key);
-        if (value == null && legacyKey != null) {
-            value = map.get(legacyKey);
-        }
-        if (value == null) {
-            return List.of();
-        }
-        if (value instanceof List) {
-            return (List<String>) value;
-        }
-        return List.of();
-    }
-
-    /**
-     * Extracts potential diagnoses from parsed JSON map. Supports short keys
-     * (`pd`/`d`/`c`) with fallback to legacy keys (`potentialDiagnoses`/`diagnosis`/`confidence`).
-     */
-    @SuppressWarnings("unchecked")
-    private List<CaseAnalysisResult.PotentialDiagnosis> extractPotentialDiagnoses(Map<String, Object> map) {
-        Object value = map.get("pd");
-        if (value == null) {
-            value = map.get("potentialDiagnoses");
-        }
-        if (value == null) {
-            return List.of();
-        }
-        if (value instanceof List) {
-            List<Map<String, Object>> diagnosesList = (List<Map<String, Object>>) value;
-            return diagnosesList.stream()
-                    .map(diagnosisMap -> {
-                        String diagnosis = (String) diagnosisMap.getOrDefault("d", diagnosisMap.get("diagnosis"));
-                        Object confidenceObj = diagnosisMap.getOrDefault("c", diagnosisMap.get("confidence"));
-                        Double confidence = confidenceObj instanceof Number
-                                ? ((Number) confidenceObj).doubleValue()
-                                : 0.5;
-                        return new CaseAnalysisResult.PotentialDiagnosis(diagnosis, confidence);
-                    })
-                    .toList();
-        }
-        return List.of();
     }
 }

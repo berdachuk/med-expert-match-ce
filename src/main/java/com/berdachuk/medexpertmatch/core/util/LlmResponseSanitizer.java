@@ -77,6 +77,15 @@ public final class LlmResponseSanitizer {
     public record ReasoningSplit(String reasoning, String content) {
     }
 
+    /**
+     * Extracts JSON from LLM response text, handling markdown code fences and trailing prose.
+     *
+     * @deprecated Use {@link LenientJsonOutputConverter} instead, which provides
+     *             the same fence-stripping and trailing-content cleanup via
+     *             {@link LenientJsonOutputConverter#cleanResponse(String)} and
+     *             integrates with Spring AI's structured output pipeline.
+     */
+    @Deprecated(since = "M136", forRemoval = false)
     public static String extractJson(String llmOutput) {
         if (llmOutput == null || llmOutput.isBlank()) {
             return llmOutput;

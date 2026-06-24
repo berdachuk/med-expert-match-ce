@@ -10,3 +10,4 @@
 {"id":"REQ-130","title":"Token-Efficient Format Skill Hardening","module":".agents","status":"active","domainModels":[],"created":"2026-06-20","supersededBy":null}
 {"id":"REQ-131","title":"Case-Analysis Prompt Ultra-Compact JSON","module":"caseanalysis","status":"active","domainModels":[],"created":"2026-06-21","supersededBy":null}
 {"id":"REQ-132","title":"MedGemma Case-Analysis Prompt Ultra-Compact JSON","module":"caseanalysis","status":"active","domainModels":[],"created":"2026-06-21","supersededBy":null}
+{"id":"REQ-133","title":"Self-Correcting Structured Output for LLM Calls","module":"core","status":"active","domainModels":["CaseAnalysisResult","GoalClassification"],"created":"2026-06-24","supersededBy":null}

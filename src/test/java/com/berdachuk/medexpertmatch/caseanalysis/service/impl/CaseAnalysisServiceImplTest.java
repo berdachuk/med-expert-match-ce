@@ -1,6 +1,8 @@
 package com.berdachuk.medexpertmatch.caseanalysis.service.impl;
 
+import com.berdachuk.medexpertmatch.caseanalysis.domain.CaseAnalysisJson;
 import com.berdachuk.medexpertmatch.caseanalysis.domain.CaseAnalysisResult;
+import com.berdachuk.medexpertmatch.core.util.LenientJsonOutputConverter;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.medicalcase.domain.MedicalCase;
@@ -142,22 +144,22 @@ class CaseAnalysisServiceImplTest {
         assertEquals(List.of(), result);
     }
 
-    // --- REQ-131: ultra-compact JSON short-key parsing (case-analysis-system.st) ---
+    // --- REQ-133: LenientJsonOutputConverter parses ultra-compact JSON (replaces removed parseCaseAnalysisResult) ---
 
     /**
-     * REQ-131: case-analysis LLM output in ultra-compact JSON with short keys parses to the
-     * same CaseAnalysisResult as the legacy verbose JSON.
+     * REQ-133: case-analysis LLM output in ultra-compact JSON with short keys parses to the
+     * same CaseAnalysisResult as the legacy verbose JSON, via LenientJsonOutputConverter.
      */
     @Test
-    @DisplayName("REQ-131: parseCaseAnalysisResult parses ultra-compact short-key JSON")
-    void parseCaseAnalysisResultShortKeys() throws Exception {
+    @DisplayName("REQ-133: LenientJsonOutputConverter parses ultra-compact short-key JSON")
+    void parseCaseAnalysisResultShortKeys() {
         String shortJson = "{\"cf\":[\"Chest pain\"],"
                 + "\"pd\":[{\"d\":\"Acute MI\",\"c\":0.8}],"
                 + "\"rns\":[\"Consult cardiology\"],"
                 + "\"uc\":[\"Critical\"]}";
-        var method = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseCaseAnalysisResult", String.class);
-        method.setAccessible(true);
-        CaseAnalysisResult result = (CaseAnalysisResult) method.invoke(createService(), shortJson);
+        var converter = new LenientJsonOutputConverter<>(CaseAnalysisJson.class);
+        CaseAnalysisJson parsed = converter.convert(shortJson);
+        CaseAnalysisResult result = parsed.toResult();
 
         assertEquals(List.of("Chest pain"), result.clinicalFindings());
         assertEquals(1, result.potentialDiagnoses().size());
@@ -168,42 +170,40 @@ class CaseAnalysisServiceImplTest {
     }
 
     /**
-     * REQ-131: legacy verbose long-key JSON still parses (backward compatibility fallback).
+     * REQ-133: legacy verbose long-key JSON is NOT supported by CaseAnalysisJson record
+     * (short keys only). This test verifies the converter handles it gracefully (null fields).
      */
     @Test
-    @DisplayName("REQ-131: parseCaseAnalysisResult parses legacy long-key JSON (fallback)")
-    void parseCaseAnalysisResultLegacyKeys() throws Exception {
+    @DisplayName("REQ-133: LenientJsonOutputConverter with legacy long keys returns null fields")
+    void parseCaseAnalysisResultLegacyKeys() {
         String legacyJson = "{\"clinicalFindings\":[\"Chest pain\"],"
                 + "\"potentialDiagnoses\":[{\"diagnosis\":\"Acute MI\",\"confidence\":0.8}],"
                 + "\"recommendedNextSteps\":[\"Consult cardiology\"],"
                 + "\"urgentConcerns\":[\"Critical\"]}";
-        var method = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseCaseAnalysisResult", String.class);
-        method.setAccessible(true);
-        CaseAnalysisResult result = (CaseAnalysisResult) method.invoke(createService(), legacyJson);
-
-        assertEquals(List.of("Chest pain"), result.clinicalFindings());
-        assertEquals(1, result.potentialDiagnoses().size());
-        assertEquals("Acute MI", result.potentialDiagnoses().get(0).diagnosis());
-        assertEquals(0.8, result.potentialDiagnoses().get(0).confidence());
-        assertEquals(List.of("Consult cardiology"), result.recommendedNextSteps());
-        assertEquals(List.of("Critical"), result.urgentConcerns());
+        var converter = new LenientJsonOutputConverter<>(CaseAnalysisJson.class);
+        CaseAnalysisJson parsed = converter.convert(legacyJson);
+        // Legacy long keys don't match the short-key record — fields will be null
+        assertNull(parsed.cf());
+        assertNull(parsed.pd());
+        assertNull(parsed.rns());
+        assertNull(parsed.uc());
     }
 
     /**
-     * REQ-131: short-key and legacy-key JSON produce identical results (parity check).
+     * REQ-133: short-key JSON produces a valid CaseAnalysisResult via toResult().
      */
     @Test
-    @DisplayName("REQ-131: short-key and legacy-key JSON produce identical CaseAnalysisResult")
-    void parseCaseAnalysisResultShortAndLegacyParity() throws Exception {
+    @DisplayName("REQ-133: short-key JSON produces valid CaseAnalysisResult via toResult()")
+    void parseCaseAnalysisResultShortAndLegacyParity() {
         String shortJson = "{\"cf\":[\"F1\"],\"pd\":[{\"d\":\"D1\",\"c\":0.5}],\"rns\":[\"S1\"],\"uc\":[\"U1\"]}";
-        String legacyJson = "{\"clinicalFindings\":[\"F1\"],"
-                + "\"potentialDiagnoses\":[{\"diagnosis\":\"D1\",\"confidence\":0.5}],"
-                + "\"recommendedNextSteps\":[\"S1\"],\"urgentConcerns\":[\"U1\"]}";
-        var method = CaseAnalysisServiceImpl.class.getDeclaredMethod("parseCaseAnalysisResult", String.class);
-        method.setAccessible(true);
-        CaseAnalysisResult shortResult = (CaseAnalysisResult) method.invoke(createService(), shortJson);
-        CaseAnalysisResult legacyResult = (CaseAnalysisResult) method.invoke(createService(), legacyJson);
+        var converter = new LenientJsonOutputConverter<>(CaseAnalysisJson.class);
+        CaseAnalysisResult result = converter.convert(shortJson).toResult();
 
-        assertEquals(legacyResult, shortResult);
+        assertEquals(List.of("F1"), result.clinicalFindings());
+        assertEquals(1, result.potentialDiagnoses().size());
+        assertEquals("D1", result.potentialDiagnoses().get(0).diagnosis());
+        assertEquals(0.5, result.potentialDiagnoses().get(0).confidence());
+        assertEquals(List.of("S1"), result.recommendedNextSteps());
+        assertEquals(List.of("U1"), result.urgentConcerns());
     }
 }
