@@ -84,6 +84,20 @@ Rows marked **provisional** are not yet linked to a verified test artifact; see 
 | Token-Efficient Format Skill Hardening | REQ-130 | .agents |  |  | active |
 | Case-Analysis Prompt Ultra-Compact JSON | REQ-131 | caseanalysis |  |  | active |
 | MedGemma Case-Analysis Prompt Ultra-Compact JSON | REQ-132 | caseanalysis |  |  | active |
+| Self-Correcting Structured Output for LLM Calls | REQ-133 | core | CaseAnalysisResult, GoalClassification |  | active |
+| Composable Tool Calling: Progressive Disclosure, Inner Thinking, Advisor Ordering | REQ-134 | llm | AgentThinking, ToolCallback, ToolCallingAdvisor |  | active |
+| Case Analysis — ICD-10 extraction, urgency classification, specialty determination | REQ-007 | caseanalysis | MedicalCase, CaseAnalysisResult |  | active |
+| Doctor Matching — specialty alignment, experience, outcomes, certifications | REQ-008 | retrieval | Doctor, DoctorMatch, ScoreResult |  | active |
+| Evidence Retrieval — clinical guidelines, PubMed, GRADE assessment | REQ-009 | evidence | EvidenceResult |  | active |
+| Clinical Recommendations — diagnostic workup, treatment, monitoring, risk assessment | REQ-010 | llm | RecommendationResult |  | active |
+| Queue Prioritization — urgency-based sorting, priority scoring | REQ-011 | retrieval | MedicalCase, PriorityScore |  | active |
+| Network Analytics — expertise metrics, doctor/facility ranking, time-based filtering | REQ-012 | graph | Doctor, Facility |  | active |
+| Regional Routing — facility capability assessment, geographic optimization, scoring | REQ-013 | retrieval | Facility, RouteScoreResult |  | active |
+| AI Chat Temporal Context — datetime tool, prompt context injection | REQ-014 | chat |  |  | active |
+| FHIR Integration — Bundle ingestion, resource conversion, validation | REQ-015 | ingestion | MedicalCase, FhirBundle |  | active |
+| Data Storage — PostgreSQL, PgVector embeddings, Apache AGE graph | REQ-016 | core | MedicalCase, Doctor, ClinicalExperience |  | active |
+| Test Data Generation — synthetic doctors, cases, FHIR-compliant data | REQ-017 | ingestion | Doctor, MedicalCase |  | active |
+| Agent Skills — case-analyzer, doctor-matcher, evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, routing-planner | REQ-018 | llm |  |  | active |
 
 ### Agent skills → scenarios
 

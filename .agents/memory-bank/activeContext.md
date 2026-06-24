@@ -43,7 +43,12 @@ _Captured per-milestone in `records/active/M{NN}.md`._
 - **RISK-132** — Short-key/long-key drift in LlmResponseSanitizer (mitigated, module: core) — mitigation: dual-key fallback + parity tests
 - **RISK-133** — Agents ignore do-not-hand-edit rule on generated files (mitigated, module: .agents) — mitigation: sync-memory-index.sh --check CI gate + code-style/security-check skill enforcement
 - **RISK-134** — CI gate fails if jq not installed on runner (mitigated, module: .github) — mitigation: Install jq step added to ci.yml before sync check
-- **RISK-135** — Enrichment script may extract wrong module assignments from archived plans (open, module: core) — mitigation: manual spot-check 10% of enriched records
+- **RISK-135** — Enrichment script may extract wrong module assignments from archived plans (mitigated, module: core) — mitigation: manual spot-check 10% of enriched records
+- **RISK-136** — LenientJsonOutputConverter may miss edge cases handled by LlmResponseSanitizer.extractJson() (mitigated, module: core) — mitigation: Delegate to extractJson() logic, not just fence-stripping; add parity tests
+- **RISK-137** — validateSchema() retry loop increases LLM cost on malformed output (open, module: core) — mitigation: Default 3 retries; monitor via LlmUsageTelemetryService
+- **RISK-138** — ToolSearchToolCallingAdvisor with vector index requires VectorStore bean (open, module: llm) — mitigation: Fall back to regex index if vector store is unavailable
+- **RISK-139** — AugmentedToolCallbackProvider adds tokens per tool call (inner thinking) (open, module: llm) — mitigation: Monitor via LlmUsageTelemetryService; thinking field is a small record
+- **RISK-140** — Moving SessionMemoryAdvisor inside tool loop may increase session storage (open, module: llm) — mitigation: Compaction trigger/strategy already configured; monitor session sizes
 
 ## Traceability Gaps
 

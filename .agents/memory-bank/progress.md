@@ -10,481 +10,499 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - [full record](records/progress/M99.md)
 
-- Summary: Populate Case Coordinates for Geographic Routing
+- Summary: - **Milestone:** M99
 
 ### M98
 
 - [full record](records/progress/M98.md)
 
-- Summary: Security Hardening and Auth Enablement
+- Summary: - **Milestone:** M98
 
 ### M97
 
 - [full record](records/progress/M97.md)
 
-- Summary: Document RAG Embedding Backfill and Deprecation Cleanup
+- Summary: - **Milestone:** M97
 
 ### M96
 
 - [full record](records/progress/M96.md)
 
-- Summary: Route-Case Keywords, Chat Mode Cleanup, and Response Sanitizer Fixes
+- Summary: - **Milestone:** M96
 
 ### M95
 
 - [full record](records/progress/M95.md)
 
-- Summary: LLM Prompt Quality and Response Reliability
+- Summary: - **Milestone:** M95
 
 ### M94
 
 - [full record](records/progress/M94.md)
 
-- Summary: Security Hardening and Tool Surface Closeout
+- Summary: - **Milestone:** M94
 
 ### M93
 
 - [full record](records/progress/M93.md)
 
-- Summary: Production-Readiness and Doc RAG Closeout
+- Summary: - **Milestone:** M93
 
 ### M92
 
 - [full record](records/progress/M92.md)
 
-- Summary: Session Memory Compaction and Document RAG Pipeline
+- Summary: - **Milestone:** M92
 
 ### M91
 
 - [full record](records/progress/M91.md)
 
-- Summary: M77 Fixes and Session Compaction Wiring
+- Summary: - **Milestone:** M91
 
 ### M90
 
 - [full record](records/progress/M90.md)
 
-- Summary: Implement M77 Runtime-Measured Synthetic Data Estimates (Hand-Driven)
+- Summary: - **Milestone:** M90
 
 ### M89
 
 - [full record](records/progress/M89.md)
 
-- Summary: Full Test Suite Hardening
+- Summary: - **Milestone:** M89
 
 ### M86
 
 - [full record](records/progress/M86.md)
 
-- Summary: Implement M84 (Resolve the Pre-Existing Modulith Cycle)
+- Summary: - **Milestone:** M86
 
 ### M84
 
 - [full record](records/progress/M84.md)
 
-- Summary: Resolve Pre-Existing Spring Modulith Cycle
+- Summary: - **Milestone:** M84
 
 ### M83
 
 - [full record](records/progress/M83.md)
 
-- Summary: Add Depth to HARNESS_AND_AGENT_USAGE §2.2 (Medical LLM Orchestration)
+- Summary: - **Milestone:** M83
 
 ### M79
 
 - [full record](records/progress/M79.md)
 
-- Summary: Run the Ralph Loop Pilot on M77 (Autonomous Iteration on the Active Plan)
+- Summary: - **Milestone:** M79
 
 ### M77
 
 - [full record](records/progress/M77.md)
 
-- Summary: Specialization Match — Live-Measured Runtime Estimates
+- Summary: - **Milestone:** M77
 
 ### M76
 
 - [full record](records/progress/M76.md)
 
-- Summary: Update Synthetic Data Time Estimates + Add "very-large" (1000 doctors) Size
+- Summary: - **Milestone:** M76
 
 ### M75
 
 - [full record](records/progress/M75.md)
 
-- Summary: Find Specialist — Case→Specialty Graph Reconciliation + Specialty Name Normalization
+- Summary: - **Milestone:** M75
 
 ### M74
 
 - [full record](records/progress/M74.md)
 
-- Summary: Render LLM Response as Human-Readable, Not JSON
+- Summary: - **Milestone:** M74
 
 ### M73
 
 - [full record](records/progress/M73.md)
 
-- Summary: Synthetic Data Quality + LLM Cache Visibility
+- Summary: - **Milestone:** M73
 
 ### M72
 
 - [full record](records/progress/M72.md)
 
-- Summary: Find Specialist — PubMed, Match Transaction, and Data Quality Fixes
+- Summary: - **Milestone:** M72
 
 ### M71
 
 - [full record](records/progress/M71.md)
 
-- Summary: LLM Usage Telemetry and Agent Panel Summary
+- Summary: - **Milestone:** M71
 
 ### M70
 
 - [full record](records/progress/M70.md)
 
-- Summary: Find Specialist Explainability Panel
+- Summary: - **Milestone:** M70
 
 ### M69
 
 - [full record](records/progress/M69.md)
 
-- Summary: Adjudication Eval Flywheel
+- Summary: - **Milestone:** M69
 
 ### M68
 
 - [full record](records/progress/M68.md)
 
-- Summary: Harness Context Summarizer (M64 Phase 3)
+- Summary: - **Milestone:** M68
 
 ### M67
 
 - [full record](records/progress/M67.md)
 
-- Summary: LLM Role Endpoint Separation (Clinical + Utility)
+- Summary: - **Milestone:** M67
 
 ### M66
 
 - [full record](records/progress/M66.md)
 
-- Summary: Agent vs Chat Product Packaging
+- Summary: - **Milestone:** M66
 
 ### M65
 
 - [full record](records/progress/M65.md)
 
-- Summary: Human-in-the-Loop Harness
+- Summary: - **Milestone:** M65
 
 ### M64
 
 - [full record](records/progress/M64.md)
 
-- Summary: Cost-Quality Tier Routing
+- Summary: - **Milestone:** M64
 
 ### M63
 
 - [full record](records/progress/M63.md)
 
-- Summary: Match Outcome Data Flywheel
+- Summary: - **Milestone:** M63
 
 ### M62
 
 - [full record](records/progress/M62.md)
 
-- Summary: Eval Flywheel & Release Gate
+- Summary: - **Milestone:** M62
 
 ### M61
 
 - [full record](records/progress/M61.md)
 
-- Summary: Policy Layer v2 (Confidence Router)
+- Summary: - **Milestone:** M61
 
 ### M60
 
 - [full record](records/progress/M60.md)
 
-- Summary: FunctionGemma Fine-Tune Execution
+- Summary: - **Milestone:** M60
 
 ### M59
 
 - [full record](records/progress/M59.md)
 
-- Summary: Chat Collapsible Reasoning and Follow-Up Routing
+- Summary: - **Milestone:** M59
 
 ### M58
 
 - [full record](records/progress/M58.md)
 
-- Summary: FunctionGemma Tool-Calling Fine-Tune (Optional)
+- Summary: - **Milestone:** M58
 
 ### M57
 
 - [full record](records/progress/M57.md)
 
-- Summary: Goal Classifier Hybrid Session Routing (Variant C)
+- Summary: - **Milestone:** M57
 
 ### M56
 
 - [full record](records/progress/M56.md)
 
-- Summary: Chat Auto Find Specialist Fix — ✅ Complete
+- Summary: - **Milestone:** M56
 
 ### M55
 
 - [full record](records/progress/M55.md)
 
-- Summary: REST Controller and Configuration Test Coverage
+- Summary: - **Milestone:** M55
 
 ### M54
 
 - [full record](records/progress/M54.md)
 
-- Summary: System Health, Monitoring, and Shutdown Coverage
+- Summary: - **Milestone:** M54
 
 ### M53
 
 - [full record](records/progress/M53.md)
 
-- Summary: Ingestion Module Test Coverage and Remaining Coverage Gaps
+- Summary: - **Milestone:** M53
 
 ### M52
 
 - [full record](records/progress/M52.md)
 
-- Summary: Mock External Services in Integration Tests
+- Summary: - **Milestone:** M52
 
 ### M51
 
 - [full record](records/progress/M51.md)
 
-- Summary: Production Hardening and Test Coverage
+- Summary: - **Milestone:** M51
 
 ### M50
 
 - [full record](records/progress/M50.md)
 
-- Summary: Fix Remaining Integration Test Failures
+- Summary: - **Milestone:** M50
 
 ### M49
 
 - [full record](records/progress/M49.md)
 
-- Summary: Spring AI M8 API Migration and AutoMemory Test Compatibility
+- Summary: - **Milestone:** M49
 
 ### M48
 
 - [full record](records/progress/M48.md)
 
-- Summary: Code Quality and Dependency Freshness
+- Summary: - **Milestone:** M48
 
 ### M47
 
 - [full record](records/progress/M47.md)
 
-- Summary: Upgrade Testcontainers to 2.0.5
+- Summary: - **Milestone:** M47
 
 ### M46
 
 - [full record](records/progress/M46.md)
 
-- Summary: FIX_PLAN Finalization — Operational & Test Hardening
+- Summary: - **Milestone:** M46
 
 ### M45
 
 - [full record](records/progress/M45.md)
 
-- Summary: Documentation Inconsistency Fixes
+- Summary: - **Milestone:** M45
 
 ### M44
 
 - [full record](records/progress/M44.md)
 
-- Summary: Test Coverage for Core Infrastructure and Missing E2E Tests
+- Summary: - **Milestone:** M44
 
 ### M43
 
 - [full record](records/progress/M43.md)
 
-- Summary: Pipeline Security, Health, and Live Stage Tracking
+- Summary: - **Milestone:** M43
 
 ### M42
 
 - [full record](records/progress/M42.md)
 
-- Summary: Event Pipeline Observability, Recovery, and UI Integration
+- Summary: - **Milestone:** M42
 
 ### M41
 
 - [full record](records/progress/M41.md)
 
-- Summary: Fix Chat Follow-Up Context Loss
+- Summary: - **Milestone:** M41
 
 ### M40
 
 - [full record](records/progress/M40.md)
 
-- Summary: Inline Agent Activity Panel (Collapsible, Inside Chat Area)
+- Summary: - **Milestone:** M40
 
 ### M39
 
 - [full record](records/progress/M39.md)
 
-- Summary: Wire Event-Driven Agents into Chat Pipeline
+- Summary: - **Milestone:** M39
 
 ### M38
 
 - [full record](records/progress/M38.md)
 
-- Summary: Multi-Agent Event-Driven Pipeline
+- Summary: - **Milestone:** M38
 
 ### M37
 
 - [full record](records/progress/M37.md)
 
-- Summary: Harness Production Hardening & Context Strategy
+- Summary: - **Milestone:** M37
 
 ### M36
 
 - [full record](records/progress/M36.md)
 
-- Summary: Chat Context Hardening & Production Readiness
+- Summary: - **Milestone:** M36
 
 ### M35
 
 - [full record](records/progress/M35.md)
 
-- Summary: Chat Conversation Context & Turn Continuity
+- Summary: - **Milestone:** M35
 
 ### M34
 
 - [full record](records/progress/M34.md)
 
-- Summary: Harness Production Readiness
+- Summary: - **Milestone:** M34
 
 ### M33
 
 - [full record](records/progress/M33.md)
 
-- Summary: Harness Full Eval & Chain Visibility — ✅ Archived
+- Summary: - **Milestone:** M33
 
 ### M32
 
 - [full record](records/progress/M32.md)
 
-- Summary: Harness Eval Regression & Ops UI — ✅ Archived
+- Summary: - **Milestone:** M32
 
 ### M31
 
 - [full record](records/progress/M31.md)
 
-- Summary: Harness Human Checkpoint & Event Handoffs — ✅ Archived
+- Summary: - **Milestone:** M31
 
 ### M30
 
 - [full record](records/progress/M30.md)
 
-- Summary: Harness Orchestration Expansion — ✅ Archived
+- Summary: - **Milestone:** M30
 
 ### M29
 
 - [full record](records/progress/M29.md)
 
-- Summary: Harness Engineering Improvements — ✅ Archived
+- Summary: - **Milestone:** M29
 
 ### M28
 
 - [full record](records/progress/M28.md)
 
-- Summary: Chat Trust & Interoperability
+- Summary: - **Milestone:** M28
 
 ### M27
 
 - [full record](records/progress/M27.md)
 
-- Summary: Chat Observability & Governance
+- Summary: - **Milestone:** M27
 
 ### M26
 
 - [full record](records/progress/M26.md)
 
-- Summary: Chat Federation & Compliance
+- Summary: - **Milestone:** M26
 
 ### M25
 
 - [full record](records/progress/M25.md)
 
-- Summary: Chat Platform Hardening — ✅ Complete
+- Summary: - **Milestone:** M25
 
 ### M24
 
 - [full record](records/progress/M24.md)
 
-- Summary: A2A Production Readiness — ✅ Complete
+- Summary: - **Milestone:** M24
 
 ### M23
 
 - [full record](records/progress/M23.md)
 
-- Summary: Chat Security & A2A Governance — ✅ Complete
+- Summary: - **Milestone:** M23
 
 ### M22
 
 - [full record](records/progress/M22.md)
 
-- Summary: A2A Federation & Chat Lifecycle — ✅ Complete
+- Summary: - **Milestone:** M22
 
 ### M21
 
 - [full record](records/progress/M21.md)
 
-- Summary: Chat Admin & Observability — ✅ Archived
+- Summary: - **Milestone:** M21
 
 ### M20
 
 - [full record](records/progress/M20.md)
 
-- Summary: Chat Governance & A2A Contract Hardening — ✅ Archived
+- Summary: - **Milestone:** M20
 
 ### M19
 
 - [full record](records/progress/M19.md)
 
-- Summary: Chat Ops, Rate Limits & Browser Interop — ✅ Archived
+- Summary: - **Milestone:** M19
 
 ### M18
 
 - [full record](records/progress/M18.md)
 
-- Summary: Chat Production Readiness & Observability — ✅ Archived
+- Summary: - **Milestone:** M18
 
 ### M17
 
 - [full record](records/progress/M17.md)
 
-- Summary: Chat Agent Polish & A2A Hardening — ✅ Archived
+- Summary: - **Milestone:** M17
 
 ### M16
 
 - [full record](records/progress/M16.md)
 
-- Summary: Full A2A Integration & M08 Closeout — ✅ Archived
+- Summary: - **Milestone:** M16
 
 ### M15
 
 - [full record](records/progress/M15.md)
 
-- Summary: A2A Interop, Chat Streaming & Production Hardening — ✅ Archived
+- Summary: - **Milestone:** M15
 
 ### M14
 
 - [full record](records/progress/M14.md)
 
-- Summary: AI Chat Agent Routing — ✅ Archived
+- Summary: - **Milestone:** M14
 
 ### M13
 
 - [full record](records/progress/M13.md)
 
-- Summary: M13 Phase A: AI Chat Tab Foundation — ✅ Archived
+- Summary: - **Milestone:** M13
+
+### M137
+
+- [full record](records/progress/M137.md)
+
+- Summary: - **Milestone:** M137
+
+### M136
+
+- [full record](records/progress/M136.md)
+
+- Summary: - **Milestone:** M136
+
+### M135
+
+- [full record](records/progress/M135.md)
+
+- Summary: - **Milestone:** M135
 
 ### M134
 
@@ -520,7 +538,7 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - [full record](records/progress/M12.md)
 
-- Summary: API Versioning, Advanced Search & Production Release — ✅ Archived
+- Summary: - **Milestone:** M12
 
 ### M129
 
@@ -586,7 +604,7 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - [full record](records/progress/M11.md)
 
-- Summary: End-to-End Testing, Feature Flags & UI Polish
+- Summary: - **Milestone:** M11
 
 ### M119
 
@@ -646,121 +664,121 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - [full record](records/progress/M110.md)
 
-- Summary: Integration Test Infrastructure and CI Hardening
+- Summary: - **Milestone:** M110
 
 ### M10
 
 - [full record](records/progress/M10.md)
 
-- Summary: Authentication, Caching & Load Testing — ✅ Archived
+- Summary: - **Milestone:** M10
 
 ### M109
 
 - [full record](records/progress/M109.md)
 
-- Summary: Next Priorities — Triage and Define
+- Summary: - **Milestone:** M109
 
 ### M107
 
 - [full record](records/progress/M107.md)
 
-- Summary: Code Quality and Dependency Freshness
+- Summary: - **Milestone:** M107
 
 ### M106
 
 - [full record](records/progress/M106.md)
 
-- Summary: Local Dev Experience and Test Infrastructure
+- Summary: - **Milestone:** M106
 
 ### M105
 
 - [full record](records/progress/M105.md)
 
-- Summary: Dependency Freshness and Final Cleanup
+- Summary: - **Milestone:** M105
 
 ### M104
 
 - [full record](records/progress/M104.md)
 
-- Summary: Documentation and Code Quality Roundout
+- Summary: - **Milestone:** M104
 
 ### M103
 
 - [full record](records/progress/M103.md)
 
-- Summary: Code Quality and Dependency Freshness
+- Summary: - **Milestone:** M103
 
 ### M102
 
 - [full record](records/progress/M102.md)
 
-- Summary: Find Specialist Explainability and Chat Polish
+- Summary: - **Milestone:** M102
 
 ### M101
 
 - [full record](records/progress/M101.md)
 
-- Summary: Document RAG Wiring and Code Quality
+- Summary: - **Milestone:** M101
 
 ### M100
 
 - [full record](records/progress/M100.md)
 
-- Summary: Hardening Round-Out and Sync Main Branch
+- Summary: - **Milestone:** M100
 
 ### M09
 
 - [full record](records/progress/M09.md)
 
-- Summary: Code Quality, Performance Tuning & Documentation
+- Summary: - **Milestone:** M09
 
 ### M08
 
 - [full record](records/progress/M08.md)
 
-- Summary: Observability, CI/CD Pipeline & Monitoring
+- Summary: - **Milestone:** M08
 
 ### M07
 
 - [full record](records/progress/M07.md)
 
-- Summary: Security Hardening, Web UI Tests & Production Readiness
+- Summary: - **Milestone:** M07
 
 ### M06
 
 - [full record](records/progress/M06.md)
 
-- Summary: Document Search API, Eval Dataset Expansion & Pipeline Integration
+- Summary: - **Milestone:** M06
 
 ### M05
 
 - [full record](records/progress/M05.md)
 
-- Summary: Remaining Quality Gaps & Evaluation REST API
+- Summary: - **Milestone:** M05
 
 ### M04
 
 - [full record](records/progress/M04.md)
 
-- Summary: Production Hardening & Quality
+- Summary: - **Milestone:** M04
 
 ### M03
 
 - [full record](records/progress/M03.md)
 
-- Summary: DocuRAG Improvements Implementation Plan
+- Summary: - **Milestone:** M03
 
 ### M02
 
 - [full record](records/progress/M02.md)
 
-- Summary: Agentic Improvements Implementation Plan
+- Summary: - **Milestone:** M02
 
 ### M01
 
 - [full record](records/progress/M01.md)
 
-- Summary: Upgrade Spring AI 2.0.0-M2 to 2.0.0-M6
+- Summary: - **Milestone:** M01
 
 ## Historical (M01–M83)
 

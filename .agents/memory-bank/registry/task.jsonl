@@ -32,3 +32,10 @@
 {"id":"TASK-033","milestone":"M136","title":"Security review","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
 {"id":"TASK-034","milestone":"M136","title":"Run sync-memory-index.sh --check","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
 {"id":"TASK-035","milestone":"M136","title":"Commit + merge to develop","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-036","milestone":"M135","title":"Enrich M01-M110 stubs with structured metadata","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-037","milestone":"M135","title":"Mine test classes and append to test.jsonl","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-038","milestone":"M135","title":"Cross-check req.jsonl against docs FRs","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-039","milestone":"M135","title":"Validate module lock flow end-to-end","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-040","milestone":"M135","title":"Run sync-memory-index.sh --check","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-041","milestone":"M135","title":"Security review","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-042","milestone":"M135","title":"Commit + merge to develop","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
