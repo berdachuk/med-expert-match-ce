@@ -96,9 +96,7 @@ patient:
     label: Type 2 diabetes
     onset: 2022-06
 ```
-
-**Java-side parsing**: write a lightweight TOON parser (indentation-stack + line-split) or convert TOON → JSON via a pre-processing step before Jackson deserialization. TOON is not a Jackson format, so it requires a thin adapter layer. **This adapter does not exist yet** — see the STATUS banner above.
-
+**Java-side parsing**: requires a lightweight TOON parser (indentation-stack + line-split) or TOON → JSON pre-processing before Jackson deserialization. TOON is not a Jackson format, so it needs a thin adapter layer. **This adapter does not exist yet** — see the STATUS banner above.
 ### 3. When to use ultra-compact JSON
 
 Use **ultra-compact JSON** (no whitespace, very short keys) when:
@@ -184,23 +182,18 @@ In those cases, focus token reduction on **input** (shorter instructions, less c
 
 Embed this as a concise policy in root or module AGENTS:
 
-- Before defining response format, classify the output as:
-  - `type=object_deep`, `object_flat`, `table`, or `list`.
-- If `type in {object_deep, object_flat}` and result is consumed by Spring AI structured output / JSON schema, choose JSON with short keys and no extra commentary.
-- If `type in {object_deep, object_flat}` and no JSON schema validation is required, prefer **ultra-compact JSON** with short keys (it is Jackson-parseable via `Map.class`). Do NOT choose TOON — no TOON→JSON adapter exists.
-- If `type=table` and many rows are expected, choose CSV/TSV with short headers.
-- If `type=list` and items are atomic, choose `|`-delimited or line-delimited output.
-- Always:
-  - Remove greetings, explanations, and markdown wrappers from model output.
-  - Prefer compact keys and values over verbose ones.
-  - Keep the chosen format stable per endpoint so Java-side parsing is trivial.
-  - When changing JSON prompt keys, update `LlmResponseSanitizer` field labels / patterns in lockstep (see §3 coupling note).
+- Before defining response format, classify the output as `type=object_deep`, `object_flat`, `table`, or `list`.
+- If `type in {object_deep, object_flat}` and consumed by Spring AI structured output / JSON schema → choose JSON with short keys, no extra commentary.
+- If `type in {object_deep, object_flat}` and no JSON schema required → prefer **ultra-compact JSON** (Jackson-parseable via `Map.class`). Do NOT choose TOON — no adapter exists.
+- If `type=table` and many rows → choose CSV/TSV with short headers.
+- If `type=list` and items atomic → choose `|`-delimited or line-delimited output.
+- Always: remove greetings/explanations/markdown wrappers from model output; prefer compact keys/values; keep format stable per endpoint; when changing JSON prompt keys, update `LlmResponseSanitizer` field labels/patterns in lockstep (see §3).
 
 ## 7. Input-side token reduction
 
 Output format is only half the cost. Reduce **input** tokens for frequently called prompts:
 
-- **Shared boilerplate**: the medical disclaimer is duplicated verbatim across ~10 `.st` files and the `CRITICAL OUTPUT LIMITS` block across 4 prose prompts. Extract these into a single shared fragment and include it via Spring AI resource composition, or hoist them into a once-per-conversation system prompt so per-call prompts shrink.
-- **Shorten repeated limits**: prefer one compact line (`Output: 1 JSON object, ≤3000 chars, then stop.`) over the multi-bullet `CRITICAL OUTPUT LIMITS` block; the model obeys single-line constraints as well or better.
-- **Summarize context**: when injecting case context / evidence, pass a compact summary reference instead of the full payload where the downstream step only needs key fields.
+- **Shared boilerplate**: the medical disclaimer is duplicated verbatim across ~10 `.st` files and the `CRITICAL OUTPUT LIMITS` block across 4 prose prompts. Extract into a single shared fragment (Spring AI resource composition) or hoist into a once-per-conversation system prompt.
+- **Shorten repeated limits**: prefer one compact line (`Output: 1 JSON object, ≤3000 chars, then stop.`) over the multi-bullet `CRITICAL OUTPUT LIMITS` block.
+- **Summarize context**: pass a compact summary reference instead of the full payload where the downstream step only needs key fields.
 - **Trim verbose keys in input payloads too**: the same short-key discipline applies to any structured input you compose for the model.

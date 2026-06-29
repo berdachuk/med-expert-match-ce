@@ -145,6 +145,10 @@ Always use TDD. Before implementing any functionality:
 
 Persistent repo-local agent memory for session continuity. Read at the start of substantial tasks.
 
+### Session bootstrap (Tier-1 read)
+
+Read `.agents/memory-bank/INDEX.md` first at the start of every substantial task — it lists each file's purpose, last-updated date, the current focus, and top risks. Then deep-read the full memory-bank file only when the task touches the area it covers. `INDEX.md` is a manual file (not regenerated); refresh it after registry/record updates.
+
 ### Reference files (hand-edited, low-frequency)
 
 | File | Purpose |

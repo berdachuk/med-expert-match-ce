@@ -87,3 +87,21 @@ TEST*.xml
 *.wmv
 /.settings/
 /.factorypath
+
+# AI context — local/volatile state (do not commit)
+.agents/memory-bank/INDEX.md
+.agents/memory-bank/bootstrap-events.jsonl
+.agents/snapshot.md
+
+# AI context — committed (these ARE committed, do NOT add to .gitignore)
+# AGENTS.md
+# .agents/config.json
+# .agents/memory-bank/projectbrief.md
+# .agents/memory-bank/productContext.md
+# .agents/memory-bank/systemPatterns.md
+# .agents/memory-bank/techContext.md
+# .agents/memory-bank/progress.md
+# .agents/memory-bank/decisions.md
+# .agents/skills/
+# .agents/plans/
+# docs/ai-context-strategy.md
