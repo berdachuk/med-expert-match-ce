@@ -29,6 +29,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * 3. Agent uses case-analyzer to assess urgency, complexity, and resource needs
  * 4. Agent returns prioritized queue with scores and rationales
  */
+/**
+ * REQ-003: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-007: executable scenario coverage.
+ */
 class UseCase3IT extends BaseIntegrationTest {
 
     @Autowired

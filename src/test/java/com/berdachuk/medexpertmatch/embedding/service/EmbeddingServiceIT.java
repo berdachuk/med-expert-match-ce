@@ -16,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for EmbeddingService.
  * Tests embedding generation using real EmbeddingModel (mocked in test profile).
  */
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 class EmbeddingServiceIT extends BaseIntegrationTest {
 
     @Autowired

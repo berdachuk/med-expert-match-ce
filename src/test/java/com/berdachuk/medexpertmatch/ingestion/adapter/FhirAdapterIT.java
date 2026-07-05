@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for FHIR adapters.
  * Tests conversion of FHIR R5 resources to MedicalCase entities.
  */
+/**
+ * REQ-015: integration coverage for registered requirement.
+ */
 class FhirAdapterIT extends BaseIntegrationTest {
 
     @Autowired

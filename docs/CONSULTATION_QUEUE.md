@@ -95,4 +95,4 @@ graph LR
 
 - [Use Cases](use-cases.md) – Use Case 3: Prioritizing the Consultation Queue
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) – prioritize-consults and case-analyzer
-- [Architecture](02-architecture.md) – API and pages
+- [Architecture](pipeline/02-architecture.md) – API and pages

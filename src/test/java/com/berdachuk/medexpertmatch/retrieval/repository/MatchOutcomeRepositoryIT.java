@@ -20,6 +20,11 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * REQ-001: integration coverage for registered requirement.
+ * REQ-008: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 class MatchOutcomeRepositoryIT extends BaseIntegrationTest {
 
     @Autowired

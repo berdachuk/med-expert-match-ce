@@ -21,6 +21,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for MedicalAgentService hybrid approach.
  * Verifies that the primary LLM is used for medical reasoning and FunctionGemma for tool orchestration.
  */
+/**
+ * REQ-010: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 class MedicalAgentServiceHybridApproachIT extends BaseIntegrationTest {
 
     @Autowired

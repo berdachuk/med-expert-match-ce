@@ -166,5 +166,5 @@ Create a concise document listing required external services:
 
 - [FIX_PLAN.md](../docs/FIX_PLAN.md) — source of remaining items
 - [M44 plan](M44-core-infrastructure-test-coverage.md) — sibling infrastructure test coverage milestone
-- [02-architecture.md](../docs/02-architecture.md) — system architecture reference
+- [02-architecture.md](../docs/pipeline/02-architecture.md) — system architecture reference
 - [AGENTS.md](../AGENTS.md) — project rules and conventions

@@ -5,6 +5,7 @@ import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
 import com.berdachuk.medexpertmatch.llm.automemory.MemoryConsolidationTrigger;
 import com.berdachuk.medexpertmatch.llm.automemory.TimeGapConsolidationTrigger;
+import com.berdachuk.medexpertmatch.llm.domain.AgentThinking;
 import com.berdachuk.medexpertmatch.llm.service.AgentQuestionService;
 import com.berdachuk.medexpertmatch.llm.service.AgentTodoTrackingService;
 import com.berdachuk.medexpertmatch.llm.tools.*;
@@ -30,6 +31,7 @@ import org.springframework.ai.session.compaction.*;
 import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 import org.springframework.ai.tokenizer.TokenCountEstimator;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.augment.AugmentedToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -203,6 +205,11 @@ public class MedicalAgentConfiguration {
      * Wires turn-safe short-term memory into the medical agent's advisor chain. Both a trigger
      * and a strategy MUST be supplied together — {@link SessionMemoryAdvisor.Builder#build()}
      * throws {@link IllegalArgumentException} otherwise (the turn-safety guard).
+     * <p>
+     * Order is set to {@link ToolCallingAdvisor#DEFAULT_ORDER} + 1 so the memory advisor sits
+     * <b>inside</b> the tool loop, capturing the full tool request/response transcript in session
+     * memory. {@link ToolCallingAdvisor} has {@code conversationHistoryEnabled(false)} to avoid
+     * duplicate writes.
      */
     @Bean
     SessionMemoryAdvisor sessionMemoryAdvisor(SessionService sessionService,
@@ -211,6 +218,7 @@ public class MedicalAgentConfiguration {
         return SessionMemoryAdvisor.builder(sessionService)
                 .compactionTrigger(sessionCompactionTrigger)
                 .compactionStrategy(sessionCompactionStrategy)
+                .order(ToolCallingAdvisor.DEFAULT_ORDER + 1)
                 .build();
     }
 
@@ -261,15 +269,15 @@ public class MedicalAgentConfiguration {
             var subagentReferences = loadSubagentReferences(resourceLoader);
             ChatClient.Builder subagentChatClientBuilder = ChatClient.builder(toolCallingChatModel)
                     .defaultAdvisors(dateTimeContextAdvisor)
-                    .defaultTools(caseAnalysisAgentTools)
-                    .defaultTools(doctorMatchingAgentTools)
-                    .defaultTools(evidenceAgentTools)
-                    .defaultTools(clinicalAdvisorAgentTools)
-                    .defaultTools(graphAnalyticsAgentTools)
-                    .defaultTools(routingAgentTools)
-                    .defaultTools(dateTimeAgentTools)
-                    .defaultTools(todoWriteTool)
-                    .defaultTools(askUserQuestionTool);
+                    .defaultTools(augmentTool(caseAnalysisAgentTools))
+                    .defaultTools(augmentTool(doctorMatchingAgentTools))
+                    .defaultTools(augmentTool(evidenceAgentTools))
+                    .defaultTools(augmentTool(clinicalAdvisorAgentTools))
+                    .defaultTools(augmentTool(graphAnalyticsAgentTools))
+                    .defaultTools(augmentTool(routingAgentTools))
+                    .defaultTools(augmentTool(dateTimeAgentTools))
+                    .defaultTools(augmentTool(todoWriteTool))
+                    .defaultTools(augmentTool(askUserQuestionTool));
             return TaskTool.builder()
                     .subagentReferences(subagentReferences)
                     .subagentTypes(ClaudeSubagentType.builder()
@@ -306,12 +314,29 @@ public class MedicalAgentConfiguration {
     /**
      * Tool-call advisor with conversation history disabled so todo updates from {@link TodoWriteTool}
      * persist via the session advisor without duplicate internal history (Part 3 guidance).
+     * <p>
+     * Internal conversation history is disabled because {@link SessionMemoryAdvisor} sits inside
+     * the tool loop (order = DEFAULT_ORDER + 1) and captures the full tool transcript.
      */
     @Bean
     ToolCallingAdvisor agentToolCallAdvisor(ToolCallingManager toolCallingManager) {
         return ToolCallingAdvisor.builder()
                 .toolCallingManager(toolCallingManager)
                 .conversationHistoryEnabled(false)
+                .build();
+    }
+
+    /**
+     * Wraps a tool object with {@link AugmentedToolCallbackProvider} to add an {@code innerThought}
+     * parameter to every tool's input schema. The model must articulate its reasoning before calling
+     * each tool, improving traceability for medical compliance.
+     */
+    private static AugmentedToolCallbackProvider<AgentThinking> augmentTool(Object toolObject) {
+        return AugmentedToolCallbackProvider.<AgentThinking>builder()
+                .toolObject(toolObject)
+                .argumentType(AgentThinking.class)
+                .argumentConsumer(event -> log.debug("Tool: {} | Reasoning: {}",
+                        event.toolDefinition().name(), event.arguments().innerThought()))
                 .build();
     }
 
@@ -355,16 +380,16 @@ public class MedicalAgentConfiguration {
 
         ChatClient.Builder builder = ChatClient.builder(toolCallingChatModel)
                 .defaultSystem(autoMemorySystemPromptTemplate.render(Collections.emptyMap()))
-                .defaultTools(caseAnalysisAgentTools)
-                .defaultTools(doctorMatchingAgentTools)
-                .defaultTools(evidenceAgentTools)
-                .defaultTools(clinicalAdvisorAgentTools)
-                .defaultTools(graphAnalyticsAgentTools)
-                .defaultTools(routingAgentTools)
-                .defaultTools(autoMemoryTools)
-                .defaultTools(dateTimeAgentTools)
-                .defaultTools(todoWriteTool)
-                .defaultTools(askUserQuestionTool)
+                .defaultTools(augmentTool(caseAnalysisAgentTools))
+                .defaultTools(augmentTool(doctorMatchingAgentTools))
+                .defaultTools(augmentTool(evidenceAgentTools))
+                .defaultTools(augmentTool(clinicalAdvisorAgentTools))
+                .defaultTools(augmentTool(graphAnalyticsAgentTools))
+                .defaultTools(augmentTool(routingAgentTools))
+                .defaultTools(augmentTool(autoMemoryTools))
+                .defaultTools(augmentTool(dateTimeAgentTools))
+                .defaultTools(augmentTool(todoWriteTool))
+                .defaultTools(augmentTool(askUserQuestionTool))
                 .defaultAdvisors(dateTimeContextAdvisor, agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
         builder.defaultToolCallbacks(skillsTool, taskTool);

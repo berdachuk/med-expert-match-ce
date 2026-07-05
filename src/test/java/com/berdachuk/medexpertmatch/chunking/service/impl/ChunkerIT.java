@@ -7,6 +7,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 class ChunkerIT {
 
     private final SemanticChunker semanticChunker = new SemanticChunker();

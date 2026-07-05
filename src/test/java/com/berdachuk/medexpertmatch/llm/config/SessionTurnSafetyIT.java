@@ -21,6 +21,10 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ * REQ-134: integration coverage for registered requirement.
+ */
 @SpringBootTest
 class SessionTurnSafetyIT extends BaseIntegrationTest {
 

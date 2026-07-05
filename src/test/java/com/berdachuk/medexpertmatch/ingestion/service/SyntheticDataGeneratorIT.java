@@ -25,6 +25,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration tests for SyntheticDataGenerator service using Testcontainers PostgreSQL.
  * Uses mocked AI services (ChatModel, EmbeddingModel) via TestAIConfig.
  */
+/**
+ * REQ-015: integration coverage for registered requirement.
+ * REQ-017: integration coverage for registered requirement.
+ */
 class SyntheticDataGeneratorIT extends BaseIntegrationTest {
 
     @Autowired

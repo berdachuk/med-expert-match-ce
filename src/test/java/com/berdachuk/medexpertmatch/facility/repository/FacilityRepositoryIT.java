@@ -13,6 +13,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-006: integration coverage for registered requirement.
+ * REQ-013: integration coverage for registered requirement.
+ */
 class FacilityRepositoryIT extends BaseIntegrationTest {
 
     @Autowired

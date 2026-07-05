@@ -147,5 +147,5 @@ This gives the project a clean baseline before behavior changes begin.
 
 - [Development Guide](DEVELOPMENT_GUIDE.md)
 - [Implementation Plan](IMPLEMENTATION_PLAN.md)
-- [Architecture](02-architecture.md)
-- [Testing Guide](04-testing.md)
+- [Architecture](pipeline/02-architecture.md)
+- [Testing Guide](pipeline/04-testing.md)

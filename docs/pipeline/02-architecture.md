@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-05-19  
 **Version:** 1.4  
-**Status:** MVP complete with agentic improvements and DocuRAG improvements (see [improvements-from-docu-rag](improvements-from-docu-rag.md))
+**Status:** MVP complete with agentic improvements and DocuRAG improvements (see [improvements-from-docu-rag](../improvements-from-docu-rag.md))
 
 ## Overview
 
@@ -363,7 +363,7 @@ direct access to `/admin/synthetic-data` and `/admin/graph-visualization` redire
 See [Simulated Security](#role-based-simulated-security) below.
 
 **Wireframe Mockups**: All UI pages have detailed wireframe mockups using PlantUML Salt format.
-See [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) for visual layouts, user flows, and UI/UX guidelines.
+See [UI Flows and Mockups](../UI_FLOWS_AND_MOCKUPS.md) for visual layouts, user flows, and UI/UX guidelines.
 
 ### Role-based Simulated Security
 
@@ -430,7 +430,7 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 - **Skills**: case-analyzer, routing-planner, clinical-guideline, triage
 - **UI Page**: `/routing`
 
-**Reference**: See [use-cases.md](use-cases.md) for detailed sequence diagrams and workflows for each endpoint.
+**Reference**: See [use-cases.md](../use-cases.md) for detailed sequence diagrams and workflows for each endpoint.
 
 ### Schema-Guided Reasoning (SGR)
 
@@ -536,10 +536,10 @@ Results flow back -> Agent formats response -> REST API returns JSON
 ## Related Documentation
 
 - [03-design.md](03-design.md) — Schema, domain records, service/repository APIs, implementation patterns
-- [use-cases.md](use-cases.md) — Detailed use case workflows with sequence diagrams
+- [use-cases.md](../use-cases.md) — Detailed use case workflows with sequence diagrams
 - [01-requirements.md](01-requirements.md) — Complete product requirements and specifications
-- [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) — User interface wireframes, flows, and UI/UX guidelines
-- [Vision](VISION.md) — Project vision and long-term goals
+- [UI Flows and Mockups](../UI_FLOWS_AND_MOCKUPS.md) — User interface wireframes, flows, and UI/UX guidelines
+- [Vision](../VISION.md) — Project vision and long-term goals
 
 ---
 

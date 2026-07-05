@@ -31,6 +31,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Integration test for MedicalGraphBuilderService.
  * Uses Testcontainers PostgreSQL with Apache AGE.
  */
+/**
+ * REQ-004: integration coverage for registered requirement.
+ * REQ-012: integration coverage for registered requirement.
+ */
 class MedicalGraphBuilderServiceIT extends BaseIntegrationTest {
 
     @Autowired

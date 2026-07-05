@@ -51,7 +51,7 @@ Tier 6  System         system
 - `@Transactional` on service methods only
 
 ### Array-Based References (TEXT[])
-TEXT[] arrays + GIN indexes used instead of foreign keys for reference data (ICD-10 codes, specialties, facilities). Rationale: read-heavy workload, fast containment queries (`@>`), no JOIN overhead, simple application code. Trade-off: no DB-enforced referential integrity. See `docs/02-architecture.md` for full design rationale.
+TEXT[] arrays + GIN indexes used instead of foreign keys for reference data (ICD-10 codes, specialties, facilities). Rationale: read-heavy workload, fast containment queries (`@>`), no JOIN overhead, simple application code. Trade-off: no DB-enforced referential integrity. See `docs/pipeline/02-architecture.md` for full design rationale.
 
 ### ID Normalization
 - Internal IDs: CHAR(24) hex strings

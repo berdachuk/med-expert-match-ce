@@ -13,7 +13,7 @@ Integration tests require Docker. On **Windows**, Maven uses **PowerShell** in t
 ensure `medexpertmatch-postgres-test:latest` exists (`scripts/ensure-test-container.ps1`); no Git Bash is required.
 
 If Docker runs **only in WSL**: run `mvn verify` from a WSL shell under `/mnt/c/...`, or set on Windows
-`DOCKER_HOST=tcp://localhost:2375` after exposing the Docker daemon in WSL on TCP (see the main [README](../README.md)
+`DOCKER_HOST=tcp://localhost:2375` after exposing the Docker daemon in WSL on TCP (see the main [README](../../README.md)
 section "Windows 11, WSL, and integration tests"). Testcontainers respects `DOCKER_HOST`.
 
 ## Testing Principles
@@ -169,11 +169,11 @@ All tests follow TDD principles and use Testcontainers with PostgreSQL.
 
 ## Related Documentation
 
-- [Development Guide](DEVELOPMENT_GUIDE.md)
+- [Development Guide](../DEVELOPMENT_GUIDE.md)
 - [Architecture](02-architecture.md)
-- [Synthetic Data Generator](SYNTHETIC_DATA_GENERATOR.md) - Comprehensive feature description including vector
+- [Synthetic Data Generator](../SYNTHETIC_DATA_GENERATOR.md) - Comprehensive feature description including vector
   embeddings
-- [Find Specialist Flow](FIND_SPECIALIST_FLOW.md) - Text input endpoint and case search documentation
+- [Find Specialist Flow](../FIND_SPECIALIST_FLOW.md) - Text input endpoint and case search documentation
 
 ---
 

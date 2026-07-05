@@ -19,6 +19,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * REQ-007: integration coverage for registered requirement.
+ * REQ-125: integration coverage for registered requirement.
+ * SCN-001: executable scenario coverage.
+ * SCN-009: executable scenario coverage.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class CaseAnalysisControllerIT extends BaseIntegrationTest {

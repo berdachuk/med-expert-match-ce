@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
 public class MedicalAgentQueuePrioritizationWorkflowServiceImpl implements MedicalAgentQueuePrioritizationWorkflowService {
 
     private static final int MAX_CASES_FOR_QUEUE = 20;
-    private static final Pattern URGENCY_PATTERN = Pattern.compile("\"urgencyLevel\"\\s*:\\s*\"(CRITICAL|HIGH|MEDIUM|LOW)\"");
-    private static final Pattern SPECIALTY_PATTERN = Pattern.compile("\"requiredSpecialty\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern URGENCY_PATTERN = Pattern.compile("\"(?:u|urgencyLevel)\"\\s*:\\s*\"(CRITICAL|HIGH|MEDIUM|LOW)\"");
+    private static final Pattern SPECIALTY_PATTERN = Pattern.compile("\"(?:sp|requiredSpecialty)\"\\s*:\\s*\"([^\"]+)\"");
 
     private final ChatClient chatClient;
     private final String functionGemmaModelName;
@@ -155,7 +155,7 @@ public class MedicalAgentQueuePrioritizationWorkflowServiceImpl implements Medic
             try {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> map = objectMapper.readValue(caseAnalysis.trim(), Map.class);
-                Object urgencyValue = map.get("urgencyLevel");
+                Object urgencyValue = map.getOrDefault("u", map.get("urgencyLevel"));
                 if (urgencyValue != null) {
                     String urgencyText = urgencyValue.toString().toUpperCase();
                     if ("CRITICAL".equals(urgencyText) || "HIGH".equals(urgencyText)
@@ -163,11 +163,11 @@ public class MedicalAgentQueuePrioritizationWorkflowServiceImpl implements Medic
                         urgency = urgencyText;
                     }
                 }
-                Object specialtyValue = map.get("requiredSpecialty");
+                Object specialtyValue = map.getOrDefault("sp", map.get("requiredSpecialty"));
                 if (specialtyValue != null && !specialtyValue.toString().isEmpty()) {
                     specialty = specialtyValue.toString().trim();
                 }
-                Object caseSummaryValue = map.get("caseSummary");
+                Object caseSummaryValue = map.getOrDefault("sm", map.get("caseSummary"));
                 if (caseSummaryValue != null && !caseSummaryValue.toString().isEmpty()) {
                     caseSummary = caseSummaryValue.toString().trim();
                 }

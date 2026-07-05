@@ -1,172 +1,791 @@
 # Progress
 
-Timestamped log of completed work. This is a summary derived from `.agents/plans/progress.txt` (the canonical iteration log). See that file for detailed per-story entries.
+Timestamped log of completed work. **GENERATED** from `records/progress/*.md` by `scripts/sync-memory-index.sh`. Do not hand-edit.
 
-## 2026-06-19: M129 Complete — Responsive Chat Sidebar
+Each completed milestone has a record file under `records/progress/M{NN}.md`. To log a completed milestone, create that file and re-run this script.
 
-- **M129** — Responsive chat sidebar (REQ-129):
-  - Sidebar hidden on screens <992px (`d-none d-lg-block` on sidebar column)
-  - Hamburger button (☰) with `d-lg-none` in top-left of chat area
-  - Bootstrap offcanvas (`offcanvas-start`) wraps sidebar for slide-in overlay
-  - JS wires hamburger click to toggle, auto-closes on chat selection
-  - CSS for hamburger positioning, offcanvas body padding, chat list max-height
-  - 948 unit tests pass (1 pre-existing failure: `ChatMarkdownRendererTest.allowsHttpsLinks`)
-- Merged via `feat/m129-responsive-chat-sidebar` → develop → branch deleted
-- Archived M129 plan to `.agents/plans/archive/`
+## Milestones (most recent first)
 
-## 2026-06-19: M127 Complete — Token-Efficient Format Implementation
+### M99
 
-- **M127** — Token-efficient format implementation (REQ-127):
-  - `goal-classification.st` → ultra-compact JSON with short keys (`g`/`s`/`u`)
-  - `reranking-doctors.st` → line-based indices (one per line)
-  - `icd10-extraction-system.st` → line-based codes (one per line)
-  - `specialty-determination-system.st` → line-based specialties (one per line)
-  - `GoalClassifier.parseClassification()`: supports short keys with legacy long-key fallback
-  - `RerankingServiceImpl`: replaced Jackson JSON array parsing with `parseLineBasedIndices()`
-  - `CaseAnalysisServiceImpl.parseJsonArray()`: auto-detects JSON vs line-based format
-  - 9 new tests: GoalClassifierTest (short keys + legacy), RerankingServiceImplTest (4 line-based tests), CaseAnalysisServiceImplTest (4 line-based tests)
-  - 948 unit tests pass, 0 failures, 2 skipped
-- Merged via `feat/m127-token-efficient-format-implementation` → develop → branch deleted
-- Archived M127 plan to `.agents/plans/archive/`
+- [full record](records/progress/M99.md)
 
-## 2026-06-19: M124+M125 Complete — Main Menu Restructure + Pre-existing Fix
+- Summary: - **Milestone:** M99
 
-- **M125** — Main Menu Restructure: AI Chat is now the primary entry point at `/`. Removed `HomeController`, `index.html`, dashboard stats. Rewrote header nav: sub-page links always visible, Home→AI Chat at root, back arrow gates on `currentPage != 'chat'`. i18n: `nav.home=AI Chat`, removed `nav.chat`. Deleted `HomeControllerIT`, added root page test to `ChatWebControllerIT`.
-- **Fix** — `SessionTokenApiKeyAuthFilterIT` pre-existing compilation error: replaced `@MockBean` (removed in Spring Boot 4.x) with `@TestConfiguration` + `mock()`.
-- **Test count**: 938 unit + 567 integration tests, 0 failures, BUILD SUCCESS.
-- Merged via `feat/m124-m125-main-menu-restructure-and-perf` → develop → archived.
-- Created M126 plan: GraphRAG profiling, monitoring enhancements, ops docs.
+### M98
 
-## 2026-06-19: Code Review Fix + M126 Archive
+- [full record](records/progress/M98.md)
 
-- **Code review fixes**: Fixed 3 issues (empty catch blocks in `IdGenerator` → added `@Slf4j` + meaningful warn log; unused `newlineCount` variable in `AdaptiveChunker`; NPE-unsafe `equals` in `ChatAssistantServiceImpl` → added null check).
-- All 938 tests pass, 0 failures, 0 errors.
-- Merged via `feat/code-review-fixes` → develop → deleted branch.
-- Archived M126 plan to `.agents/plans/archive/`.
+- Summary: - **Milestone:** M98
 
-## 2026-06-19: M123 Complete — Code Quality and Dependency Freshness
+### M97
 
-- **Fixed flaky test** — `SessionTokenApiKeyAuthFilterIT.allowsValidKey`: mocked `PubMedService` to prevent real HTTP calls causing 500 errors; enabled auth in test properties
-- **Dependency freshness pass** — All deps current (Spring Boot 4.1.0, Spring AI 2.0.0 GA, Spring Modulith 2.1.0, Testcontainers 2.0.5, Jackson 2.22.0, WireMock 3.9.2)
-- **Documentation alignment** — Updated 6 docs (PRD.md, MedExpertMatch.md, IMPLEMENTATION_PLAN.md, ARCHITECTURE.md, README.md) with correct version numbers
-- **Code quality scan** — No violations: 0 hardcoded prompts, 0 @Deprecated usage, 0 TODO/FIXME/HACK, 5 System.out/err (all in CLI main classes)
-- Merged via `feat/m123-code-quality-and-dependency-freshness` → develop → archived
+- [full record](records/progress/M97.md)
 
-## 2026-06-16: M122 Complete — Security Hardening and Test Coverage
+- Summary: - **Milestone:** M97
 
-- **@Valid/@Validated** added to all 8 REST controllers
-- **DTO validation** — `@NotBlank`/`@NotNull` on `MatchOutcomeRecordRequest` and `CheckpointRequestBody`
-- **CORS configuration** — added to `LocalSecurityConfig` and `DockerSecurityConfig`
-- **53 new unit tests** across 12 test classes
-- **938 unit tests, 568 integration tests, 0 failures, BUILD SUCCESS**
-- Merged via `feat/m122-security-hardening-and-test-coverage` → develop → archived
+### M96
 
-## 2026-06-16: M121 Complete — Application Hardening and Observability
+- [full record](records/progress/M96.md)
 
-- **M121 plan created** — `.agents/plans/M121-application-hardening-and-observability.md` (active)
-- **Kubernetes probes enabled** — `management.endpoint.health.probes.enabled=true` in `application.yml`
-- **ReadinessStateHealthIndicator** — new class in `system/health/`
-- **Dev Docker health check** — added `healthcheck` block to app service in `docker-compose.yml`
-- **885 unit tests, 568 integration tests, 0 failures, BUILD SUCCESS**
-- Merged via `feat/m121-application-hardening` → develop → archived
+- Summary: - **Milestone:** M96
 
-## 2026-06-15: M117 Archived + M118 Active — Traceability Coverage Closeout
+### M95
 
-- **M117 archived** — `feat/m117-semantic-markup-and-traceability-foundation` merged to `develop`, branch deleted (local + remote)
-- **M118 plan created** — `.agents/plans/M118-traceability-coverage-closeout.md` (active); closes the 5 traceability gaps M117 identified
-- `00-index.md` — M117 moved to Archive table; M118 added to Active table
-- `activeContext.md` — "Traceability Gaps (M118 follow-up)" replaces the M117 section; M117 marked Completed
-- `progress.md` — 2026-06-15 entry added
+- [full record](records/progress/M95.md)
 
-## 2026-06-15: M117 Active — Semantic Markup & Traceability Foundation
+- Summary: - **Milestone:** M95
 
-- New plan `.agents/plans/M117-semantic-markup-and-traceability-foundation.md` (docs + skill scaffolding only)
-- New skill `.agents/skills/bdd-traceability/SKILL.md` (Description, When to use, Instructions, Boundaries, Java Cucumber rule, anti-patterns)
-- Adopted stable ID scheme: `REQ-###`, `NFR-###`, `SCN-###`, `STEP-###`, `TEST-###`, `DEC-###`, `RISK-###`, `TASK-###`
-- `decisions.md` header documents `D-###` ↔ `DEC-###` alias convention (historical ADRs stay immutable)
-- `productContext.md` now carries a seed traceability table for 6 use cases + 9 agent skills
-- `activeContext.md` adds "Traceability Gaps" subsection + open question
-- `00-index.md` Active table will be updated separately by the plan implementation
-- `mvn verify` is still green (this entry is docs/skill scaffolding only; no production code changed)
+### M94
 
-## 2026-06-13: Memory Bank Alignment
+- [full record](records/progress/M94.md)
 
-- Fixed factual errors in memory bank files against canonical docs
-- Added missing D-011, D-012, D-013 to decisions.md
-- Enriched systemPatterns.md with architecture patterns (array-based refs, ID normalization, agent skills, testing, harness)
-- Enriched productContext.md with 6 use cases, 7 agent skills, scoring weights
-- Updated techContext.md with correct versions (pgvector 0.1.6, AGE 1.6.0, Session 0.3.0, Testcontainers 2.0.5, etc.)
+- Summary: - **Milestone:** M94
 
-## 2026-06-13: Memory Bank Bootstrap
+### M93
 
-- Created `.agents/memory-bank/` with all 7 files
-- Updated `AGENTS.md` and `docs/ai-context-strategy.md` with memory bank layer
-- Added `bun.lock`/`package.json` to `.gitignore`
+- [full record](records/progress/M93.md)
 
-## 2026-06-13: M96 Complete
+- Summary: - **Milestone:** M93
 
-- Russian route-case keyword patterns, chat mode cleanup, LLM response sanitizer fixes
+### M92
 
-## 2026-06-12: M95 Complete
+- [full record](records/progress/M92.md)
 
-- Simplified case analysis prompt (31→16 lines), ICD-10 validation, parallel description generation with `LlmCallLimiter`
+- Summary: - **Milestone:** M92
 
-## 2026-06-12: M94 Complete
+### M91
 
-- Session ID fix in `EvidenceAgentTools`/`ClinicalAdvisorAgentTools`, data-sizes.csv update
+- [full record](records/progress/M91.md)
 
-## 2026-06-12: M93 Complete
+- Summary: - **Milestone:** M91
 
-- Production readiness closeout, embed scheduler, 549 ITs green
+### M90
 
-## 2026-06-10: M89 Complete
+- [full record](records/progress/M90.md)
 
-- Full test suite hardening: 544 tests, 0 failures
+- Summary: - **Milestone:** M90
 
-## 2026-06-10: M77 Complete (10 stories)
+### M89
 
-- Runtime-measured synthetic data estimates: `SyntheticDataGenerationRun` table, `EstimateAdjustmentService`, admin UI. 883 unit + 546 IT, 0 failures.
+- [full record](records/progress/M89.md)
 
-## 2026-06-12: M92 Complete
+- Summary: - **Milestone:** M89
 
-- Wire DocumentSearch into evidence-retriever skill; chunk NULL embedding backfill; `DocumentSearchServiceTest`
+### M86
 
-## 2026-06: M91 Complete
+- [full record](records/progress/M86.md)
 
-- Fix clinicalExperienceMs tracking gap, remove duplicate `@EnableScheduling`
+- Summary: - **Milestone:** M86
 
-## 2026-06: M90 Complete
+### M84
 
-- Implement M77 runtime-measured synthetic data estimates
+- [full record](records/progress/M84.md)
 
-## 2026-06: M86 Complete
+- Summary: - **Milestone:** M84
 
-- Execute M84 modulith cycle resolution spec
+### M83
 
-## 2026-06: M84 Complete
+- [full record](records/progress/M83.md)
 
-- Resolve pre-existing `ModulithVerificationIT` cycle
+- Summary: - **Milestone:** M83
 
-## 2026-06-14: M114 Complete — Integration Test Hardening and CI Fixes
+### M79
 
-- Fixed `ChatOptions.mutate()` NPE in mock ChatModel: added `getOptions()` stub alongside deprecated `getDefaultOptions()`
-- Spring AI 2.0.0 GA uses `getOptions()` (not `getDefaultOptions()`) internally
-- Disabled auth in test profile (`medexpertmatch.auth.enabled=false`) to prevent 401s on web ITs
-- Fixed `MatchingServiceIT`: `validateGeographicFilteringSupport()` now throws `IllegalArgumentException` instead of silently logging
-- Fixed `ChatWebControllerIT.includesLocalizedChatModeLabels` assertion to match actual rendered value
-- **549 integration tests, 0 failures, BUILD SUCCESS**
-- Merged via `feat/m114-integration-test-hardening-and-ci` → develop
-- Created M115 plan: dependency freshness and CI optimization
+- [full record](records/progress/M79.md)
 
-- Upgraded Spring Boot 4.0.6 → 4.1.0
-- Upgraded Spring AI 2.0.0-M8 → 2.0.0 GA
-- Upgraded Spring Modulith 2.0.7 → 2.1.0
-- Upgraded spring-ai-agent-utils 0.8.0 → 0.9.0
-- Fixed `ToolCallAdvisor` → `ToolCallingAdvisor` rename (2 source files + 2 test files)
-- Fixed `internalToolExecutionEnabled` removal in `ToolSelectionLiveEvalService.java`
-- 885 tests pass, 0 failures, 0 errors (unit tests)
-- Published as feat/m111 → merged to develop → archived
+- Summary: - **Milestone:** M79
+
+### M77
+
+- [full record](records/progress/M77.md)
+
+- Summary: - **Milestone:** M77
+
+### M76
+
+- [full record](records/progress/M76.md)
+
+- Summary: - **Milestone:** M76
+
+### M75
+
+- [full record](records/progress/M75.md)
+
+- Summary: - **Milestone:** M75
+
+### M74
+
+- [full record](records/progress/M74.md)
+
+- Summary: - **Milestone:** M74
+
+### M73
+
+- [full record](records/progress/M73.md)
+
+- Summary: - **Milestone:** M73
+
+### M72
+
+- [full record](records/progress/M72.md)
+
+- Summary: - **Milestone:** M72
+
+### M71
+
+- [full record](records/progress/M71.md)
+
+- Summary: - **Milestone:** M71
+
+### M70
+
+- [full record](records/progress/M70.md)
+
+- Summary: - **Milestone:** M70
+
+### M69
+
+- [full record](records/progress/M69.md)
+
+- Summary: - **Milestone:** M69
+
+### M68
+
+- [full record](records/progress/M68.md)
+
+- Summary: - **Milestone:** M68
+
+### M67
+
+- [full record](records/progress/M67.md)
+
+- Summary: - **Milestone:** M67
+
+### M66
+
+- [full record](records/progress/M66.md)
+
+- Summary: - **Milestone:** M66
+
+### M65
+
+- [full record](records/progress/M65.md)
+
+- Summary: - **Milestone:** M65
+
+### M64
+
+- [full record](records/progress/M64.md)
+
+- Summary: - **Milestone:** M64
+
+### M63
+
+- [full record](records/progress/M63.md)
+
+- Summary: - **Milestone:** M63
+
+### M62
+
+- [full record](records/progress/M62.md)
+
+- Summary: - **Milestone:** M62
+
+### M61
+
+- [full record](records/progress/M61.md)
+
+- Summary: - **Milestone:** M61
+
+### M60
+
+- [full record](records/progress/M60.md)
+
+- Summary: - **Milestone:** M60
+
+### M59
+
+- [full record](records/progress/M59.md)
+
+- Summary: - **Milestone:** M59
+
+### M58
+
+- [full record](records/progress/M58.md)
+
+- Summary: - **Milestone:** M58
+
+### M57
+
+- [full record](records/progress/M57.md)
+
+- Summary: - **Milestone:** M57
+
+### M56
+
+- [full record](records/progress/M56.md)
+
+- Summary: - **Milestone:** M56
+
+### M55
+
+- [full record](records/progress/M55.md)
+
+- Summary: - **Milestone:** M55
+
+### M54
+
+- [full record](records/progress/M54.md)
+
+- Summary: - **Milestone:** M54
+
+### M53
+
+- [full record](records/progress/M53.md)
+
+- Summary: - **Milestone:** M53
+
+### M52
+
+- [full record](records/progress/M52.md)
+
+- Summary: - **Milestone:** M52
+
+### M51
+
+- [full record](records/progress/M51.md)
+
+- Summary: - **Milestone:** M51
+
+### M50
+
+- [full record](records/progress/M50.md)
+
+- Summary: - **Milestone:** M50
+
+### M49
+
+- [full record](records/progress/M49.md)
+
+- Summary: - **Milestone:** M49
+
+### M48
+
+- [full record](records/progress/M48.md)
+
+- Summary: - **Milestone:** M48
+
+### M47
+
+- [full record](records/progress/M47.md)
+
+- Summary: - **Milestone:** M47
+
+### M46
+
+- [full record](records/progress/M46.md)
+
+- Summary: - **Milestone:** M46
+
+### M45
+
+- [full record](records/progress/M45.md)
+
+- Summary: - **Milestone:** M45
+
+### M44
+
+- [full record](records/progress/M44.md)
+
+- Summary: - **Milestone:** M44
+
+### M43
+
+- [full record](records/progress/M43.md)
+
+- Summary: - **Milestone:** M43
+
+### M42
+
+- [full record](records/progress/M42.md)
+
+- Summary: - **Milestone:** M42
+
+### M41
+
+- [full record](records/progress/M41.md)
+
+- Summary: - **Milestone:** M41
+
+### M40
+
+- [full record](records/progress/M40.md)
+
+- Summary: - **Milestone:** M40
+
+### M39
+
+- [full record](records/progress/M39.md)
+
+- Summary: - **Milestone:** M39
+
+### M38
+
+- [full record](records/progress/M38.md)
+
+- Summary: - **Milestone:** M38
+
+### M37
+
+- [full record](records/progress/M37.md)
+
+- Summary: - **Milestone:** M37
+
+### M36
+
+- [full record](records/progress/M36.md)
+
+- Summary: - **Milestone:** M36
+
+### M35
+
+- [full record](records/progress/M35.md)
+
+- Summary: - **Milestone:** M35
+
+### M34
+
+- [full record](records/progress/M34.md)
+
+- Summary: - **Milestone:** M34
+
+### M33
+
+- [full record](records/progress/M33.md)
+
+- Summary: - **Milestone:** M33
+
+### M32
+
+- [full record](records/progress/M32.md)
+
+- Summary: - **Milestone:** M32
+
+### M31
+
+- [full record](records/progress/M31.md)
+
+- Summary: - **Milestone:** M31
+
+### M30
+
+- [full record](records/progress/M30.md)
+
+- Summary: - **Milestone:** M30
+
+### M29
+
+- [full record](records/progress/M29.md)
+
+- Summary: - **Milestone:** M29
+
+### M28
+
+- [full record](records/progress/M28.md)
+
+- Summary: - **Milestone:** M28
+
+### M27
+
+- [full record](records/progress/M27.md)
+
+- Summary: - **Milestone:** M27
+
+### M26
+
+- [full record](records/progress/M26.md)
+
+- Summary: - **Milestone:** M26
+
+### M25
+
+- [full record](records/progress/M25.md)
+
+- Summary: - **Milestone:** M25
+
+### M24
+
+- [full record](records/progress/M24.md)
+
+- Summary: - **Milestone:** M24
+
+### M23
+
+- [full record](records/progress/M23.md)
+
+- Summary: - **Milestone:** M23
+
+### M22
+
+- [full record](records/progress/M22.md)
+
+- Summary: - **Milestone:** M22
+
+### M21
+
+- [full record](records/progress/M21.md)
+
+- Summary: - **Milestone:** M21
+
+### M20
+
+- [full record](records/progress/M20.md)
+
+- Summary: - **Milestone:** M20
+
+### M19
+
+- [full record](records/progress/M19.md)
+
+- Summary: - **Milestone:** M19
+
+### M18
+
+- [full record](records/progress/M18.md)
+
+- Summary: - **Milestone:** M18
+
+### M17
+
+- [full record](records/progress/M17.md)
+
+- Summary: - **Milestone:** M17
+
+### M16
+
+- [full record](records/progress/M16.md)
+
+- Summary: - **Milestone:** M16
+
+### M15
+
+- [full record](records/progress/M15.md)
+
+- Summary: - **Milestone:** M15
+
+### M14
+
+- [full record](records/progress/M14.md)
+
+- Summary: - **Milestone:** M14
+
+### M13
+
+- [full record](records/progress/M13.md)
+
+- Summary: - **Milestone:** M13
+
+### M138
+
+- [full record](records/progress/M138.md)
+
+- Summary: - **Milestone:** M138
+
+### M137
+
+- [full record](records/progress/M137.md)
+
+- Summary: - **Milestone:** M137
+
+### M136
+
+- [full record](records/progress/M136.md)
+
+- Summary: - **Milestone:** M136
+
+### M135
+
+- [full record](records/progress/M135.md)
+
+- Summary: - **Milestone:** M135
+
+### M134
+
+- [full record](records/progress/M134.md)
+
+- Summary: - **Milestone:** M134
+
+### M133
+
+- [full record](records/progress/M133.md)
+
+- Summary: - **Milestone:** M133
+
+### M132
+
+- [full record](records/progress/M132.md)
+
+- Summary: - **Milestone:** M132
+
+### M131
+
+- [full record](records/progress/M131.md)
+
+- Summary: - **Milestone:** M131
+
+### M130
+
+- [full record](records/progress/M130.md)
+
+- Summary: - **Milestone:** M130
+
+### M12
+
+- [full record](records/progress/M12.md)
+
+- Summary: - **Milestone:** M12
+
+### M129
+
+- [full record](records/progress/M129.md)
+
+- Summary: - **Milestone:** M129
+
+### M128
+
+- [full record](records/progress/M128.md)
+
+- Summary: Fix Markdown Rendering in Chat
+
+### M127
+
+- [full record](records/progress/M127.md)
+
+- Summary: Token-Efficient Format Implementation
+
+### M126
+
+- [full record](records/progress/M126.md)
+
+- Summary: Next Implementation Phase
+
+### M125
+
+- [full record](records/progress/M125.md)
+
+- Summary: - **Milestone:** M125
+
+### M124
+
+- [full record](records/progress/M124.md)
+
+- Summary: Performance Optimization and Monitoring Enhancement
+
+### M123
+
+- [full record](records/progress/M123.md)
+
+- Summary: Code Quality and Dependency Freshness
+
+### M122
+
+- [full record](records/progress/M122.md)
+
+- Summary: - **Milestone:** M122
+
+### M121
+
+- [full record](records/progress/M121.md)
+
+- Summary: Application Hardening and Observability
+
+### M120
+
+- [full record](records/progress/M120.md)
+
+- Summary: Cucumber Coverage Expansion
+
+### M11
+
+- [full record](records/progress/M11.md)
+
+- Summary: - **Milestone:** M11
+
+### M119
+
+- [full record](records/progress/M119.md)
+
+- Summary: BDD Cucumber Adoption
+
+### M118
+
+- [full record](records/progress/M118.md)
+
+- Summary: Traceability Coverage Closeout
+
+### M117
+
+- [full record](records/progress/M117.md)
+
+- Summary: Semantic Markup and Traceability Foundation
+
+### M116
+
+- [full record](records/progress/M116.md)
+
+- Summary: Application Hardening and Observability
+
+### M115
+
+- [full record](records/progress/M115.md)
+
+- Summary: Dependency Freshness and CI Optimization
+
+### M114
+
+- [full record](records/progress/M114.md)
+
+- Summary: Integration Test Hardening and CI Pipeline
+
+### M113
+
+- [full record](records/progress/M113.md)
+
+- Summary: Presentation slides finalize
+
+### M112
+
+- [full record](records/progress/M112.md)
+
+- Summary: Post-Upgrade Stabilization
+
+### M111
+
+- [full record](records/progress/M111.md)
+
+- Summary: - **Milestone:** M111
+
+### M110
+
+- [full record](records/progress/M110.md)
+
+- Summary: - **Milestone:** M110
+
+### M10
+
+- [full record](records/progress/M10.md)
+
+- Summary: - **Milestone:** M10
+
+### M109
+
+- [full record](records/progress/M109.md)
+
+- Summary: - **Milestone:** M109
+
+### M107
+
+- [full record](records/progress/M107.md)
+
+- Summary: - **Milestone:** M107
+
+### M106
+
+- [full record](records/progress/M106.md)
+
+- Summary: - **Milestone:** M106
+
+### M105
+
+- [full record](records/progress/M105.md)
+
+- Summary: - **Milestone:** M105
+
+### M104
+
+- [full record](records/progress/M104.md)
+
+- Summary: - **Milestone:** M104
+
+### M103
+
+- [full record](records/progress/M103.md)
+
+- Summary: - **Milestone:** M103
+
+### M102
+
+- [full record](records/progress/M102.md)
+
+- Summary: - **Milestone:** M102
+
+### M101
+
+- [full record](records/progress/M101.md)
+
+- Summary: - **Milestone:** M101
+
+### M100
+
+- [full record](records/progress/M100.md)
+
+- Summary: - **Milestone:** M100
+
+### M09
+
+- [full record](records/progress/M09.md)
+
+- Summary: - **Milestone:** M09
+
+### M08
+
+- [full record](records/progress/M08.md)
+
+- Summary: - **Milestone:** M08
+
+### M07
+
+- [full record](records/progress/M07.md)
+
+- Summary: - **Milestone:** M07
+
+### M06
+
+- [full record](records/progress/M06.md)
+
+- Summary: - **Milestone:** M06
+
+### M05
+
+- [full record](records/progress/M05.md)
+
+- Summary: - **Milestone:** M05
+
+### M04
+
+- [full record](records/progress/M04.md)
+
+- Summary: - **Milestone:** M04
+
+### M03
+
+- [full record](records/progress/M03.md)
+
+- Summary: - **Milestone:** M03
+
+### M02
+
+- [full record](records/progress/M02.md)
+
+- Summary: - **Milestone:** M02
+
+### M01
+
+- [full record](records/progress/M01.md)
+
+- Summary: - **Milestone:** M01
 
 ## Historical (M01–M83)
 
-All milestones M01–M83 are complete and archived. See `.agents/plans/archive/` for full history (90+ plans) and `.agents/plans/progress.txt` for detailed per-story iteration log.
+All milestones M01–M83 are complete and archived. See `.agents/plans/archive/` for full history and `.agents/plans/progress.txt` for the detailed per-story iteration log.

@@ -8,7 +8,7 @@ import org.junit.platform.suite.api.Suite;
 import static io.cucumber.junit.platform.engine.Constants.GLUE_PROPERTY_NAME;
 
 /**
- * Cucumber JUnit Platform Suite runner.
+ * Cucumber JUnit Platform Suite runner (SCN-001..SCN-009).
  * Discovers .feature files from src/test/resources/features/.
  */
 @Suite

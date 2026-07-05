@@ -18,6 +18,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration tests for synthetic data edge cases:
  * empty catalog handling, size=0, duplicates, null safety, large batch thresholds.
  */
+/**
+ * REQ-015: integration coverage for registered requirement.
+ * REQ-017: integration coverage for registered requirement.
+ */
 class SyntheticDataEdgeCasesIT extends BaseIntegrationTest {
 
     @Autowired

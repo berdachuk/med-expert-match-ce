@@ -1,130 +1,150 @@
 # Milestone Plan Index
 
+> **GENERATED** from `records/active/`, `records/deferred/`, `records/progress/` by `scripts/sync-memory-index.sh`. Do not hand-edit.
+
 ## Active
-
-None — all plans archived.
-
-## Deferred
-
-Postponed indefinitely; repo scaffolding from M58 remains. Resume only when GPU fine-tune capacity is available and a stakeholder confirms the fine-tune is worth the engineering cost vs. the server-side `ToolSelectionGuardingResolver` (M57) which already covers the production gap.
 
 | # | Plan | Description |
 |---|------|-------------|
-| M60 | [`archive/M60-functiongemma-finetune-execution-next.md`](archive/M60-functiongemma-finetune-execution-next.md) | GPU fine-tune execution + live before/after eval (postponed 2026-06-09) |
-| — | [`archive/M60-functiongemma-finetune-execution.md`](archive/M60-functiongemma-finetune-execution.md) | Superseded by `M60-functiongemma-finetune-execution-next.md` (same scope, refreshed 2026-06-08) |
+| M139 | [`M139.md`](../memory-bank/records/active/M139.md) | - **Milestone:** M139 |
+
+## Deferred
+
+None.
 
 ## Archive
 
 | # | Plan | Description |
 |---|------|-------------|
-| M01 | [`M01-upgrade-spring-ai-to-m6.md`](archive/M01-upgrade-spring-ai-to-m6.md) | Upgrade Spring AI to M6 |
-| M02 | [`M02-agentic-orchestration-improvements.md`](archive/M02-agentic-orchestration-improvements.md) | Agentic orchestration improvements |
-| M03 | [`M03-retrieval-and-evaluation-improvements.md`](archive/M03-retrieval-and-evaluation-improvements.md) | Retrieval and evaluation improvements |
-| M04 | [`M04-production-hardening.md`](archive/M04-production-hardening.md) | Production hardening |
-| M05 | [`M05-remaining-quality-gaps.md`](archive/M05-remaining-quality-gaps.md) | Remaining quality gaps |
-| M06 | [`M06-doc-search-api-eval-expansion.md`](archive/M06-doc-search-api-eval-expansion.md) | Doc search API eval expansion |
-| M07 | [`M07-security-web-ui-prod-readiness.md`](archive/M07-security-web-ui-prod-readiness.md) | Security, web UI, prod readiness |
-| M08 | [`M08-agentic-patterns-improvements.md`](archive/M08-agentic-patterns-improvements.md) | Agentic patterns improvements |
-| M08 | [`M08-observability-ci-cd-monitoring.md`](archive/M08-observability-ci-cd-monitoring.md) | Observability CI/CD monitoring |
-| M09 | [`M09-code-quality-performance-docs.md`](archive/M09-code-quality-performance-docs.md) | Code quality, performance, docs |
-| M10 | [`M10-auth-caching-load-testing.md`](archive/M10-auth-caching-load-testing.md) | Auth, caching, load testing |
-| M11 | [`M11-e2e-tests-feature-flags-ui-polish.md`](archive/M11-e2e-tests-feature-flags-ui-polish.md) | E2E tests, feature flags, UI polish |
-| M12 | [`M12-api-versioning-search-release.md`](archive/M12-api-versioning-search-release.md) | API versioning, search, release |
-| M13 | [`M13-ai-chat-tab-and-specialized-agents.md`](archive/M13-ai-chat-tab-and-specialized-agents.md) | AI chat tab and specialized agents |
-| M13 | [`M13-ai-chat-tab-phase-a.md`](archive/M13-ai-chat-tab-phase-a.md) | AI chat tab phase A |
-| M14 | [`M14-ai-chat-agent-routing.md`](archive/M14-ai-chat-agent-routing.md) | AI chat agent routing |
-| M15 | [`M15-a2a-streaming-hardening.md`](archive/M15-a2a-streaming-hardening.md) | A2A streaming hardening |
-| M16 | [`M16-a2a-full-integration-and-m08-closeout.md`](archive/M16-a2a-full-integration-and-m08-closeout.md) | A2A full integration |
-| M17 | [`M17-chat-agent-polish-and-a2a-hardening.md`](archive/M17-chat-agent-polish-and-a2a-hardening.md) | Chat agent polish, A2A hardening |
-| M18 | [`M18-chat-production-readiness.md`](archive/M18-chat-production-readiness.md) | Chat production readiness |
-| M19 | [`M19-chat-ops-and-interop.md`](archive/M19-chat-ops-and-interop.md) | Chat ops and interop |
-| M20 | [`M20-chat-governance-and-a2a-contracts.md`](archive/M20-chat-governance-and-a2a-contracts.md) | Chat governance, A2A contracts |
-| M21 | [`M21-chat-admin-and-observability.md`](archive/M21-chat-admin-and-observability.md) | Chat admin and observability |
-| M22 | [`M22-a2a-federation-and-chat-lifecycle.md`](archive/M22-a2a-federation-and-chat-lifecycle.md) | A2A federation, chat lifecycle |
-| M23 | [`M23-chat-security-and-a2a-governance.md`](archive/M23-chat-security-and-a2a-governance.md) | Chat security, A2A governance |
-| M24 | [`M24-a2a-production-readiness.md`](archive/M24-a2a-production-readiness.md) | A2A production readiness |
-| M25 | [`M25-chat-platform-hardening.md`](archive/M25-chat-platform-hardening.md) | Chat platform hardening |
-| M26 | [`M26-chat-federation-and-compliance.md`](archive/M26-chat-federation-and-compliance.md) | Chat federation and compliance |
-| M27 | [`M27-chat-observability-and-governance.md`](archive/M27-chat-observability-and-governance.md) | Chat observability and governance |
-| M28 | [`M28-chat-trust-and-interoperability.md`](archive/M28-chat-trust-and-interoperability.md) | Chat trust and interoperability |
-| M29 | [`M29-agent-tools-split-and-orchestrator-hardening.md`](archive/M29-agent-tools-split-and-orchestrator-hardening.md) | Agent tools split, orchestrator hardening |
-| M29 | [`M29-harness-engineering-improvements.md`](archive/M29-harness-engineering-improvements.md) | Harness engineering improvements |
-| M30 | [`M30-harness-orchestration-expansion.md`](archive/M30-harness-orchestration-expansion.md) | Harness orchestration expansion |
-| M31 | [`M31-harness-human-checkpoint-and-events.md`](archive/M31-harness-human-checkpoint-and-events.md) | Harness human checkpoint and events |
-| M32 | [`M32-harness-eval-and-ops-ui.md`](archive/M32-harness-eval-and-ops-ui.md) | Harness eval and ops UI |
-| M33 | [`M33-harness-full-eval-and-chain-ui.md`](archive/M33-harness-full-eval-and-chain-ui.md) | Harness full eval and chain UI |
-| M34 | [`M34-harness-production-readiness.md`](archive/M34-harness-production-readiness.md) | Harness production readiness |
-| M35 | [`M35-chat-conversation-context-turn-continuity.md`](archive/M35-chat-conversation-context-turn-continuity.md) | Chat conversation context turn continuity |
-| M36 | [`M36-chat-context-hardening.md`](archive/M36-chat-context-hardening.md) | Chat context hardening |
-| M37 | [`M37-harness-production-hardening.md`](archive/M37-harness-production-hardening.md) | Harness production hardiness |
-| M38 | [`M38-multi-agent-event-pipeline.md`](archive/M38-multi-agent-event-pipeline.md) | Multi-agent event pipeline |
-| M39 | [`M39-wire-event-agents-into-chat.md`](archive/M39-wire-event-agents-into-chat.md) | Wire event agents into chat |
-| M40 | [`M40-inline-agent-activity-panel.md`](archive/M40-inline-agent-activity-panel.md) | Inline agent activity panel |
-| M41 | [`M41-fix-chat-follow-up-context-loss.md`](archive/M41-fix-chat-follow-up-context-loss.md) | Fix chat follow-up context loss |
-| M42 | [`M42-event-pipeline-observability-recovery.md`](archive/M42-event-pipeline-observability-recovery.md) | Event pipeline observability recovery |
-| M43 | [`M43-pipeline-security-health-live-tracking.md`](archive/M43-pipeline-security-health-live-tracking.md) | Pipeline security, health, live tracking |
-| M44 | [`M44-core-infrastructure-test-coverage.md`](archive/M44-core-infrastructure-test-coverage.md) | Core infrastructure test coverage |
-| M45 | [`M45-doc-inconsistency-fixes.md`](archive/M45-doc-inconsistency-fixes.md) | Doc inconsistency fixes |
-| M46 | [`M46-fix-plan-finalization.md`](archive/M46-fix-plan-finalization.md) | Fix plan finalization |
-| M47 | [`M47-upgrade-testcontainers-to-2.0.5.md`](archive/M47-upgrade-testcontainers-to-2.0.5.md) | Upgrade Testcontainers to 2.0.5 |
-| M48 | [`M48-code-quality-and-dependency-freshness.md`](archive/M48-code-quality-and-dependency-freshness.md) | Code quality and dependency freshness |
-| M49 | [`M49-spring-ai-m8-api-migration.md`](archive/M49-spring-ai-m8-api-migration.md) | Spring AI M8 API migration |
-| M50 | [`M50-fix-remaining-test-failures.md`](archive/M50-fix-remaining-test-failures.md) | Fix remaining test failures |
-| M51 | [`M51-production-hardening-and-coverage.md`](archive/M51-production-hardening-and-coverage.md) | Production hardening and coverage |
-| M52 | [`M52-mock-external-services.md`](archive/M52-mock-external-services.md) | Mock external services |
-| M53 | [`M53-ingestion-coverage.md`](archive/M53-ingestion-coverage.md) | Ingestion coverage |
-| M54 | [`M54-system-health-monitoring-coverage.md`](archive/M54-system-health-monitoring-coverage.md) | System health monitoring coverage |
-| M55 | [`M55-rest-controller-config-coverage.md`](archive/M55-rest-controller-config-coverage.md) | REST controller config coverage |
-| M56 | [`M56-chat-auto-find-specialist-fix.md`](archive/M56-chat-auto-find-specialist-fix.md) | Chat Auto Find Specialist harness routing and CoT sanitization |
-| M57 | [`M57-goal-classifier-hybrid-session-routing.md`](archive/M57-goal-classifier-hybrid-session-routing.md) | Hybrid GoalClassifier: session rules + LLM context + chat continuity + PolicyGate rename |
-| M58 | [`M58-functiongemma-tool-calling-finetune.md`](archive/M58-functiongemma-tool-calling-finetune.md) | FunctionGemma tool-selection policy, live eval pipeline, Unsloth export (GPU train → M60) |
-| M59 | [`M59-chat-collapsible-reasoning-and-follow-up.md`](archive/M59-chat-collapsible-reasoning-and-follow-up.md) | Collapsible CoT in chat, follow-up routing, case-analysis interpretation, chat UI |
-| M61 | [`M61-policy-layer-v2.md`](archive/M61-policy-layer-v2.md) | Confidence policy router: ANSWER / CLARIFY / ESCALATE / REFUSE |
-| M62 | [`M62-eval-flywheel-release-gate.md`](archive/M62-eval-flywheel-release-gate.md) | Unified eval flywheel report + ROI release gate |
-| M63 | [`M63-match-outcome-data-flywheel.md`](archive/M63-match-outcome-data-flywheel.md) | Match outcome labels + historical weight calibration |
-| M65 | [`M65-human-in-the-loop-harness.md`](archive/M65-human-in-the-loop-harness.md) | HUMAN_REVIEW checkpoint, adjudication audit, M63 override hook |
-| M66 | [`M66-agent-vs-chat-packaging.md`](archive/M66-agent-vs-chat-packaging.md) | Chat mode selector, match explainability, pitch/case study |
-| M69 | [`M69-adjudication-eval-flywheel.md`](archive/M69-adjudication-eval-flywheel.md) | Adjudication eval family + release gate (7th flywheel family) |
-| M64 | [`M64-cost-quality-routing.md`](archive/M64-cost-quality-routing.md) | Cost-quality tier routing (LIGHT/STANDARD/FULL), token budgets, Prometheus metrics |
-| M67 | [`M67-llm-role-endpoint-separation.md`](archive/M67-llm-role-endpoint-separation.md) | Clinical + utility LLM endpoints (`CLINICAL_*`, `UTILITY_*`); M64 ADR Phase 2 |
-| M68 | [`M68-harness-context-summarizer.md`](archive/M68-harness-context-summarizer.md) | Harness context summarizer before clinical LLM (M64 ADR Phase 3) |
-| M70 | [`M70-find-specialist-explainability.md`](archive/M70-find-specialist-explainability.md) | Find Specialist explainability panel (SSR + AJAX) |
-| M71 | [`M71-llm-usage-telemetry.md`](archive/M71-llm-usage-telemetry.md) | LLM usage metadata capture + compact summary in agent activity panel |
-| M72 | [`M72-find-specialist-data-quality-fixes.md`](archive/M72-find-specialist-data-quality-fixes.md) | PubMed ObjectId guard, LLM session ID in advisor context, circular dep fix, missing `match_outcomes` tables, match validation with extended context, file-backed logs |
-| M73 | [`M73-synthetic-data-quality-and-llm-cache-logging.md`](archive/M73-synthetic-data-quality-and-llm-cache-logging.md) | Synthetic data quality: `MAJOR_SPECIALTIES` round-robin, `reconcileSpecialtyGraph()` (idempotent MERGE), admin endpoint `POST /api/v1/admin/synthetic-data/reconcile-specialties`, unconditional `INFO` LLM-usage log with `cache_hit=true\|false` |
-| M74 | [`M74-human-readable-response-rendering.md`](archive/M74-human-readable-response-rendering.md) | Render LLM JSON blocks embedded in narrative as human-readable prose, **UI path only** |
-| M75 | [`M75-find-specialist-case-specialty-reconcile.md`](archive/M75-find-specialist-case-specialty-reconcile.md) | `reconcileCaseSpecialtyGraph()` + bidirectional substring match |
-| M76 | [`M76-update-data-sizes-and-add-very-large.md`](archive/M76-update-data-sizes-and-add-very-large.md) | Fix wrong time estimates in `data-sizes.csv`, add `very_large` size |
-| M77 | [`M77-runtime-measured-estimates.md`](archive/M77-runtime-measured-estimates.md) | Measure every actual run; persist in `synthetic_data_generation_runs` table; surface "Last actual" in admin UI; nightly job auto-adjusts estimates |
-| M83 | [`M83-harness-section-2-2-depth.md`](archive/M83-harness-section-2-2-depth.md) | Add depth to `HARNESS_AND_AGENT_USAGE` §2.2 |
-| M84 | [`M84-resolve-modulith-cycle.md`](archive/M84-resolve-modulith-cycle.md) | Resolve the pre-existing ModulithVerificationIT cycle |
-| M86 | [`M86-implement-m84-modulith-cycle.md`](archive/M86-implement-m84-modulith-cycle.md) | Execute the M84 spec |
-| M90 | [`M90-implement-m77-feature.md`](archive/M90-implement-m77-feature.md) | Implement M77 runtime-measured synthetic data estimates (consolidated M81+M82) |
-| M91 | [`M91-m77-fixes-and-session-compaction.md`](archive/M91-m77-fixes-and-session-compaction.md) | Fix clinicalExperienceMs tracking gap, remove duplicate @EnableScheduling |
-| M92 | [`M92-session-compaction-document-rag.md`](archive/M92-session-compaction-document-rag.md) | Wire DocumentSearch into evidence-retriever skill; add chunk NULL embedding backfill; add DocumentSearchServiceTest |
-| M93 | [`M93-production-readiness-and-doc-rag-closeout.md`](archive/M93-production-readiness-and-doc-rag-closeout.md) | Production-readiness close-out: document RAG embed scheduler, DocumentChunkRepositoryIT for findByEmbeddingIsNull, full-codebase security review, dependency-freshness pass, multi-module test-coverage infra closure |
-| M94 | [`M94-security-hardening-and-tool-surface-closeout.md`](archive/M94-security-hardening-and-tool-surface-closeout.md) | Security hardening: risk_assessment caseId validation, fix error disclosure in DocumentSearchController, sanitize tool log messages, explicit REST endpoint security posture |
-| M95 | [`M95-llm-prompt-quality-and-response-reliability.md`](archive/M95-llm-prompt-quality-and-response-reliability.md) | Simplify case analysis prompt, add ICD-10 validation to prevent hallucination, parallelize synthetic data description generation (5-10x speedup), add LlmCallLimiter |
-| M96 | [`M96-route-case-keywords-and-chat-mode-cleanup.md`](archive/M96-route-case-keywords-and-chat-mode-cleanup.md) | Russian route-case keyword patterns, finalize chat mode cleanup, LLM response sanitizer fixes |
-| M111 | [`archive/M111-upgrade-spring-ai-to-2.0.0.md`](archive/M111-upgrade-spring-ai-to-2.0.0.md) | Upgrade Spring AI 2.0.0-M8 → 2.0.0 GA (ToolCallAdvisor rename, internalToolExecutionEnabled removal, session BOM) |
-| M112 | [`archive/M112-post-upgrade-stabilization.md`](archive/M112-post-upgrade-stabilization.md) | Post-upgrade code quality, presentation slides, local dev auth fix |
-| M113 | [`archive/M113-presentation-slides-finalize.md`](archive/M113-presentation-slides-finalize.md) | Reorder slides, add System Overview/Three-Signal Scorer/How Skills Work slides, align speaker script and OPML mindmap |
-| M114 | [`archive/M114-integration-test-hardening-and-ci.md`](archive/M114-integration-test-hardening-and-ci.md) | Fix integration test failures, harden CI pipeline, close stability gaps |
-| M115 | [`archive/M115-dependency-freshness-and-ci-optimization.md`](archive/M115-dependency-freshness-and-ci-optimization.md) | Update safe deps (jackson 2.22.0, spring-ai-agent-utils 0.10.0, wiremock held at 3.9.2), optimize CI build parallelism, document CI workflow |
-| M117 | [`archive/M117-semantic-markup-and-traceability-foundation.md`](archive/M117-semantic-markup-and-traceability-foundation.md) | Semantic markup + traceability foundation: stable IDs (`REQ-###`/`SCN-###`/`DEC-###`/`TEST-###`/`RISK-###`), new `bdd-traceability` skill, seed traceability table, `D-###` ↔ `DEC-###` alias convention |
-| M118 | [`archive/M118-traceability-coverage-closeout.md`](archive/M118-traceability-coverage-closeout.md) | Close traceability gaps: secondOpinion test, PriorityScore/RouteScore verification, DEC-014 (graph-ops-only), SCN-### annotations on 9 agent-skill test classes |
-| M119 | [`archive/M119-bdd-cucumber-adoption.md`](archive/M119-bdd-cucumber-adoption.md) | Adopt Cucumber JVM + Gherkin: 3 .feature files (case-analyzer, doctor-matcher, routing-planner), thin step definitions, CucumberIT runner, 6 scenarios pass |
-| M120 | [`archive/M120-cucumber-coverage-expansion.md`](archive/M120-cucumber-coverage-expansion.md) | Extend Cucumber BDD coverage to remaining 6 agent skills (evidence-retriever, recommendation-engine, clinical-advisor, network-analyzer, clinical-guideline, triage); 18 total scenarios |
-| M121 | [`archive/M121-application-hardening-and-observability.md`](archive/M121-application-hardening-and-observability.md) | Application hardening: Kubernetes probes, ReadinessStateHealthIndicator, dev Docker health check |
-| M122 | [`archive/M122-security-hardening-and-test-coverage.md`](archive/M122-security-hardening-and-test-coverage.md) | Security hardening: @Valid on 8 controllers, CORS config, 53 new unit tests |
-| M123 | [`archive/M123-code-quality-and-dependency-freshness.md`](archive/M123-code-quality-and-dependency-freshness.md) | Code quality pass, dependency freshness, flaky test fixes, documentation alignment |
-| M124 | [`archive/M124-performance-optimization-and-monitoring-enhancement.md`](archive/M124-performance-optimization-and-monitoring-enhancement.md) | Performance optimization and monitoring enhancement |
-| M125 | [`archive/M125-main-menu-restructure.md`](archive/M125-main-menu-restructure.md) | Main menu restructure — AI Chat as primary entry point |
-| M126 | [`archive/M126-next-implementation-phase.md`](archive/M126-next-implementation-phase.md) | Next implementation phase — GraphRAG profiling, monitoring, ops docs |
-| M127 | [`archive/M127-token-efficient-format-implementation.md`](archive/M127-token-efficient-format-implementation.md) | Token-efficient format implementation — ultra-compact JSON + line-based prompts |
-| M128 | [`archive/M128-markdown-rendering-fix.md`](archive/M128-markdown-rendering-fix.md) | Fix markdown rendering in chat — bold/italic/lists, content before reasoning block |
-| M129 | [`archive/M129-responsive-chat-sidebar.md`](archive/M129-responsive-chat-sidebar.md) | Responsive chat sidebar — hide on small/medium, hamburger menu toggle |
+| M99 | [`M99.md`](../memory-bank/records/progress/M99.md) | - **Milestone:** M99 |
+| M98 | [`M98.md`](../memory-bank/records/progress/M98.md) | - **Milestone:** M98 |
+| M97 | [`M97.md`](../memory-bank/records/progress/M97.md) | - **Milestone:** M97 |
+| M96 | [`M96.md`](../memory-bank/records/progress/M96.md) | - **Milestone:** M96 |
+| M95 | [`M95.md`](../memory-bank/records/progress/M95.md) | - **Milestone:** M95 |
+| M94 | [`M94.md`](../memory-bank/records/progress/M94.md) | - **Milestone:** M94 |
+| M93 | [`M93.md`](../memory-bank/records/progress/M93.md) | - **Milestone:** M93 |
+| M92 | [`M92.md`](../memory-bank/records/progress/M92.md) | - **Milestone:** M92 |
+| M91 | [`M91.md`](../memory-bank/records/progress/M91.md) | - **Milestone:** M91 |
+| M90 | [`M90.md`](../memory-bank/records/progress/M90.md) | - **Milestone:** M90 |
+| M89 | [`M89.md`](../memory-bank/records/progress/M89.md) | - **Milestone:** M89 |
+| M86 | [`M86.md`](../memory-bank/records/progress/M86.md) | - **Milestone:** M86 |
+| M84 | [`M84.md`](../memory-bank/records/progress/M84.md) | - **Milestone:** M84 |
+| M83 | [`M83.md`](../memory-bank/records/progress/M83.md) | - **Milestone:** M83 |
+| M79 | [`M79.md`](../memory-bank/records/progress/M79.md) | - **Milestone:** M79 |
+| M77 | [`M77.md`](../memory-bank/records/progress/M77.md) | - **Milestone:** M77 |
+| M76 | [`M76.md`](../memory-bank/records/progress/M76.md) | - **Milestone:** M76 |
+| M75 | [`M75.md`](../memory-bank/records/progress/M75.md) | - **Milestone:** M75 |
+| M74 | [`M74.md`](../memory-bank/records/progress/M74.md) | - **Milestone:** M74 |
+| M73 | [`M73.md`](../memory-bank/records/progress/M73.md) | - **Milestone:** M73 |
+| M72 | [`M72.md`](../memory-bank/records/progress/M72.md) | - **Milestone:** M72 |
+| M71 | [`M71.md`](../memory-bank/records/progress/M71.md) | - **Milestone:** M71 |
+| M70 | [`M70.md`](../memory-bank/records/progress/M70.md) | - **Milestone:** M70 |
+| M69 | [`M69.md`](../memory-bank/records/progress/M69.md) | - **Milestone:** M69 |
+| M68 | [`M68.md`](../memory-bank/records/progress/M68.md) | - **Milestone:** M68 |
+| M67 | [`M67.md`](../memory-bank/records/progress/M67.md) | - **Milestone:** M67 |
+| M66 | [`M66.md`](../memory-bank/records/progress/M66.md) | - **Milestone:** M66 |
+| M65 | [`M65.md`](../memory-bank/records/progress/M65.md) | - **Milestone:** M65 |
+| M64 | [`M64.md`](../memory-bank/records/progress/M64.md) | - **Milestone:** M64 |
+| M63 | [`M63.md`](../memory-bank/records/progress/M63.md) | - **Milestone:** M63 |
+| M62 | [`M62.md`](../memory-bank/records/progress/M62.md) | - **Milestone:** M62 |
+| M61 | [`M61.md`](../memory-bank/records/progress/M61.md) | - **Milestone:** M61 |
+| M60 | [`M60.md`](../memory-bank/records/progress/M60.md) | - **Milestone:** M60 |
+| M59 | [`M59.md`](../memory-bank/records/progress/M59.md) | - **Milestone:** M59 |
+| M58 | [`M58.md`](../memory-bank/records/progress/M58.md) | - **Milestone:** M58 |
+| M57 | [`M57.md`](../memory-bank/records/progress/M57.md) | - **Milestone:** M57 |
+| M56 | [`M56.md`](../memory-bank/records/progress/M56.md) | - **Milestone:** M56 |
+| M55 | [`M55.md`](../memory-bank/records/progress/M55.md) | - **Milestone:** M55 |
+| M54 | [`M54.md`](../memory-bank/records/progress/M54.md) | - **Milestone:** M54 |
+| M53 | [`M53.md`](../memory-bank/records/progress/M53.md) | - **Milestone:** M53 |
+| M52 | [`M52.md`](../memory-bank/records/progress/M52.md) | - **Milestone:** M52 |
+| M51 | [`M51.md`](../memory-bank/records/progress/M51.md) | - **Milestone:** M51 |
+| M50 | [`M50.md`](../memory-bank/records/progress/M50.md) | - **Milestone:** M50 |
+| M49 | [`M49.md`](../memory-bank/records/progress/M49.md) | - **Milestone:** M49 |
+| M48 | [`M48.md`](../memory-bank/records/progress/M48.md) | - **Milestone:** M48 |
+| M47 | [`M47.md`](../memory-bank/records/progress/M47.md) | - **Milestone:** M47 |
+| M46 | [`M46.md`](../memory-bank/records/progress/M46.md) | - **Milestone:** M46 |
+| M45 | [`M45.md`](../memory-bank/records/progress/M45.md) | - **Milestone:** M45 |
+| M44 | [`M44.md`](../memory-bank/records/progress/M44.md) | - **Milestone:** M44 |
+| M43 | [`M43.md`](../memory-bank/records/progress/M43.md) | - **Milestone:** M43 |
+| M42 | [`M42.md`](../memory-bank/records/progress/M42.md) | - **Milestone:** M42 |
+| M41 | [`M41.md`](../memory-bank/records/progress/M41.md) | - **Milestone:** M41 |
+| M40 | [`M40.md`](../memory-bank/records/progress/M40.md) | - **Milestone:** M40 |
+| M39 | [`M39.md`](../memory-bank/records/progress/M39.md) | - **Milestone:** M39 |
+| M38 | [`M38.md`](../memory-bank/records/progress/M38.md) | - **Milestone:** M38 |
+| M37 | [`M37.md`](../memory-bank/records/progress/M37.md) | - **Milestone:** M37 |
+| M36 | [`M36.md`](../memory-bank/records/progress/M36.md) | - **Milestone:** M36 |
+| M35 | [`M35.md`](../memory-bank/records/progress/M35.md) | - **Milestone:** M35 |
+| M34 | [`M34.md`](../memory-bank/records/progress/M34.md) | - **Milestone:** M34 |
+| M33 | [`M33.md`](../memory-bank/records/progress/M33.md) | - **Milestone:** M33 |
+| M32 | [`M32.md`](../memory-bank/records/progress/M32.md) | - **Milestone:** M32 |
+| M31 | [`M31.md`](../memory-bank/records/progress/M31.md) | - **Milestone:** M31 |
+| M30 | [`M30.md`](../memory-bank/records/progress/M30.md) | - **Milestone:** M30 |
+| M29 | [`M29.md`](../memory-bank/records/progress/M29.md) | - **Milestone:** M29 |
+| M28 | [`M28.md`](../memory-bank/records/progress/M28.md) | - **Milestone:** M28 |
+| M27 | [`M27.md`](../memory-bank/records/progress/M27.md) | - **Milestone:** M27 |
+| M26 | [`M26.md`](../memory-bank/records/progress/M26.md) | - **Milestone:** M26 |
+| M25 | [`M25.md`](../memory-bank/records/progress/M25.md) | - **Milestone:** M25 |
+| M24 | [`M24.md`](../memory-bank/records/progress/M24.md) | - **Milestone:** M24 |
+| M23 | [`M23.md`](../memory-bank/records/progress/M23.md) | - **Milestone:** M23 |
+| M22 | [`M22.md`](../memory-bank/records/progress/M22.md) | - **Milestone:** M22 |
+| M21 | [`M21.md`](../memory-bank/records/progress/M21.md) | - **Milestone:** M21 |
+| M20 | [`M20.md`](../memory-bank/records/progress/M20.md) | - **Milestone:** M20 |
+| M19 | [`M19.md`](../memory-bank/records/progress/M19.md) | - **Milestone:** M19 |
+| M18 | [`M18.md`](../memory-bank/records/progress/M18.md) | - **Milestone:** M18 |
+| M17 | [`M17.md`](../memory-bank/records/progress/M17.md) | - **Milestone:** M17 |
+| M16 | [`M16.md`](../memory-bank/records/progress/M16.md) | - **Milestone:** M16 |
+| M15 | [`M15.md`](../memory-bank/records/progress/M15.md) | - **Milestone:** M15 |
+| M14 | [`M14.md`](../memory-bank/records/progress/M14.md) | - **Milestone:** M14 |
+| M13 | [`M13.md`](../memory-bank/records/progress/M13.md) | - **Milestone:** M13 |
+| M138 | [`M138.md`](../memory-bank/records/progress/M138.md) | - **Milestone:** M138 |
+| M137 | [`M137.md`](../memory-bank/records/progress/M137.md) | - **Milestone:** M137 |
+| M136 | [`M136.md`](../memory-bank/records/progress/M136.md) | - **Milestone:** M136 |
+| M135 | [`M135.md`](../memory-bank/records/progress/M135.md) | - **Milestone:** M135 |
+| M134 | [`M134.md`](../memory-bank/records/progress/M134.md) | - **Milestone:** M134 |
+| M133 | [`M133.md`](../memory-bank/records/progress/M133.md) | - **Milestone:** M133 |
+| M132 | [`M132.md`](../memory-bank/records/progress/M132.md) | - **Milestone:** M132 |
+| M131 | [`M131.md`](../memory-bank/records/progress/M131.md) | - **Milestone:** M131 |
+| M130 | [`M130.md`](../memory-bank/records/progress/M130.md) | - **Milestone:** M130 |
+| M12 | [`M12.md`](../memory-bank/records/progress/M12.md) | - **Milestone:** M12 |
+| M129 | [`M129.md`](../memory-bank/records/progress/M129.md) | - **Milestone:** M129 |
+| M128 | [`M128.md`](../memory-bank/records/progress/M128.md) | Fix Markdown Rendering in Chat |
+| M127 | [`M127.md`](../memory-bank/records/progress/M127.md) | Token-Efficient Format Implementation |
+| M126 | [`M126.md`](../memory-bank/records/progress/M126.md) | Next Implementation Phase |
+| M125 | [`M125.md`](../memory-bank/records/progress/M125.md) | - **Milestone:** M125 |
+| M124 | [`M124.md`](../memory-bank/records/progress/M124.md) | Performance Optimization and Monitoring Enhancement |
+| M123 | [`M123.md`](../memory-bank/records/progress/M123.md) | Code Quality and Dependency Freshness |
+| M122 | [`M122.md`](../memory-bank/records/progress/M122.md) | - **Milestone:** M122 |
+| M121 | [`M121.md`](../memory-bank/records/progress/M121.md) | Application Hardening and Observability |
+| M120 | [`M120.md`](../memory-bank/records/progress/M120.md) | Cucumber Coverage Expansion |
+| M11 | [`M11.md`](../memory-bank/records/progress/M11.md) | - **Milestone:** M11 |
+| M119 | [`M119.md`](../memory-bank/records/progress/M119.md) | BDD Cucumber Adoption |
+| M118 | [`M118.md`](../memory-bank/records/progress/M118.md) | Traceability Coverage Closeout |
+| M117 | [`M117.md`](../memory-bank/records/progress/M117.md) | Semantic Markup and Traceability Foundation |
+| M116 | [`M116.md`](../memory-bank/records/progress/M116.md) | Application Hardening and Observability |
+| M115 | [`M115.md`](../memory-bank/records/progress/M115.md) | Dependency Freshness and CI Optimization |
+| M114 | [`M114.md`](../memory-bank/records/progress/M114.md) | Integration Test Hardening and CI Pipeline |
+| M113 | [`M113.md`](../memory-bank/records/progress/M113.md) | Presentation slides finalize |
+| M112 | [`M112.md`](../memory-bank/records/progress/M112.md) | Post-Upgrade Stabilization |
+| M111 | [`M111.md`](../memory-bank/records/progress/M111.md) | - **Milestone:** M111 |
+| M110 | [`M110.md`](../memory-bank/records/progress/M110.md) | - **Milestone:** M110 |
+| M10 | [`M10.md`](../memory-bank/records/progress/M10.md) | - **Milestone:** M10 |
+| M109 | [`M109.md`](../memory-bank/records/progress/M109.md) | - **Milestone:** M109 |
+| M107 | [`M107.md`](../memory-bank/records/progress/M107.md) | - **Milestone:** M107 |
+| M106 | [`M106.md`](../memory-bank/records/progress/M106.md) | - **Milestone:** M106 |
+| M105 | [`M105.md`](../memory-bank/records/progress/M105.md) | - **Milestone:** M105 |
+| M104 | [`M104.md`](../memory-bank/records/progress/M104.md) | - **Milestone:** M104 |
+| M103 | [`M103.md`](../memory-bank/records/progress/M103.md) | - **Milestone:** M103 |
+| M102 | [`M102.md`](../memory-bank/records/progress/M102.md) | - **Milestone:** M102 |
+| M101 | [`M101.md`](../memory-bank/records/progress/M101.md) | - **Milestone:** M101 |
+| M100 | [`M100.md`](../memory-bank/records/progress/M100.md) | - **Milestone:** M100 |
+| M09 | [`M09.md`](../memory-bank/records/progress/M09.md) | - **Milestone:** M09 |
+| M08 | [`M08.md`](../memory-bank/records/progress/M08.md) | - **Milestone:** M08 |
+| M07 | [`M07.md`](../memory-bank/records/progress/M07.md) | - **Milestone:** M07 |
+| M06 | [`M06.md`](../memory-bank/records/progress/M06.md) | - **Milestone:** M06 |
+| M05 | [`M05.md`](../memory-bank/records/progress/M05.md) | - **Milestone:** M05 |
+| M04 | [`M04.md`](../memory-bank/records/progress/M04.md) | - **Milestone:** M04 |
+| M03 | [`M03.md`](../memory-bank/records/progress/M03.md) | - **Milestone:** M03 |
+| M02 | [`M02.md`](../memory-bank/records/progress/M02.md) | - **Milestone:** M02 |
+| M01 | [`M01.md`](../memory-bank/records/progress/M01.md) | - **Milestone:** M01 |
 
-## Creating a New Plan
-
-See root `AGENTS.md` → Plan Files for naming and lifecycle rules.
+_Legacy plan files in `.agents/plans/archive/` are not yet migrated to `records/progress/`; see the existing `00-index.md` archive table for the full historical list until migration completes._

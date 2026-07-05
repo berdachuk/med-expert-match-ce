@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for MedicalCaseDescriptionService.
  * Tests description generation with LLM enhancement and fallback to simple text.
  */
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 class MedicalCaseDescriptionServiceIT extends BaseIntegrationTest {
 
     @Autowired

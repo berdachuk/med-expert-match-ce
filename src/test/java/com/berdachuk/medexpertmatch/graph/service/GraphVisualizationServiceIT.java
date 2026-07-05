@@ -16,6 +16,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for GraphVisualizationService.
  * Uses Testcontainers PostgreSQL with Apache AGE and real test data.
  */
+/**
+ * REQ-004: integration coverage for registered requirement.
+ * REQ-012: integration coverage for registered requirement.
+ */
 class GraphVisualizationServiceIT extends BaseIntegrationTest {
 
     @Autowired

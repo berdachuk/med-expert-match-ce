@@ -23,6 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * End-to-end smoke coverage for chat page assets and SSE lifecycle (M18 Step 4).
  * Playwright/browser automation remains optional for local runs; see testing skill.
  */
+/**
+ * REQ-014: integration coverage for registered requirement.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class ChatE2ESmokeIT extends BaseIntegrationTest {

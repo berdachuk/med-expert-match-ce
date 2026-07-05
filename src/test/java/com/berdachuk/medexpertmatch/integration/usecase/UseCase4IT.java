@@ -33,6 +33,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * 4. Agent aggregates metrics: top experts, case volumes, outcomes, facility performance
  * 5. Response: analytics report with insights and recommendations
  */
+/**
+ * REQ-004: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-006: executable scenario coverage.
+ * SCN-007: executable scenario coverage.
+ */
 class UseCase4IT extends BaseIntegrationTest {
 
     @Autowired

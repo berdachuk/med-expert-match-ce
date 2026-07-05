@@ -19,6 +19,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for MedicalCaseRepository.
  * Uses Testcontainers PostgreSQL database.
  */
+/**
+ * REQ-007: integration coverage for registered requirement.
+ */
 class MedicalCaseRepositoryIT extends BaseIntegrationTest {
 
     @Autowired

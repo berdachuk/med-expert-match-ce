@@ -14,6 +14,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 class DocumentSearchServiceIT extends BaseIntegrationTest {
 
     @Autowired

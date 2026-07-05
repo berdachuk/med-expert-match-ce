@@ -32,6 +32,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * 3. Agent uses case-analyzer and doctor-matcher skills with Semantic Graph Retrieval scoring
  * 4. Agent returns ranked list of doctors with scores and rationales
  */
+/**
+ * REQ-001: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-002: executable scenario coverage.
+ * SCN-007: executable scenario coverage.
+ */
 class UseCase1IT extends BaseIntegrationTest {
 
     @Autowired

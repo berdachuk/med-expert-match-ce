@@ -10,6 +10,9 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 @ActiveProfiles("event-driven")
 class MultiAgentPipelineIT extends BaseIntegrationTest {
 

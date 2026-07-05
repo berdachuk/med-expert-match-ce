@@ -6,6 +6,9 @@ import org.springframework.mock.env.MockEnvironment;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 @DisplayName("Profile-dependent behavior tests")
 class ProfileBehaviorIT {
 

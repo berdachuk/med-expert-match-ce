@@ -13,6 +13,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 class ChunkRepositoryIT extends BaseIntegrationTest {
 
     @Autowired

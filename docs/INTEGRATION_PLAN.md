@@ -165,6 +165,6 @@ graph LR
 
 - [HL7 FHIR R5](https://www.hl7.org/fhir/)
 - [Use Cases](use-cases.md) – EMR, portal, queue, and routing flows
-- [Architecture](02-architecture.md) – FHIR adapters and ingestion module
-- [PRD – FHIR Integration](01-requirements.md) – FR-8.x, NFR-4.3, NFR-5.1
+- [Architecture](pipeline/02-architecture.md) – FHIR adapters and ingestion module
+- [PRD – FHIR Integration](pipeline/01-requirements.md) – FR-8.x, NFR-4.3, NFR-5.1
 - [Synthetic Data Generator](SYNTHETIC_DATA_GENERATOR.md) – FHIR R5 test data

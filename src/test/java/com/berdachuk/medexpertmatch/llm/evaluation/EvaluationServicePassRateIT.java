@@ -22,6 +22,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 @Import(EvaluationServicePassRateIT.MockMedicalAgentConfig.class)
 class EvaluationServicePassRateIT extends BaseIntegrationTest {
 

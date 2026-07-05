@@ -26,6 +26,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for MedicalAgentController.
  * Tests all 6 use cases end-to-end.
  */
+/**
+ * REQ-010: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 class MedicalAgentControllerIT extends BaseIntegrationTest {
 
     @Autowired

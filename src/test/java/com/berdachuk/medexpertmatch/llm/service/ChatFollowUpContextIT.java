@@ -11,6 +11,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * REQ-014: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 @DisplayName("Chat follow-up context")
 class ChatFollowUpContextIT {
 

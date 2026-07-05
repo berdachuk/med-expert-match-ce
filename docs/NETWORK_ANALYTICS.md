@@ -86,4 +86,4 @@ graph LR
 
 - [Use Cases](use-cases.md) – Use Case 4: Network Analytics
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) – network-analyzer tools
-- [Architecture](02-architecture.md) – API and pages
+- [Architecture](pipeline/02-architecture.md) – API and pages

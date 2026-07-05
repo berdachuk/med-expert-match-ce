@@ -10,6 +10,9 @@ import java.time.Instant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 class HarnessWorkflowRunStoreIT extends BaseIntegrationTest {
 
     @Autowired

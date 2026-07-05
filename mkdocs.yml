@@ -99,7 +99,6 @@ nav:
       - Full talk speaker script (RU): presentations/medexpertmatch-full-presentation-speaker-ru.md
   - Overview:
       - Vision: VISION.md
-      - Product Requirements: 01-requirements.md
       - MedExpertMatch Overview: MedExpertMatch.md
       - Use Cases: use-cases.md
       - Problems Solved: PROBLEMS_SOLVED.md
@@ -120,11 +119,17 @@ nav:
       - FunctionGemma Tool Calling: FUNCTIONGEMMA.md
       - Harness & Agent Patterns: HARNESS_AND_AGENT_USAGE.md
   - Architecture:
-      - Architecture Overview: 02-architecture.md
       - Integration Plan: INTEGRATION_PLAN.md
       - Diagrams:
           - Data Flow Architecture: architecture/diagrams/data-flow-architecture.md
           - Expert Matching Sequence: architecture/diagrams/expert-matching-sequence.md
+  - Development pipeline:
+      - Pipeline index: pipeline/00-index.md
+      - Requirements (SRS): pipeline/01-requirements.md
+      - Architecture (SAD): pipeline/02-architecture.md
+      - Design (SDD): pipeline/03-design.md
+      - Testing (Test plan): pipeline/04-testing.md
+      - Deployment (Ops guide): pipeline/05-deployment.md
   - Development:
       - Fix Plan: FIX_PLAN.md
       - Implementation Plan: IMPLEMENTATION_PLAN.md
@@ -132,7 +137,6 @@ nav:
       - UI Flows and Mockups: UI_FLOWS_AND_MOCKUPS.md
       - Development Guide: DEVELOPMENT_GUIDE.md
       - Coding Rules: CODING_RULES.md
-      - Testing: 04-testing.md
       - List Formatting Guide: LIST_FORMATTING_GUIDE.md
       - MkDocs Setup: MKDOCS_SETUP.md
       - PlantUML Usage: PLANTUML_USAGE.md

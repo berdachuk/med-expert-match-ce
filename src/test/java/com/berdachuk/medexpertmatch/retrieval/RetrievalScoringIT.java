@@ -19,6 +19,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-001: integration coverage for registered requirement.
+ * REQ-008: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 class RetrievalScoringIT extends BaseIntegrationTest {
 
     @Autowired

@@ -11,6 +11,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * REQ-003: integration coverage for registered requirement.
+ * REQ-011: integration coverage for registered requirement.
+ * REQ-125: integration coverage for registered requirement.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class QueueControllerIT extends BaseIntegrationTest {

@@ -1,42 +1,57 @@
 # Active Context
 
+> **GENERATED** from `records/active/*.md` + `registry/risk.jsonl`. Do not hand-edit. To start a milestone, create `records/active/M{NN}.md`; to raise a risk, append to `registry/risk.jsonl`.
+
 ## Current Focus
 
-All milestones M01–M127 are complete. All planned tasks implemented. Ready for next phase planning.
+### M139
 
-## Current Milestone
+# M139 — Traceability CI Gate & Composable Tool Calling Monitoring
 
-None — all plans archived.
+- **Milestone:** M139
+- **Status:** Active
+- **Date:** 2026-07-05
 
-## Completed Recently
+## Current Focus
 
-- **M129** — Responsive chat sidebar (REQ-129). Sidebar hidden on screens <992px (`d-none d-lg-block`). Hamburger button (☰) appears in top-left of chat area on small screens. Bootstrap offcanvas wraps sidebar for slide-in overlay. JS wires hamburger click to toggle, auto-closes on chat selection. CSS for hamburger positioning, offcanvas body padding, chat list max-height. 948 unit tests pass (1 pre-existing failure: `ChatMarkdownRendererTest.allowsHttpsLinks`).
-- **M125** — Main Menu Restructure: AI Chat is now the primary entry point at `/` (REQ-125). Removed `HomeController`, `index.html`, dashboard stats. Rewrote header nav: sub-page links always visible, Home→AI Chat at root, back arrow now gates on `currentPage != 'chat'`. Deleted `HomeControllerIT`, added root page test to `ChatWebControllerIT`. Fixed pre-existing `@MockBean` compilation error in `SessionTokenApiKeyAuthFilterIT` (replaced with `@TestConfiguration` + `mock()`). 938 unit + 567 IT tests pass.
-- **M124** — Performance optimization and monitoring enhancement plan (scope deferred to M126).
-- **M123** — Code quality and dependency freshness: fixed flaky `SessionTokenApiKeyAuthFilterIT` (mocked `PubMedService`), dependency freshness pass (all deps current), documentation alignment (6 docs updated with correct Spring Boot 4.1.0 / Spring AI 2.0.0 GA versions), code quality scan (no violations found)
-- **M122** — Security hardening: @Valid on 8 controllers, CORS config, 53 new unit tests (938 unit + 568 IT, 0 failures)
-- **M121** — Application hardening closeout: probes, readiness indicator, dev Docker health check
-- **M120** — Cucumber coverage expansion to 6 agent skills (18 scenarios)
-- **M119** — BDD Cucumber adoption (3 feature files, 6 scenarios)
-- **M118** — Traceability coverage closeout (all 15 rows verified)
-- **M117** — Semantic markup and traceability foundation
-- **M114** — Integration test hardening: fixed NPE (getOptions() stub), auth 401s, validate maxDistanceKm requires coordinates, ChatWebControllerIT assertion. 549 ITs green.
-- **M113** — Presentation slides finalize: reorder slides, speaker script, mindmap alignment
-- **M112** — Post-upgrade stabilization: presentation slides, local auth fix
-- **M111** — Core Framework Upgrades: Spring Boot 4.0.6 → 4.1.0, Spring AI 2.0.0-M8 → 2.0.0 GA, Spring Modulith 2.0.7 → 2.1.0, spring-ai-agent-utils 0.8.0 → 0.9.0
+Harden traceability as a CI gate and add monitoring for composable tool calling risks (RISK-137..140).
+
+## Tasks
+
+1. [ ] Add `--check` mode to `backfill-test-traceability.py`.
+2. [ ] Wire traceability check into CI.
+3. [ ] Update `scn.jsonl` `testRefs` from enriched `test.jsonl`.
+4. [ ] Add Micrometer metrics for schema retry and tool-search fallback.
+5. [ ] Document monitoring for RISK-137..140.
+6. [ ] Run `sync-memory-index.sh --check`.
+7. [ ] Security review.
+8. [ ] Commit + merge to develop.
 
 ## Open Questions
 
-- When will GPU capacity become available for M60?
-
-## Traceability Gaps
-
-No remaining traceability gaps. All 15 rows in `productContext.md` verified.
+- None.
 
 ## Risks
 
-None active.
+- RISK-142: CI traceability check false-positives on provisional entries.
 
-## Next Steps
+## Open Questions
 
-1. **Next implementation phase** — TBD.
+_Captured per-milestone in `records/active/M{NN}.md`._
+
+## Risks
+
+- **RISK-132** — Short-key/long-key drift in LlmResponseSanitizer (mitigated, module: core) — mitigation: dual-key fallback + parity tests
+- **RISK-133** — Agents ignore do-not-hand-edit rule on generated files (mitigated, module: .agents) — mitigation: sync-memory-index.sh --check CI gate + code-style/security-check skill enforcement
+- **RISK-134** — CI gate fails if jq not installed on runner (mitigated, module: .github) — mitigation: Install jq step added to ci.yml before sync check
+- **RISK-135** — Enrichment script may extract wrong module assignments from archived plans (mitigated, module: core) — mitigation: manual spot-check 10% of enriched records
+- **RISK-136** — LenientJsonOutputConverter may miss edge cases handled by LlmResponseSanitizer.extractJson() (mitigated, module: core) — mitigation: Delegate to extractJson() logic, not just fence-stripping; add parity tests
+- **RISK-137** — validateSchema() retry loop increases LLM cost on malformed output (open, module: core) — mitigation: Default 3 retries; monitor via LlmUsageTelemetryService
+- **RISK-138** — ToolSearchToolCallingAdvisor with vector index requires VectorStore bean (open, module: llm) — mitigation: Fall back to regex index if vector store is unavailable
+- **RISK-139** — AugmentedToolCallbackProvider adds tokens per tool call (inner thinking) (open, module: llm) — mitigation: Monitor via LlmUsageTelemetryService; thinking field is a small record
+- **RISK-140** — Moving SessionMemoryAdvisor inside tool loop may increase session storage (open, module: llm) — mitigation: Compaction trigger/strategy already configured; monitor session sizes
+- **RISK-141** — Module-inferred traceability refs may mis-link IT classes to requirements (mitigated, module: .agents) — mitigation: Class-level javadoc added to 96 IT classes; backfill script re-scans source on each run
+
+## Traceability Gaps
+
+No remaining traceability gaps.

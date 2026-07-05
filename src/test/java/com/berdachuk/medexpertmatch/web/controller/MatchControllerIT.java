@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for MedicalCaseRestController.
  * Tests case search endpoint functionality.
  */
+/**
+ * REQ-125: integration coverage for registered requirement.
+ */
 class MatchControllerIT extends BaseIntegrationTest {
 
     @Autowired

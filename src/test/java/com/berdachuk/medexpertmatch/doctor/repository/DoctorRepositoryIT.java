@@ -17,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for DoctorRepository.
  * Uses Testcontainers PostgreSQL database.
  */
+/**
+ * REQ-008: integration coverage for registered requirement.
+ */
 class DoctorRepositoryIT extends BaseIntegrationTest {
 
     @Autowired

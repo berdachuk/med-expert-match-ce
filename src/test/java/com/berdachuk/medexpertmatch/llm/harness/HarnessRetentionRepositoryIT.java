@@ -15,6 +15,10 @@ import java.time.temporal.ChronoUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 @ActiveProfiles("test")
 class HarnessRetentionRepositoryIT extends BaseIntegrationTest {
 

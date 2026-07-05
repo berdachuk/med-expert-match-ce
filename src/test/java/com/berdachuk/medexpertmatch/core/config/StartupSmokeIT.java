@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 @DisplayName("Startup smoke tests")
 class StartupSmokeIT {
 

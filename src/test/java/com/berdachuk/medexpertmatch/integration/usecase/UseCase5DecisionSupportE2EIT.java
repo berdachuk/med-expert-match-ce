@@ -18,6 +18,14 @@ import java.util.List;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * REQ-005: integration coverage for registered requirement.
+ * REQ-010: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-001: executable scenario coverage.
+ * SCN-007: executable scenario coverage.
+ * SCN-009: executable scenario coverage.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class UseCase5DecisionSupportE2EIT extends BaseIntegrationTest {

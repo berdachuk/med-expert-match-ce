@@ -137,7 +137,7 @@ See [Use Cases](use-cases.md) for detailed workflows and technical implementatio
 ## Related Documentation
 
 - [Use Cases](use-cases.md) - Detailed use case workflows
-- [Architecture](02-architecture.md) - System architecture and design
+- [Architecture](pipeline/02-architecture.md) - System architecture and design
 
 ---
 

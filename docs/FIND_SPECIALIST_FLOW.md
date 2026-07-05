@@ -2157,9 +2157,9 @@ The web UI (`/match` page) includes:
 
 ## Related Documentation
 
-- [Architecture Overview](02-architecture.md)
+- [Architecture Overview](pipeline/02-architecture.md)
 - [MedGemma Configuration](MEDGEMMA_CONFIGURATION.md)
 - [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md)
 - [Use Cases](use-cases.md)
 - [Development Guide](DEVELOPMENT_GUIDE.md)
-- [Testing Guide](04-testing.md) - Text input and case search testing
+- [Testing Guide](pipeline/04-testing.md) - Text input and case search testing

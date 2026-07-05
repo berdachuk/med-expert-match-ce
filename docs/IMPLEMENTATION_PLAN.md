@@ -12,8 +12,8 @@ uses patterns established in this repository. This document is written in Englis
 
 **Related Documentation**:
 
-- [Product Requirements Document](01-requirements.md) - Complete product requirements and specifications
-- [Architecture](02-architecture.md) - System architecture and design
+- [Product Requirements Document](pipeline/01-requirements.md) - Complete product requirements and specifications
+- [Architecture](pipeline/02-architecture.md) - System architecture and design
 - [Use Cases](use-cases.md) - Detailed use case workflows with sequence diagrams
 - [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) - User interface wireframes, flows, and UI/UX guidelines
 - [Vision](VISION.md) - Project vision and long-term goals
@@ -614,12 +614,12 @@ public abstract class BaseIntegrationTest {
 ### 3.1 Agent Skills Setup
 
 **Reference**: See `src/main/resources/skills/` directory structure
-and [Architecture - Agent Skills](02-architecture.md#agent-skills)
+and [Architecture - Agent Skills](pipeline/02-architecture.md#agent-skills)
 
 **Tasks**:
 
 1. Create `src/main/resources/skills/` directory structure
-2. Create 7 skill directories (see [Architecture](02-architecture.md#agent-skills) for skill descriptions):
+2. Create 7 skill directories (see [Architecture](pipeline/02-architecture.md#agent-skills) for skill descriptions):
     - `case-analyzer/` - Analyze cases, extract entities, ICD-10 codes, classify urgency and complexity
     - `doctor-matcher/` - Match doctors to cases, scoring and ranking using multiple signals
     - `evidence-retriever/` - Search guidelines, PubMed, GRADE evidence summaries
@@ -629,7 +629,7 @@ and [Architecture - Agent Skills](02-architecture.md#agent-skills)
     - `routing-planner/` - Facility routing optimization, multi-facility scoring, geographic routing
 3. Create `SKILL.md` file in each directory with domain knowledge and tool invocation guidance
 4. Configure Spring AI Agent Skills in `application.yml`
-5. Map skills to use cases (see [Architecture - API Layer](02-architecture.md#api-layer) for endpoint-to-skill mapping)
+5. Map skills to use cases (see [Architecture - API Layer](pipeline/02-architecture.md#api-layer) for endpoint-to-skill mapping)
 
 ### 3.2 Java Tool Methods
 
@@ -669,7 +669,7 @@ and [Architecture - Agent Skills](02-architecture.md#agent-skills)
 
 **Location**: `src/main/java/com/berdachuk/medexpertmatch/llm/rest/MedicalAgentController.java`
 
-**Reference**: See [Architecture - API Layer](02-architecture.md#api-layer) and [Use Cases](use-cases.md) for endpoint
+**Reference**: See [Architecture - API Layer](pipeline/02-architecture.md#api-layer) and [Use Cases](use-cases.md) for endpoint
 details
 
 **Tasks**:
@@ -933,7 +933,7 @@ for wireframe mockups
     - `TestDataController` - Test Data Generator (`/admin/test-data`) - Admin UI
 3. Return template names and use `Model` to pass data
 4. Implement user flows as documented in [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md)
-5. Follow form field requirements from [PRD Section 7.2](01-requirements.md#72-ui-pages-and-forms)
+5. Follow form field requirements from [PRD Section 7.2](pipeline/01-requirements.md#72-ui-pages-and-forms)
 6. Write integration tests: `*ControllerIT`
 
 ## Phase 6: Integration & Testing (Week 5-6)
@@ -974,7 +974,7 @@ for wireframe mockups
 
 ### 6.3 Demo Preparation
 
-**Reference**: See [PRD Section 4.2.3](01-requirements.md#423-test-data-generation) for test data generator requirements
+**Reference**: See [PRD Section 4.2.3](pipeline/01-requirements.md#423-test-data-generation) for test data generator requirements
 
 **Tasks**:
 
@@ -1237,9 +1237,9 @@ See the codebase and test coverage for detailed metrics and implementation patte
 For detailed information on specific aspects of the implementation:
 
 - **Implementation status** - Current implementation status, metrics, patterns, and known limitations (see codebase)
-- **[Product Requirements Document](01-requirements.md)** - Complete product requirements, functional requirements, UI pages, and
+- **[Product Requirements Document](pipeline/01-requirements.md)** - Complete product requirements, functional requirements, UI pages, and
   API specifications
-- **[Architecture](02-architecture.md)** - System architecture, module structure, service layer, API layer, and agent
+- **[Architecture](pipeline/02-architecture.md)** - System architecture, module structure, service layer, API layer, and agent
   skills
 - **[Use Cases](use-cases.md)** - Detailed use case workflows with sequence diagrams showing API, agent, skill, and
   service interactions

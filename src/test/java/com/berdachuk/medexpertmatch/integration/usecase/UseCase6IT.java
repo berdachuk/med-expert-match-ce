@@ -32,6 +32,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * 4. Agent queries graph for candidate facilities and uses Semantic Graph Retrieval for routing scores
  * 5. Response: ranked list of facilities with routing scores and rationales
  */
+/**
+ * REQ-016: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-007: executable scenario coverage.
+ */
 class UseCase6IT extends BaseIntegrationTest {
 
     @Autowired

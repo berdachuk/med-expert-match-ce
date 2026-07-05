@@ -136,7 +136,7 @@ Key REST endpoints:
 
 ## Documentation
 
-- [Architecture](docs/02-architecture.md)
+- [Architecture](docs/pipeline/02-architecture.md)
 - [Unique Selling Propositions](docs/UNIQUE_SELLING_PROPOSITIONS.md)
 - [Implementation Plan](docs/IMPLEMENTATION_PLAN.md)
 - [Development Guide](docs/DEVELOPMENT_GUIDE.md)

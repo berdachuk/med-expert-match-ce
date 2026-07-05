@@ -20,6 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * only the public items (Home, Find Specialist, Case Analysis, Queue, Analytics,
  * Routing, AI Chat).
  */
+/**
+ * REQ-125: integration coverage for registered requirement.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class HeaderNavPermissionsIT extends BaseIntegrationTest {

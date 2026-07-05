@@ -13,6 +13,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 class AgentPlanArtefactStoreIT extends BaseIntegrationTest {
 
     @Autowired

@@ -1,0 +1,41 @@
+{"id":"TASK-001","milestone":"M133","title":"Analyze memory-bank structure, propose changes","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-002","milestone":"M133","title":"Create registry/SCHEMA.md + seeded JSONL files","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-003","milestone":"M133","title":"Create locks/README.md","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-004","milestone":"M133","title":"Create scripts/sync-memory-index.sh","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-005","milestone":"M133","title":"Update AGENTS.md Memory Bank section","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-006","milestone":"M133","title":"Update .gitignore for worktrees/ and tmp/","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-007","milestone":"M133","title":"Update bootstrap-new-project.md template","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-008","milestone":"M133","title":"Fix sync-memory-index.sh bugs (idempotency, path resolution, dead code, splicing, substring match, trap cleanup)","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-009","milestone":"M133","title":"Create records/decisions/DEC-001..014.md","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-010","milestone":"M133","title":"Create records/progress/ seed files for recent milestones","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-011","milestone":"M133","title":"Regenerate index files, verify --check passes and is idempotent","module":"core","status":"done","plan":"records/progress/M133.md","assignedTo":null}
+{"id":"TASK-012","milestone":"M134","title":"Add sync-memory-index.sh --check step to .github/workflows/ci.yml","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-013","milestone":"M134","title":"Migrate archive plans M01-M128 to records/progress/ stubs","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-014","milestone":"M134","title":"Seed registry/nfr.jsonl from docs NFRs","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-015","milestone":"M134","title":"Seed registry/task.jsonl from M133 completed tasks","module":"core","status":"done","plan":"records/active/M134.md","assignedTo":null}
+{"id":"TASK-016","milestone":"M134","title":"Update docs/ai-context-strategy.md with partitioned layer model","module":"core","status":"in_progress","plan":"records/active/M134.md","assignedTo":null}{"id":"TASK-017","milestone":"M134","title":"Run sync-memory-index.sh, verify --check passes","module":"core","status":"done","plan":"records/progress/M134.md","assignedTo":null}
+{"id":"TASK-018","milestone":"M134","title":"Security review","module":"core","status":"done","plan":"records/progress/M134.md","assignedTo":null}
+{"id":"TASK-019","milestone":"M134","title":"Commit + merge to develop","module":"core","status":"done","plan":"records/progress/M134.md","assignedTo":null}
+{"id":"TASK-020","milestone":"M135","title":"Enrich M01-M110 stubs with structured metadata","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-021","milestone":"M135","title":"Mine test classes and append to test.jsonl","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-022","milestone":"M135","title":"Cross-check req.jsonl against docs FRs","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-023","milestone":"M135","title":"Validate module lock flow end-to-end","module":"core","status":"pending","plan":"records/active/M135.md","assignedTo":null}
+{"id":"TASK-024","milestone":"M136","title":"Create LenientJsonOutputConverter in core/util","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-025","milestone":"M136","title":"Create structured output records (CaseAnalysisJson, GoalClassificationJson)","module":"caseanalysis","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-026","milestone":"M136","title":"Migrate CaseAnalysisServiceImpl 4 call sites to .entity() with validateSchema()","module":"caseanalysis","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-027","milestone":"M136","title":"Migrate GoalClassifier.classifyByLlm() to .entity() with validateSchema()","module":"llm","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-028","milestone":"M136","title":"Strip JSON format instructions from prompt templates","module":"llm","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-029","milestone":"M136","title":"Deprecate LlmResponseSanitizer.extractJson()","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-030","milestone":"M136","title":"Write unit tests for LenientJsonOutputConverter","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-031","milestone":"M136","title":"Update CaseAnalysisServiceIT for new .entity() path","module":"caseanalysis","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-032","milestone":"M136","title":"Run mvn verify, fix failures","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-033","milestone":"M136","title":"Security review","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-034","milestone":"M136","title":"Run sync-memory-index.sh --check","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-035","milestone":"M136","title":"Commit + merge to develop","module":"core","status":"pending","plan":"records/active/M136.md","assignedTo":null}
+{"id":"TASK-036","milestone":"M135","title":"Enrich M01-M110 stubs with structured metadata","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-037","milestone":"M135","title":"Mine test classes and append to test.jsonl","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-038","milestone":"M135","title":"Cross-check req.jsonl against docs FRs","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-039","milestone":"M135","title":"Validate module lock flow end-to-end","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-040","milestone":"M135","title":"Run sync-memory-index.sh --check","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-041","milestone":"M135","title":"Security review","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}
+{"id":"TASK-042","milestone":"M135","title":"Commit + merge to develop","module":"core","status":"done","plan":"records/progress/M135.md","assignedTo":null}

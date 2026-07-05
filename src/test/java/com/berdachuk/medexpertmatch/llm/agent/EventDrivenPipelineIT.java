@@ -18,6 +18,9 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 @ActiveProfiles("event-driven")
 class EventDrivenPipelineIT extends BaseIntegrationTest {
 

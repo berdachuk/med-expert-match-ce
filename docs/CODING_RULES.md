@@ -227,8 +227,8 @@ try {
 ## Related Documentation
 
 - [Development Guide](DEVELOPMENT_GUIDE.md)
-- [Architecture](02-architecture.md)
-- [Testing Guide](04-testing.md)
+- [Architecture](pipeline/02-architecture.md)
+- [Testing Guide](pipeline/04-testing.md)
 
 ---
 

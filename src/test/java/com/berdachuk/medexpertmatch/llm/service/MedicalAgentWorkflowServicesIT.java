@@ -20,6 +20,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Focused integration tests for extracted workflow-oriented agent services.
  */
+/**
+ * REQ-010: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 class MedicalAgentWorkflowServicesIT extends BaseIntegrationTest {
 
     @Autowired

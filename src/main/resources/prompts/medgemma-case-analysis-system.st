@@ -21,20 +21,20 @@ Analyze this medical case comprehensively and extract key information needed for
    - If Patient Age was provided in the input, use that EXACT number when mentioning age (e.g. "42-year-old"). Do NOT substitute or invent a different age.
    - Use ONLY the ICD-10 codes from the input - never invent codes.
 
-**Response Format:**
-Provide a structured analysis in JSON format:
-{
-  "requiredSpecialty": "Specialty name",
-  "urgencyLevel": "CRITICAL|HIGH|MEDIUM|LOW",
-  "clinicalFindings": ["finding1", "finding2", ...],
-  "icd10Codes": ["code1", "code2", ...],
-  "caseSummary": "Brief summary for specialist matching"
-}
+**Response Format (ultra-compact JSON, no markdown, no explanation):**
+{"sp":"Specialty","u":"CRITICAL|HIGH|MEDIUM|LOW","cf":["finding"],"icd":["code"],"sm":"Brief summary"}
+
+**Key reference:**
+- `sp` = requiredSpecialty
+- `u` = urgencyLevel
+- `cf` = clinicalFindings (array of strings)
+- `icd` = icd10Codes (array of strings; use ONLY input codes)
+- `sm` = caseSummary
 
 **CRITICAL OUTPUT LIMITS:**
-- Provide EXACTLY ONE JSON response and STOP
+- Provide EXACTLY ONE JSON object and STOP
 - Do NOT repeat the JSON structure multiple times
 - Do NOT generate multiple responses
 - Maximum response length: 2000 characters
-- Stop immediately after providing the JSON response
+- Stop immediately after providing the JSON
 - Do NOT continue generating after the JSON is complete

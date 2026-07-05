@@ -7,6 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 class EvaluationServiceIT extends BaseIntegrationTest {
 
     @Autowired

@@ -1,6 +1,13 @@
 package com.berdachuk.medexpertmatch.llm.chat;
 
-import com.berdachuk.medexpertmatch.core.util.*;
+import com.berdachuk.medexpertmatch.core.util.CaseIdExtractor;
+import com.berdachuk.medexpertmatch.core.util.LenientJsonOutputConverter;
+import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
+import com.berdachuk.medexpertmatch.core.util.LlmClientType;
+import com.berdachuk.medexpertmatch.core.util.LlmOperation;
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
+import com.berdachuk.medexpertmatch.core.util.LlmUsageContextRunner;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
@@ -410,7 +417,18 @@ public class GoalClassifier {
                                 .call()
                                 .content()));
 
-        return parseClassification(response, caseId, ctx);
+        if (response == null || response.isBlank()) {
+            return GoalClassification.general();
+        }
+
+        try {
+            var converter = new LenientJsonOutputConverter<>(GoalClassificationJson.class);
+            GoalClassificationJson parsed = converter.convert(response);
+            return parseClassification(parsed, caseId, ctx);
+        } catch (Exception e) {
+            log.warn("Failed to parse goal classification response: {}", e.getMessage());
+            return GoalClassification.general();
+        }
     }
 
     public static CaseContextIntent toContextIntent(GoalType goalType) {
@@ -421,6 +439,40 @@ public class GoalClassifier {
             case TRIAGE_INTAKE -> CaseContextIntent.MATCH;
             case SEARCH_EVIDENCE -> CaseContextIntent.EVIDENCE;
             default -> CaseContextIntent.CHAT_AUTO;
+        };
+    }
+
+    GoalClassification parseClassification(
+            GoalClassificationJson parsed, Optional<String> caseId, ConversationGoalContext.Entry sessionCtx) {
+        if (parsed == null || parsed.g() == null) {
+            return GoalClassification.general();
+        }
+
+        String goalType = parsed.g();
+        String summary = parsed.s() != null ? parsed.s() : "";
+        boolean useSessionCase = Boolean.TRUE.equals(parsed.u());
+
+        Optional<String> effectiveCaseId = caseId.filter(id -> !id.isBlank());
+        if (effectiveCaseId.isEmpty() && useSessionCase && sessionCtx != null
+                && sessionCtx.lastCaseId() != null && !sessionCtx.lastCaseId().isBlank()) {
+            effectiveCaseId = Optional.of(sessionCtx.lastCaseId());
+        }
+
+        return switch (goalType.toUpperCase()) {
+            case "MATCH_DOCTORS" -> effectiveCaseId
+                    .map(id -> GoalClassification.matchDoctors(id, summary))
+                    .orElseGet(() -> GoalClassification.matchDoctors("", summary));
+            case "ANALYZE_CASE" -> effectiveCaseId
+                    .map(id -> GoalClassification.analyzeCase(id, summary))
+                    .orElseGet(() -> GoalClassification.analyzeCase("", summary));
+            case "ROUTE_CASE" -> effectiveCaseId
+                    .map(id -> GoalClassification.routeCase(id, summary))
+                    .orElse(GoalClassification.general());
+            case "TRIAGE_INTAKE" -> GoalClassification.triageIntake(summary);
+            case "SEARCH_EVIDENCE" -> GoalClassification.searchEvidence(summary);
+            case "GENERATE_RECOMMENDATIONS" -> GoalClassification.generateRecommendations("", summary);
+            case "GENERAL_QUESTION" -> GoalClassification.general();
+            default -> GoalClassification.general();
         };
     }
 

@@ -15,6 +15,9 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 class DocumentEmbeddingPipelineIT extends BaseIntegrationTest {
 
     @Autowired

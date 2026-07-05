@@ -24,6 +24,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <p>Run after fine-tune (change model via env):
  * {@code set TOOL_CALLING_MODEL=functiongemma-medexpertmatch:270m && mvn test ... -Dmedexpertmatch.eval.tool-selection.label=finetuned}
  */
+/**
+ * REQ-018: integration coverage for registered requirement.
+ * REQ-134: integration coverage for registered requirement.
+ */
 @EnabledIfSystemProperty(named = "medexpertmatch.eval.tool-selection.live", matches = "true")
 class ToolSelectionLiveEvalIT {
 

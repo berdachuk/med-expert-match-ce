@@ -16,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for ICD10CodeRepository.
  * Uses Testcontainers PostgreSQL database.
  */
+/**
+ * REQ-007: integration coverage for registered requirement.
+ */
 class ICD10CodeRepositoryIT extends BaseIntegrationTest {
 
     @Autowired

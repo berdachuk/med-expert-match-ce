@@ -110,7 +110,7 @@ graph LR
 
 - [Use Cases](use-cases.md) – Use Case 5: Decision Support
 - [Medical Agent Tools](MEDICAL_AGENT_TOOLS.md) – evidence tools and agent API
-- [Architecture](02-architecture.md) – Case Analysis and evidence flow
+- [Architecture](pipeline/02-architecture.md) – Case Analysis and evidence flow
 
 Evidence retrieval is for research and educational purposes only. Review all evidence with qualified medical
 professionals before clinical use. This system is not certified for clinical use.

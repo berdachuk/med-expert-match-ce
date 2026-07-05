@@ -19,7 +19,7 @@ For a comprehensive overview including architecture, key features, and use cases
 ## MedGemma Impact Challenge
 
 **MedExpertMatch** was developed for the MedGemma Impact Challenge, a hackathon organized by Google Research on Kaggle.
-See the [Product Requirements Document](01-requirements.md) for full challenge alignment details.
+See the [Product Requirements Document](pipeline/01-requirements.md) for full challenge alignment details.
 
 **Challenge submission completed February 24, 2026** (6-week development timeline).
 
@@ -28,7 +28,7 @@ See the [Product Requirements Document](01-requirements.md) for full challenge a
 ### Getting Started
 
 - [Vision](VISION.md) - Project vision and long-term goals
-- [Product Requirements Document](01-requirements.md) - Complete product specification
+- [Product Requirements Document](pipeline/01-requirements.md) - Complete product specification
 - [MedExpertMatch Overview](MedExpertMatch.md) - Complete project overview
 - [Use Cases](use-cases.md) - Core use cases and workflows
 - [Problems Solved](PROBLEMS_SOLVED.md) - List of healthcare problems the application addresses
@@ -41,7 +41,7 @@ See the [Product Requirements Document](01-requirements.md) for full challenge a
 
 ### Architecture
 
-- [Architecture Overview](02-architecture.md) - System architecture and design
+- [Architecture Overview](pipeline/02-architecture.md) - System architecture and design
 - [M64 Cost-Quality Tier Routing (ADR)](decisions/M64-cost-quality-tier-routing.md) - Multi-tier LLM routing decision and full design
 - [LLM Cost Model by Tier](eval/cost-model.md) - Tier → model → token budget reference (M64 / M68)
 
@@ -51,7 +51,7 @@ See the [Product Requirements Document](01-requirements.md) for full challenge a
 - [Implementation Plan](IMPLEMENTATION_PLAN.md) - Detailed phase-by-phase implementation guide
 - [Development Guide](DEVELOPMENT_GUIDE.md) - Setup and development workflow
 - [Coding Rules](CODING_RULES.md) - Development guidelines and conventions
-- [Testing Guide](04-testing.md) - Testing patterns and best practices
+- [Testing Guide](pipeline/04-testing.md) - Testing patterns and best practices
 - [List Formatting Guide](LIST_FORMATTING_GUIDE.md) - Markdown list formatting examples and fixes
 - [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) - User interface flows and form mockups in PlantUML
 - [Repository Methods Update](REPOSITORY_METHODS_UPDATE.md) - Recent repository method additions (findAll)
@@ -120,7 +120,7 @@ For development guidelines, see:
 
 - [Development Guide](DEVELOPMENT_GUIDE.md)
 - [Coding Rules](CODING_RULES.md)
-- [Testing Guide](04-testing.md)
+- [Testing Guide](pipeline/04-testing.md)
 
 ## Support
 

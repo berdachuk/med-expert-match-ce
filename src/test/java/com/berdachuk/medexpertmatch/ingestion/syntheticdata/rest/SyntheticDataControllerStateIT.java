@@ -17,6 +17,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * REQ-015: integration coverage for registered requirement.
+ * REQ-017: integration coverage for registered requirement.
+ */
 class SyntheticDataControllerStateIT extends BaseIntegrationTest {
 
     @Autowired

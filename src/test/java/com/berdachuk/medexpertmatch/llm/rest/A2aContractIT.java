@@ -21,6 +21,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Contract tests for A2A JSON-RPC and stream envelopes (M20).
  */
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class A2aContractIT extends BaseIntegrationTest {

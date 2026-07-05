@@ -252,7 +252,7 @@ minimal**: prefer pointers to code and commands over duplicated prose that drift
 - [Harness Architecture](HARNESS.md) — detailed harness design: `GoalClassifier`, workflow engines, config, SSE events.
 - [FunctionGemma Tool Calling](FUNCTIONGEMMA.md) — tool-calling model role, configuration, and optional fine-tuning.
 - [AGENTS.md](../AGENTS.md) (repository root) Development guide for builds, tests, and conventions.
-- [02-architecture.md](02-architecture.md) System architecture.
+- [02-architecture.md](pipeline/02-architecture.md) System architecture.
 - [Find Specialist Flow](FIND_SPECIALIST_FLOW.md) End-to-end specialist matching UX and API.
 - [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) Phased delivery context (including agent skills implementation).
 

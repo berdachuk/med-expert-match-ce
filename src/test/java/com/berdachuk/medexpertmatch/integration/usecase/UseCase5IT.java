@@ -33,6 +33,14 @@ import static org.junit.jupiter.api.Assertions.*;
  * 5. System calls POST /api/v1/agent/recommendations/{matchId} for expert recommendations
  * 6. Response: comprehensive analysis with recommendations and expert matches
  */
+/**
+ * REQ-005: integration coverage for registered requirement.
+ * REQ-010: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-001: executable scenario coverage.
+ * SCN-007: executable scenario coverage.
+ * SCN-009: executable scenario coverage.
+ */
 class UseCase5IT extends BaseIntegrationTest {
 
     @Autowired

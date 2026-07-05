@@ -20,6 +20,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Verifies A2A SSE stream uses the same token envelope as chat ({@code event:token}, JSON {@code {"t":"..."}}).
  */
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class A2aStreamParityIT extends BaseIntegrationTest {

@@ -67,7 +67,7 @@ docker compose -f docker-compose.dev.yml up -d
 
 ### MedGemma Setup (Local Development)
 
-See [MedGemma Setup Guide](MEDGEMMA_SETUP.md) for detailed instructions.
+See [MedGemma Setup Guide](../MEDGEMMA_SETUP.md) for detailed instructions.
 
 **Quick Start:**
 
@@ -121,7 +121,7 @@ mkdocs build
 | Mode | App | DB | AI |
 |------|-----|----|----|
 | `local` profile | `http://localhost:8080` (or custom, e.g. `8094`) | `localhost:5434` or `5433` | `application-local.yml` |
-| Default (no profile) | `http://localhost:8080` | `localhost:5433` | [application.yml](../src/main/resources/application.yml) defaults |
+| Default (no profile) | `http://localhost:8080` | `localhost:5433` | [application.yml](../../src/main/resources/application.yml) defaults |
 | Docker Compose | `http://localhost:8094` | `localhost:5433` | `docker-compose.yml` |
 | tests | — | Testcontainers | mocked beans |
 
@@ -137,7 +137,7 @@ CLINICAL_* / UTILITY_* / TOOL_CALLING_* / EMBEDDING_* / RERANKING_* / CHAT_* (le
 ```
 
 **Single-host Ollama:** all roles may share one base URL (e.g. `http://192.168.0.73:11434/v1`). Role separation is by
-**model name**, not by port. See [Model Selection Guide](MODEL_SELECTION_GUIDE.md).
+**model name**, not by port. See [Model Selection Guide](../MODEL_SELECTION_GUIDE.md).
 
 ### Default models (`application.yml`)
 
@@ -149,7 +149,7 @@ CLINICAL_* / UTILITY_* / TOOL_CALLING_* / EMBEDDING_* / RERANKING_* / CHAT_* (le
 | Reranking | `RERANKING_*` → `UTILITY_*` | `qwen3.5:4b` | `rerankingChatModel` |
 | Embedding | `EMBEDDING_*` | `nomic-embed-text:v1.5` (768 dims) | `primaryEmbeddingModel` |
 
-Default concurrency: clinical `1`, utility `2`, others `1` — see `medexpertmatch.llm.*` in [application.yml](../src/main/resources/application.yml).
+Default concurrency: clinical `1`, utility `2`, others `1` — see `medexpertmatch.llm.*` in [application.yml](../../src/main/resources/application.yml).
 
 ### Environment Variables
 
@@ -190,7 +190,7 @@ Verify models: `curl http://HOST:11434/v1/models`.
 
 ### Local profile (`application-local.yml`)
 
-Copy [application-local.yml.sample](../src/main/resources/application-local.yml.sample) to `application-local.yml`
+Copy [application-local.yml.sample](../../src/main/resources/application-local.yml.sample) to `application-local.yml`
 (gitignored). The sample uses **one Ollama** at `http://127.0.0.1:11434/v1` with M67 role variables:
 
 - `CLINICAL_*` — harness / case analysis (`medgemma1.5:4b`)
@@ -275,10 +275,10 @@ MEDEXPERTMATCH_EMBEDDING_MULTI_ENDPOINT_API_BATCH_SIZE=50
 ## Related Documentation
 
 - [02-architecture.md](02-architecture.md) — System architecture
-- [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) — Full AI provider setup details
-- [Model Selection Guide](MODEL_SELECTION_GUIDE.md) — Models per role (local vs cloud)
-- [MedGemma Configuration](MEDGEMMA_CONFIGURATION.md) — MedGemma model configuration
-- [MedGemma Setup](MEDGEMMA_SETUP.md) — Local MedGemma setup guide
+- [AI Provider Configuration](../AI_PROVIDER_CONFIGURATION.md) — Full AI provider setup details
+- [Model Selection Guide](../MODEL_SELECTION_GUIDE.md) — Models per role (local vs cloud)
+- [MedGemma Configuration](../MEDGEMMA_CONFIGURATION.md) — MedGemma model configuration
+- [MedGemma Setup](../MEDGEMMA_SETUP.md) — Local MedGemma setup guide
 - [04-testing.md](04-testing.md) — Testing guidelines
 
 ---

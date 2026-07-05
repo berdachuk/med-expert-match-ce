@@ -56,7 +56,7 @@ med-expert-match/
 └── pom.xml
 ```
 
-See [Architecture](02-architecture.md) for detailed module descriptions.
+See [Architecture](pipeline/02-architecture.md) for detailed module descriptions.
 
 ## Current Implementation Status
 
@@ -583,12 +583,12 @@ See [Model Selection Guide](MODEL_SELECTION_GUIDE.md) and [application-local.yml
 
 ## Related Documentation
 
-- [Architecture](02-architecture.md) - System architecture
+- [Architecture](pipeline/02-architecture.md) - System architecture
 - [AI Provider Configuration](AI_PROVIDER_CONFIGURATION.md) - AI provider setup
 - [Model Selection Guide](MODEL_SELECTION_GUIDE.md) - Models per role (local vs cloud)
 - [MedGemma Configuration](MEDGEMMA_CONFIGURATION.md) - MedGemma model configuration
 - [MedGemma Setup](MEDGEMMA_SETUP.md) - Local MedGemma setup guide
-- [Testing](04-testing.md) - Testing guidelines
+- [Testing](pipeline/04-testing.md) - Testing guidelines
 
 ---
 

@@ -32,6 +32,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * 4. Agent uses doctor-matcher with Semantic Graph Retrieval, prioritizing telehealth-enabled doctors
  * 5. Response: top specialists with scores, availability, and reasons
  */
+/**
+ * REQ-002: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-007: executable scenario coverage.
+ */
 class UseCase2IT extends BaseIntegrationTest {
 
     @Autowired

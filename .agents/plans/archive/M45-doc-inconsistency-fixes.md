@@ -161,5 +161,5 @@ rg "FHIR R4" docs/02-architecture.md docs/IMPLEMENTATION_PLAN.md
 ## Related
 
 - [FIX_PLAN.md](docs/FIX_PLAN.md) — existing tracked fixes (Phase 1 covers some alignment already)
-- [02-architecture.md](docs/02-architecture.md)
-- [01-requirements.md](docs/01-requirements.md)
+- [02-architecture.md](docs/pipeline/02-architecture.md)
+- [01-requirements.md](docs/pipeline/01-requirements.md)

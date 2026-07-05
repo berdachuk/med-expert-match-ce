@@ -18,6 +18,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for ClinicalExperienceRepository.
  * Uses Testcontainers PostgreSQL database.
  */
+/**
+ * REQ-008: integration coverage for registered requirement.
+ */
 class ClinicalExperienceRepositoryIT extends BaseIntegrationTest {
 
     @Autowired

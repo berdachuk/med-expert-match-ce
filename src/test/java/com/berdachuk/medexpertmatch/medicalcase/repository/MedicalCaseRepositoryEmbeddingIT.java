@@ -18,6 +18,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration test for MedicalCaseRepository embedding methods.
  * Tests findWithoutEmbeddings() and updateEmbedding() methods.
  */
+/**
+ * REQ-007: integration coverage for registered requirement.
+ * REQ-016: integration coverage for registered requirement.
+ */
 class MedicalCaseRepositoryEmbeddingIT extends BaseIntegrationTest {
 
     @Autowired

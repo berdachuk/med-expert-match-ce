@@ -13,6 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
+/**
+ * REQ-018: integration coverage for registered requirement.
+ */
 @ExtendWith(MockitoExtension.class)
 class WebSocketJobStatusIT {
 

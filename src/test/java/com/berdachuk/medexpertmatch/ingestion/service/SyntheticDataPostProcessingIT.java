@@ -17,6 +17,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration tests for synthetic data post-processing (clear, graph rebuild cycles).
  */
+/**
+ * REQ-015: integration coverage for registered requirement.
+ * REQ-017: integration coverage for registered requirement.
+ */
 class SyntheticDataPostProcessingIT extends BaseIntegrationTest {
 
     @Autowired

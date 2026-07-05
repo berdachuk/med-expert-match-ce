@@ -10,6 +10,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ * SCN-007: executable scenario coverage.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 class UseCase6DocumentSearchE2EIT extends BaseIntegrationTest {

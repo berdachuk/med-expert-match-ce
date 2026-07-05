@@ -631,9 +631,9 @@ Results flow back → Agent formats response → REST API returns JSON
 - **Pattern**: Controllers return template names (e.g., `return "index"`) and use `Model` to pass data
 - **Development**: Templates automatically reload with Spring Boot DevTools
 - **Mockups**: All UI mockups are documented using PlantUML Salt wireframes
-  in [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md)
+  in [UI Flows and Mockups](../UI_FLOWS_AND_MOCKUPS.md)
 
-**Reference**: See [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) for detailed wireframe mockups, user flows, and UI/UX
+**Reference**: See [UI Flows and Mockups](../UI_FLOWS_AND_MOCKUPS.md) for detailed wireframe mockups, user flows, and UI/UX
 guidelines.
 
 ### 7.2 UI Pages and Forms
@@ -651,7 +651,7 @@ guidelines.
 
 **Layout**: Standard layout with header, navigation, main content, footer
 
-**Wireframe Mockup**: See [UI Flows and Mockups - Home Page](UI_FLOWS_AND_MOCKUPS.md#page-1-home-page) for PlantUML Salt
+**Wireframe Mockup**: See [UI Flows and Mockups - Home Page](../UI_FLOWS_AND_MOCKUPS.md#page-1-home-page) for PlantUML Salt
 wireframe with visual layout.
 
 #### 7.2.2 Specialist Matching Page (`/match`)
@@ -702,7 +702,7 @@ wireframe with visual layout.
 7. User reviews results and selects specialist
 8. User clicks "Request Consultation" or "View Details"
 
-**Wireframe Mockup**: See [UI Flows and Mockups - Find Specialist](UI_FLOWS_AND_MOCKUPS.md#page-2-find-specialist-match)
+**Wireframe Mockup**: See [UI Flows and Mockups - Find Specialist](../UI_FLOWS_AND_MOCKUPS.md#page-2-find-specialist-match)
 for PlantUML Salt wireframe and detailed UI flow diagram.
 
 #### 7.2.3 Consultation Queue Page (`/queue`)
@@ -736,7 +736,7 @@ for PlantUML Salt wireframe and detailed UI flow diagram.
 5. System updates queue and sends notifications
 
 **Wireframe Mockup**:
-See [UI Flows and Mockups - Consultation Queue](UI_FLOWS_AND_MOCKUPS.md#page-3-consultation-queue-queue) for PlantUML
+See [UI Flows and Mockups - Consultation Queue](../UI_FLOWS_AND_MOCKUPS.md#page-3-consultation-queue-queue) for PlantUML
 Salt wireframe with queue table layout and detailed UI flow diagram.
 
 #### 7.2.4 Network Analytics Page (`/analytics`)
@@ -786,7 +786,7 @@ Salt wireframe with queue table layout and detailed UI flow diagram.
 6. Analyst exports report or saves view
 
 **Wireframe Mockup**:
-See [UI Flows and Mockups - Network Analytics](UI_FLOWS_AND_MOCKUPS.md#page-4-network-analytics-analytics) for PlantUML
+See [UI Flows and Mockups - Network Analytics](../UI_FLOWS_AND_MOCKUPS.md#page-4-network-analytics-analytics) for PlantUML
 Salt wireframe with query form and results visualization.
 
 #### 7.2.5 Case Analysis Page (`/analyze/{caseId}`)
@@ -833,7 +833,7 @@ Salt wireframe with query form and results visualization.
 7. Specialist selects colleague for consultation
 
 **Wireframe Mockup**:
-See [UI Flows and Mockups - Case Analysis](UI_FLOWS_AND_MOCKUPS.md#page-5-case-analysis-analyzecaseid) for PlantUML Salt
+See [UI Flows and Mockups - Case Analysis](../UI_FLOWS_AND_MOCKUPS.md#page-5-case-analysis-analyzecaseid) for PlantUML Salt
 wireframe showing structured analysis layout.
 
 #### 7.2.6 Regional Routing Page (`/routing`)
@@ -883,7 +883,7 @@ wireframe showing structured analysis layout.
 8. System initiates routing and sends notifications
 
 **Wireframe Mockup**:
-See [UI Flows and Mockups - Regional Routing](UI_FLOWS_AND_MOCKUPS.md#page-6-regional-routing-routing) for PlantUML Salt
+See [UI Flows and Mockups - Regional Routing](../UI_FLOWS_AND_MOCKUPS.md#page-6-regional-routing-routing) for PlantUML Salt
 wireframe with facility routing cards.
 
 #### 7.2.7 Doctor Profile Page (`/doctors/{doctorId}`)
@@ -916,7 +916,7 @@ wireframe with facility routing cards.
 - "Contact" button (if authorized)
 
 **Wireframe Mockup**:
-See [UI Flows and Mockups - Doctor Profile](UI_FLOWS_AND_MOCKUPS.md#page-7-doctor-profile-doctorsdoctorid) for PlantUML
+See [UI Flows and Mockups - Doctor Profile](../UI_FLOWS_AND_MOCKUPS.md#page-7-doctor-profile-doctorsdoctorid) for PlantUML
 Salt wireframe with profile layout.
 
 #### 7.2.8 Synthetic Data Page (`/admin/synthetic-data`)
@@ -968,7 +968,7 @@ in the user selector).
 6. Admin can now use generated data for demos
 
 **Wireframe Mockup**:
-See [UI Flows and Mockups - Synthetic Data](UI_FLOWS_AND_MOCKUPS.md) for
+See [UI Flows and Mockups - Synthetic Data](../UI_FLOWS_AND_MOCKUPS.md) for
 PlantUML Salt wireframe with generation form and progress display.
 
 #### 7.2.9 Graph Visualization Page (`/admin/graph-visualization`)
@@ -1201,7 +1201,7 @@ selected in the user selector).
 
 ### 7.5 UI/UX Guidelines
 
-**Reference**: See [UI Flows and Mockups - UI/UX Guidelines](UI_FLOWS_AND_MOCKUPS.md#uiux-guidelines) for detailed
+**Reference**: See [UI Flows and Mockups - UI/UX Guidelines](../UI_FLOWS_AND_MOCKUPS.md#uiux-guidelines) for detailed
 design guidelines with PlantUML Salt wireframe examples.
 
 #### 7.5.1 Design Principles
@@ -1249,7 +1249,7 @@ design guidelines with PlantUML Salt wireframe examples.
 - **Tablet**: Optimized layout with collapsible sections
 - **Mobile**: Stacked layout, simplified forms, touch-friendly buttons
 
-**Mobile Wireframe**: See [UI Flows and Mockups - Mobile View](UI_FLOWS_AND_MOCKUPS.md#mobile-view) for PlantUML Salt
+**Mobile Wireframe**: See [UI Flows and Mockups - Mobile View](../UI_FLOWS_AND_MOCKUPS.md#mobile-view) for PlantUML Salt
 wireframe showing mobile layout.
 
 #### 7.5.6 Accessibility Features
@@ -1262,7 +1262,7 @@ wireframe showing mobile layout.
 - **Color Contrast**: WCAG AA compliance for color contrast ratios
 
 **Accessibility Wireframe**:
-See [UI Flows and Mockups - Accessibility Features](UI_FLOWS_AND_MOCKUPS.md#accessibility-features) for accessibility
+See [UI Flows and Mockups - Accessibility Features](../UI_FLOWS_AND_MOCKUPS.md#accessibility-features) for accessibility
 component details.
 
 ## 8. API Specifications
@@ -1426,10 +1426,10 @@ All agent endpoints follow a consistent pattern under `/api/v1/agent`:
 
 ### 13.2 Related Documents
 
-- [Vision](VISION.md) - Project vision and long-term goals
-- [Use Cases](use-cases.md) - Detailed use case workflows with sequence diagrams
+- [Vision](../VISION.md) - Project vision and long-term goals
+- [Use Cases](../use-cases.md) - Detailed use case workflows with sequence diagrams
 - [Architecture](02-architecture.md) - System architecture and design
-- [UI Flows and Mockups](UI_FLOWS_AND_MOCKUPS.md) - User interface flows, wireframe mockups, and UI/UX guidelines
+- [UI Flows and Mockups](../UI_FLOWS_AND_MOCKUPS.md) - User interface flows, wireframe mockups, and UI/UX guidelines
 
 ---
 

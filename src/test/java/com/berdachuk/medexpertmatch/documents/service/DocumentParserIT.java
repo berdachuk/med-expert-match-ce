@@ -14,6 +14,9 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * REQ-016: integration coverage for registered requirement.
+ */
 class DocumentParserIT {
 
     private StructuredFileParser parser;

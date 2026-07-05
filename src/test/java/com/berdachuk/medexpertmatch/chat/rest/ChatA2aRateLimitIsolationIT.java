@@ -17,6 +17,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * REQ-014: integration coverage for registered requirement.
+ * REQ-016: integration coverage for registered requirement.
+ * REQ-018: integration coverage for registered requirement.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Import(com.berdachuk.medexpertmatch.chat.service.ChatRateLimitLowLimitTestConfig.class)
