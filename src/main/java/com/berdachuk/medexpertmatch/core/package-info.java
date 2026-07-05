@@ -4,7 +4,7 @@
  * This module provides:
  * - Configuration classes (SpringAIConfig, MedicalAgentConfiguration, PromptTemplateConfig)
  * - Exception handling (MedExpertMatchException, RetrievalException, ErrorCode)
- * - Monitoring (MedGemmaToolCallingMonitor)
+ * - Monitoring (MedGemmaToolCallingMonitor, StructuredOutputValidationMetrics)
  * - Utilities (IdGenerator, LlmCallLimiter, LlmClientType, RetryWithBackoff)
  * - Health monitoring (HealthCheck, DatabaseHealthCheck, HealthCheckService)
  * - Log streaming (LogStreamService)

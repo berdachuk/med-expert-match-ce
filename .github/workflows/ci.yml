@@ -21,6 +21,9 @@ jobs:
       - name: Memory-bank index sync check
         run: ./scripts/sync-memory-index.sh --check
 
+      - name: Test traceability registry check
+        run: python3 scripts/backfill-test-traceability.py --check
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:

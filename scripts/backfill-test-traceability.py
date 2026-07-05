@@ -95,8 +95,95 @@ def load_jsonl(path: Path) -> list[dict]:
     return entries
 
 
+def load_jsonl_strict(path: Path) -> list[dict]:
+    """Load JSONL requiring exactly one JSON object per non-empty line."""
+    entries: list[dict] = []
+    for line_no, line in enumerate(path.read_text().splitlines(), 1):
+        if not line.strip():
+            continue
+        try:
+            obj, end = json.JSONDecoder().raw_decode(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path}:{line_no}: invalid JSON: {exc}") from exc
+        trailing = line[end:].strip()
+        if trailing:
+            raise ValueError(f"{path}:{line_no}: merged JSON objects on one line")
+        entries.append(obj)
+    return entries
+
+
 def write_jsonl(path: Path, entries: list[dict]) -> None:
     path.write_text("\n".join(json.dumps(e, separators=(",", ":")) for e in entries) + "\n")
+
+
+def run_check(test_jsonl: Path = TEST_JSONL) -> int:
+    """Validate test.jsonl integrity and traceability refs. Exit 0 when valid."""
+    errors: list[str] = []
+    try:
+        entries = load_jsonl_strict(test_jsonl)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    for entry in entries:
+        entry_id = entry.get("id", "<missing-id>")
+        if not entry.get("id"):
+            errors.append(f"{entry_id}: missing id")
+        if not entry.get("class"):
+            errors.append(f"{entry_id}: missing class")
+        if not entry.get("module"):
+            errors.append(f"{entry_id}: missing module")
+
+        if entry.get("status") == "provisional":
+            continue
+
+        reqs = entry.get("reqRefs") or []
+        scns = entry.get("scnRefs") or []
+        if not reqs and not scns:
+            errors.append(f"{entry_id}: lacks reqRefs and scnRefs (set status=provisional to waive)")
+
+    if errors:
+        print(f"ERROR: traceability check failed ({len(errors)} issue(s)):", file=sys.stderr)
+        for err in errors:
+            print(f"  - {err}", file=sys.stderr)
+        return 1
+
+    print(f"OK: {len(entries)} test registry entries passed traceability check")
+    return 0
+
+
+def sync_scn_test_refs(
+    test_jsonl: Path = TEST_JSONL,
+    scn_jsonl: Path = SCN_JSONL,
+    dry_run: bool = False,
+) -> int:
+    """Merge testRefs on scn.jsonl from scnRefs on test.jsonl."""
+    test_entries = load_jsonl(test_jsonl)
+    scn_entries = load_jsonl(scn_jsonl)
+
+    scn_to_tests: dict[str, set[str]] = {}
+    for entry in test_entries:
+        test_id = entry.get("id")
+        if not test_id:
+            continue
+        for scn_id in entry.get("scnRefs") or []:
+            scn_to_tests.setdefault(scn_id, set()).add(test_id)
+
+    updated = 0
+    for scn_entry in scn_entries:
+        scn_id = scn_entry.get("id")
+        if not scn_id:
+            continue
+        merged = sorted(set(scn_entry.get("testRefs") or []) | scn_to_tests.get(scn_id, set()))
+        if merged != (scn_entry.get("testRefs") or []):
+            scn_entry["testRefs"] = merged
+            updated += 1
+
+    if not dry_run and updated:
+        write_jsonl(scn_jsonl, scn_entries)
+
+    print(f"SCN testRefs updated: {updated}")
+    return updated
 
 
 def resolve_java_path(class_path: str) -> Path | None:
@@ -208,6 +295,12 @@ def annotate_it_sources(test_entries: list[dict], dry_run: bool) -> int:
 def main() -> int:
     dry_run = "--dry-run" in sys.argv
     annotate = "--annotate" in sys.argv
+    check_only = "--check" in sys.argv
+    sync_scn = "--sync-scn" in sys.argv
+
+    if check_only:
+        return run_check()
+
     test_entries = load_jsonl(TEST_JSONL)
     updated = 0
     missing_source = 0
@@ -245,6 +338,9 @@ def main() -> int:
     if annotate:
         annotate_it_sources(test_entries, dry_run=dry_run)
 
+    if sync_scn:
+        sync_scn_test_refs(dry_run=dry_run)
+
     if not dry_run:
         write_jsonl(TEST_JSONL, test_entries)
 
@@ -256,6 +352,9 @@ def main() -> int:
         risk_path = ROOT / ".agents/memory-bank/registry/risk.jsonl"
         risk_entries = load_jsonl(risk_path)
         write_jsonl(risk_path, risk_entries)
+
+        if not sync_scn:
+            sync_scn_test_refs(dry_run=False)
 
     return 0
 

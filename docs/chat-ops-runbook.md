@@ -72,6 +72,29 @@ Workflow logs emit `HARNESS_STATE` transitions on the active session id (doctor 
 - Alerts: `grafana/chat-alerts.yml`, hints in `docs/grafana-chat-alerts.md`
 - Key panels: tier rate limits, turn duration by tier, export rate
 
+### Composable tool calling & structured output (RISK-137..140)
+
+Micrometer metrics for Spring AI composable tool calling and structured-output risks. No PHI in labels.
+
+| Metric | Tags | Risk | Meaning |
+|--------|------|------|---------|
+| `llm.structured-output.validation.retry` | `operation`, `client_type`, `attempt` | RISK-137 | `validateSchema()` re-issued a call after schema mismatch |
+| `llm.structured-output.validation.failure` | `operation`, `client_type` | RISK-137 | All validation retries exhausted |
+| `llm.tool-search.fallback.total` | `requested_index`, `resolved_index` | RISK-138 | Tool search index fell back (e.g. vector → regex) |
+| `llm.tokens.total` | `client_type`, `tier`, `goal_type`, `direction` | RISK-139 | Token volume; watch utility/tool-calling tier after `AugmentedToolCallbackProvider` inner-thought args |
+| `session.compaction.total` | — | RISK-140 | Session memory compactions (tool loop transcript growth) |
+| `session.compaction.events_removed` | — | RISK-140 | Events removed per compaction |
+| `session.events.count` | `session_hash` (sampled) | RISK-140 | Remaining events after compaction on sampled sessions |
+
+**Prometheus queries (examples):**
+
+- Schema retry rate: `rate(llm_structured_output_validation_retry_total[5m])`
+- Tool-search fallback: `increase(llm_tool_search_fallback_total[1h])`
+- Inner-thought token drift: compare `llm_tokens_total{client_type="UTILITY"}` before/after deploy
+- Session growth: `session_compaction_events_removed_sum / session_compaction_total`
+
+Structured-output counters are emitted from M140 call sites; tool-search fallback from `ToolSearchToolCallingAdvisor` wiring when vector index is unavailable.
+
 ## PHI safety
 
 - Never log message content, patient identifiers, or raw chat/user ids.
