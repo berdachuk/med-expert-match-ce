@@ -18,8 +18,7 @@ class SessionBranchIsolationTest {
     @Test
     @DisplayName("EventFilter.forBranch binds orchestrator branch name")
     void eventFilterForOrchestratorBranch() {
-        EventFilter filter = EventFilter.forBranch(AgentSessionBranches.ORCHESTRATOR);
-        assertNotNull(filter);
+        EventFilter filter = AgentSessionBranches.orchestratorEventFilter();
         assertEquals(AgentSessionBranches.ORCHESTRATOR, filter.branch());
     }
 }

@@ -17,6 +17,7 @@ import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
+import org.springframework.ai.session.tool.SessionEventTools;
 import org.springframework.ai.session.compaction.CompactionStrategy;
 import org.springframework.ai.session.compaction.CompactionTrigger;
 import org.springframework.ai.tool.ToolCallback;
@@ -50,10 +51,12 @@ class MedicalAgentMemoryWiringTest {
 
         // SessionMemoryAdvisor is final; build a real one with mocked collaborators (mirrors the
         // existing session wiring) rather than mocking it.
-        SessionMemoryAdvisor sessionMemoryAdvisor = SessionMemoryAdvisor.builder(mock(SessionService.class))
+        SessionService sessionService = mock(SessionService.class);
+        SessionMemoryAdvisor sessionMemoryAdvisor = SessionMemoryAdvisor.builder(sessionService)
                 .compactionTrigger(mock(CompactionTrigger.class))
                 .compactionStrategy(mock(CompactionStrategy.class))
                 .build();
+        SessionEventTools sessionEventTools = config.sessionEventTools(sessionService);
         TodoWriteTool todoWriteTool = config.todoWriteTool(mock(AgentTodoTrackingService.class));
         AskUserQuestionTool askUserQuestionTool = config.askUserQuestionTool(mock(AgentQuestionService.class));
         ToolCallingAdvisor toolCallAdvisor = config.agentToolCallAdvisor(mock(ToolCallingManager.class));
@@ -66,8 +69,10 @@ class MedicalAgentMemoryWiringTest {
                 mock(RoutingAgentTools.class),
                 mock(TodoWriteTool.class),
                 mock(AskUserQuestionTool.class),
-                mock(com.berdachuk.medexpertmatch.llm.tools.DateTimeAgentTools.class),
-                new com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor());
+                mock(DateTimeAgentTools.class),
+                new com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor(),
+                toolCallAdvisor,
+                sessionMemoryAdvisor);
         PromptTemplate autoMemorySystemPromptTemplate = mock(PromptTemplate.class);
         when(autoMemorySystemPromptTemplate.render(any())).thenReturn("automemory system prompt with phi guard");
 
@@ -92,6 +97,7 @@ class MedicalAgentMemoryWiringTest {
                 mock(com.berdachuk.medexpertmatch.llm.tools.DateTimeAgentTools.class),
                 toolCallAdvisor,
                 sessionMemoryAdvisor,
+                sessionEventTools,
                 new com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor(),
                 memProps,
                 autoMemorySystemPromptTemplate);

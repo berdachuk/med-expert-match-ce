@@ -17,6 +17,7 @@ agent:
     max-turns: ${AGENT_SESSION_MAX_TURNS:20}        # turn-count compaction trigger
     max-tokens: ${AGENT_SESSION_MAX_TOKENS:4000}    # estimated-token compaction trigger
     max-window-turns: ${AGENT_SESSION_MAX_WINDOW_TURNS:30}  # turns kept by the non-LLM window strategy
+    retention-days: ${AGENT_SESSION_RETENTION_DAYS:${CHAT_RETENTION_IDLE_DAYS:0}}  # aligned with chat.retention.idle-days
   memory: # Long-term (cross-session) AutoMemory. NON-PHI ONLY (PhiGuard rejects PHI-shaped content).
     dir: ${AGENT_MEMORY_DIR:${user.home}/.spring-ai-agent/medexpertmatch/memory}
     consolidation:

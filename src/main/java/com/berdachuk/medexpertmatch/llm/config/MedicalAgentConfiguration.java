@@ -2,6 +2,9 @@ package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
+import com.berdachuk.medexpertmatch.llm.agent.AgentSessionBranches;
+import com.berdachuk.medexpertmatch.llm.agent.SubagentSessionContextAdvisor;
+import com.berdachuk.medexpertmatch.llm.agent.OrchestratorBranchSessionService;
 import com.berdachuk.medexpertmatch.llm.automemory.AutoMemoryTools;
 import com.berdachuk.medexpertmatch.llm.automemory.MemoryConsolidationTrigger;
 import com.berdachuk.medexpertmatch.llm.automemory.TimeGapConsolidationTrigger;
@@ -28,6 +31,7 @@ import org.springframework.ai.session.SessionRepository;
 import org.springframework.ai.session.SessionService;
 import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
 import org.springframework.ai.session.compaction.*;
+import org.springframework.ai.session.tool.SessionEventTools;
 import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 import org.springframework.ai.tokenizer.TokenCountEstimator;
 import org.springframework.ai.tool.ToolCallback;
@@ -196,9 +200,10 @@ public class MedicalAgentConfiguration {
     @ConditionalOnBean(SessionRepository.class)
     SessionService sessionService(SessionRepository sessionRepository) {
         log.info("Creating DefaultSessionService for turn-safe short-term memory");
-        return DefaultSessionService.builder()
+        SessionService core = DefaultSessionService.builder()
                 .sessionRepository(sessionRepository)
                 .build();
+        return new OrchestratorBranchSessionService(core);
     }
 
     /**
@@ -220,6 +225,18 @@ public class MedicalAgentConfiguration {
                 .compactionStrategy(sessionCompactionStrategy)
                 .order(ToolCallingAdvisor.DEFAULT_ORDER + 1)
                 .build();
+    }
+
+    /**
+     * Post-compaction recall: lets the orchestrator keyword-search full verbatim session history
+     * after {@link TurnWindowCompactionStrategy} drops older turns. Registered without
+     * {@link AugmentedToolCallbackProvider} — the tool already exposes {@code innerThought}.
+     */
+    @Bean
+    @ConditionalOnBean(SessionService.class)
+    SessionEventTools sessionEventTools(SessionService sessionService) {
+        log.info("Creating SessionEventTools for post-compaction conversation recall");
+        return SessionEventTools.builder(sessionService).build();
     }
 
     @Bean
@@ -263,31 +280,85 @@ public class MedicalAgentConfiguration {
             TodoWriteTool todoWriteTool,
             AskUserQuestionTool askUserQuestionTool,
             DateTimeAgentTools dateTimeAgentTools,
-            DateTimeContextAdvisor dateTimeContextAdvisor) {
+            DateTimeContextAdvisor dateTimeContextAdvisor,
+            ToolCallingAdvisor agentToolCallAdvisor,
+            SessionMemoryAdvisor sessionMemoryAdvisor) {
         log.info("Creating TaskTool with specialist subagents from classpath:agents");
         try {
             var subagentReferences = loadSubagentReferences(resourceLoader);
-            ChatClient.Builder subagentChatClientBuilder = ChatClient.builder(toolCallingChatModel)
-                    .defaultAdvisors(dateTimeContextAdvisor)
-                    .defaultTools(augmentTool(caseAnalysisAgentTools))
-                    .defaultTools(augmentTool(doctorMatchingAgentTools))
-                    .defaultTools(augmentTool(evidenceAgentTools))
-                    .defaultTools(augmentTool(clinicalAdvisorAgentTools))
-                    .defaultTools(augmentTool(graphAnalyticsAgentTools))
-                    .defaultTools(augmentTool(routingAgentTools))
-                    .defaultTools(augmentTool(dateTimeAgentTools))
-                    .defaultTools(augmentTool(todoWriteTool))
-                    .defaultTools(augmentTool(askUserQuestionTool));
+            Resource[] agentResources = new PathMatchingResourcePatternResolver(resourceLoader)
+                    .getResources("classpath:agents/*.md");
+            var subagentTypeBuilder = ClaudeSubagentType.builder();
+            ChatClient.Builder defaultSubagentBuilder = null;
+            for (Resource resource : agentResources) {
+                String fileName = resource.getFilename();
+                if (fileName == null || fileName.isBlank()) {
+                    continue;
+                }
+                String agentId = AgentSessionBranches.agentIdFromFilename(fileName);
+                ChatClient.Builder builder = subagentChatClientBuilder(
+                        toolCallingChatModel,
+                        agentId,
+                        caseAnalysisAgentTools,
+                        doctorMatchingAgentTools,
+                        evidenceAgentTools,
+                        clinicalAdvisorAgentTools,
+                        graphAnalyticsAgentTools,
+                        routingAgentTools,
+                        dateTimeAgentTools,
+                        todoWriteTool,
+                        askUserQuestionTool,
+                        dateTimeContextAdvisor,
+                        agentToolCallAdvisor,
+                        sessionMemoryAdvisor);
+                subagentTypeBuilder.chatClientBuilder(agentId, builder);
+                if (defaultSubagentBuilder == null) {
+                    defaultSubagentBuilder = builder;
+                }
+            }
+            if (defaultSubagentBuilder != null) {
+                subagentTypeBuilder.chatClientBuilder("default", defaultSubagentBuilder);
+            }
             return TaskTool.builder()
                     .subagentReferences(subagentReferences)
-                    .subagentTypes(ClaudeSubagentType.builder()
-                            .chatClientBuilder("default", subagentChatClientBuilder)
-                            .build())
+                    .subagentTypes(subagentTypeBuilder.build())
                     .taskRepository(new DefaultTaskRepository())
                     .build();
         } catch (Exception e) {
             throw new IllegalStateException("Failed to load TaskTool subagents from classpath:agents", e);
         }
+    }
+
+    private static ChatClient.Builder subagentChatClientBuilder(
+            ChatModel toolCallingChatModel,
+            String agentId,
+            CaseAnalysisAgentTools caseAnalysisAgentTools,
+            DoctorMatchingAgentTools doctorMatchingAgentTools,
+            EvidenceAgentTools evidenceAgentTools,
+            ClinicalAdvisorAgentTools clinicalAdvisorAgentTools,
+            GraphAnalyticsAgentTools graphAnalyticsAgentTools,
+            RoutingAgentTools routingAgentTools,
+            DateTimeAgentTools dateTimeAgentTools,
+            TodoWriteTool todoWriteTool,
+            AskUserQuestionTool askUserQuestionTool,
+            DateTimeContextAdvisor dateTimeContextAdvisor,
+            ToolCallingAdvisor agentToolCallAdvisor,
+            SessionMemoryAdvisor sessionMemoryAdvisor) {
+        return ChatClient.builder(toolCallingChatModel)
+                .defaultAdvisors(
+                        dateTimeContextAdvisor,
+                        new SubagentSessionContextAdvisor(agentId),
+                        agentToolCallAdvisor,
+                        sessionMemoryAdvisor)
+                .defaultTools(augmentTool(caseAnalysisAgentTools))
+                .defaultTools(augmentTool(doctorMatchingAgentTools))
+                .defaultTools(augmentTool(evidenceAgentTools))
+                .defaultTools(augmentTool(clinicalAdvisorAgentTools))
+                .defaultTools(augmentTool(graphAnalyticsAgentTools))
+                .defaultTools(augmentTool(routingAgentTools))
+                .defaultTools(augmentTool(dateTimeAgentTools))
+                .defaultTools(augmentTool(todoWriteTool))
+                .defaultTools(augmentTool(askUserQuestionTool));
     }
 
     private static java.util.List<SubagentReference> loadSubagentReferences(
@@ -369,6 +440,7 @@ public class MedicalAgentConfiguration {
             DateTimeAgentTools dateTimeAgentTools,
             ToolCallingAdvisor agentToolCallAdvisor,
             SessionMemoryAdvisor sessionMemoryAdvisor,
+            SessionEventTools sessionEventTools,
             DateTimeContextAdvisor dateTimeContextAdvisor,
             AgentMemoryProperties agentMemoryProperties,
             @Qualifier("autoMemorySystemPromptTemplate") PromptTemplate autoMemorySystemPromptTemplate
@@ -390,6 +462,7 @@ public class MedicalAgentConfiguration {
                 .defaultTools(augmentTool(dateTimeAgentTools))
                 .defaultTools(augmentTool(todoWriteTool))
                 .defaultTools(augmentTool(askUserQuestionTool))
+                .defaultTools(sessionEventTools)
                 .defaultAdvisors(dateTimeContextAdvisor, agentToolCallAdvisor, sessionMemoryAdvisor, new SimpleLoggerAdvisor());
 
         builder.defaultToolCallbacks(skillsTool, taskTool);

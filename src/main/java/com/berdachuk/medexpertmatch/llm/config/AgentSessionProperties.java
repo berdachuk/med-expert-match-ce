@@ -5,11 +5,12 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties(prefix = "agent.session")
-public record AgentSessionProperties(Integer maxTurns, Integer maxTokens, Integer maxWindowTurns) {
+public record AgentSessionProperties(Integer maxTurns, Integer maxTokens, Integer maxWindowTurns, Integer retentionDays) {
 
     private static final int DEFAULT_MAX_TURNS = 20;
     private static final int DEFAULT_MAX_TOKENS = 4000;
     private static final int DEFAULT_MAX_WINDOW_TURNS = 30;
+    private static final int DEFAULT_RETENTION_DAYS = 0;
 
     public AgentSessionProperties {
         if (maxTurns == null) {
@@ -21,5 +22,12 @@ public record AgentSessionProperties(Integer maxTurns, Integer maxTokens, Intege
         if (maxWindowTurns == null) {
             maxWindowTurns = DEFAULT_MAX_WINDOW_TURNS;
         }
+        if (retentionDays == null) {
+            retentionDays = DEFAULT_RETENTION_DAYS;
+        }
+    }
+
+    public boolean retentionEnabled() {
+        return retentionDays != null && retentionDays > 0;
     }
 }

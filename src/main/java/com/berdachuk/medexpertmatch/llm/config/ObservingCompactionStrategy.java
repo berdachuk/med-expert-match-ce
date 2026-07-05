@@ -25,7 +25,7 @@ public class ObservingCompactionStrategy implements CompactionStrategy {
                 : OrchestrationContextHolder.sessionIdOrNull();
         try {
             CompactionResult result = delegate.compact(request);
-            observability.recordCompaction(sessionId, result.eventsRemoved());
+            observability.recordCompaction(sessionId, result.eventsRemoved(), result.compactedEvents().size());
             return result;
         } catch (RuntimeException ex) {
             observability.recordFailure(sessionId);
