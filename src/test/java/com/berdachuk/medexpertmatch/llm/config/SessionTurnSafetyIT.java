@@ -1,6 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
 import com.berdachuk.medexpertmatch.integration.BaseIntegrationTest;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -41,11 +42,11 @@ class SessionTurnSafetyIT extends BaseIntegrationTest {
     void compactsAfterMoreThanTwentyTurns() {
         assertNotNull(sessionService, "SessionService required for JDBC compaction IT");
 
-        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 10);
+        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 10, null);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(new DefaultResourceLoader());
         CompactionTrigger trigger = config.sessionCompactionTrigger(props, config.sessionTokenCountEstimator());
         CompactionStrategy strategy = config.sessionCompactionStrategy(
-                props, config.sessionTokenCountEstimator(), new SessionCompactionObservability());
+                props, config.sessionTokenCountEstimator(), new SessionCompactionObservability(new SimpleMeterRegistry()));
 
         String sessionId = "turn-safety-jdbc-" + UUID.randomUUID();
         sessionService.create(CreateSessionRequest.builder()

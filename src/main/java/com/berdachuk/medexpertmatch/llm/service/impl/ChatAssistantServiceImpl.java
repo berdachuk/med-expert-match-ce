@@ -13,6 +13,7 @@ import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.agent.SessionAdvisorSupport;
 import com.berdachuk.medexpertmatch.llm.chat.*;
 import com.berdachuk.medexpertmatch.llm.config.HarnessProperties;
+import com.berdachuk.medexpertmatch.llm.harness.HarnessSessionSummary;
 import com.berdachuk.medexpertmatch.llm.harness.MedicalAgentPolicyGateService;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmRoutingMetrics;
 import com.berdachuk.medexpertmatch.llm.monitoring.LlmUsageTelemetryService;
@@ -633,14 +634,15 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             String responseText = formatHarnessReply(languageTurn, engineResponse.response());
             ChatMessage assistantMessage = chatService.appendAssistantMessage(chatId, userId, responseText);
             ConversationGoalContext.set(goal.goalType(), caseId, sessionId);
-            try {
-                sessionService.appendMessage(sessionId, new AssistantMessage(responseText));
-            } catch (Exception ignored) {
-                // best effort
-            }
             Map<String, Object> engineMetadata = engineResponse.metadata() != null
                     ? new HashMap<>(engineResponse.metadata())
                     : new HashMap<>();
+            try {
+                sessionService.appendMessage(sessionId, new AssistantMessage(responseText));
+                HarnessSessionSummary.append(sessionService, sessionId, goal.goalType(), caseId, engineMetadata);
+            } catch (Exception ignored) {
+                // best effort
+            }
             return new HarnessChatResult(
                     Map.of("userMessage", userMessage, "assistantMessage", assistantMessage),
                     engineMetadata);
@@ -753,6 +755,10 @@ public class ChatAssistantServiceImpl implements ChatAssistantService {
             ConversationGoalContext.set(goal.goalType(), caseId, sessionId);
             try {
                 sessionService.appendMessage(sessionId, new AssistantMessage(responseText));
+                Map<String, Object> metadata = engineResponse.metadata() != null
+                        ? new HashMap<>(engineResponse.metadata())
+                        : Map.of();
+                HarnessSessionSummary.append(sessionService, sessionId, goal.goalType(), caseId, metadata);
             } catch (Exception ignored) {
             }
             return Map.of("userMessage", userMessage, "assistantMessage", assistantMessage);

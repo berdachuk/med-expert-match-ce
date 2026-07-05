@@ -8,6 +8,9 @@ import org.springaicommunity.agent.tools.TodoWriteTool;
 import org.springaicommunity.agent.tools.task.TaskTool;
 import org.springaicommunity.agent.tools.task.claude.ClaudeSubagentReferences;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.session.advisor.SessionMemoryAdvisor;
+import org.springframework.ai.session.compaction.CompactionStrategy;
+import org.springframework.ai.session.compaction.CompactionTrigger;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.core.io.DefaultResourceLoader;
 
@@ -42,7 +45,12 @@ class MedicalSubagentRoutingTest {
                 mock(TodoWriteTool.class),
                 mock(AskUserQuestionTool.class),
                 mock(com.berdachuk.medexpertmatch.llm.tools.DateTimeAgentTools.class),
-                new com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor());
+                new com.berdachuk.medexpertmatch.core.advisor.DateTimeContextAdvisor(),
+                config.agentToolCallAdvisor(mock(org.springframework.ai.model.tool.ToolCallingManager.class)),
+                SessionMemoryAdvisor.builder(mock(org.springframework.ai.session.SessionService.class))
+                        .compactionTrigger(mock(org.springframework.ai.session.compaction.CompactionTrigger.class))
+                        .compactionStrategy(mock(org.springframework.ai.session.compaction.CompactionStrategy.class))
+                        .build());
         assertNotNull(taskTool);
     }
 

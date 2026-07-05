@@ -33,6 +33,7 @@
         <hapi-fhir.version>7.0.0</hapi-fhir.version>
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <spring-modulith.version>2.1.0</spring-modulith.version>
+        <spring-ai-session.version>0.5.0</spring-ai-session.version>
         <commons-io.version>2.22.0</commons-io.version>
         <commons-lang3.version>3.20.0</commons-lang3.version>
         <datafaker.version>2.5.4</datafaker.version>
@@ -70,7 +71,7 @@
             <dependency>
                 <groupId>org.springaicommunity</groupId>
                 <artifactId>spring-ai-session-bom</artifactId>
-                <version>0.3.0</version>
+                <version>${spring-ai-session.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

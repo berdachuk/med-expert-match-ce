@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.session.SessionService;
@@ -32,7 +33,7 @@ class SessionCompactionConfigTest {
     @Test
     @DisplayName("AgentSessionProperties exposes sensible defaults (20 turns / 4000 tokens)")
     void defaultsAreSensible() {
-        AgentSessionProperties props = new AgentSessionProperties(null, null, null);
+        AgentSessionProperties props = new AgentSessionProperties(null, null, null, null);
 
         assertEquals(20, props.maxTurns(), "default max-turns must be 20 (blog Part 7)");
         assertEquals(4000, props.maxTokens(), "default max-tokens must be 4000 (blog Part 7)");
@@ -60,7 +61,7 @@ class SessionCompactionConfigTest {
     @Test
     @DisplayName("Composite trigger is anyOf(TurnCount, TokenCount) from configured thresholds")
     void buildsCompositeAnyOfTrigger() {
-        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30);
+        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30, null);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(mock(org.springframework.core.io.ResourceLoader.class));
 
         CompactionTrigger trigger = config.sessionCompactionTrigger(props, config.sessionTokenCountEstimator());
@@ -73,11 +74,11 @@ class SessionCompactionConfigTest {
     @Test
     @DisplayName("Default compaction strategy is the non-LLM TurnWindowCompactionStrategy")
     void buildsNonLlmStrategy() {
-        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30);
+        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30, null);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(mock(org.springframework.core.io.ResourceLoader.class));
 
         var strategy = config.sessionCompactionStrategy(props, config.sessionTokenCountEstimator(),
-                new SessionCompactionObservability());
+                new SessionCompactionObservability(new SimpleMeterRegistry()));
 
         assertNotNull(strategy);
         assertInstanceOf(ObservingCompactionStrategy.class, strategy,
@@ -87,10 +88,10 @@ class SessionCompactionConfigTest {
     @Test
     @DisplayName("Advisor is constructed with BOTH trigger and strategy (happy path)")
     void advisorBuildsWithTriggerAndStrategy() {
-        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30);
+        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30, null);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(mock(org.springframework.core.io.ResourceLoader.class));
         SessionService sessionService = mock(SessionService.class);
-        SessionCompactionObservability observability = new SessionCompactionObservability();
+        SessionCompactionObservability observability = new SessionCompactionObservability(new SimpleMeterRegistry());
 
         SessionMemoryAdvisor advisor = config.sessionMemoryAdvisor(
                 sessionService,

@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.chat.repository.ChatMessageRepository;
 import com.berdachuk.medexpertmatch.chat.repository.ChatRepository;
 import com.berdachuk.medexpertmatch.chat.service.ChatRetentionMetrics;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import com.berdachuk.medexpertmatch.core.service.ChatRetentionPurgeListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,7 @@ class ChatRetentionServiceImplTest {
         properties.setIdleDays(30);
         properties.setBatchSize(10);
         chatRetentionMetrics = new ChatRetentionMetrics(new SimpleMeterRegistry(), properties);
-        service = new ChatRetentionServiceImpl(properties, chatRepository, chatMessageRepository, goalContextRepository, chatRetentionMetrics);
+        service = new ChatRetentionServiceImpl(properties, chatRepository, chatMessageRepository, goalContextRepository, chatRetentionMetrics, List.of());
     }
 
     @Test
@@ -66,5 +67,23 @@ class ChatRetentionServiceImplTest {
 
         assertEquals(1, service.purgeIdleChats());
         verify(chatRepository).deleteChat("c1");
+    }
+
+    @Test
+    @DisplayName("Notifies session purge listeners when chat is deleted")
+    void notifiesSessionPurgeListeners() {
+        ChatRetentionPurgeListener listener = mock(ChatRetentionPurgeListener.class);
+        service = new ChatRetentionServiceImpl(properties, chatRepository, chatMessageRepository,
+                goalContextRepository, chatRetentionMetrics, List.of(listener));
+
+        Chat idle = new Chat("c2", "u2", "Old", "auto", false,
+                Instant.now(), Instant.now(), Instant.now().minusSeconds(86400L * 40), 0);
+        when(chatRepository.findIdleNonDefaultChatsBefore(any(), eq(10))).thenReturn(List.of(idle));
+        when(chatMessageRepository.getHistory("c2", 10_000, 0)).thenReturn(List.of());
+        when(chatRepository.deleteChat("c2")).thenReturn(true);
+
+        service.purgeIdleChats();
+
+        verify(listener).onChatPurged("u2", "c2");
     }
 }
