@@ -22,13 +22,10 @@ class GoalClassifierMedicalEnglishTest {
     private static final String SESSION_ID = "user-a-chat1";
     private static final String CASE_ID = "6a1db20e86d74aa336e98ff0";
 
-    private final GoalClassifier goalClassifier = new GoalClassifier(
+    private final GoalClassifier goalClassifier = GoalClassifierTestSupport.classifier(
             mock(org.springframework.ai.chat.client.ChatClient.class),
             mock(PromptTemplate.class),
-            mock(PromptTemplate.class),
-            new ObjectMapper(),
-            new LlmCallLimiter(1, 1, 1, 1),
-            mock(ApplicationEventPublisher.class));
+            mock(PromptTemplate.class));
 
     @BeforeEach
     void setUp() {

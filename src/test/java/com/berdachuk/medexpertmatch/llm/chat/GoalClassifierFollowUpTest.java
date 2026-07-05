@@ -26,9 +26,8 @@ class GoalClassifierFollowUpTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final LlmCallLimiter llmCallLimiter = new LlmCallLimiter(1, 1, 1, 1);
     private final PromptTemplate goalClassificationUserTemplate = mock(PromptTemplate.class);
-    private final GoalClassifier goalClassifier = new GoalClassifier(
-            chatClient, goalClassificationTemplate, goalClassificationUserTemplate, objectMapper, llmCallLimiter,
-            mock(ApplicationEventPublisher.class));
+    private final GoalClassifier goalClassifier = GoalClassifierTestSupport.classifier(
+            chatClient, goalClassificationTemplate, goalClassificationUserTemplate);
 
     @BeforeEach
     void setUp() {

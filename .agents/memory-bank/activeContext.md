@@ -4,38 +4,7 @@
 
 ## Current Focus
 
-### M140
-
-# M140 — Self-Correcting Structured Output (Spring AI 2.0 Phase 2)
-
-- **Milestone:** M140
-- **REQ:** REQ-133
-- **Status:** Planned (after M139)
-- **Date:** 2026-07-05
-
-## Current Focus
-
-Complete M136 by migrating 5 structured LLM call sites from `.call().content()` + manual parsing to Spring AI 2.0 `.entity(..., spec -> spec.validateSchema())` with optional gated `useProviderStructuredOutput()`.
-
-## Tasks
-
-1. [ ] Spike `.entity(LenientJsonOutputConverter, validateSchema)` on Spring AI 2.0-M8.
-2. [ ] Add `StructuredOutputSupport` + `LlmStructuredOutputProperties`.
-3. [ ] Migrate `CaseAnalysisServiceImpl` (4 sites) and `GoalClassifier.classifyByLlm()`.
-4. [ ] Add `StringListJson`, `UrgencyClassificationJson` records.
-5. [ ] Strip redundant JSON format instructions from prompt templates.
-6. [ ] Wire `llm.structured-output.validation.*` Micrometer metrics (RISK-137).
-7. [ ] Run `mvn verify`, security review, `sync-memory-index.sh --check`.
-
-## Open Questions
-
-- Confirm Spring AI M8 `EntityParamSpec` accepts custom `StructuredOutputConverter` as first `.entity()` argument.
-
-## Risks
-
-- RISK-137 — retry cost (metrics)
-- RISK-143 — provider-native on local MedGemma
-- RISK-144 — ultra-compact JSON key alignment
+_No active milestones._
 
 ## Open Questions
 

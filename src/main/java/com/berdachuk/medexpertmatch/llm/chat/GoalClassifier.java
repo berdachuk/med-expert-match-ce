@@ -5,9 +5,11 @@ import com.berdachuk.medexpertmatch.core.util.LenientJsonOutputConverter;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.core.util.LlmClientType;
 import com.berdachuk.medexpertmatch.core.util.LlmOperation;
-import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
+import com.berdachuk.medexpertmatch.core.config.LlmStructuredOutputProperties;
+import com.berdachuk.medexpertmatch.core.monitoring.StructuredOutputValidationMetrics;
+import com.berdachuk.medexpertmatch.core.util.StructuredOutputSupport;
 import com.berdachuk.medexpertmatch.core.util.LlmUsageContext;
-import com.berdachuk.medexpertmatch.core.util.LlmUsageContextRunner;
+import com.berdachuk.medexpertmatch.core.util.LlmResponseSanitizer;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.event.GoalIdentifiedEvent;
 import com.berdachuk.medexpertmatch.llm.harness.CaseContextIntent;
@@ -17,6 +19,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -70,6 +73,9 @@ public class GoalClassifier {
     private final ObjectMapper objectMapper;
     private final LlmCallLimiter llmCallLimiter;
     private final ApplicationEventPublisher eventPublisher;
+    private final LlmStructuredOutputProperties structuredOutputProperties;
+    private final Environment environment;
+    private final StructuredOutputValidationMetrics validationMetrics;
 
     public GoalClassifier(
             @Qualifier("utilityChatClient") ChatClient utilityChatClient,
@@ -77,13 +83,19 @@ public class GoalClassifier {
             @Qualifier("goalClassificationUserPromptTemplate") PromptTemplate goalClassificationUserTemplate,
             ObjectMapper objectMapper,
             LlmCallLimiter llmCallLimiter,
-            ApplicationEventPublisher eventPublisher) {
+            ApplicationEventPublisher eventPublisher,
+            LlmStructuredOutputProperties structuredOutputProperties,
+            Environment environment,
+            StructuredOutputValidationMetrics validationMetrics) {
         this.chatClient = utilityChatClient;
         this.goalClassificationTemplate = goalClassificationTemplate;
         this.goalClassificationUserTemplate = goalClassificationUserTemplate;
         this.objectMapper = objectMapper;
         this.llmCallLimiter = llmCallLimiter;
         this.eventPublisher = eventPublisher;
+        this.structuredOutputProperties = structuredOutputProperties;
+        this.environment = environment;
+        this.validationMetrics = validationMetrics;
     }
 
     public static boolean requestsMoreDoctors(String message) {
@@ -407,23 +419,22 @@ public class GoalClassifier {
 
         log.info("Classifying goal via LLM for message length: {}", message.length());
 
-        String response = LlmUsageContextRunner.execute(
-                new LlmUsageContext(OrchestrationContextHolder.sessionIdOrNull(),
-                        LlmClientType.UTILITY, LlmOperation.GOAL_CLASSIFY, null, null, null),
-                () -> llmCallLimiter.execute(LlmClientType.UTILITY, () ->
-                        chatClient.prompt()
-                                .system(systemPrompt)
-                                .user(classificationPrompt)
-                                .call()
-                                .content()));
-
-        if (response == null || response.isBlank()) {
-            return GoalClassification.general();
-        }
-
         try {
             var converter = new LenientJsonOutputConverter<>(GoalClassificationJson.class);
-            GoalClassificationJson parsed = converter.convert(response);
+            GoalClassificationJson parsed = StructuredOutputSupport.callEntity(
+                    chatClient,
+                    new LlmUsageContext(OrchestrationContextHolder.sessionIdOrNull(),
+                            LlmClientType.UTILITY, LlmOperation.GOAL_CLASSIFY, null, null, null),
+                    llmCallLimiter,
+                    structuredOutputProperties,
+                    environment,
+                    validationMetrics,
+                    spec -> spec.system(systemPrompt).user(classificationPrompt),
+                    converter);
+
+            if (parsed == null) {
+                return GoalClassification.general();
+            }
             return parseClassification(parsed, caseId, ctx);
         } catch (Exception e) {
             log.warn("Failed to parse goal classification response: {}", e.getMessage());

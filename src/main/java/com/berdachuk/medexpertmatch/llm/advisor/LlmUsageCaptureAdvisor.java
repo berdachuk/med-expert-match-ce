@@ -53,6 +53,7 @@ public class LlmUsageCaptureAdvisor implements CallAdvisor, StreamAdvisor {
         if (response == null) {
             return;
         }
+        com.berdachuk.medexpertmatch.core.monitoring.StructuredOutputValidationTracker.onProviderCall();
         long latencyMs = Math.max(0L, (System.nanoTime() - startNanos) / 1_000_000L);
         LlmCallSnapshot snapshot = LlmCallSnapshot.fromProvider(
                 response, request, LlmUsageContextHolder.getOrDefault(), latencyMs);

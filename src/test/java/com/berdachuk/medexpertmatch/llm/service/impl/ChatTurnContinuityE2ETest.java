@@ -4,6 +4,7 @@ import com.berdachuk.medexpertmatch.chat.repository.ChatGoalContextRepositoryImp
 import com.berdachuk.medexpertmatch.llm.chat.ConversationGoalContext;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassification;
 import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
+import com.berdachuk.medexpertmatch.llm.chat.GoalClassifierTestSupport;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,8 +47,7 @@ class ChatTurnContinuityE2ETest {
         org.springframework.ai.chat.prompt.PromptTemplate promptTemplate =
                 org.mockito.Mockito.mock(org.springframework.ai.chat.prompt.PromptTemplate.class);
         com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-        goalClassifier = new GoalClassifier(chatClient, promptTemplate, promptTemplate, objectMapper, llmCallLimiter,
-                org.mockito.Mockito.mock(ApplicationEventPublisher.class));
+        goalClassifier = GoalClassifierTestSupport.classifier(chatClient, promptTemplate, promptTemplate);
     }
 
     @AfterEach
@@ -91,6 +91,11 @@ class ChatTurnContinuityE2ETest {
                 "Match doctors for case " + CASE_ID);
         assertNotNull(turn1Goal);
         assertEquals(GoalType.MATCH_DOCTORS, turn1Goal.goalType());
+
+        clearInvocations(goalContextRepository);
+        when(goalContextRepository.findBySessionId(SESSION_ID))
+                .thenReturn(Optional.of(new ChatGoalContextRepositoryImpl.ChatGoalContextRow(
+                        SESSION_ID, GoalType.MATCH_DOCTORS.name(), CASE_ID)));
 
         ConversationGoalContext.set(turn1Goal.goalType(), CASE_ID, SESSION_ID);
         ConversationGoalContext.clear(SESSION_ID);

@@ -317,6 +317,18 @@ After compaction, the orchestrator can call `conversation_search` to keyword-sea
 
 ---
 
+## Structured JSON output (M140)
+
+Case analysis and goal classification use Spring AI 2.0 `.entity(..., validateSchema())` with `LenientJsonOutputConverter` for fence-tolerant parsing and up to three schema self-correction retries.
+
+| Setting | Default | Effect |
+|---------|---------|--------|
+| `medexpertmatch.llm.structured-output.provider-native-enabled` | `false` | When `true` and endpoint is not local Ollama, adds `useProviderStructuredOutput()` per call |
+
+Metrics: `llm.structured-output.validation.retry` and `.failure` (see [chat-ops-runbook.md](chat-ops-runbook.md)). Prefer keeping provider-native off for local MedGemma/Ollama (RISK-143).
+
+---
+
 ## References
 
 - [Ollama Cloud models](https://ollama.com/search?c=cloud) — catalog (DeepSeek V4, Qwen3.5, Gemma 4, Nemotron, etc.)

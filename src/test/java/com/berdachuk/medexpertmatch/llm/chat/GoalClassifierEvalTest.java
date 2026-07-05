@@ -24,13 +24,10 @@ class GoalClassifierEvalTest {
     private static final String SESSION_ID = "eval-user-eval-chat";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-    private final GoalClassifier goalClassifier = new GoalClassifier(
+    private final GoalClassifier goalClassifier = GoalClassifierTestSupport.classifier(
             mock(org.springframework.ai.chat.client.ChatClient.class),
             mock(PromptTemplate.class),
-            mock(PromptTemplate.class),
-            objectMapper,
-            new LlmCallLimiter(1, 1, 1, 1),
-            mock(ApplicationEventPublisher.class));
+            mock(PromptTemplate.class));
 
     @BeforeEach
     void setUp() {
