@@ -302,6 +302,33 @@ After changing models:
 
 ---
 
+## Agent session memory tuning (`agent.session.*`)
+
+Spring AI Session JDBC backs chat short-term memory. Tune via `application.yml` or env vars:
+
+| Property | Default | Effect |
+|----------|---------|--------|
+| `agent.session.max-turns` | 20 | Turn-count compaction trigger |
+| `agent.session.max-tokens` | 4000 | Estimated-token compaction trigger (either trigger fires compaction) |
+| `agent.session.max-window-turns` | 30 | Turns retained after compaction (non-LLM window; PHI-safe) |
+| `agent.session.retention-days` | `chat.retention.idle-days` | JDBC session purge aligned with chat retention |
+
+After compaction, the orchestrator can call `conversation_search` to keyword-search full history. See [Harness and Agent Usage](HARNESS_AND_AGENT_USAGE.md) §2.3.
+
+---
+
+## Structured JSON output (M140)
+
+Case analysis and goal classification use Spring AI 2.0 `.entity(..., validateSchema())` with `LenientJsonOutputConverter` for fence-tolerant parsing and up to three schema self-correction retries.
+
+| Setting | Default | Effect |
+|---------|---------|--------|
+| `medexpertmatch.llm.structured-output.provider-native-enabled` | `false` | When `true` and endpoint is not local Ollama, adds `useProviderStructuredOutput()` per call |
+
+Metrics: `llm.structured-output.validation.retry` and `.failure` (see [chat-ops-runbook.md](chat-ops-runbook.md)). Prefer keeping provider-native off for local MedGemma/Ollama (RISK-143).
+
+---
+
 ## References
 
 - [Ollama Cloud models](https://ollama.com/search?c=cloud) — catalog (DeepSeek V4, Qwen3.5, Gemma 4, Nemotron, etc.)

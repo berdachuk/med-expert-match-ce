@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +19,7 @@ class SessionCompactionObservabilityTest {
     @Test
     @DisplayName("Tracks compaction and failure counters")
     void tracksCounters() {
-        SessionCompactionObservability observability = new SessionCompactionObservability();
+        SessionCompactionObservability observability = new SessionCompactionObservability(new SimpleMeterRegistry());
         observability.recordCompaction("session-1", 3);
         observability.recordFailure("session-1");
 

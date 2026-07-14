@@ -268,8 +268,12 @@ if [[ "$CHECK_ONLY" -eq 1 ]]; then
     fi
   done
   # productContext tables: the generated tables must match the tail of the file
-  if ! diff <(sed -n '/^### Use cases/,$p' "$MB/productContext.md") "$GENERATED/productContext.tables.md" >/dev/null 2>&1; then
+  if ! diff <(sed 's/\r$//' "$MB/productContext.md" | sed -n '/^### Use cases/,$p') "$GENERATED/productContext.tables.md" >/dev/null 2>&1; then
     echo "STALE: productContext.md traceability tables out of sync. Run ./scripts/sync-memory-index.sh" >&2
+    stale=1
+  fi
+  if ! python3 "$ROOT/scripts/backfill-test-traceability.py" --check; then
+    echo "STALE: test.jsonl traceability check failed. Run ./scripts/backfill-test-traceability.py" >&2
     stale=1
   fi
   exit "$stale"
@@ -284,19 +288,22 @@ cp "$GENERATED/activeContext.md"  "$MB/activeContext.md"
 cp "$GENERATED/00-index.md"       "$PLANS/00-index.md"
 
 # productContext.md: keep the prose before "### Use cases", replace the rest.
-if grep -q '^### Use cases' "$MB/productContext.md"; then
+# Normalize CRLF first so sed anchors match on Windows checkouts.
+sed 's/\r$//' "$MB/productContext.md" > "$MB/productContext.md.lf"
+if grep -q '^### Use cases' "$MB/productContext.md.lf"; then
   {
-    sed -n '1,/^### Use cases/p' "$MB/productContext.md" | sed '${/^### Use cases$/d}'
+    sed -n '1,/^### Use cases/p' "$MB/productContext.md.lf" | sed '${/^### Use cases$/d}'
     cat "$GENERATED/productContext.tables.md"
   } > "$MB/productContext.md.new"
 else
   # Fresh file with no tables yet: append a separator then the tables
   {
-    cat "$MB/productContext.md"
+    cat "$MB/productContext.md.lf"
     echo
     cat "$GENERATED/productContext.tables.md"
   } > "$MB/productContext.md.new"
 fi
+rm -f "$MB/productContext.md.lf"
 mv "$MB/productContext.md.new" "$MB/productContext.md"
 
 echo "Memory-bank indexes regenerated:"

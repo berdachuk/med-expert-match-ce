@@ -28,8 +28,8 @@ public final class GoalIntentPatterns {
             Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 
     static final Pattern MATCH_DOCTORS_KEYWORDS = Pattern.compile(
-            "\\b(?:find\\s+specialist|match\\s+doctor|recommend\\s+doctor|expert\\s+match|"
-                    + "find\\s+doctors?|rank\\s+doctors?|best\\s+doctor|find\\s+expert|"
+            "\\b(?:find\\s+specialists?|match\\s+doctors?|recommend\\s+doctor|expert\\s+match|"
+            + "find\\s+doctors?|rank\\s+doctors?|best\\s+doctor|find\\s+expert|"
                     + "suggest\\s+(?:a\\s+)?specialist|who\\s+should\\s+treat|physician\\s+recommendation|"
                     + "expert\\s+referral|specialist\\s+ranking|top\\s+doctors?|"
                     + "suitable\\s+specialist|clinician\\s+match|specialist\\s+recommendation|"

@@ -4,9 +4,7 @@
 
 ## Active
 
-| # | Plan | Description |
-|---|------|-------------|
-| M139 | [`M139.md`](../memory-bank/records/active/M139.md) | - **Milestone:** M139 |
+None — no active milestones.
 
 ## Deferred
 
@@ -95,7 +93,10 @@ None.
 | M16 | [`M16.md`](../memory-bank/records/progress/M16.md) | - **Milestone:** M16 |
 | M15 | [`M15.md`](../memory-bank/records/progress/M15.md) | - **Milestone:** M15 |
 | M14 | [`M14.md`](../memory-bank/records/progress/M14.md) | - **Milestone:** M14 |
+| M141 | [`M141.md`](../memory-bank/records/progress/M141.md) | - **Milestone:** M141 |
+| M140 | [`M140.md`](../memory-bank/records/progress/M140.md) | - **Milestone:** M140 |
 | M13 | [`M13.md`](../memory-bank/records/progress/M13.md) | - **Milestone:** M13 |
+| M139 | [`M139.md`](../memory-bank/records/progress/M139.md) | - **Milestone:** M139 |
 | M138 | [`M138.md`](../memory-bank/records/progress/M138.md) | - **Milestone:** M138 |
 | M137 | [`M137.md`](../memory-bank/records/progress/M137.md) | - **Milestone:** M137 |
 | M136 | [`M136.md`](../memory-bank/records/progress/M136.md) | - **Milestone:** M136 |

@@ -12,14 +12,8 @@ This AI system is for research and educational purposes only. It is NOT certifie
 **Task:**
 Classify the urgency level of this medical case based on the provided information.
 
-**Response Format:**
-Return a single urgency level: CRITICAL, HIGH, MEDIUM, or LOW
+Return a JSON object with a single field:
 
-**CRITICAL OUTPUT LIMITS:**
-- Provide EXACTLY ONE urgency level and STOP
-- Return ONLY the word: CRITICAL, HIGH, MEDIUM, or LOW
-- Do NOT include explanations, descriptions, or additional text
-- Do NOT repeat the urgency level multiple times
-- Maximum response length: 20 characters
-- Stop immediately after providing the urgency level
-- Do NOT continue generating after the response
+{"level":"HIGH"}
+
+Allowed values for `level`: CRITICAL, HIGH, MEDIUM, LOW

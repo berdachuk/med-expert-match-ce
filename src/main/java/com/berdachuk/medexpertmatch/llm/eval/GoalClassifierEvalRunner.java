@@ -1,5 +1,7 @@
 package com.berdachuk.medexpertmatch.llm.eval;
 
+import com.berdachuk.medexpertmatch.core.config.LlmStructuredOutputProperties;
+import com.berdachuk.medexpertmatch.core.monitoring.StructuredOutputValidationMetrics;
 import com.berdachuk.medexpertmatch.core.util.LlmCallLimiter;
 import com.berdachuk.medexpertmatch.llm.agent.OrchestrationContextHolder;
 import com.berdachuk.medexpertmatch.llm.chat.ConversationGoalContext;
@@ -8,8 +10,10 @@ import com.berdachuk.medexpertmatch.llm.chat.GoalClassifier;
 import com.berdachuk.medexpertmatch.llm.chat.GoalType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.env.StandardEnvironment;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -36,7 +40,10 @@ public final class GoalClassifierEvalRunner {
                 stubTemplate,
                 objectMapper,
                 new LlmCallLimiter(1, 1, 1, 1),
-                noOpPublisher);
+                noOpPublisher,
+                new LlmStructuredOutputProperties(false),
+                new StandardEnvironment(),
+                new StructuredOutputValidationMetrics(new SimpleMeterRegistry()));
 
         OrchestrationContextHolder.setSessionId(SESSION_ID);
         try {

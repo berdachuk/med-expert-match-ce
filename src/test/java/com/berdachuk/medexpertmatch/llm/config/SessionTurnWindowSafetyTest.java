@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -27,10 +28,10 @@ class SessionTurnWindowSafetyTest {
     @Test
     @DisplayName("Retained window starts on USER after >20 turns")
     void retainedWindowStartsOnUser() {
-        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30);
+        AgentSessionProperties props = new AgentSessionProperties(20, 4000, 30, null);
         MedicalAgentConfiguration config = new MedicalAgentConfiguration(mock(org.springframework.core.io.ResourceLoader.class));
         CompactionStrategy strategy = config.sessionCompactionStrategy(
-                props, new JTokkitTokenCountEstimator(), new SessionCompactionObservability());
+                props, new JTokkitTokenCountEstimator(), new SessionCompactionObservability(new SimpleMeterRegistry()));
 
         Session session = Session.builder()
                 .id("turn-safety-test")

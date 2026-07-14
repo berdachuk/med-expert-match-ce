@@ -1,5 +1,6 @@
 package com.berdachuk.medexpertmatch.llm.config;
 
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -84,6 +85,9 @@ class SessionCompactionHealthIndicatorTest {
         int compactionCount;
         int failureCount;
 
+        TestObservability() {
+            super(new SimpleMeterRegistry());
+        }
         @Override
         public void recordCompaction(String sessionId, int eventsRemoved) {
             compactionCount++;

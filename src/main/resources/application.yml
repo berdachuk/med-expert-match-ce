@@ -17,6 +17,7 @@ agent:
     max-turns: ${AGENT_SESSION_MAX_TURNS:20}        # turn-count compaction trigger
     max-tokens: ${AGENT_SESSION_MAX_TOKENS:4000}    # estimated-token compaction trigger
     max-window-turns: ${AGENT_SESSION_MAX_WINDOW_TURNS:30}  # turns kept by the non-LLM window strategy
+    retention-days: ${AGENT_SESSION_RETENTION_DAYS:${CHAT_RETENTION_IDLE_DAYS:0}}  # aligned with chat.retention.idle-days
   memory: # Long-term (cross-session) AutoMemory. NON-PHI ONLY (PhiGuard rejects PHI-shaped content).
     dir: ${AGENT_MEMORY_DIR:${user.home}/.spring-ai-agent/medexpertmatch/memory}
     consolidation:
@@ -247,6 +248,8 @@ medexpertmatch:
     tool-calling:
       max-concurrent-calls: ${MEDEXPERTMATCH_LLM_TOOL_CALLING_MAX_CONCURRENT_CALLS:1}
     acquire-timeout-seconds: ${MEDEXPERTMATCH_LLM_ACQUIRE_TIMEOUT_SECONDS:120}
+    structured-output:
+      provider-native-enabled: ${MEDEXPERTMATCH_LLM_PROVIDER_NATIVE_STRUCTURED:false}
     tier:
       light:
         max-tokens: ${MEDEXPERTMATCH_LLM_TIER_LIGHT_MAX_TOKENS:2048}

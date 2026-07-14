@@ -7,6 +7,7 @@ import com.berdachuk.medexpertmatch.chat.repository.ChatMessageRepository;
 import com.berdachuk.medexpertmatch.chat.repository.ChatRepository;
 import com.berdachuk.medexpertmatch.chat.service.ChatRetentionMetrics;
 import com.berdachuk.medexpertmatch.chat.service.ChatRetentionService;
+import com.berdachuk.medexpertmatch.core.service.ChatRetentionPurgeListener;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,18 +25,21 @@ public class ChatRetentionServiceImpl implements ChatRetentionService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatGoalContextRepositoryImpl goalContextRepository;
     private final ChatRetentionMetrics chatRetentionMetrics;
+    private final List<ChatRetentionPurgeListener> purgeListeners;
 
     public ChatRetentionServiceImpl(
             ChatRetentionProperties properties,
             ChatRepository chatRepository,
             ChatMessageRepository chatMessageRepository,
             ChatGoalContextRepositoryImpl goalContextRepository,
-            ChatRetentionMetrics chatRetentionMetrics) {
+            ChatRetentionMetrics chatRetentionMetrics,
+            List<ChatRetentionPurgeListener> purgeListeners) {
         this.properties = properties;
         this.chatRepository = chatRepository;
         this.chatMessageRepository = chatMessageRepository;
         this.goalContextRepository = goalContextRepository;
         this.chatRetentionMetrics = chatRetentionMetrics;
+        this.purgeListeners = purgeListeners != null ? purgeListeners : List.of();
     }
 
     @Override
@@ -53,6 +57,7 @@ public class ChatRetentionServiceImpl implements ChatRetentionService {
             messagesRemoved += chatMessageRepository.getHistory(chat.id(), 10_000, 0).size();
             if (chatRepository.deleteChat(chat.id())) {
                 purged++;
+                notifySessionPurge(chat.userId(), chat.id());
                 try {
                     goalContextRepository.deleteByChatPattern("%-" + chat.id());
                 } catch (Exception ignored) {
@@ -65,5 +70,15 @@ public class ChatRetentionServiceImpl implements ChatRetentionService {
         }
         chatRetentionMetrics.recordPurgeRun(Instant.now(), purged, messagesRemoved, true, properties.idleDays());
         return purged;
+    }
+
+    private void notifySessionPurge(String userId, String chatId) {
+        for (ChatRetentionPurgeListener listener : purgeListeners) {
+            try {
+                listener.onChatPurged(userId, chatId);
+            } catch (Exception ignored) {
+                // best effort
+            }
+        }
     }
 }

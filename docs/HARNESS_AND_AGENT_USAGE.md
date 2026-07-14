@@ -234,6 +234,29 @@ minimal**: prefer pointers to code and commands over duplicated prose that drift
 
 ---
 
+## 2.3 Spring AI Session (0.5) — short-term memory and branches
+
+Chat orchestration uses **Spring AI Session JDBC** with turn-safe compaction and multi-agent branch isolation:
+
+| Surface | Session branch | Memory scope |
+|---------|----------------|--------------|
+| Chat orchestrator | `orch` | User/orchestrator turns only (`OrchestratorBranchSessionService` hides `orch.sub.*` tool noise) |
+| TaskTool subagents | `orch.sub.{agentId}` | Per-subagent tool transcript |
+| Post-compaction recall | `conversation_search` tool | Full verbatim JDBC history (session-scoped) |
+| Harness completion | Synthetic `[Harness] …` event | Compact non-PHI outcome for follow-up turns |
+
+**Tuning** (`application.yml` → `agent.session.*`):
+
+- `max-turns` / `max-tokens` — when compaction fires (either threshold).
+- `max-window-turns` — turns kept by non-LLM `TurnWindowCompactionStrategy` (PHI-safe; no LLM summarization).
+- `retention-days` — aligned with `chat.retention.idle-days`; JDBC session rows purged when chat retention deletes the parent chat.
+
+**Metrics:** `session.compaction.*` counters and sampled `session.events.count` gauge (Actuator/Prometheus).
+
+See `llm/AGENTS.md` for recall vs AutoMemory guidance.
+
+---
+
 ## 5. Practices that align with harness thinking
 
 1. **Prefer the harness you already have** Extend `MedicalAgentTools` and domain services instead of ad-hoc LLM calls from

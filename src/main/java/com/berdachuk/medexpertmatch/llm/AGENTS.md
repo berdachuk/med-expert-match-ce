@@ -44,6 +44,16 @@ Orchestrates all LLM-driven workflows and Agent Skills. Depends on 11 other modu
 - Multilingual: `ChatLanguageService` translates to/from English around harness and chat paths
 - Harness backlog template: `.agents/templates/harness-backlog-item.md`
 
+## Spring AI Session (M141)
+
+- **Short-term memory:** `SessionMemoryAdvisor` inside the tool loop; compaction via `TurnWindowCompactionStrategy` (non-LLM, PHI-safe).
+- **Recall:** `SessionEventTools.conversation_search` on orchestrator `ChatClient` — keyword search of full JDBC history after compaction.
+- **AutoMemory vs recall:** AutoMemory = cross-session operational facts (non-PHI only). Session recall = same-chat verbatim history; never quote patient identifiers in replies.
+- **Branches:** orchestrator `orch`; subagents `orch.sub.{agentId}` via `SubagentSessionContextAdvisor`.
+- **Harness continuity:** `HarnessSessionSummary` appends `[Harness] GOAL completed · caseId=…` synthetic events after engine success.
+- **Retention:** `SessionRetentionPurgeListener` deletes JDBC session when chat retention purges the parent chat.
+- **Config:** `agent.session.max-turns`, `max-tokens`, `max-window-turns`, `retention-days` in `application.yml`.
+
 ## Related Skills
 
 - `llm-prompts` — prompt template creation and management

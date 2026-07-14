@@ -72,12 +72,12 @@ Rows marked **provisional** are not yet linked to a verified test artifact; see 
 
 | Use Case | REQ-### | Owning module | Primary domain models | Verified test artifact (TEST-###) | Status |
 |---|---|---|---|---|---|
-| Specialist Matching | REQ-001 | retrieval | MedicalCase, Doctor, DoctorMatch, ScoreResult | retrieval/service/MatchingServiceIT | active |
+| Specialist Matching | REQ-001 | retrieval | MedicalCase, Doctor, DoctorMatch, ScoreResult | retrieval/service/MatchingServiceIT; com/berdachuk/medexpertmatch/integration/usecase/UseCase1IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase1MatchDoctorsE2EIT; com/berdachuk/medexpertmatch/bdd/CucumberIT | active |
 | Second Opinion | REQ-002 | retrieval | MedicalCase, DoctorMatch |  | active |
 | Queue Prioritization | REQ-003 | retrieval | MedicalCase, PriorityScore |  | active |
-| Network Analytics | REQ-004 | graph | Doctor, MedicalSpecialty | graph/service/GraphQueryServiceIT | active |
-| Decision Support | REQ-005 | llm | CaseAnalysisResult, MedicalCase | caseanalysis/service/CaseAnalysisServiceIT; evidence/service/EvidenceRetrievalServiceIT; llm/service/RecommendationServiceIT | active |
-| Regional Routing | REQ-006 | retrieval | Facility, FacilityMatch, RouteScoreResult | llm/service/RecommendationServiceIT | active |
+| Network Analytics | REQ-004 | graph | Doctor, MedicalSpecialty | graph/service/GraphQueryServiceIT; com/berdachuk/medexpertmatch/integration/usecase/UseCase4IT; com/berdachuk/medexpertmatch/bdd/CucumberIT | active |
+| Decision Support | REQ-005 | llm | CaseAnalysisResult, MedicalCase | caseanalysis/service/CaseAnalysisServiceIT; evidence/service/EvidenceRetrievalServiceIT; llm/service/RecommendationServiceIT; com/berdachuk/medexpertmatch/llm/tools/MedicalAgentToolsIT; com/berdachuk/medexpertmatch/web/controller/CaseAnalysisControllerIT; com/berdachuk/medexpertmatch/evidence/service/PubMedServiceIT; com/berdachuk/medexpertmatch/integration/usecase/UseCase5IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase5DecisionSupportE2EIT; com/berdachuk/medexpertmatch/bdd/CucumberIT | active |
+| Regional Routing | REQ-006 | retrieval | Facility, FacilityMatch, RouteScoreResult | llm/service/RecommendationServiceIT; com/berdachuk/medexpertmatch/llm/tools/MedicalAgentToolsIT; com/berdachuk/medexpertmatch/integration/usecase/UseCase1IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase1MatchDoctorsE2EIT; com/berdachuk/medexpertmatch/integration/usecase/UseCase2IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase3IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase3PrioritizeE2EIT; com/berdachuk/medexpertmatch/integration/usecase/UseCase4IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase5IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase5DecisionSupportE2EIT; com/berdachuk/medexpertmatch/integration/usecase/UseCase6IT; com/berdachuk/medexpertmatch/integration/usecase/UseCase6DocumentSearchE2EIT; com/berdachuk/medexpertmatch/bdd/CucumberIT | active |
 | Main Menu Restructure | REQ-125 | web |  |  | active |
 | Token-Efficient Format Implementation | REQ-127 | llm |  |  | active |
 | Responsive Chat Sidebar | REQ-129 | web |  |  | active |

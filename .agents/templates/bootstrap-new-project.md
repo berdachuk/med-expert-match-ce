@@ -329,6 +329,7 @@ Propose an initial set of 4–7 skills that make sense for this project, based o
 - `api-design` — conventions for REST/RPC/GraphQL, error handling, versioning.
 - `security-check` — threat modeling, input validation, secrets hygiene, dependency audit, auth/authz boundaries, and OWASP-aligned review for AI-generated code.
 - `write-less-code` — minimal-diff thinking, simplification, reuse-first implementation, and context hygiene.
+- `finding-your-unknowns` — blind-spot discovery, ambiguity reduction, implementation notes, explainer generation, and post-change comprehension checks.
 - `bdd-traceability` — links functional requirements to Gherkin scenarios, step definitions, tests, and implementation artifacts.
 - `requirements-modeling` — normalizes requirement statements, stable IDs, domain vocabulary, and ownership.
 - `token-efficient-format` — chooses the cheapest format that still supports safe parsing per LLM call (JSON, TOON, ultra-compact JSON, CSV/TSV, line-based, or unstructured text) based on structure needs, volume, and downstream parsers. TOON (Token-Oriented Object Notation) uses indentation for hierarchy and tabular blocks for uniform arrays, achieving ~60% token reduction vs JSON.
@@ -581,6 +582,143 @@ It must explicitly state:
 - run both **before implementation** for risky work and **after implementation** before commit.
 
 ---
+
+---
+
+## 6.7 Finding your unknowns (mandatory)
+
+Adopt a dedicated **finding-your-unknowns** workflow inspired by Claude Fable guidance for agentic coding.
+
+Core idea:
+- your prompt is the **map**,
+- the codebase, runtime behavior, integrations, and business constraints are the **territory**,
+- the gap between them is where rework, false assumptions, and brittle agent output come from.
+
+The agent must actively reduce four categories of unknowns before, during, and after implementation:
+
+- **Known knowns** — explicit facts already present in requirements, prompts, code, and docs.
+- **Known unknowns** — gaps the team already knows about.
+- **Unknown knowns** — assumptions that feel obvious to humans but were never written down.
+- **Unknown unknowns** — hidden constraints, edge cases, or coupling the team has not yet considered.
+
+### 6.7.1 Unknowns-first execution rule
+
+Before writing plans, code, or major context files, the agent must perform an **Unknowns Pass** and record results in the memory bank.
+
+Required outputs:
+- add an `## Unknowns` section to `.agents/memory-bank/activeContext.md`, or to `records/active/M{NN}.md` in the append-only memory model,
+- classify findings into the four unknown categories,
+- explicitly mark which unknowns are blocking, risky, or merely informational,
+- convert major unknowns into milestone tasks, risks, or decisions.
+
+### 6.7.2 Before implementation: required techniques
+
+Before implementation, the agent should choose one or more of these patterns depending on task ambiguity:
+
+1. **Blind spot pass**
+   - Use when entering an unfamiliar codebase area, domain, protocol, or integration.
+   - Ask: what might be missing from the current prompt, docs, tests, or architecture notes?
+   - Output: a short blind-spot list with likely failure zones and follow-up questions.
+
+2. **Brainstorms and prototypes**
+   - Use when quality depends on taste, interaction design, workflow shape, or architecture direction.
+   - Generate multiple distinct candidate approaches before picking one.
+   - Use throwaway prototypes to surface hidden evaluation criteria.
+
+3. **Interview the human**
+   - Use when ambiguity remains after repository analysis.
+   - Ask one question at a time, prioritizing answers that could change architecture, module ownership, domain boundaries, security model, or test strategy.
+
+4. **Reference hunt**
+   - Use when the desired behavior is easier to point to than describe.
+   - Prefer existing source code, prior modules, tests, docs, or external examples as the effective specification.
+
+5. **Implementation plan with uncertainty markers**
+   - Plans must distinguish:
+     - stable assumptions,
+     - reversible assumptions,
+     - unverified assumptions,
+     - explicit out-of-scope areas.
+   - Every major plan should contain an `Unknowns` subsection listing what still needs validation.
+
+### 6.7.3 During implementation: required notes discipline
+
+During implementation, the agent must maintain **implementation notes** whenever reality diverges from the plan.
+
+Implementation notes should capture:
+- what assumption failed,
+- what new information was discovered,
+- what decision was taken,
+- whether the change affects requirements, tests, domain models, security, or architecture boundaries.
+
+In the append-only memory model:
+- store active deviations in `records/active/M{NN}.md`,
+- append durable decisions to `registry/dec.jsonl` and `records/decisions/DEC-###.md`,
+- append discovered risks to `registry/risk.jsonl`.
+
+### 6.7.4 After implementation: explanation and verification
+
+After implementation, the agent must ensure that work is understandable, reviewable, and actually understood by the human team.
+
+Required post-implementation practices:
+- create a short **pitch/explainer** for major changes,
+- summarize what changed, why it changed, and which unknowns were resolved,
+- create a short **change quiz** or verification checklist for complex changes,
+- do not treat a diff as proof of understanding.
+
+The goal is not only to write code, but to prove shared understanding of the change.
+
+### 6.7.5 Unknowns traceability rules
+
+Unknowns must be connected to the rest of the context system:
+
+- unresolved unknowns that affect delivery become `RISK-###`,
+- clarified ambiguity that changes architecture becomes `DEC-###`,
+- behavior ambiguity that changes acceptance criteria updates `REQ-###`, `SCN-###`, and `TEST-###` mappings,
+- implementation surprises must be reflected in milestone records and regenerated indexes.
+
+Do not leave important unknowns only in chat context or temporary scratchpads.
+
+### 6.7.6 Add a `finding-your-unknowns` skill
+
+Create:
+
+```text
+.agents/skills/finding-your-unknowns/SKILL.md
+```
+
+Use this initial content:
+
+```markdown
+# Finding Your Unknowns
+
+## Description
+Surface blind spots before, during, and after implementation so the agent does not confuse a prompt with the full reality of the codebase, product, and runtime environment.
+
+## When to use
+- Starting work in a new repository or unfamiliar module.
+- Designing a feature with unclear requirements or hidden constraints.
+- Creating architecture, test, migration, or integration plans.
+- Investigating failures, rework, or repeated surprises.
+- Reviewing large diffs that may hide misunderstood behavior.
+
+## Instructions
+- Treat the prompt as a map, not the territory.
+- Classify uncertainty into known knowns, known unknowns, unknown knowns, and unknown unknowns.
+- Run a blind-spot pass before planning or implementation.
+- Use brainstorming or throwaway prototypes when the human will recognize quality better than they can specify it.
+- Interview the human one question at a time when ambiguity could change architecture or scope.
+- Use working references from code, docs, or external examples as specifications when they are more precise than prose.
+- Keep implementation notes whenever reality diverges from the plan.
+- Convert durable findings into risks, decisions, requirement updates, or milestone notes.
+- After implementation, produce a short explainer and a change quiz/checklist for complex work.
+
+## Boundaries
+- Do not invent certainty where evidence is missing.
+- Do not treat generated plans as facts until validated against code, tests, and docs.
+- Do not hide unresolved uncertainty in prose; record it explicitly.
+- Do not skip test, security, or architecture updates when unknowns materially affect them.
+```
 
 ## 6.8 Semantic markup and traceability rules (mandatory)
 
