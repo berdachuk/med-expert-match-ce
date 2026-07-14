@@ -474,6 +474,12 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - Summary: - **Milestone:** M15
 
+### M14
+
+- [full record](records/progress/M14.md)
+
+- Summary: - **Milestone:** M14
+
 ### M141
 
 - [full record](records/progress/M141.md)
@@ -486,11 +492,11 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - Summary: - **Milestone:** M140
 
-### M14
+### M13
 
-- [full record](records/progress/M14.md)
+- [full record](records/progress/M13.md)
 
-- Summary: - **Milestone:** M14
+- Summary: - **Milestone:** M13
 
 ### M139
 
@@ -552,11 +558,11 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - Summary: - **Milestone:** M130
 
-### M13
+### M12
 
-- [full record](records/progress/M13.md)
+- [full record](records/progress/M12.md)
 
-- Summary: - **Milestone:** M13
+- Summary: - **Milestone:** M12
 
 ### M129
 
@@ -618,11 +624,11 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - Summary: Cucumber Coverage Expansion
 
-### M12
+### M11
 
-- [full record](records/progress/M12.md)
+- [full record](records/progress/M11.md)
 
-- Summary: - **Milestone:** M12
+- Summary: - **Milestone:** M11
 
 ### M119
 
@@ -684,11 +690,11 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 
 - Summary: - **Milestone:** M110
 
-### M11
+### M10
 
-- [full record](records/progress/M11.md)
+- [full record](records/progress/M10.md)
 
-- Summary: - **Milestone:** M11
+- Summary: - **Milestone:** M10
 
 ### M109
 
@@ -743,12 +749,6 @@ Each completed milestone has a record file under `records/progress/M{NN}.md`. To
 - [full record](records/progress/M100.md)
 
 - Summary: - **Milestone:** M100
-
-### M10
-
-- [full record](records/progress/M10.md)
-
-- Summary: - **Milestone:** M10
 
 ### M09
 

@@ -1,0 +1,4 @@
+# Deferred-but-not-archived milestones.
+# Create records/deferred/M{NN}.md for milestones postponed but not yet
+# completed/archived. The sync script reads these for plans/00-index.md.
+# This file only keeps the empty directory tracked by git.

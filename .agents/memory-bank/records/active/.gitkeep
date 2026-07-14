@@ -1,0 +1,4 @@
+# Per-active-milestone records.
+# Create records/active/M{NN}.md when starting milestone M{NN};
+# move to records/progress/M{NN}.md on completion.
+# This file only keeps the empty directory tracked by git.

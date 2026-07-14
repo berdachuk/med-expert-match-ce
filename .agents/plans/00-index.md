@@ -92,9 +92,10 @@ None.
 | M17 | [`M17.md`](../memory-bank/records/progress/M17.md) | - **Milestone:** M17 |
 | M16 | [`M16.md`](../memory-bank/records/progress/M16.md) | - **Milestone:** M16 |
 | M15 | [`M15.md`](../memory-bank/records/progress/M15.md) | - **Milestone:** M15 |
+| M14 | [`M14.md`](../memory-bank/records/progress/M14.md) | - **Milestone:** M14 |
 | M141 | [`M141.md`](../memory-bank/records/progress/M141.md) | - **Milestone:** M141 |
 | M140 | [`M140.md`](../memory-bank/records/progress/M140.md) | - **Milestone:** M140 |
-| M14 | [`M14.md`](../memory-bank/records/progress/M14.md) | - **Milestone:** M14 |
+| M13 | [`M13.md`](../memory-bank/records/progress/M13.md) | - **Milestone:** M13 |
 | M139 | [`M139.md`](../memory-bank/records/progress/M139.md) | - **Milestone:** M139 |
 | M138 | [`M138.md`](../memory-bank/records/progress/M138.md) | - **Milestone:** M138 |
 | M137 | [`M137.md`](../memory-bank/records/progress/M137.md) | - **Milestone:** M137 |
@@ -105,7 +106,7 @@ None.
 | M132 | [`M132.md`](../memory-bank/records/progress/M132.md) | - **Milestone:** M132 |
 | M131 | [`M131.md`](../memory-bank/records/progress/M131.md) | - **Milestone:** M131 |
 | M130 | [`M130.md`](../memory-bank/records/progress/M130.md) | - **Milestone:** M130 |
-| M13 | [`M13.md`](../memory-bank/records/progress/M13.md) | - **Milestone:** M13 |
+| M12 | [`M12.md`](../memory-bank/records/progress/M12.md) | - **Milestone:** M12 |
 | M129 | [`M129.md`](../memory-bank/records/progress/M129.md) | - **Milestone:** M129 |
 | M128 | [`M128.md`](../memory-bank/records/progress/M128.md) | Fix Markdown Rendering in Chat |
 | M127 | [`M127.md`](../memory-bank/records/progress/M127.md) | Token-Efficient Format Implementation |
@@ -116,7 +117,7 @@ None.
 | M122 | [`M122.md`](../memory-bank/records/progress/M122.md) | - **Milestone:** M122 |
 | M121 | [`M121.md`](../memory-bank/records/progress/M121.md) | Application Hardening and Observability |
 | M120 | [`M120.md`](../memory-bank/records/progress/M120.md) | Cucumber Coverage Expansion |
-| M12 | [`M12.md`](../memory-bank/records/progress/M12.md) | - **Milestone:** M12 |
+| M11 | [`M11.md`](../memory-bank/records/progress/M11.md) | - **Milestone:** M11 |
 | M119 | [`M119.md`](../memory-bank/records/progress/M119.md) | BDD Cucumber Adoption |
 | M118 | [`M118.md`](../memory-bank/records/progress/M118.md) | Traceability Coverage Closeout |
 | M117 | [`M117.md`](../memory-bank/records/progress/M117.md) | Semantic Markup and Traceability Foundation |
@@ -127,7 +128,7 @@ None.
 | M112 | [`M112.md`](../memory-bank/records/progress/M112.md) | Post-Upgrade Stabilization |
 | M111 | [`M111.md`](../memory-bank/records/progress/M111.md) | - **Milestone:** M111 |
 | M110 | [`M110.md`](../memory-bank/records/progress/M110.md) | - **Milestone:** M110 |
-| M11 | [`M11.md`](../memory-bank/records/progress/M11.md) | - **Milestone:** M11 |
+| M10 | [`M10.md`](../memory-bank/records/progress/M10.md) | - **Milestone:** M10 |
 | M109 | [`M109.md`](../memory-bank/records/progress/M109.md) | - **Milestone:** M109 |
 | M107 | [`M107.md`](../memory-bank/records/progress/M107.md) | - **Milestone:** M107 |
 | M106 | [`M106.md`](../memory-bank/records/progress/M106.md) | - **Milestone:** M106 |
@@ -137,7 +138,6 @@ None.
 | M102 | [`M102.md`](../memory-bank/records/progress/M102.md) | - **Milestone:** M102 |
 | M101 | [`M101.md`](../memory-bank/records/progress/M101.md) | - **Milestone:** M101 |
 | M100 | [`M100.md`](../memory-bank/records/progress/M100.md) | - **Milestone:** M100 |
-| M10 | [`M10.md`](../memory-bank/records/progress/M10.md) | - **Milestone:** M10 |
 | M09 | [`M09.md`](../memory-bank/records/progress/M09.md) | - **Milestone:** M09 |
 | M08 | [`M08.md`](../memory-bank/records/progress/M08.md) | - **Milestone:** M08 |
 | M07 | [`M07.md`](../memory-bank/records/progress/M07.md) | - **Milestone:** M07 |
