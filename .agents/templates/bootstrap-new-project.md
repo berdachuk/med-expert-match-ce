@@ -18,11 +18,11 @@ The memory-bank design should follow the established Markdown-based Memory Bank 
 
 | Step | Document | Standard | Use for |
 |---|---|---|---|
-| — | **[01-requirements.md](01-requirements.md)** | SRS | **Source of truth** — what to build: dataset, MCP surface, NFRs, milestones |
-| 1 | **[02-architecture.md](02-architecture.md)** | SAD | System context, Modulith modules, stack, design decisions |
-| 2 | **[03-design.md](03-design.md)** | SDD | Schema, domain records, service/repository APIs, MCP class sketches |
-| 3 | **[04-testing.md](04-testing.md)** | Test plan | Unit/integration/quality tests, CSV split discipline, CI gates |
-| 4 | **[05-deployment.md](05-deployment.md)** | Ops guide | `application.yml`, env vars, Docker, MCP client config |
+| — | **[01-requirements.md](docs/pipeline/01-requirements.md)** | SRS | **Source of truth** — what to build: dataset, MCP surface, NFRs, milestones |
+| 1 | **[02-architecture.md](docs/pipeline/02-architecture.md)** | SAD | System context, Modulith modules, stack, design decisions |
+| 2 | **[03-design.md](docs/pipeline/03-design.md)** | SDD | Schema, domain records, service/repository APIs, MCP class sketches |
+| 3 | **[04-testing.md](docs/pipeline/04-testing.md)** | Test plan | Unit/integration/quality tests, CSV split discipline, CI gates |
+| 4 | **[05-deployment.md](docs/pipeline/05-deployment.md)** | Ops guide | `application.yml`, env vars, Docker, MCP client config |
 
 ## Supplementary
 
