@@ -334,6 +334,11 @@ Propose an initial set of 4–7 skills that make sense for this project, based o
 - `requirements-modeling` — normalizes requirement statements, stable IDs, domain vocabulary, and ownership.
 - `token-efficient-format` — chooses the cheapest format that still supports safe parsing per LLM call (JSON, TOON, ultra-compact JSON, CSV/TSV, line-based, or unstructured text) based on structure needs, volume, and downstream parsers. TOON (Token-Oriented Object Notation) uses indentation for hierarchy and tabular blocks for uniform arrays, achieving ~60% token reduction vs JSON.
 
+For AI-native products that call models in production, also consider:
+
+- `llm-prompts` — prompt-as-contract design, external prompt templates, structured output schemas, and model-output parsing boundaries.
+- `eval-flywheel` — golden examples, synthetic cases, quality metrics, feedback loops, and release gates for model behavior.
+
 For each proposed skill, define:
 
 - when it should be used,
@@ -582,6 +587,66 @@ It must explicitly state:
 - run both **before implementation** for risky work and **after implementation** before commit.
 
 ---
+
+## 6.6 AI-native engineering principles (anti-sycophancy)
+
+A common failure mode in AI systems is **model sycophancy**: the model smooths over ambiguity, agrees with flawed premises, or produces confident filler because the task is under-specified and the conversation optimizes for agreeability. The antidote is not a bigger "be critical" instruction. It is an **engineering architecture** that moves complexity out of one giant context window and into stable, testable, contract-bound layers.
+
+This section states the through-line that should shape every AI-native plan, prompt, and module boundary: compete on cognitive **infrastructure**, not model size. The durable asset is the superstructure around the model: orchestration, memory, feedback loops, evals, datasets, pipelines, and operational knowledge.
+
+### Principle 1 — Move complexity out of the model, not into it
+
+Do **not** solve a complex problem inside one giant prompt. Every requirement, exception, and reasoning step shoved into one context window degrades signal/noise, raises variance, and invites sycophancy plus hallucination.
+
+Instead, decompose complex work into 5–10 smaller subtasks. By Pareto, most become trivial; the remaining hard 1–2 are re-decomposed until no single model call carries more than ~2–5% of the pipeline's genuine complexity. Complexity belongs in narrow, local, well-defined steps, not in model context.
+
+This is the same rule as module boundaries (`core-architecture`), single-responsibility prompts (`llm-prompts` when generated), and one-record-per-file memory updates — applied to cognitive load, not only code structure.
+
+### Principle 2 — Prompts are contracts, not text
+
+Treat prompts as versioned **data contracts**, not magic prose. A contract can be tested, versioned, reproduced, evaluated, and swapped across model providers.
+
+Every non-trivial model-facing prompt should define, preferably as JSON/YAML/schema-backed structure:
+
+- an **allowed-solution corridor**: what is in scope and explicitly out of scope,
+- **quality criteria**: what "good" means for this call,
+- **evaluation metrics**: how output quality is measured, including a metric that penalizes unjustified agreement with user premises.
+
+For multi-call pipelines, a cheap converter model may normalize Markdown input into the contract at the pipeline boundary. After that, model-to-model and model-to-code contracts should stay structured; only human-facing output may be free text.
+
+### Principle 3 — Keep the cognitive core vendor- and domain-agnostic
+
+Do not put model-provider assumptions or vertical-specific knowledge into domain logic. Separate:
+
+- system intelligence from industry-specific knowledge,
+- reasoning process from data representation,
+- orchestration/control from the model provider,
+- knowledge sources from execution mechanisms.
+
+The reusable core should remain one thing; domain specialization is a pluggable knowledge layer: system prompts, RAG indexes, knowledge graphs, fixtures, and domain data. Do not build a separate cognitive architecture for each vertical unless the domain analysis proves the core abstraction fails.
+
+### Principle 4 — Make feedback loops first-class
+
+A request via chat, API, webhook, CLI, or UI is not only a response opportunity; it is a potential eval case and feedback-loop input. Use interactions to improve prompts, datasets, routing, and tool policies — subject to consent, privacy, retention, and anonymization rules.
+
+Seed the flywheel with ~10–15 hand-authored **gold standards** and 200–300 **synthetic** cases for each meaningful agentic behavior. Run evals against recorded/replayed fixtures; never make live external calls from tests. Real interactions may expand the dataset only after sensitive data is removed and the project's security policy allows retention.
+
+### How the principles map to template mechanisms
+
+| Principle | Template mechanism |
+|---|---|
+| Decompose complexity | `core-architecture` boundaries, `finding-your-unknowns` blind-spot pass, one-record-per-file memory bank |
+| Prompts as contracts | optional `llm-prompts` skill, structured outputs, `bdd-traceability` acceptance links, `token-efficient-format` |
+| Core over provider | provider policy in project boundaries, module boundaries, memory-bank operational knowledge |
+| Feedback flywheel | optional `eval-flywheel` skill, golden examples, synthetic cases, generated registries, release gates |
+
+### Boundaries
+
+- These principles describe architecture shape, not a product spec. Do not invent verticals, datasets, providers, or model choices from this section alone; derive them from the domain analysis in §1.
+- "Self-improvement" never means auto-merging prompts, auto-training on private data, or auto-deploying without the human gates in the TDD/security/traceability workflows.
+- Vendor-agnostic does **not** authorize changing away from the project's approved provider and security policy.
+- Feedback loops must not store secrets, credentials, PHI/PII, or private prompts unless the project's explicit retention/anonymization policy allows it.
+- Do not duplicate these principles into every skill; link back here.
 
 ---
 
