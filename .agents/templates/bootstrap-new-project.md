@@ -8,6 +8,7 @@ Your goal is to create a standard context architecture with:
 - layered nested `AGENTS.md` files only at major module boundaries
 - `.agents/skills/` as the **single source of truth** for domain skills
 - `.agents/memory-bank/` as the persistent, repo-local long-term memory layer
+- `.agents/jobs/` as an optional durable, resumable execution-state layer for multi-task work
 - optional adapters for IDE agents (e.g., `.cursor/`, MCP, others)
 
 Before creating or modifying any files, you **must analyze the project structure and the relationships between modules and domain models** to reflect the real architecture and domain boundaries.
@@ -107,6 +108,9 @@ Show the planned tree in text form, for example:
 │   │   ├── 00-index.md                # GENERATED — do not hand-edit
 │   │   ├── archive/
 │   │   └── progress.txt               # optional canonical iteration log
+│   ├── jobs/                          # durable active job state (optional)
+│   │   ├── archive/                   # completed job folders
+│   │   └── README.md                  # durable-job lifecycle and format pointers
 │   └── skills/
 │       ├── core-architecture/
 │       │   └── SKILL.md
@@ -129,10 +133,134 @@ The memory bank is partitioned so that **parallel agents working in separate wor
 - **Per-record files** (`records/progress/M{NN}.md`, `records/active/M{NN}.md`, `records/decisions/DEC-###.md`) mean two agents completing different milestones create distinct files — zero merge conflict.
 - **Module locks** (`locks/<module>.md`) record which agent/branch currently owns a module. They turn silent semantic breakages (e.g. a prompt `.st` change that must update a coupled sanitizer in lockstep) into a textual conflict the second agent can detect and serialize on.
 - **Worktree scratchpads** (`worktrees/<branch-slug>/`, git-ignored) hold per-agent "Current Focus" drafts and open questions that should never merge to the main branch.
+- **Durable jobs** (`.agents/jobs/<job-id>/`) store operational state for long-running or multi-task execution. They are separate from the memory bank: job files coordinate in-flight work, while memory-bank records preserve durable project facts.
 
 Design this structure so that it aligns with the real module relationships and domain model ownership discovered in step 1.
 
 Use `.agents/plans` for plans and use `M-NN` prefix for milestone naming. Name files `M-NN-short-topic.md` (literal `M` prefix, `NN` = zero-padded milestone number, e.g. `M-04-runtime-platform-foundations.md`). Index at `00-index.md`. Completed plans are archived to `/plans/archive/`.
+
+---
+
+## 2.1 Add optional durable job state under `.agents/jobs/`
+
+For repositories where AI agents will execute multiple tasks, long-running work, resumable handoffs, or subagent fan-out, add a durable operational state layer under:
+
+- `.agents/jobs/`
+
+This layer follows the `durable-job` workflow pattern. It complements, but does not replace, `.agents/memory-bank/`:
+
+- `.agents/jobs/<job-id>/` stores execution state for one active job.
+- `.agents/jobs/archive/<job-id>/` stores completed job folders.
+- `.agents/memory-bank/` stores durable project memory, decisions, requirements, risks, and milestone summaries.
+- `.agents/plans/` stores milestone scope and closure order.
+
+Use durable jobs when any of these are true:
+- the user asks for resumable, checkpointed, or interrupt-safe work,
+- a task spans multiple bounded implementation/verification cycles,
+- a task dispatches subagents whose results are needed later,
+- a task crosses multiple risk or verification boundaries and may not finish in one session,
+- the user points to an existing `JOB.md`, `STATE.md`, or `PLAN.md` folder and asks to continue.
+
+Do not use durable jobs for small one-shot edits, ordinary answers, or cases where a todo list plus memory-bank update is enough.
+
+### Required layout
+
+```text
+.agents/jobs/<job-id>/
+├── JOB.md
+├── STATE.md
+├── PLAN.md
+├── JOURNAL.md
+├── agents/
+│   └── <NN>-<slug>/
+│       ├── BRIEF.md
+│       ├── PLAN.md
+│       ├── NOTES.md
+│       └── REPORT.md
+└── artifacts/
+```
+
+Use lowercase kebab-case for `<job-id>`, preferably including a milestone or task ID: `m-477-transport-closure`, `task-016-durable-flow-adoption`.
+
+Create `.agents/jobs/README.md` with a short description of the active/archive layout, a pointer to `.agents/skills/durable-job/SKILL.md`, and the rule that completed jobs move to `.agents/jobs/archive/<job-id>/`.
+
+### Durable execution rules
+
+- Keep all paths in job state files relative to the repository root.
+- Use ISO 8601 timestamps with timezone.
+- Keep `JOB.md` append-only for the original task and later user amendments.
+- Rewrite `STATE.md` freely; history belongs in `JOURNAL.md`.
+- Keep `JOURNAL.md` append-only, one event per line when possible.
+- Use stable plan markers everywhere: `[ ]` pending, `[~]` in progress, `[x]` done, `[!]` failed or blocked, `[-]` skipped with reason.
+- Keep step numbers stable. Add `4a`, `4b`, etc. instead of renumbering after a plan revision.
+- Store intermediate products required by later steps in `artifacts/`; prefer concise Markdown, JSON, or inventories over large generated dumps.
+- Never store secrets in job state. Record environment variable names only.
+
+### Initialize
+
+When no state exists:
+
+1. Create `.agents/jobs/<job-id>/` with `agents/` and `artifacts/`.
+2. Write `JOB.md` with the verbatim original user task, scope, constraints, success criteria, milestone/task IDs if known, and verification gates.
+3. Write `PLAN.md` with bounded steps small enough that repeating one after interruption is cheap.
+4. Write `STATE.md` with `Status: running`, no in-flight work, environment requirements, and the first next action.
+5. Write initial `JOURNAL.md` entries for job creation and plan creation.
+6. Start step 1 immediately. Creating durable state is not the deliverable.
+
+### Execution loop
+
+For every step, use write-ahead, work, write-behind.
+
+Before work starts:
+- mark the step `[~]` in `PLAN.md`,
+- set `STATE.md` `In flight` to the exact step,
+- include a concrete verification hint that a fresh agent can use to detect partial or complete execution,
+- append a `JOURNAL.md` entry with intended files/commands and risk.
+
+After work finishes:
+- mark the step `[x]`, `[!]`, or `[-]`,
+- clear or update `STATE.md` `In flight`,
+- set the next concrete action,
+- append a `JOURNAL.md` outcome entry with produced paths and verification results.
+
+If the step changes durable project facts, also update memory-bank records/registries and run `scripts/sync-memory-index.sh` plus `scripts/sync-memory-index.sh --check`.
+
+### Resume
+
+When `STATE.md` exists, assume conversation history is not trustworthy. Read in order:
+
+1. `STATE.md`
+2. `JOB.md`
+3. `PLAN.md`
+4. recent `JOURNAL.md` entries since the last completed step
+5. any `agents/*/` folder with `BRIEF.md` but no `REPORT.md`
+
+Then reconcile recorded state with reality by checking files, tests, git state, generated artifacts, and in-flight verification hints. Journal the resume with timestamp, branch, findings, and next step. Fix `STATE.md` or `PLAN.md` if reality differs, then continue the execution loop unless blocked.
+
+### Subagents
+
+Every subagent dispatch must have durable state before spawn:
+
+1. Create `agents/<NN>-<slug>/`.
+2. Write `BRIEF.md` with task, inputs, expected outputs, constraints, and state contract.
+3. Journal the dispatch in the main `JOURNAL.md`.
+4. Require the subagent to write `PLAN.md` first, append progress/decisions to `NOTES.md`, and write `REPORT.md` last.
+
+Treat `REPORT.md` as the completion signal. If an agent exits without `REPORT.md`, inspect its state, journal the finding, and either finish the remainder inline or respawn with a resume instruction appended to `BRIEF.md`.
+
+### Completion
+
+When all steps are `[x]` or consciously `[-]`:
+
+1. Verify against `JOB.md` success criteria.
+2. Set `STATE.md` to `complete` with delivered paths and verification commands.
+3. Journal completion.
+4. Promote durable outcomes to `.agents/memory-bank/` records/registries.
+5. Run `scripts/sync-memory-index.sh` and `scripts/sync-memory-index.sh --check`.
+6. Move `.agents/jobs/<job-id>/` to `.agents/jobs/archive/<job-id>/`.
+7. Report concise results with the archived job folder path.
+
+If blocked, set `Status: blocked` and record exactly what is needed to unblock. If failed, set `Status: failed` with what was salvaged and what should not be retried blindly.
 
 ---
 
@@ -330,9 +458,15 @@ Propose an initial set of 4–7 skills that make sense for this project, based o
 - `security-check` — threat modeling, input validation, secrets hygiene, dependency audit, auth/authz boundaries, and OWASP-aligned review for AI-generated code.
 - `write-less-code` — minimal-diff thinking, simplification, reuse-first implementation, and context hygiene.
 - `finding-your-unknowns` — blind-spot discovery, ambiguity reduction, implementation notes, explainer generation, and post-change comprehension checks.
+- `durable-job` — resumable, interrupt-safe execution for multi-task work, subagent dispatch, and checkpointed implementation/verification cycles.
 - `bdd-traceability` — links functional requirements to Gherkin scenarios, step definitions, tests, and implementation artifacts.
 - `requirements-modeling` — normalizes requirement statements, stable IDs, domain vocabulary, and ownership.
 - `token-efficient-format` — chooses the cheapest format that still supports safe parsing per LLM call (JSON, TOON, ultra-compact JSON, CSV/TSV, line-based, or unstructured text) based on structure needs, volume, and downstream parsers. TOON (Token-Oriented Object Notation) uses indentation for hierarchy and tabular blocks for uniform arrays, achieving ~60% token reduction vs JSON.
+
+For AI-native products that call models in production, also consider:
+
+- `llm-prompts` — prompt-as-contract design, external prompt templates, structured output schemas, and model-output parsing boundaries.
+- `eval-flywheel` — golden examples, synthetic cases, quality metrics, feedback loops, and release gates for model behavior.
 
 For each proposed skill, define:
 
@@ -442,11 +576,12 @@ Do **not** assume any specific IDE yet, but design the structure so it is easy t
 
 Create a short architecture note as `docs/ai-context-strategy.md` that explains:
 
-- the layer model (root `AGENTS.md` → nested module `AGENTS.md` → `.agents/memory-bank/` → skills in `.agents/skills` → optional adapters),
+- the layer model (root `AGENTS.md` → nested module `AGENTS.md` → `.agents/memory-bank/` → optional durable execution state in `.agents/jobs/` → skills in `.agents/skills` → optional adapters),
 - how the module and domain model analysis feeds into this structure,
 - how new skills should be added,
 - how existing skills should be updated,
 - how the memory bank should be maintained,
+- how durable jobs should be initialized, resumed, archived, and reconciled with memory-bank records,
 - how to keep everything in sync across tools,
 - how semantic traceability is preserved between requirements, scenarios, tests, and implementation artifacts.
 
@@ -582,6 +717,66 @@ It must explicitly state:
 - run both **before implementation** for risky work and **after implementation** before commit.
 
 ---
+
+## 6.6 AI-native engineering principles (anti-sycophancy)
+
+A common failure mode in AI systems is **model sycophancy**: the model smooths over ambiguity, agrees with flawed premises, or produces confident filler because the task is under-specified and the conversation optimizes for agreeability. The antidote is not a bigger "be critical" instruction. It is an **engineering architecture** that moves complexity out of one giant context window and into stable, testable, contract-bound layers.
+
+This section states the through-line that should shape every AI-native plan, prompt, and module boundary: compete on cognitive **infrastructure**, not model size. The durable asset is the superstructure around the model: orchestration, memory, feedback loops, evals, datasets, pipelines, and operational knowledge.
+
+### Principle 1 — Move complexity out of the model, not into it
+
+Do **not** solve a complex problem inside one giant prompt. Every requirement, exception, and reasoning step shoved into one context window degrades signal/noise, raises variance, and invites sycophancy plus hallucination.
+
+Instead, decompose complex work into 5–10 smaller subtasks. By Pareto, most become trivial; the remaining hard 1–2 are re-decomposed until no single model call carries more than ~2–5% of the pipeline's genuine complexity. Complexity belongs in narrow, local, well-defined steps, not in model context.
+
+This is the same rule as module boundaries (`core-architecture`), single-responsibility prompts (`llm-prompts` when generated), and one-record-per-file memory updates — applied to cognitive load, not only code structure.
+
+### Principle 2 — Prompts are contracts, not text
+
+Treat prompts as versioned **data contracts**, not magic prose. A contract can be tested, versioned, reproduced, evaluated, and swapped across model providers.
+
+Every non-trivial model-facing prompt should define, preferably as JSON/YAML/schema-backed structure:
+
+- an **allowed-solution corridor**: what is in scope and explicitly out of scope,
+- **quality criteria**: what "good" means for this call,
+- **evaluation metrics**: how output quality is measured, including a metric that penalizes unjustified agreement with user premises.
+
+For multi-call pipelines, a cheap converter model may normalize Markdown input into the contract at the pipeline boundary. After that, model-to-model and model-to-code contracts should stay structured; only human-facing output may be free text.
+
+### Principle 3 — Keep the cognitive core vendor- and domain-agnostic
+
+Do not put model-provider assumptions or vertical-specific knowledge into domain logic. Separate:
+
+- system intelligence from industry-specific knowledge,
+- reasoning process from data representation,
+- orchestration/control from the model provider,
+- knowledge sources from execution mechanisms.
+
+The reusable core should remain one thing; domain specialization is a pluggable knowledge layer: system prompts, RAG indexes, knowledge graphs, fixtures, and domain data. Do not build a separate cognitive architecture for each vertical unless the domain analysis proves the core abstraction fails.
+
+### Principle 4 — Make feedback loops first-class
+
+A request via chat, API, webhook, CLI, or UI is not only a response opportunity; it is a potential eval case and feedback-loop input. Use interactions to improve prompts, datasets, routing, and tool policies — subject to consent, privacy, retention, and anonymization rules.
+
+Seed the flywheel with ~10–15 hand-authored **gold standards** and 200–300 **synthetic** cases for each meaningful agentic behavior. Run evals against recorded/replayed fixtures; never make live external calls from tests. Real interactions may expand the dataset only after sensitive data is removed and the project's security policy allows retention.
+
+### How the principles map to template mechanisms
+
+| Principle | Template mechanism |
+|---|---|
+| Decompose complexity | `core-architecture` boundaries, `finding-your-unknowns` blind-spot pass, one-record-per-file memory bank |
+| Prompts as contracts | optional `llm-prompts` skill, structured outputs, `bdd-traceability` acceptance links, `token-efficient-format` |
+| Core over provider | provider policy in project boundaries, module boundaries, memory-bank operational knowledge |
+| Feedback flywheel | optional `eval-flywheel` skill, golden examples, synthetic cases, generated registries, release gates |
+
+### Boundaries
+
+- These principles describe architecture shape, not a product spec. Do not invent verticals, datasets, providers, or model choices from this section alone; derive them from the domain analysis in §1.
+- "Self-improvement" never means auto-merging prompts, auto-training on private data, or auto-deploying without the human gates in the TDD/security/traceability workflows.
+- Vendor-agnostic does **not** authorize changing away from the project's approved provider and security policy.
+- Feedback loops must not store secrets, credentials, PHI/PII, or private prompts unless the project's explicit retention/anonymization policy allows it.
+- Do not duplicate these principles into every skill; link back here.
 
 ---
 
@@ -956,6 +1151,251 @@ Preserve explicit links between functional requirements, domain language, Gherki
 
 ---
 
+## 6.10 Durable multi-task execution (optional but recommended)
+
+If the repository will use AI agents for multi-task delivery, resumable work, subagent fan-out, or long-running implementation/verification loops, generate a `durable-job` skill and `.agents/jobs/` state layer.
+
+### 6.10.1 Add a `durable-job` skill
+
+Create:
+
+```text
+.agents/skills/durable-job/SKILL.md
+.agents/skills/durable-job/references/state-format.md
+```
+
+The skill must explain how to:
+- initialize `.agents/jobs/<job-id>/` with `JOB.md`, `STATE.md`, `PLAN.md`, `JOURNAL.md`, `agents/`, and `artifacts/`,
+- execute steps with write-ahead/write-behind checkpoints,
+- resume from files alone without trusting chat history,
+- manage subagent state folders and `REPORT.md` completion signals,
+- archive completed jobs under `.agents/jobs/archive/<job-id>/`,
+- promote durable outcomes into `.agents/memory-bank/` records and registries.
+
+### 6.10.2 Recommended skill template
+
+Use this initial file content for `.agents/skills/durable-job/SKILL.md`:
+
+```markdown
+# Durable Job
+
+## Description
+Execute long-running work as a durable, interruptible, resumable job with active execution state persisted under `.agents/jobs/` and completed jobs archived under `.agents/jobs/archive/`.
+
+This skill complements the project memory bank:
+- `.agents/jobs/<job-id>/` stores operational execution state for one active job.
+- `.agents/jobs/archive/<job-id>/` stores completed job folders.
+- `.agents/memory-bank/` stores durable project memory, registries, decisions, and milestone summaries.
+- `.agents/plans/` stores milestone scope and closure order.
+
+Do not use a durable job as a substitute for requirement IDs, TDD, security review, approval gates, or memory-bank updates.
+
+## When to use
+- The user explicitly asks for durable, resumable, checkpointed, or interrupt-safe work.
+- The user points at a folder containing `JOB.md`, `STATE.md`, or `PLAN.md` and asks to continue.
+- A task spans multiple bounded implementation/verification cycles.
+- A task dispatches subagents whose results are needed later.
+- A task crosses multiple risk or verification boundaries and may not complete in one session.
+
+Do not use it for small one-shot edits, ordinary answers, or tasks where the normal todo list plus memory-bank update is enough.
+
+## Instructions
+- Active state lives under `.agents/jobs/<job-id>/`; completed state moves to `.agents/jobs/archive/<job-id>/`.
+- Use lowercase kebab-case job IDs, preferably including milestone or task IDs.
+- Keep all paths relative to repository root.
+- Use ISO 8601 timestamps with timezone.
+- Use plan markers consistently: `[ ]` pending, `[~]` in progress, `[x]` done, `[!]` failed or blocked, `[-]` skipped with reason.
+- Keep step numbers stable; add suffixes like `4a` instead of renumbering.
+- Initialize `JOB.md`, `STATE.md`, `PLAN.md`, `JOURNAL.md`, `agents/`, and `artifacts/` before starting the first step.
+- Use write-ahead before each step: mark `[~]`, set `STATE.md` `In flight`, add a concrete verification hint, and append a journal entry.
+- Use write-behind after each step: mark `[x]`, `[!]`, or `[-]`, update `STATE.md`, set the next action, and journal outputs plus verification.
+- On resume, read `STATE.md`, `JOB.md`, `PLAN.md`, recent `JOURNAL.md`, and open `agents/*/` folders, then reconcile with files, tests, git state, and artifacts before continuing.
+- Before spawning subagents, create `agents/<NN>-<slug>/BRIEF.md`; require subagents to write `PLAN.md` first, append to `NOTES.md`, and write `REPORT.md` last.
+- Treat `REPORT.md` as the subagent completion signal.
+- On completion, verify success criteria, update project memory, run memory index sync/check, archive the job folder, and report the archived path.
+
+## Boundaries
+- No secrets, credentials, tokens, private URLs, or large raw logs in job state.
+- Do not store large generated outputs if a path to the real artifact is enough.
+- Do not let job state diverge from milestone plans or memory-bank records.
+- Do not use durable jobs to bypass approvals, TDD, security review, or risk boundaries.
+- Do not create noisy commits for every checkpoint unless the user explicitly requests machine-handoff durability.
+```
+
+Use this initial file content for `.agents/skills/durable-job/references/state-format.md`:
+
+````markdown
+# Durable Job State Templates
+
+All paths in state files are relative to the repository root. Use ISO 8601 timestamps with timezone.
+
+## JOB.md
+
+Written at initialization. Do not rewrite the original task. Append later user steering under **Amendments**.
+
+```text
+# Job: <short title>
+
+Created: <timestamp>
+State folder: .agents/jobs/<job-id>
+Milestone: <M-NNN or none>
+Task: <TASK-NNN or none>
+Requirements: <REQ/NFR IDs or none>
+
+## Original task
+
+> <verbatim user task>
+
+## Scope and constraints
+
+<What is in scope, out of scope, risk boundaries, approvals, branch/worktree constraints, and relevant project rules.>
+
+## Success criteria
+
+- <Concrete criterion>
+
+## Verification gates
+
+- <Focused test/build/check command or N/A>
+- `scripts/sync-memory-index.sh --check` when memory-bank changed
+
+## Amendments
+
+<Append-only. Timestamp + verbatim user steering + what changed.>
+```
+
+## STATE.md
+
+Rewrite freely. History belongs in `JOURNAL.md`.
+
+```text
+# State
+
+Status: running | blocked | complete | failed
+Updated: <timestamp>
+Branch: <current branch>
+Paths are relative to: repo root
+
+## Progress
+
+<Short statement: N of M steps complete and current phase.>
+
+## In flight
+
+<Nothing - clean checkpoint.>
+
+OR:
+
+Step <N> is in flight: <what it does>.
+Verify partial/complete state by: <specific file/test/git/generated-artifact checks>.
+
+## Next action
+
+<Single concrete action a resumer can do after reconciliation.>
+
+## Open agents
+
+<None, or agents/<NN>-slug/ entries without REPORT.md.>
+
+## Environment
+
+- Tools: <language/runtime/build tools>
+- Env var names: <names only, never values>
+- Services: <database/cache/dev server/etc. if required>
+
+## Blocked on
+
+<Only when blocked: exact unblock condition and how to verify it.>
+```
+
+## PLAN.md
+
+Keep step numbers stable. Use `[ ]`, `[~]`, `[x]`, `[!]`, `[-]`.
+
+```text
+# Plan
+
+Revised: <timestamp>
+
+- [x] 1. Inspect current workflow rules - output: JOURNAL.md evidence
+- [~] 2. Add durable-job skill - output: .agents/skills/durable-job/SKILL.md
+- [ ] 3. Update AGENTS.md rules - output: durable job workflow section
+- [ ] 4. Verify memory indexes - output: sync-memory-index check result
+```
+
+## JOURNAL.md
+
+Append-only. One event per line when possible.
+
+```text
+# Journal
+
+- <timestamp> job created; initialized .agents/jobs/<job-id>
+- <timestamp> plan written: 4 steps; no subagents required
+- <timestamp> starting step 2: add durable-job skill and templates
+- <timestamp> step 2 done: wrote .agents/skills/durable-job/SKILL.md and references/state-format.md
+- <timestamp> DECISION: job state lives in .agents/jobs/ rather than memory-bank to keep operational state separate from durable project memory indexes
+```
+
+## agents/NN-slug/BRIEF.md
+
+Written before spawning a subagent.
+
+```text
+# Brief: <NN>-<slug>
+
+Created: <timestamp>
+Purpose: <one line>
+
+## Task
+
+<Exact task. Self-contained.>
+
+## Inputs
+
+- <paths/data>
+
+## Expected outputs
+
+- <paths/report contents>
+
+## Constraints
+
+- <Project rules, risk boundaries, no-write/read-only, etc.>
+
+## State contract
+
+Your state folder is .agents/jobs/<job-id>/agents/<NN>-slug/. Write PLAN.md first, append progress/decisions to NOTES.md, and write REPORT.md last.
+```
+
+## agents/NN-slug/REPORT.md
+
+```text
+# Report: <NN>-<slug>
+
+Finished: <timestamp>
+Outcome: success | partial | failed
+
+## Produced
+
+- <path>: <description>
+
+## Remaining / caveats
+
+<None, or explicit remaining work.>
+
+## For the orchestrator
+
+<Decisions, surprises, follow-ups.>
+```
+
+## Completion archive rule
+
+When a job is complete and post-completion bookkeeping is finished, move the whole folder from `.agents/jobs/<job-id>/` to `.agents/jobs/archive/<job-id>/`.
+````
+
+---
+
 ## 7. Output
 
 At the end, you must output:
@@ -968,6 +1408,7 @@ At the end, you must output:
    - root `AGENTS.md` (should be compact)
    - all nested module-level `AGENTS.md` files
    - `.agents/memory-bank/**` (reference files, `registry/`, `records/`, `locks/`, `worktrees/`)
+   - `.agents/jobs/**` (durable active job layout, archive folder, and README when durable jobs are enabled)
    - `.agents/skills/**/SKILL.md`
    - `scripts/sync-memory-index.sh`
    - `docs/ai-context-strategy.md`
@@ -978,6 +1419,7 @@ At the end, you must output:
    - `registry/SCHEMA.md`
    - seed rows for `registry/req.jsonl`, `registry/dec.jsonl`, `registry/scn.jsonl`, `registry/test.jsonl`, `registry/risk.jsonl`
    - `locks/README.md`
+   - `.agents/jobs/README.md` and `.agents/jobs/archive/.gitkeep` when durable jobs are enabled
    - `scripts/sync-memory-index.sh` (executable)
    - `.gitignore` entry for `.agents/memory-bank/worktrees/`
    - each initial `.agents/skills/**/SKILL.md`
@@ -1104,6 +1546,8 @@ Do not skip memory-bank updates for code, test, architecture, or documentation c
 - Keep skills reusable and focused.
 - Keep `docs/` canonical for deep technical detail.
 - Keep the memory bank concise, current, and linked to canonical sources.
+- Use `.agents/jobs/` for durable operational execution state when work spans multiple tasks, checkpoints, subagents, or sessions.
+- Keep durable job state separate from memory-bank facts: jobs coordinate in-flight work; memory-bank records preserve durable project knowledge.
 - If unsure whether something belongs in memory bank or docs: put summaries in memory bank, full explanation in docs.
 - Preserve stable traceability between requirements, scenarios, tests, and implementation artifacts.
 - Prefer explicit semantic links over implicit prose when documenting behavior and coverage.
@@ -1117,6 +1561,7 @@ Do not skip memory-bank updates for code, test, architecture, or documentation c
 - **Generated indexes are read-only to agents.** `activeContext.md`, `progress.md`, `decisions.md`, `productContext.md` tables, and `plans/00-index.md` are regenerated by `scripts/sync-memory-index.sh`. Never hand-edit them. CI runs `sync-memory-index.sh --check` to assert they are in sync.
 - **Acquire a module lock before editing coupled files.** Before touching a prompt template + its coupled parser/sanitizer, or any pair of files that must change in lockstep, create/overwrite `locks/<module>.md`. If a non-expired lock already exists for a different branch, pick a different module or wait. Release the lock on merge.
 - **Use worktree scratchpads for transient state.** Per-branch "Current Focus" drafts and open questions live in `.agents/memory-bank/worktrees/<branch-slug>/` (git-ignored). Never merge them to the main branch; promote only `records/` and `registry/` files.
+- **Use durable jobs for resumable multi-task work.** Long-running or subagent-heavy work uses `.agents/jobs/<job-id>/` with `JOB.md`, `STATE.md`, `PLAN.md`, and `JOURNAL.md`. Job state must be checkpointed before and after each step, then archived on completion.
 - **Serialize, don't race.** If two agents need the same module, the second agent must wait or coordinate — the lock file makes this explicit rather than producing a green-but-broken merge.
 
 ---
@@ -1158,3 +1603,5 @@ The generated guidance should explicitly warn against these anti-patterns:
 - **Editing coupled files (prompt + sanitizer/parser) without holding the module lock** — produces a green merge that silently breaks the lockstep (the M130-class risk).
 - **Merging a worktree scratchpad** (`worktrees/<branch-slug>/`) into the main branch — leaks transient agent state into canonical memory.
 - **Two agents racing on the same module without lock coordination** — the lock file exists to make this explicit; ignoring it recreates silent semantic conflicts.
+- **Using durable jobs as a memory-bank substitute** — `.agents/jobs/` is operational state, not the source of truth for requirements, decisions, risks, or milestone summaries.
+- **Dispatching subagents without durable briefs** — if subagent output is needed later, create `agents/<NN>-<slug>/BRIEF.md` before spawn and require `REPORT.md` as the completion signal.
