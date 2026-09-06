@@ -2,9 +2,6 @@
 	"folders": [
 		{
 			"path": "."
-		},
-		{
-			"path": "../../projects-epm-esp/aist-expertmatch"
 		}
 	],
 	"settings": {
