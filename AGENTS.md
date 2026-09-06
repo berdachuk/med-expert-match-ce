@@ -79,6 +79,7 @@ mvn clean verify sonar:sonar         # SonarQube/Cloud analysis
 | db-migrations | `db-migrations/SKILL.md` | Schema changes via Flyway V1 consolidation, SQL patterns, migration rules |
 | api-design | `api-design/SKILL.md` | Designing or changing REST/RPC/A2A endpoints, versioning, error contracts |
 | write-less-code | `write-less-code/SKILL.md` | Before non-trivial implementation and before commit — push back on bloat, prefer minimum diff and reuse |
+| dependency-fitness | `dependency-fitness/SKILL.md` | Before adding a new third-party dep, or when auditing unused/overlapping packages — KEEP / TRIM / REPLACE / REMOVE |
 | security-check | `security-check/SKILL.md` | Before/after any work touching auth, APIs, DB, secrets, external input, infra, or new dependencies; review final diff for vulnerabilities |
 | bdd-traceability | `bdd-traceability/SKILL.md` | New/changed functional requirements, Gherkin or executable scenarios, TDD with acceptance, coverage-gap review, refactors that may break requirement-to-test links |
 | finding-your-unknowns | `finding-your-unknowns/SKILL.md` | Before planning/implementing in unfamiliar modules, ambiguous requirements, integration/migration/Cypher plans, and after implementation (explainer + change quiz); reduces known/unknown unknowns |
